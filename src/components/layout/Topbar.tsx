@@ -1,17 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-
-const titles: Record<string, string> = {
-  '/': 'Command Center',
-  '/create': 'Create an Agent',
-  '/runs': 'Runs & Actions',
-  '/decisions': 'Decision Ledger',
-  '/people': 'People & Agents',
-};
+import { getAreaKeyFromPath, getArea } from './areas';
 
 function titleFor(pathname: string) {
-  if (titles[pathname]) return titles[pathname];
-  if (pathname.startsWith('/outcomes')) return 'Outcomes';
-  return 'Rewive';
+  const area = getArea(getAreaKeyFromPath(pathname));
+  const item = area.items.find((i) => (i.end ? pathname === i.to : pathname.startsWith(i.to)));
+  const screenLabel = item?.label ?? (pathname.startsWith('/insights/signals') ? 'Signal Studio' : 'Rewive');
+  if (area.key === 'operate' && pathname === '/') return screenLabel;
+  return `${area.label} / ${screenLabel}`;
 }
 
 export function Topbar() {
@@ -36,7 +31,7 @@ export function Topbar() {
           </svg>
           <span className="dot"></span>
         </div>
-        <button className="btn primary sm" onClick={() => navigate('/create')}>
+        <button className="btn primary sm" onClick={() => navigate('/build/create')}>
           + New Agent
         </button>
       </div>

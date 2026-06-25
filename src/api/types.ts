@@ -213,3 +213,274 @@ export interface Paginated<T> {
   data: T[];
   meta: { total: number; page: number; pageSize: number };
 }
+
+// ============ v2 ============
+
+// ---------- Data Connectors ----------
+export type ConnectorTypeKey = 'snowflake' | 'dynamics' | 'salesforce' | 'sftp' | 'onedrive' | 'sharepoint' | 'custom';
+
+export interface ConnectorField {
+  key: string;
+  label: string;
+  inputType: 'text' | 'password' | 'url' | 'select';
+  required: boolean;
+  options?: string[];
+}
+
+export interface ConnectorType {
+  id: ConnectorTypeKey;
+  name: string;
+  icon: string;
+  description: string;
+  fields: ConnectorField[];
+  isCustom: boolean;
+}
+
+export type ConnectionStatus = 'pending' | 'approved' | 'rejected' | 'active' | 'error';
+
+export interface DataConnection {
+  id: string;
+  connectorTypeId: ConnectorTypeKey;
+  connectorTypeName: string;
+  name: string;
+  status: ConnectionStatus;
+  owner: { name: string; initials: string; avatarBg: string };
+  createdDate: string;
+  lastSyncedAt: string | null;
+  config: Record<string, string>;
+  errorMessage?: string;
+}
+
+export interface CreateConnectionInput {
+  connectorTypeId: ConnectorTypeKey;
+  name: string;
+  config: Record<string, string>;
+}
+
+export interface CreateCustomConnectorTypeInput {
+  name: string;
+  icon: string;
+  description: string;
+  fields: ConnectorField[];
+}
+
+// ---------- Agent Space ----------
+export type AgentIndustry =
+  | 'fnb'
+  | 'healthcare'
+  | 'retail'
+  | 'manufacturing'
+  | 'logistics'
+  | 'technology'
+  | 'financial_services'
+  | 'real_estate'
+  | 'general';
+export type AgentFunction = 'finance' | 'hr' | 'procurement' | 'it' | 'sales' | 'customer_success';
+export type AgentCatalogStatus = 'draft' | 'live' | 'paused' | 'archived';
+export type AgentCreationPath = 'chat' | 'studio';
+
+export interface AgentCostBudget {
+  maxTokensPerRun?: number;
+  maxMonthlyCost?: string;
+}
+
+export interface AgentCatalogEntry extends AgentPreview {
+  description: string;
+  industry: AgentIndustry;
+  function2: AgentFunction;
+  catalogStatus: AgentCatalogStatus;
+  creationPath: AgentCreationPath;
+  workflowId?: string;
+  inputsSummary: string[];
+  outputsSummary: string[];
+  roiToDate: { label: string; value: string; direction: 'up' | 'down' | 'flat' };
+  tokenCostToDate: { tokens: number; estCost: string };
+  runsCount: number;
+  lastRunAt: string | null;
+  costBudget?: AgentCostBudget;
+}
+
+export interface AgentCatalogFilters {
+  industry?: AgentIndustry | 'all';
+  function?: AgentFunction | 'all';
+  status?: AgentCatalogStatus | 'all';
+  agentType?: AgentCreationPath | 'all';
+  search?: string;
+}
+
+// ---------- Agent Studio ----------
+export type StudioNodeKind = 'input' | 'process' | 'output' | 'agent' | 'approval' | 'loop';
+
+export interface StudioNodeBase {
+  id: string;
+  kind: StudioNodeKind;
+  position: { x: number; y: number };
+  label: string;
+}
+
+export type StudioInputSourceType = 'connector' | 'synthetic';
+export interface InputNodeData extends StudioNodeBase {
+  kind: 'input';
+  sourceType: StudioInputSourceType;
+  connectionId?: string;
+  syntheticDatasetId?: string;
+}
+
+export interface ProcessNodeData extends StudioNodeBase {
+  kind: 'process';
+  instructions: string;
+  generatedPrompt: string;
+  generatedAt: string | null;
+}
+
+export type StudioOutputType = 'mcp' | 'connector' | 'excel' | 'ppt' | 'json' | 'pdf' | 'word';
+export interface OutputNodeData extends StudioNodeBase {
+  kind: 'output';
+  outputType: StudioOutputType;
+  connectionId?: string;
+  destinationLabel: string;
+}
+
+export interface AgentNodeData extends StudioNodeBase {
+  kind: 'agent';
+  refAgentId?: string;
+  inlineWorkflowId?: string;
+}
+
+export interface ApprovalNodeData extends StudioNodeBase {
+  kind: 'approval';
+  approverUserIds: string[];
+  instructions: string;
+}
+
+export interface LoopNodeData extends StudioNodeBase {
+  kind: 'loop';
+  iterationMode: 'fixed_count' | 'per_item';
+  iterationCount?: number;
+  itemsSourceNodeId?: string;
+  childNodeIds: string[];
+}
+
+export type StudioNode = InputNodeData | ProcessNodeData | OutputNodeData | AgentNodeData | ApprovalNodeData | LoopNodeData;
+
+export interface StudioEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+}
+
+export type WorkflowStatus = 'draft' | 'published';
+
+export interface AgentWorkflow {
+  id: string;
+  name: string;
+  status: WorkflowStatus;
+  version: number;
+  publishedVersion: number | null;
+  nodes: StudioNode[];
+  edges: StudioEdge[];
+  linkedAgentId?: string;
+  createdAt: string;
+  updatedAt: string;
+  owner: { name: string; initials: string; avatarBg: string };
+  costBudget?: AgentCostBudget;
+}
+
+export interface SimulationNodeResult {
+  nodeId: string;
+  summary: string;
+  sampleOutputPreview: string;
+}
+
+export interface SimulationResult {
+  workflowId: string;
+  ranAt: string;
+  status: 'success' | 'partial' | 'failed';
+  nodeResults: SimulationNodeResult[];
+  finalOutputPreview: string;
+  budgetWarning?: string;
+}
+
+// ---------- Signal Studio ----------
+export type SignalCategory = 'derailer' | 'laggard' | 'cost_drainer' | 'revenue_leakage' | 'other';
+
+export interface SignalLineageEntry {
+  connectionId: string;
+  fieldsUsed: string[];
+}
+
+export interface SuggestedSignal {
+  id: string;
+  name: string;
+  description: string;
+  category: SignalCategory;
+  sourceConnectionIds: string[];
+  computableNow: boolean;
+  approvalStatus: 'suggested' | 'pending_review' | 'approved' | 'rejected';
+  lineage: SignalLineageEntry[];
+}
+
+export interface ReviewCommitteeMember {
+  userId: string;
+  name: string;
+  initials: string;
+  avatarBg: string;
+  title: string;
+}
+
+export interface SignalApproval {
+  signalId: string;
+  approvedByUserId: string;
+  approvedAt: string;
+}
+
+export type ItsmStatus = 'new' | 'acknowledged' | 'in_progress' | 'resolved' | 'closed';
+
+export interface ItsmComment {
+  id: string;
+  authorName: string;
+  authorInitials: string;
+  authorAvatarBg: string;
+  text: string;
+  createdAt: string;
+  stageAtComment: ItsmStatus;
+}
+
+export interface TrackedKpiTicket {
+  id: string;
+  signalId: string;
+  signalName: string;
+  status: ItsmStatus;
+  assignedTo: { name: string; initials: string; avatarBg: string };
+  comments: ItsmComment[];
+  createdAt: string;
+  updatedAt: string;
+  lineage: SignalLineageEntry[];
+}
+
+export interface DatasetSignalCoverage {
+  connectionId: string;
+  connectionName: string;
+  calculableSignalIds: string[];
+}
+
+// ---------- Shared people directory & audit log (extras) ----------
+export interface PersonDirectoryEntry {
+  userId: string;
+  name: string;
+  initials: string;
+  avatarBg: string;
+  roles: string[];
+}
+
+export type AuditEntityType = 'connection' | 'signal' | 'decision' | 'workflow';
+
+export interface AuditLogEntry {
+  id: string;
+  entityType: AuditEntityType;
+  entityId: string;
+  action: string;
+  actorName: string;
+  timestamp: string;
+}

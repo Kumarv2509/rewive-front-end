@@ -9,7 +9,7 @@ export function LiveRunsList() {
     <div className="card" style={{ marginBottom: 16 }}>
       <div className="sec-head">
         <h3>Live runs</h3>
-        <Link className="all" to="/runs">All runs →</Link>
+        <Link className="all" to="/operate/runs">All runs →</Link>
       </div>
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}

@@ -21,7 +21,7 @@ export function DecisionsList() {
     <div className="card" style={{ marginBottom: 16 }}>
       <div className="sec-head">
         <h3>Needs your decision</h3>
-        <Link className="all" to="/decisions">Open ledger →</Link>
+        <Link className="all" to="/operate/decisions">Open ledger →</Link>
       </div>
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
