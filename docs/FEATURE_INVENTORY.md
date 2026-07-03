@@ -15,62 +15,59 @@ Rebuilt from the static HTML prototype so every data point comes from an API ins
 | People & Agents (leaderboard) | Built |
 | Outcomes (scorecards, insights, recommended actions) | Built |
 
-## v2 — branch as it stood before today's session
-
-What was already in the codebase when this session started (confirmed by exploring the branch directly, not from memory).
+## v2 — branch as it stood before this work started
 
 | Feature | Status |
 |---|---|
 | Top nav restructure — Operate / Build / Insights areas | Built |
 | Data Connectors (connector types, approval workflow) | Built |
 | Agent Space (agent catalog, filters, detail page) | Built |
-| Agent Studio (drag-and-drop, no-code workflow canvas — nodes, simulate, publish) | Built |
-| Signal Studio (suggested signals, committee review, KPI tickets) | Built |
+| Agent Studio (drag-and-drop, no-code workflow canvas — nodes, simulate, publish) | Built, unchanged in v3 |
+| Signal Studio (suggested signals, committee review, KPI tickets) | Built — the committee-review and KPI-ticket tabs were later removed in v3 (see below) |
 | All v1 screens, carried forward | Built |
 
-**Known gap going in:** Create an Agent (chat) and Agent Studio (canvas) were two separate data models (`AgentBuilderSession` vs `AgentWorkflow`), not one spec at two altitudes — this was the core architectural complaint in the design brief and never got resolved this round (see "Not built" below).
+**Known gap going in:** Create an Agent (chat) and Agent Studio (canvas) were two separate data models (`AgentBuilderSession` vs `AgentWorkflow`), not one spec at two altitudes — the core architectural complaint in the design brief. v3 resolves this, but as a **new, separate** entry point (Unified Agent Studio) rather than by rebuilding the existing chat/canvas screens — see notes below.
 
-## v3 — everything from today's session
+## v3 — branch `v3`, pushed to GitHub
 
-### Built and integrated into the app (branch `v3`)
+### Built and integrated into the app
 
 | Feature | Where |
 |---|---|
-| Signal Detail screen — why a signal was surfaced, impact prognosis, underlying dataset with PII masked by default, similar signals across stores *and* domains with prior-solution outcomes | `/insights/signals/:signalId` |
-| Solution Design document — spec (approach, data needed, owner, guardrails), separate from a build | `/build/solutions/:id` |
-| Copy-and-tweak — pull a prior similar-signal solution into the current draft | Solution Design screen |
-| Task list — new agents to build, existing agents reused, human tasks, each owned and status-tagged | Solution Design screen |
-| Validation agent — automated pros/cons/ROI/cost review that **proposes** the dev handoff (or says ready-for-runs), not a manual toggle | Solution Design screen |
-| Send for approval → Approve, with status stepper (drafting → pending approval → in technical design / ready for runs) | Solution Design screen |
-| Escalate handoff card — business owner → dev/IT, carries the reason | Solution Design screen (conditional) |
-| Technical Design ticket — dev-altitude mirror of the same spec: agents to build, data contract, permissions, guardrails | `/build/solutions/:id/technical-design` |
-| Handback card — dev → business, plain-language contract (does / won't / owner / when unsure) | Technical Design screen |
-| Command Center persona lens — locked to role for regular users, admin-switchable (Store Manager / CFO / Operations Head / All) | Command Center |
+| Signal Detail — why a signal was surfaced, impact prognosis, underlying dataset with PII masked by default, similar signals across stores *and* domains with prior-solution outcomes (cost, value generated, verdict) | `/insights/signals/:signalId` |
+| Signal Studio simplified — committee-review and KPI-ticket tabs removed; signals go straight from the list into Signal Detail | `/insights/signals` |
+| Solution Design document — spec (approach, data needed, owner, guardrails), separate from a build, with copy-and-tweak from a prior similar-signal solution | `/build/solutions/:id` |
+| Task list on the solution — new agents to build, existing agents reused, human tasks, each owned and status-tagged | Solution Design screen |
+| Validation agent — automated pros/cons/ROI/cost review that **proposes** a dev handoff or "ready for Runs & Actions", not a manual toggle | Solution Design screen |
+| Send for approval → Approve, with a status flow (drafting → pending approval → approved) | Solution Design screen |
+| **Unified Agent Studio** — one agent spec rendered at a Business altitude (intent, capabilities, plan preview) and a Developer altitude (data contract, permissions, guardrails, test run), reached via a **"Design agent"** action button on each new-agent task in an approved solution | `/build/agent-studio/:agentSpecId` |
+| Escalate handoff card — business owner → dev/IT, carries the reason, unlocks nothing (both altitudes were always viewable — escalate is the deliberate handoff moment, not a lock) | Unified Agent Studio, when escalated |
+| Handback card — dev → business, plain-language contract (does / won't / owner / when unsure) | Unified Agent Studio, after handback |
+| Version trail — every business/dev edit, escalate, test run, handback, and publish logged with actor, altitude, timestamp | Unified Agent Studio |
+| Test run against fixture data | Unified Agent Studio, Developer altitude |
+| Publish — works for agents that never needed a developer (publish straight from Business altitude) and agents that did (publish after handback); creates a real, live entry in Agent Space either way | Unified Agent Studio → Agent Space |
+| **Tasks** (new) — every task from every approved solution in one place, with per-task feedback/comments and a status progression | `/operate/tasks` |
+| Notification channel selector per task (In app / Teams / Slack / ServiceNow) | Tasks screen — **UI preview only, not wired to a real integration** |
+| Command Center persona lens — locked to the signed-in user's role for regular users, admin-switchable (Store Manager / CFO / Operations Head / All) | Command Center |
 | Persona-driven KPIs and pending-decisions filtering | Command Center |
 | Agents tagged with persona | Agent Space cards + Agent Detail page |
-| New `v3` branch, isolated from `v2` | repo |
 
-### Designed as an interactive mockup only — not in the codebase
+### Explicitly not built — still just discussed or mocked up
 
-These were built with the `visualize` tool as click-through prototypes to align on direction. None of this exists in the actual app yet.
-
-| Feature | Why it matters | Note |
-|---|---|---|
-| **Unified Agent Studio — one spec, two altitudes** (Business chat view / Developer spec view, single toggle, one version trail) | This was the design brief's central architectural ask | What we actually built instead is **two separate screens** (Solution Design, Technical Design) linked by a ticket — related, but not the same "one object, two altitudes" model. Worth deciding if this gap matters before further building. |
-| Agent delegate configuration — tone, culture, communication style, response type, escalation temperament, working hours, "when it's unsure" | Makes an agent read as a delegate with a working style, not a bot with settings | Not started |
-| Solution-in-hand fast path — reviewer already has a fix → task breakdown → confirm with the solution provider → assign & notify | Explicitly scoped out in the round that built Solution Design | Not started |
-| PII unmask-with-reason flow | We mask by default but there's no "request access" action | Not started |
-| Restricted cross-group-company signal access request | Shown as a greyed "restricted" pill with no action behind it | Not started |
-| Agent Studio **project workspace** — the task list becoming a live workflow with data connectors, workflow design, output formats, human review gates at every step | The task list today is descriptive text, not a working builder | Not started |
-| Solution simulation — test run against fixture data before publish | | Not started |
-| UAT publish stage — business testing before production | | Not started |
-| Manual production deploy step | Explicitly requested to stay manual | Not started |
-| Runs & Actions exception log | Surfacing agent issues to fix | Not started |
-| Chase & escalate — both SLA/timer-based (no response in N hours) and feedback-driven (user flags "too noisy" → routes to dev) | Named first-class state, not silent waiting | Not started |
-| Assessor agent — independent post-run impact assessment feeding a verdict back into the Decision Ledger | Distinct from the validation agent, which reviews the *plan*, not the outcome | Not started |
-| Full closed-loop visual (Decision Ledger verdict writing back to close the originating signal) | | Escalation/handback exist; the ledger-close visualization does not |
-| The standalone 12-screen click-through prototype shown in chat | Demo only, its own sandboxed HTML/JS, not wired to real routes or data | Reference only |
+| Feature | Note |
+|---|---|
+| Agent delegate configuration — tone, culture, communication style, response type, escalation temperament, working hours, "when it's unsure" | Not started |
+| Solution-in-hand fast path — reviewer already has a fix → task breakdown → confirm with the solution provider → assign & notify | Explicitly scoped out early on |
+| PII unmask-with-reason flow | Masked by default; no "request access" action exists |
+| Restricted cross-group-company signal access request | Shown as a greyed "restricted" pill with no action behind it |
+| UAT stage / separate manual production deploy gate | Publish in Unified Agent Studio goes straight to live — there's no distinct UAT or manual-deploy step in between |
+| Runs & Actions exception log | Not started |
+| Chase & escalate — SLA/timer-based (no response in N hours) and feedback-driven (user flags "too noisy") | Not started |
+| Assessor agent — independent post-run impact assessment feeding a verdict back into the Decision Ledger | Distinct from the validation agent, which reviews the *plan*, not the outcome |
+| Decision Ledger close-the-loop visual (verdict writing back to close the originating signal) | Not started |
+| Real Teams / Slack / ServiceNow integration behind the Tasks channel selector | Selector exists; no external delivery |
+| The standalone 12-screen click-through prototype shown earlier in chat | Reference only, its own sandboxed HTML/JS, never wired to real routes or data |
 
 ## Net effect
 
-Everything under "Designed as an interactive mockup only" is genuinely absent from the running app — that's not a bug, it's scope that was explicitly deferred round by round (see conversation for the exact scoping calls). This table exists so the next round can pick items deliberately instead of assuming they're already there.
+The signal → solution design → unified agent studio → publish loop is real and runs end to end against the mock API, including both the no-dev-needed and escalate/handback paths. Everything in the second table is genuinely absent from the running app — flagged here so the next round can pick items deliberately instead of assuming they already exist.
