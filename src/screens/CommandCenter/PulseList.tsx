@@ -1,8 +1,7 @@
-import { usePulse } from '../../api/dashboard';
-import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
+import type { DashboardResponse } from '../../api/types';
 
-export function PulseList() {
-  const { data, isLoading, isError } = usePulse();
+export function PulseList({ dashboard }: { dashboard?: DashboardResponse }) {
+  const data = dashboard?.process_traces_today?.rows;
 
   return (
     <div className="card">
@@ -10,8 +9,7 @@ export function PulseList() {
         <h3>Company pulse</h3>
         <span className="all">This week</span>
       </div>
-      {isLoading && <Loading />}
-      {isError && <ErrorMessage />}
+      {(!data || data.length === 0) && <div className="state-msg">No pulse data available.</div>}
       {data?.map((p) => (
         <div className="pulse-line" key={p.id}>
           <span className="pulse-dot" style={{ background: p.dotColor }}></span>

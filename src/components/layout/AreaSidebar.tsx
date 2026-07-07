@@ -1,7 +1,8 @@
-import { NavLink, useLocation, useParams } from 'react-router-dom';
+import { NavLink, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Avatar } from '../shared/Avatar';
-import { usePendingDecisions } from '../../api/dashboard';
+import { useDashboard } from '../../api/dashboard';
 import { useWorkflows } from '../../api/agentStudio';
+import { useAuth } from '../../context/AuthContext';
 import { getArea, getAreaKeyFromPath } from './areas';
 import { NavIcon } from './NavIcon';
 
@@ -27,9 +28,13 @@ function WorkflowSublist() {
 
 export function AreaSidebar() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const area = getArea(getAreaKeyFromPath(pathname));
-  const { data: pendingDecisions } = usePendingDecisions();
-  const pendingCount = pendingDecisions ? Math.min(pendingDecisions.length, 9) : undefined;
+  const { data: dashboard } = useDashboard();
+  const pendingCount = dashboard?.analytics_agent_approvals?.rows
+    ? Math.min(dashboard.analytics_agent_approvals.rows.length, 9)
+    : undefined;
+  const { logout, userName } = useAuth();
 
   return (
     <aside className="side area-side">
@@ -49,10 +54,13 @@ export function AreaSidebar() {
         ))}
       </nav>
       <div className="side-foot">
-        <Avatar initials="KV" background="#4F46E5" />
+        <Avatar initials={userName?.slice(0, 2).toUpperCase() ?? 'U'} background="#4F46E5" />
         <div>
-          <div className="who">Kumara Vijayan</div>
-          <div className="role">Co-founder · Admin</div>
+          <div className="who">{userName ?? 'User'}</div>
+          <button className="side-logout" onClick={() => { logout(); navigate('/login'); }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+            Log out
+          </button>
         </div>
       </div>
     </aside>

@@ -1,38 +1,33 @@
-import type { DashboardSummary, Delta } from '../../api/types';
+import type { DashboardResponse } from '../../api/types';
 
-function DeltaText({ delta }: { delta: Delta }) {
-  const arrow = delta.direction === 'up' ? '▲ ' : delta.direction === 'down' ? '▼ ' : '';
-  return <div className={`k-delta ${delta.direction}`}>{arrow}{delta.label}</div>;
-}
+export function KpiRow({ dashboard }: { dashboard: DashboardResponse }) {
+  const actions = dashboard.agent_actions_today?.rows?.[0]?.action_count ?? 0;
+  const pending = dashboard.analytics_agent_approvals?.rows?.length ?? 0;
+  const processes = dashboard.process_count_today?.rows?.[0]?.process_count ?? 0;
+  const wf = dashboard.workflow_execution_count_total?.rows?.[0];
+  const liveCount = dashboard.live_runs_today?.rows?.length ?? 0;
 
-export function KpiRow({ summary }: { summary: DashboardSummary }) {
-  const { kpis } = summary;
   return (
     <div className="grid kpis">
       <div className="card kpi">
         <div className="k-label">Actions executed today</div>
-        <div className="k-val">{kpis.actionsExecutedToday.value}</div>
-        <DeltaText delta={kpis.actionsExecutedToday.delta} />
+        <div className="k-val">{actions}</div>
       </div>
       <div className="card kpi">
         <div className="k-label">Decisions pending</div>
-        <div className="k-val">{kpis.decisionsPending.value}</div>
-        <DeltaText delta={kpis.decisionsPending.delta} />
+        <div className="k-val">{pending}</div>
       </div>
       <div className="card kpi">
-        <div className="k-label">Agents active now</div>
-        <div className="k-val">{kpis.agentsActiveNow.value}</div>
-        <DeltaText delta={kpis.agentsActiveNow.delta} />
+        <div className="k-label">Processes active now</div>
+        <div className="k-val">{processes}</div>
       </div>
       <div className="card kpi">
-        <div className="k-label">Time saved this week</div>
-        <div className="k-val">{kpis.timeSavedThisWeek.value}</div>
-        <DeltaText delta={kpis.timeSavedThisWeek.delta} />
+        <div className="k-label">Live runs</div>
+        <div className="k-val">{liveCount}</div>
       </div>
       <div className="card kpi">
-        <div className="k-label">On-time execution</div>
-        <div className="k-val">{kpis.onTimeExecution.value}</div>
-        <DeltaText delta={kpis.onTimeExecution.delta} />
+        <div className="k-label">Total executions</div>
+        <div className="k-val">{wf?.execution_count ?? 0}</div>
       </div>
     </div>
   );

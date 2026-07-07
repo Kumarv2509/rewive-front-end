@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { DecisionLedgerItem, DecisionStats, PendingDecision } from './types';
+import type { AgentActionItem, DecisionLedgerItem, DecisionStats } from './types';
 
 export function useDecisionStats() {
   return useQuery({
@@ -26,12 +26,9 @@ export function useApproveDecision() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (decisionId: string) =>
-      (await apiClient.post<PendingDecision>(`/decisions/${decisionId}/approve`)).data,
-    onSuccess: (_data, decisionId) => {
-      queryClient.setQueryData<PendingDecision[]>(['decisions', 'pending'], (prev) =>
-        prev ? prev.filter((d) => d.id !== decisionId) : prev
-      );
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] });
+      (await apiClient.post<AgentActionItem>(`/decisions/${decisionId}/approve`)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }

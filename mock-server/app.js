@@ -2,10 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import {
   dashboardSummary,
+  dashboardWidgets,
   pendingDecisions,
-  pulse,
-  liveRuns,
-  topPerformer,
+  users,
   runDetails,
   runs,
   decisionStats,
@@ -41,12 +40,20 @@ const agentSessions = new Map();
 const createdAgents = new Map();
 const outcomeReportsState = JSON.parse(JSON.stringify(outcomeReports));
 
+// ---------- Builder API (dashboard) ----------
+app.post('/builder/dashboard/v1/execute', (req, res) => {
+  res.json({
+    ...dashboardWidgets,
+    analytics_agent_approvals: { rows: pendingDecisionsState, summary_rows: null },
+  });
+});
+
 // ---------- Dashboard / Command Center ----------
 app.get('/api/v1/dashboard/summary', (req, res) => {
   res.json({ ...dashboardSummary, kpis: { ...dashboardSummary.kpis, decisionsPending: { ...dashboardSummary.kpis.decisionsPending, value: pendingDecisionsState.length } } });
 });
 
-app.get('/api/v1/decisions/pending', (req, res) => res.json(pendingDecisionsState));
+app.get('/api/v1/decisions/pending', (req, res) => res.json({ items: pendingDecisionsState }));
 
 app.post('/api/v1/decisions/:id/approve', (req, res) => {
   const { id } = req.params;
@@ -54,12 +61,6 @@ app.post('/api/v1/decisions/:id/approve', (req, res) => {
   pendingDecisionsState = pendingDecisionsState.filter((d) => d.id !== id);
   res.json(decision ?? { id });
 });
-
-app.get('/api/v1/pulse', (req, res) => res.json(pulse));
-
-app.get('/api/v1/runs/live', (req, res) => res.json(liveRuns));
-
-app.get('/api/v1/people/top-performer', (req, res) => res.json(topPerformer));
 
 // ---------- Runs & Actions ----------
 app.get('/api/v1/runs', (req, res) => {
@@ -452,6 +453,23 @@ app.post('/api/v1/kpi-tickets/:id/comments', (req, res) => {
   ticket.comments = [...ticket.comments, comment];
   ticket.updatedAt = new Date().toISOString();
   res.json(ticket);
+});
+
+// ---------- Auth ----------
+app.post('/login/authenticate', (req, res) => {
+  const { username, password } = req.body;
+  const user = users.find((u) => u.user_name === username && u.password === password);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  res.json({
+    id: user.id,
+    user_name: user.user_name,
+    rememberMeToken: user.rememberMeToken,
+    client_ref: user.client_ref,
+    fk_customer_account: user.fk_customer_account,
+    permissions: user.permissions,
+  });
 });
 
 // ---------- Shared: people directory & audit log ----------

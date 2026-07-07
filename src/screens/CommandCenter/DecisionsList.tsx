@@ -1,19 +1,21 @@
 import { Link } from 'react-router-dom';
-import { usePendingDecisions } from '../../api/dashboard';
 import { useApproveDecision } from '../../api/decisions';
 import { useToast } from '../../components/shared/Toast';
-import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
-import type { PendingDecision } from '../../api/types';
+import type { AgentActionItem, DashboardResponse } from '../../api/types';
 
-const actionLabelDefaults: Record<PendingDecision['actionVerb'], string> = {
-  approve: 'Approve',
-  act: 'Act',
-  clear: 'Clear',
-  release: 'Release',
+const actionTypeMeta: Record<AgentActionItem['action_type'], { icon: string; iconBg: string; verb: string; toastLabel: string }> = {
+  inquiry: { icon: '❓', iconBg: 'var(--amber-soft)', verb: 'Reply', toastLabel: 'replied' },
+  transaction: { icon: '💰', iconBg: 'var(--teal-soft)', verb: 'Approve', toastLabel: 'approved' },
+  request: { icon: '📋', iconBg: 'var(--accent-soft)', verb: 'Review', toastLabel: 'reviewed' },
 };
 
-export function DecisionsList() {
-  const { data, isLoading, isError } = usePendingDecisions();
+function truncate(str: string | null, max: number) {
+  if (!str) return '';
+  return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+export function DecisionsList({ dashboard }: { dashboard?: DashboardResponse }) {
+  const data = dashboard?.analytics_agent_approvals?.rows;
   const approve = useApproveDecision();
   const { showToast } = useToast();
 
@@ -23,32 +25,35 @@ export function DecisionsList() {
         <h3>Needs your decision</h3>
         <Link className="all" to="/operate/decisions">Open ledger →</Link>
       </div>
-      {isLoading && <Loading />}
-      {isError && <ErrorMessage />}
-      {data?.length === 0 && <div className="state-msg">All caught up — nothing pending.</div>}
-      {data?.map((d) => (
-        <div className="dec-item" key={d.id}>
-          <div className="dec-ico" style={{ background: d.iconBg }}>{d.icon}</div>
-          <div>
-            <div className="t1">{d.title}</div>
-            <div className="t2">{d.subtitle}</div>
+      <div className="dec-scroll">
+      {(!data || data.length === 0) && <div className="state-msg">All caught up — nothing pending.</div>}
+      {data?.map((d) => {
+        const meta = actionTypeMeta[d.action_type];
+        return (
+          <div className="dec-item" key={d.id}>
+            <div className="dec-ico" style={{ background: meta.iconBg }}>{meta.icon}</div>
+            <div>
+              <div className="t1">{d.action_title || `${d.action_type} action`}</div>
+              <div className="t2">{truncate(d.action_summary, 120)}</div>
+            </div>
+            <div className="acts">
+              <button className="btn ghost sm">Review</button>
+              <button
+                className="btn primary sm"
+                disabled={approve.isPending}
+                onClick={() =>
+                  approve.mutate(d.id, {
+                    onSuccess: () => showToast(`${d.action_title || 'Action'} — ${meta.toastLabel}`),
+                  })
+                }
+              >
+                {meta.verb}
+              </button>
+            </div>
           </div>
-          <div className="acts">
-            <button className="btn ghost sm">Review</button>
-            <button
-              className="btn primary sm"
-              disabled={approve.isPending}
-              onClick={() =>
-                approve.mutate(d.id, {
-                  onSuccess: () => showToast(`${d.title.split(' · ')[0]} — ${actionLabelDefaults[d.actionVerb]?.toLowerCase()}d`),
-                })
-              }
-            >
-              {d.actionLabel || actionLabelDefaults[d.actionVerb]}
-            </button>
-          </div>
-        </div>
-      ))}
+        );
+      })}
+      </div>
     </div>
   );
 }

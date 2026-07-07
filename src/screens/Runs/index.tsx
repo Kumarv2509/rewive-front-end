@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { useLiveRuns } from '../../api/dashboard';
-import { LiveRunCard } from './LiveRunCard';
 import { RunsTable } from './RunsTable';
 import type { RunStatus } from '../../api/types';
 
@@ -14,8 +12,6 @@ const filters: { key: RunStatus | 'all'; label: string }[] = [
 
 export function RunsScreen() {
   const [status, setStatus] = useState<RunStatus | 'all'>('all');
-  const { data: liveRuns } = useLiveRuns();
-  const primaryLiveRunId = liveRuns?.[0]?.id;
 
   return (
     <section className="screen">
@@ -33,8 +29,6 @@ export function RunsScreen() {
           </button>
         ))}
       </div>
-
-      {primaryLiveRunId && <LiveRunCard runId={primaryLiveRunId} />}
 
       <RunsTable status={status} />
     </section>

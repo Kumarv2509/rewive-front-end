@@ -17,14 +17,43 @@ export interface DashboardSummary {
   };
 }
 
-export interface PendingDecision {
+export interface AgentActionItem {
   id: string;
-  icon: string;
-  iconBg: string;
-  title: string;
-  subtitle: string;
-  actionLabel: string;
-  actionVerb: 'approve' | 'act' | 'clear' | 'release';
+  action_type: 'inquiry' | 'transaction' | 'request';
+  action_title: string | null;
+  action_summary: string | null;
+  params: {
+    from_email: string | string[];
+    to_email: string;
+  };
+  assigned_to: string | null;
+  status: string;
+  priority: string;
+  created_on: string;
+  triggered_on: string;
+  updated_on: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  client_ref: string | null;
+  user_id: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  rejection_reason: string | null;
+}
+
+export interface DashboardWidgetRow<T = Record<string, unknown>> {
+  rows?: T[];
+  summary_rows?: unknown;
+}
+
+export interface DashboardResponse {
+  live_runs_today: DashboardWidgetRow<LiveRunSummary>;
+  agent_actions_today: DashboardWidgetRow<{ action_count: number }>;
+  process_count_today: DashboardWidgetRow<{ process_count: number }>;
+  process_traces_today: DashboardWidgetRow<PulseItem>;
+  analytics_agent_approvals: DashboardWidgetRow<AgentActionItem>;
+  analytics_top_performer?: DashboardWidgetRow<TopPerformer>;
+  workflow_execution_count_total: DashboardWidgetRow<{ execution_count: number; completed_count: number; running_count: number }>;
 }
 
 export interface PulseItem {

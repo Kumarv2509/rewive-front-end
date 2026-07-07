@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useLiveRuns } from '../../api/dashboard';
-import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
+import type { DashboardResponse } from '../../api/types';
 
-export function LiveRunsList() {
-  const { data, isLoading, isError } = useLiveRuns();
+export function LiveRunsList({ dashboard }: { dashboard?: DashboardResponse }) {
+  const data = dashboard?.live_runs_today?.rows;
 
   return (
     <div className="card" style={{ marginBottom: 16 }}>
@@ -11,9 +10,7 @@ export function LiveRunsList() {
         <h3>Live runs</h3>
         <Link className="all" to="/operate/runs">All runs →</Link>
       </div>
-      {isLoading && <Loading />}
-      {isError && <ErrorMessage />}
-      {data?.length === 0 && <div className="state-msg">No runs in progress.</div>}
+      {(!data || data.length === 0) && <div className="state-msg">No runs in progress.</div>}
       {data?.map((r) => (
         <div className="run-item" key={r.id}>
           <div className="r1">
