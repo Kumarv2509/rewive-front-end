@@ -1,4 +1,20 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useSetIndustry } from '../../api/shadowOrg';
+import type { IndustryKey } from '../../api/types';
+
+const INDUSTRIES: { id: IndustryKey; name: string; blurb: string; mandates: number }[] = [
+  { id: 'fmcg', name: 'FMCG / food & beverage', blurb: 'Manufacturing, distribution and trade across modern and traditional channels.', mandates: 26 },
+  { id: 'healthcare', name: 'Healthcare', blurb: 'Clinical operations, revenue cycle, patient experience, pharmacy, finance and people.', mandates: 22 },
+  { id: 'manufacturing', name: 'Industrial manufacturing', blurb: 'Production, maintenance, supplier network, quality and safety.', mandates: 11 },
+];
+
+function useEnter() {
+  const navigate = useNavigate();
+  const setIndustry = useSetIndustry();
+  const enter = (id: IndustryKey) =>
+    setIndustry.mutate(id, { onSettled: () => navigate('/command') });
+  return { enter, pending: setIndustry.isPending };
+}
 
 const css = `
 .om{
@@ -54,6 +70,19 @@ const css = `
 .om .cta{display:inline-flex;align-items:center;gap:9px;font-family:var(--om-sans);font-size:1rem;font-weight:600;text-decoration:none;color:#fff;background:var(--grad);border-radius:13px;padding:14px 26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 34px rgba(124,99,255,.4);transition:filter .2s,transform .2s}
 .om .cta:hover{filter:brightness(1.1);transform:translateY(-1px)}
 .om .cta .arr{font-family:var(--om-mono)}
+.om .ind-picker{scroll-margin-top:24px}
+.om .ind-picker-label{font-family:var(--om-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--om-ink-3);margin-bottom:14px}
+.om .ind-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.om .ind-card{text-align:left;cursor:pointer;font-family:inherit;color:var(--om-ink);background:var(--om-glass);border:1px solid var(--om-line-2);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px;transition:transform .18s,border-color .18s,box-shadow .18s;backdrop-filter:blur(16px)}
+.om .ind-card:hover:not(:disabled){transform:translateY(-3px);border-color:rgba(139,92,246,.55);box-shadow:0 10px 34px rgba(0,0,0,.4),0 0 30px rgba(124,99,255,.18)}
+.om .ind-card:disabled{opacity:.5;cursor:default}
+.om .ind-card .ind-name{font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
+.om .ind-card .ind-blurb{font-size:.86rem;color:var(--om-ink-2);line-height:1.5;flex:1}
+.om .ind-card .ind-foot{display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:12px;border-top:1px solid var(--om-line)}
+.om .ind-card .ind-count{font-family:var(--om-mono);font-size:.72rem;color:var(--om-ink-3)}
+.om .ind-card .ind-go{font-size:.86rem;font-weight:600;color:var(--i3)}
+.om .ind-card .ind-go .arr{font-family:var(--om-mono)}
+@media(max-width:720px){.om .ind-cards{grid-template-columns:1fr}}
 
 .om .shift{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
 .om .col{border:1px solid var(--om-line);border-radius:16px;background:var(--om-glass);backdrop-filter:blur(18px);padding:26px 26px 12px}
@@ -145,6 +174,27 @@ const css = `
 @media(max-width:520px){.om .dispo{grid-template-columns:1fr}}
 `;
 
+function IndustryPicker() {
+  const { enter, pending } = useEnter();
+  return (
+    <div className="ind-picker" id="start">
+      <div className="ind-picker-label">Choose your operating context to begin</div>
+      <div className="ind-cards">
+        {INDUSTRIES.map((ind) => (
+          <button key={ind.id} className="ind-card" disabled={pending} onClick={() => enter(ind.id)}>
+            <div className="ind-name">{ind.name}</div>
+            <div className="ind-blurb">{ind.blurb}</div>
+            <div className="ind-foot">
+              <span className="ind-count">{ind.mandates} mandates</span>
+              <span className="ind-go">Enter <span className="arr">→</span></span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function LandingScreen() {
   return (
     <div className="om">
@@ -155,7 +205,7 @@ export function LandingScreen() {
           <span className="mk">R</span>
           <span className="nm">Rewive</span>
         </span>
-        <Link to="/command" className="enter">Enter the console →</Link>
+        <a href="#start" className="enter">Get started ↓</a>
       </header>
 
       {/* HERO */}
@@ -164,7 +214,7 @@ export function LandingScreen() {
         <h1>Dashboards tell you what happened. A <span className="grad-text">shadow organization</span> does something about it.</h1>
         <p className="lede">Give every function a tireless counterpart — an agent that watches the same numbers its human owner does, catches drift the moment it starts, and arrives with a decision instead of a report.</p>
         <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by the agent shadowing them.</p>
-        <div><Link to="/command" className="cta">Enter the console <span className="arr">→</span></Link></div>
+        <IndustryPicker />
       </section>
 
       {/* THE SHIFT */}
@@ -304,7 +354,7 @@ export function LandingScreen() {
       <section className="close wrap">
         <h2>An organization that <span className="grad-text">points at what you decided matters</span> — without being asked.</h2>
         <p className="lede">One organization does the work. Its shadow makes sure the work still serves the intent, catches it when it doesn't, and brings you the decision the moment it counts.</p>
-        <div><Link to="/command" className="cta">Enter the console <span className="arr">→</span></Link></div>
+        <div><a href="#start" className="cta">Choose your context <span className="arr">↑</span></a></div>
         <p className="sig">Every mandate, held twice.</p>
       </section>
     </div>
