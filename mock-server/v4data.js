@@ -6,7 +6,7 @@ export const orgProfileSeed = { orgName: 'Americana Foods (demo)', industry: 'fm
 
 export const industryOptions = [
   { id: 'fmcg', name: 'FMCG / food & beverage', description: 'Consumer packaged food: manufacturing, distribution and trade across modern and traditional channels.', streamCount: 8, kpiCount: 26 },
-  { id: 'healthcare', name: 'Healthcare', description: 'Hospital and clinic network: clinical operations, revenue cycle, patient experience and pharmacy.', streamCount: 6, kpiCount: 11 },
+  { id: 'healthcare', name: 'Healthcare', description: 'Hospital and clinic network: clinical operations, revenue cycle, patient experience, pharmacy, finance and people.', streamCount: 6, kpiCount: 22 },
   { id: 'manufacturing', name: 'Industrial manufacturing', description: 'Discrete manufacturing: production, maintenance, supplier network, quality and safety.', streamCount: 6, kpiCount: 11 },
 ];
 
@@ -156,9 +156,30 @@ const hcNodes = [
   { id: 'hc-k-labor', kind: 'stream_kpi', name: 'Labor cost % of revenue', streamKey: 'finance', definition: 'Total clinical and support labor as a share of net revenue.', currentValue: '56%', targetValue: '52%', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['GL', 'HRIS'] },
   { id: 'hc-k-nurseattr', kind: 'stream_kpi', name: 'Nurse attrition', streamKey: 'people', definition: 'Annualized voluntary nurse turnover.', currentValue: '19%', targetValue: '14%', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['HRIS'] },
 
+  // Additional mandates
+  { id: 'hc-t-safety', kind: 'target', name: 'Patient safety index', streamKey: null, definition: 'Composite of harm events — infections, medication errors, risk-adjusted mortality.', currentValue: '82', targetValue: '90', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['EMR feed', 'Lab & microbiology'] },
+
+  { id: 'hc-k-edwait', kind: 'stream_kpi', name: 'ED door-to-provider time', streamKey: 'clinical', definition: 'Median minutes from ED arrival to first provider contact.', currentValue: '42 min', targetValue: '30 min', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['EMR feed'] },
+  { id: 'hc-k-hai', kind: 'stream_kpi', name: 'Hospital-acquired infection rate', streamKey: 'clinical', definition: 'Healthcare-associated infections per 1,000 patient-days.', currentValue: '2.1', targetValue: '< 1.0', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Lab & microbiology'] },
+  { id: 'hc-k-mortality', kind: 'stream_kpi', name: 'Risk-adjusted mortality index', streamKey: 'clinical', definition: 'Observed vs expected inpatient mortality (1.0 = expected).', currentValue: '1.05', targetValue: '< 0.95', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['EMR feed'] },
+  { id: 'hc-k-cleanclaim', kind: 'stream_kpi', name: 'Clean claim rate', streamKey: 'revcycle', definition: 'Claims accepted on first submission without edits.', currentValue: '82%', targetValue: '95%', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['Claims clearinghouse'] },
+  { id: 'hc-k-poscash', kind: 'stream_kpi', name: 'Point-of-service collections', streamKey: 'revcycle', definition: 'Share of patient liability collected at or before the visit.', currentValue: '48%', targetValue: '65%', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['Claims clearinghouse'] },
+  { id: 'hc-k-clinicwait', kind: 'stream_kpi', name: 'Clinic wait time', streamKey: 'patientexp', definition: 'Median minutes from check-in to being seen in outpatient clinics.', currentValue: '27 min', targetValue: '15 min', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['Scheduling system'] },
+  { id: 'hc-k-complaint', kind: 'stream_kpi', name: 'Complaint rate', streamKey: 'patientexp', definition: 'Formal patient complaints per 1,000 visits.', currentValue: '3.4', targetValue: '2.0', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['Patient survey platform'] },
+  { id: 'hc-k-mederror', kind: 'stream_kpi', name: 'Medication error rate', streamKey: 'pharmacy', definition: 'Reported medication errors per 1,000 doses dispensed.', currentValue: '0.9', targetValue: '< 0.4', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['Pharmacy system'] },
+  { id: 'hc-k-drugspend', kind: 'stream_kpi', name: 'Drug spend per discharge', streamKey: 'pharmacy', definition: 'Pharmacy cost per adjusted discharge.', currentValue: '$1,240', targetValue: '$1,050', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Pharmacy system', 'GL'] },
+  { id: 'hc-k-costdischarge', kind: 'stream_kpi', name: 'Cost per adjusted discharge', streamKey: 'finance', definition: 'Fully loaded operating cost per adjusted discharge.', currentValue: '$11,800', targetValue: '$10,500', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['GL'] },
+  { id: 'hc-k-cashdays', kind: 'stream_kpi', name: 'Days cash on hand', streamKey: 'finance', definition: 'Days of operating expense covered by unrestricted cash.', currentValue: '142', targetValue: '> 180', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['GL'] },
+  { id: 'hc-k-agency', kind: 'stream_kpi', name: 'Agency staffing %', streamKey: 'people', definition: 'Contract/agency nursing hours as a share of total nursing hours.', currentValue: '14%', targetValue: '< 6%', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['HRIS'] },
+
   { id: 'hc-d-emr', kind: 'driver', name: 'EMR feed', streamKey: 'clinical', definition: 'Admissions, discharges, transfers and orders.', status: 'connected', dataSources: ['EMR HL7 feed'] },
   { id: 'hc-d-claims', kind: 'driver', name: 'Claims clearinghouse', streamKey: 'revcycle', definition: 'Claim submissions, remits and denial codes.', status: 'connected', dataSources: ['Clearinghouse SFTP'] },
   { id: 'hc-d-sched', kind: 'driver', name: 'Scheduling system', streamKey: 'patientexp', definition: 'Bookings, cancellations and arrivals.', status: 'connected', dataSources: ['Scheduling API'] },
+  { id: 'hc-d-lab', kind: 'driver', name: 'Lab & microbiology', streamKey: 'clinical', definition: 'Culture results, positive cultures and antibiotic flags.', status: 'connected', dataSources: ['LIS feed'] },
+  { id: 'hc-d-survey', kind: 'driver', name: 'Patient survey platform', streamKey: 'patientexp', definition: 'Post-visit surveys and complaint intake.', status: 'connected', dataSources: ['Survey API'] },
+  { id: 'hc-d-pharmacy', kind: 'driver', name: 'Pharmacy system', streamKey: 'pharmacy', definition: 'Dispensing records, formulary and error reports.', status: 'connected', dataSources: ['Pharmacy DB'] },
+  { id: 'hc-d-gl', kind: 'driver', name: 'General ledger', streamKey: 'finance', definition: 'Cost, revenue and cash positions.', status: 'connected', dataSources: ['ERP GL'] },
+  { id: 'hc-d-hr', kind: 'driver', name: 'HRIS & time clock', streamKey: 'people', definition: 'Staffing hours, agency use and overtime.', status: 'connected', dataSources: ['HRIS export'] },
 ];
 
 const hcEdges = [
@@ -178,6 +199,38 @@ const hcEdges = [
   { id: 'hc-e-14', source: 'hc-k-generic', target: 'hc-t-margin', weight: 'weak', status: 'connected' },
   { id: 'hc-e-15', source: 'hc-k-nurseattr', target: 'hc-k-alos', weight: 'weak', status: 'connected' },
   { id: 'hc-e-16', source: 'hc-k-nps', target: 'hc-t-access', weight: 'weak', status: 'connected' },
+
+  // senses → new mandates
+  { id: 'hc-e-17', source: 'hc-d-emr', target: 'hc-k-edwait', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-18', source: 'hc-d-emr', target: 'hc-k-mortality', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-19', source: 'hc-d-lab', target: 'hc-k-hai', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-20', source: 'hc-d-claims', target: 'hc-k-cleanclaim', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-21', source: 'hc-d-claims', target: 'hc-k-poscash', weight: 'moderate', status: 'connected' },
+  { id: 'hc-e-22', source: 'hc-d-sched', target: 'hc-k-clinicwait', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-23', source: 'hc-d-survey', target: 'hc-k-complaint', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-24', source: 'hc-d-pharmacy', target: 'hc-k-mederror', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-25', source: 'hc-d-pharmacy', target: 'hc-k-drugspend', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-26', source: 'hc-d-gl', target: 'hc-k-costdischarge', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-27', source: 'hc-d-gl', target: 'hc-k-cashdays', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-28', source: 'hc-d-gl', target: 'hc-k-drugspend', weight: 'moderate', status: 'connected' },
+  { id: 'hc-e-29', source: 'hc-d-hr', target: 'hc-k-agency', weight: 'strong', status: 'connected' },
+
+  // new mandates → mandates / intents (the cross-stream wiring)
+  { id: 'hc-e-30', source: 'hc-k-hai', target: 'hc-t-safety', weight: 'strong', status: 'connected', rationale: 'Infections are a leading driver of the harm composite.' },
+  { id: 'hc-e-31', source: 'hc-k-mortality', target: 'hc-t-safety', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-32', source: 'hc-k-mederror', target: 'hc-t-safety', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-33', source: 'hc-k-hai', target: 'hc-k-alos', weight: 'moderate', status: 'connected', rationale: 'Infections extend length of stay.' },
+  { id: 'hc-e-34', source: 'hc-k-edwait', target: 'hc-t-access', weight: 'moderate', status: 'connected' },
+  { id: 'hc-e-35', source: 'hc-k-cleanclaim', target: 'hc-k-denial', weight: 'strong', status: 'connected', rationale: 'Dirty claims convert directly into first-pass denials.' },
+  { id: 'hc-e-36', source: 'hc-k-cleanclaim', target: 'hc-k-ar', weight: 'moderate', status: 'connected' },
+  { id: 'hc-e-37', source: 'hc-k-poscash', target: 'hc-k-ar', weight: 'moderate', status: 'connected' },
+  { id: 'hc-e-38', source: 'hc-k-clinicwait', target: 'hc-k-nps', weight: 'moderate', status: 'connected' },
+  { id: 'hc-e-39', source: 'hc-k-complaint', target: 'hc-k-nps', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-40', source: 'hc-k-drugspend', target: 'hc-k-costdischarge', weight: 'moderate', status: 'connected' },
+  { id: 'hc-e-41', source: 'hc-k-costdischarge', target: 'hc-t-margin', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-42', source: 'hc-k-cashdays', target: 'hc-t-margin', weight: 'weak', status: 'connected' },
+  { id: 'hc-e-43', source: 'hc-k-agency', target: 'hc-k-labor', weight: 'strong', status: 'connected', rationale: 'Agency premiums inflate labor cost per hour.' },
+  { id: 'hc-e-44', source: 'hc-k-agency', target: 'hc-k-nurseattr', weight: 'weak', status: 'connected' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -260,13 +313,13 @@ export const shadowOrgs = {
   healthcare: {
     industry: 'healthcare',
     agents: [
-      { id: 'hc-sa-chief', name: 'Shadow chief of staff', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['hc-t-margin', 'hc-t-quality', 'hc-t-access'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-04T12:00:00Z', reportsToAgentId: null },
-      { id: 'hc-sa-clinical', name: 'Shadow clinical ops', streamKey: 'clinical', humanOwner: { name: 'Dr. Maya Suresh', initials: 'MS', avatarBg: '#0E7490', role: 'Chief medical officer' }, watchesNodeIds: ['hc-k-alos', 'hc-k-bed', 'hc-k-orutil', 'hc-d-emr'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: '2026-07-01T09:00:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-revcycle', name: 'Shadow revenue cycle', streamKey: 'revcycle', humanOwner: { name: 'James Okafor', initials: 'JO', avatarBg: '#B45309', role: 'Revenue cycle director' }, watchesNodeIds: ['hc-k-ar', 'hc-k-denial', 'hc-d-claims'], openFindings: 0, slaBreaches: 1, temperament: 55, health: 'critical', lastFindingAt: '2026-07-06T05:30:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-patientexp', name: 'Shadow patient experience', streamKey: 'patientexp', humanOwner: { name: 'Fatima Al Marri', initials: 'FA', avatarBg: '#BE185D', role: 'Patient experience lead' }, watchesNodeIds: ['hc-k-noshow', 'hc-k-nps', 'hc-d-sched'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-05T15:20:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-pharmacy', name: 'Shadow pharmacy', streamKey: 'pharmacy', humanOwner: { name: 'Ravi Menon', initials: 'RM', avatarBg: '#0F766E', role: 'Pharmacy operations head' }, watchesNodeIds: ['hc-k-generic'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-27T10:00:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-finance', name: 'Shadow finance', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['hc-k-labor'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: '2026-07-02T13:45:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-people', name: 'Shadow people', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['hc-k-nurseattr'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-29T09:30:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-chief', name: 'Shadow chief of staff', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['hc-t-margin', 'hc-t-quality', 'hc-t-access', 'hc-t-safety'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-04T12:00:00Z', reportsToAgentId: null },
+      { id: 'hc-sa-clinical', name: 'Shadow clinical ops', streamKey: 'clinical', humanOwner: { name: 'Dr. Maya Suresh', initials: 'MS', avatarBg: '#0E7490', role: 'Chief medical officer' }, watchesNodeIds: ['hc-k-alos', 'hc-k-bed', 'hc-k-orutil', 'hc-k-edwait', 'hc-k-hai', 'hc-k-mortality', 'hc-d-emr', 'hc-d-lab'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: '2026-07-01T09:00:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-revcycle', name: 'Shadow revenue cycle', streamKey: 'revcycle', humanOwner: { name: 'James Okafor', initials: 'JO', avatarBg: '#B45309', role: 'Revenue cycle director' }, watchesNodeIds: ['hc-k-ar', 'hc-k-denial', 'hc-k-cleanclaim', 'hc-k-poscash', 'hc-d-claims'], openFindings: 0, slaBreaches: 1, temperament: 55, health: 'critical', lastFindingAt: '2026-07-06T05:30:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-patientexp', name: 'Shadow patient experience', streamKey: 'patientexp', humanOwner: { name: 'Fatima Al Marri', initials: 'FA', avatarBg: '#BE185D', role: 'Patient experience lead' }, watchesNodeIds: ['hc-k-noshow', 'hc-k-nps', 'hc-k-clinicwait', 'hc-k-complaint', 'hc-d-sched', 'hc-d-survey'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-05T15:20:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-pharmacy', name: 'Shadow pharmacy', streamKey: 'pharmacy', humanOwner: { name: 'Ravi Menon', initials: 'RM', avatarBg: '#0F766E', role: 'Pharmacy operations head' }, watchesNodeIds: ['hc-k-generic', 'hc-k-mederror', 'hc-k-drugspend', 'hc-d-pharmacy'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-27T10:00:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-finance', name: 'Shadow finance', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['hc-k-labor', 'hc-k-costdischarge', 'hc-k-cashdays', 'hc-d-gl'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: '2026-07-02T13:45:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-people', name: 'Shadow people', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['hc-k-nurseattr', 'hc-k-agency', 'hc-d-hr'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-29T09:30:00Z', reportsToAgentId: 'hc-sa-chief' },
     ],
   },
   manufacturing: {
