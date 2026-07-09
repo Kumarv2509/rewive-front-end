@@ -38,10 +38,18 @@ export function SolutionDesignScreen() {
 
   const matchesWithSolutions = signalDetail?.similarSignals.filter((s) => s.priorSolution) ?? [];
   const approved = solution.status === 'approved';
+  // Solutions opened by a finding's "act" disposition carry the finding id as signalId (v4).
+  const fromFinding = /-f-/.test(solution.signalId);
 
   return (
     <section className="screen">
-      <Link to={`/insights/signals/${solution.signalId}`} className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Signal detail</Link>
+      <Link
+        to={fromFinding ? `/insights/findings/${solution.signalId}` : `/insights/signals/${solution.signalId}`}
+        className="btn ghost sm"
+        style={{ marginBottom: 14, display: 'inline-flex' }}
+      >
+        &larr; {fromFinding ? 'Finding' : 'Signal detail'}
+      </Link>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <h1 className="page" style={{ marginBottom: 0 }}>Solution design &mdash; {solution.signalName}</h1>

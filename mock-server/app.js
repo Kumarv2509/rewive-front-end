@@ -33,6 +33,14 @@ import {
   runExceptions,
   runChases,
 } from './data.js';
+import {
+  orgProfileSeed,
+  industryOptions,
+  brains,
+  shadowOrgs,
+  findingsSeed,
+  closureKpisSeed,
+} from './v4data.js';
 
 const app = express();
 app.use(cors());
@@ -1017,6 +1025,291 @@ app.get('/api/v1/audit-log', (req, res) => {
   res.json(result);
 });
 
+// ============ v4 — shadow organization ============
+// KPI brains, shadow agents, findings with 4-A dispositions, closure KPIs.
+let orgProfileState = { ...orgProfileSeed };
+let brainsState = JSON.parse(JSON.stringify(brains));
+let findingsState = JSON.parse(JSON.stringify(findingsSeed));
+let closureKpisState = JSON.parse(JSON.stringify(closureKpisSeed));
+const shadowOrgsSeed = JSON.parse(JSON.stringify(shadowOrgs));
+
+function v4Industry(req) {
+  const q = req.query.industry;
+  return q && brainsState[q] ? q : orgProfileState.industry;
+}
+
+// closureTemplate is a server-side hint consumed on accept — not part of the client contract
+function stripServerFields(finding) {
+  const { closureTemplate, ...rest } = finding;
+  return rest;
+}
+
+function findFinding(id) {
+  for (const [industry, list] of Object.entries(findingsState)) {
+    const finding = list.find((f) => f.id === id);
+    if (finding) return { finding, industry };
+  }
+  return null;
+}
+
+// ---------- Org profile & industry templates ----------
+app.get('/api/v1/org-profile', (req, res) => res.json(orgProfileState));
+
+app.get('/api/v1/industries', (req, res) => res.json(industryOptions));
+
+app.put('/api/v1/org-profile', (req, res) => {
+  const { industry } = req.body;
+  if (!brainsState[industry]) return res.status(400).json({ message: 'Unknown industry template' });
+  orgProfileState = { ...orgProfileState, industry };
+  logAudit('org', 'profile', `switched the industry template to ${industry}`);
+  res.json(orgProfileState);
+});
+
+// ---------- KPI brain ----------
+app.get('/api/v1/kpi-brain', (req, res) => res.json(brainsState[v4Industry(req)]));
+
+app.post('/api/v1/kpi-brain/nodes', (req, res) => {
+  const brain = brainsState[v4Industry(req)];
+  const { name, streamKey, definition, dataSources = [], contributesTo } = req.body;
+  if (!name || !streamKey) return res.status(400).json({ message: 'name and streamKey are required' });
+  if (!brain.streams.some((s) => s.key === streamKey)) return res.status(400).json({ message: 'Unknown stream for this industry' });
+  const id = `${brain.industry}-k-custom-${Date.now()}`;
+  const node = {
+    id,
+    kind: 'stream_kpi',
+    name,
+    streamKey,
+    definition: definition || '',
+    status: dataSources.length ? 'connected' : 'needs_data',
+    dataSources,
+  };
+  brain.nodes.push(node);
+  if (contributesTo && brain.nodes.some((n) => n.id === contributesTo)) {
+    brain.edges.push({ id: `${id}-edge`, source: id, target: contributesTo, weight: 'moderate', status: 'connected' });
+  }
+  logAudit('kpi', id, `added a custom KPI to the brain: ${name}`);
+  res.json(node);
+});
+
+function findBrainNode(id) {
+  for (const brain of Object.values(brainsState)) {
+    const node = brain.nodes.find((n) => n.id === id);
+    if (node) return { node, brain };
+  }
+  return null;
+}
+
+app.post('/api/v1/kpi-brain/nodes/:id/accept', (req, res) => {
+  const hit = findBrainNode(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Node not found' });
+  if (hit.node.status !== 'proposed') return res.status(400).json({ message: 'Only proposed nodes can be accepted' });
+  hit.node.status = 'connected';
+  for (const edge of hit.brain.edges) {
+    if (edge.status === 'proposed' && (edge.source === hit.node.id || edge.target === hit.node.id)) edge.status = 'connected';
+  }
+  logAudit('kpi', hit.node.id, `accepted the proposed KPI: ${hit.node.name}`);
+  res.json(hit.brain);
+});
+
+app.post('/api/v1/kpi-brain/nodes/:id/decline', (req, res) => {
+  const hit = findBrainNode(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Node not found' });
+  if (hit.node.status !== 'proposed') return res.status(400).json({ message: 'Only proposed nodes can be declined' });
+  hit.node.status = 'declined';
+  hit.brain.edges = hit.brain.edges.filter((e) => !(e.status === 'proposed' && (e.source === hit.node.id || e.target === hit.node.id)));
+  logAudit('kpi', hit.node.id, `declined the proposed KPI: ${hit.node.name}`);
+  res.json(hit.brain);
+});
+
+app.post('/api/v1/kpi-brain/edges/:id/accept', (req, res) => {
+  for (const brain of Object.values(brainsState)) {
+    const edge = brain.edges.find((e) => e.id === req.params.id);
+    if (edge) {
+      if (edge.status !== 'proposed') return res.status(400).json({ message: 'Only proposed connections can be accepted' });
+      edge.status = 'connected';
+      logAudit('kpi', edge.id, 'accepted a proposed KPI connection');
+      return res.json(brain);
+    }
+  }
+  res.status(404).json({ message: 'Connection not found' });
+});
+
+app.post('/api/v1/kpi-brain/edges/:id/decline', (req, res) => {
+  for (const brain of Object.values(brainsState)) {
+    const idx = brain.edges.findIndex((e) => e.id === req.params.id);
+    if (idx !== -1) {
+      if (brain.edges[idx].status !== 'proposed') return res.status(400).json({ message: 'Only proposed connections can be declined' });
+      brain.edges.splice(idx, 1);
+      logAudit('kpi', req.params.id, 'declined a proposed KPI connection');
+      return res.json(brain);
+    }
+  }
+  res.status(404).json({ message: 'Connection not found' });
+});
+
+// ---------- Shadow org (counts computed live from findings) ----------
+app.get('/api/v1/shadow-org', (req, res) => {
+  const industry = v4Industry(req);
+  const findings = findingsState[industry];
+  const agents = shadowOrgsSeed[industry].agents.map((agent) => {
+    const mine = agent.streamKey === null
+      ? findings.filter((f) => f.escalatedToAgentId === agent.id)
+      : findings.filter((f) => f.streamKey === agent.streamKey);
+    const open = mine.filter((f) => f.status === 'open');
+    const breaches = open.filter((f) => f.slaHoursRemaining <= 8);
+    const health = breaches.length ? 'critical' : open.length ? 'attention' : 'healthy';
+    return { ...agent, openFindings: open.length, slaBreaches: breaches.length, health };
+  });
+  res.json({ industry, agents });
+});
+
+// ---------- Findings & the 4-A disposition engine ----------
+app.get('/api/v1/findings', (req, res) => {
+  const industry = v4Industry(req);
+  let result = findingsState[industry].map(stripServerFields);
+  const { persona, stream, status } = req.query;
+  if (persona && persona !== 'all') result = result.filter((f) => f.persona === persona);
+  if (stream && stream !== 'all') result = result.filter((f) => f.streamKey === stream);
+  if (status && status !== 'all') result = result.filter((f) => f.status === status);
+  const sevRank = { critical: 0, high: 1, medium: 2, low: 3 };
+  const openFirst = (f) => (f.status === 'open' ? 0 : 1);
+  result.sort((a, b) => openFirst(a) - openFirst(b) || sevRank[a.severity] - sevRank[b.severity] || a.slaHoursRemaining - b.slaHoursRemaining);
+  res.json(result);
+});
+
+app.get('/api/v1/findings/:id', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  res.json(stripServerFields(hit.finding));
+});
+
+app.post('/api/v1/findings/:id/disposition', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  const { finding, industry } = hit;
+  if (finding.status !== 'open') return res.status(400).json({ message: 'This finding already has a disposition' });
+  const { disposition, reason, reAlertCondition } = req.body;
+  const now = new Date().toISOString();
+
+  if (disposition === 'accept') {
+    // Accept: the finding is real — generate its measurable exit condition and keep watching.
+    const template = finding.closureTemplate ?? { name: `Close: ${finding.title}`, baseline: '—', target: '—' };
+    const closure = {
+      id: `${industry}-c-${Date.now()}`,
+      findingId: finding.id,
+      findingTitle: finding.title,
+      name: template.name,
+      baseline: template.baseline,
+      target: template.target,
+      current: template.baseline,
+      progressPct: 0,
+      status: 'tracking',
+      watchedByAgentName: finding.raisedByAgentName,
+      createdAt: now,
+      closedAt: null,
+    };
+    closureKpisState[industry].push(closure);
+    finding.status = 'accepted';
+    finding.closureKpiId = closure.id;
+    logAudit('finding', finding.id, `accepted — closure KPI created: ${closure.name}`);
+  } else if (disposition === 'act') {
+    // Act: spin up the existing solution-design loop, seeded from the finding.
+    const solutionId = `sol-${Date.now()}`;
+    const categoryByStream = { finance: 'cost_drainer', commercial: 'revenue_leakage', marketing: 'revenue_leakage' };
+    const solution = {
+      id: solutionId,
+      signalId: finding.id,
+      signalName: finding.title,
+      signalCategory: categoryByStream[finding.streamKey] ?? (finding.severity === 'critical' ? 'derailer' : 'laggard'),
+      status: 'drafting',
+      approach: `Work the finding raised by ${finding.raisedByAgentName}: ${finding.summary}`,
+      dataNeeded: finding.evidence.map((e) => e.label).join('; ') || 'existing connected data',
+      owner: { name: currentUser.name, initials: currentUser.initials, avatarBg: currentUser.avatarBg },
+      guardrails: 'Pause and ask before any change with a projected impact over $2,000.',
+      copiedFromLabel: null,
+      taskList: makeDefaultTaskList(solutionId, finding.title),
+      validation: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    solutionDesigns.set(solutionId, solution);
+    finding.status = 'acting';
+    finding.solutionDesignId = solutionId;
+    logAudit('finding', finding.id, 'disposition: act — solution design opened');
+  } else if (disposition === 'acknowledge') {
+    // Acknowledge: watch state — carries a re-alert condition so it comes back if it worsens.
+    const node = brainsState[industry].nodes.find((n) => n.id === finding.linkedKpiNodeId);
+    finding.status = 'acknowledged';
+    finding.reAlertCondition = reAlertCondition
+      || `Re-alert if ${node?.name ?? 'the linked KPI'} worsens a further 5% or after 14 days`;
+    logAudit('finding', finding.id, `acknowledged — ${finding.reAlertCondition}`);
+  } else if (disposition === 'abandon') {
+    // Abandon: requires a reason — the reason is what tunes the agent.
+    if (!reason || !reason.trim()) return res.status(400).json({ message: 'Abandoning a finding requires a reason — it tunes the agent' });
+    finding.status = 'abandoned';
+    finding.dispositionReason = reason.trim();
+    logAudit('finding', finding.id, `abandoned with reason: ${reason.trim()}`);
+  } else {
+    return res.status(400).json({ message: 'disposition must be accept, act, acknowledge or abandon' });
+  }
+
+  finding.disposition = disposition;
+  finding.dispositionBy = currentUser.name;
+  finding.dispositionAt = now;
+  finding.slaHoursRemaining = 0;
+  res.json(stripServerFields(finding));
+});
+
+app.post('/api/v1/findings/:id/escalate', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  const { finding, industry } = hit;
+  if (finding.status !== 'open') return res.status(400).json({ message: 'Only open findings can be escalated' });
+  finding.escalationLevel += 1;
+  finding.escalatedToAgentId = `${industry}-sa-chief`;
+  finding.slaHoursRemaining = 12;
+  logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} up the shadow org`);
+  res.json(stripServerFields(finding));
+});
+
+// Re-alert an acknowledged finding — the trip-wire fired, so it comes back for a fresh disposition.
+app.post('/api/v1/findings/:id/re-alert', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  const { finding } = hit;
+  if (finding.status !== 'acknowledged') return res.status(400).json({ message: 'Only acknowledged findings can re-alert' });
+  finding.status = 'open';
+  finding.disposition = null;
+  finding.dispositionBy = null;
+  finding.dispositionAt = null;
+  finding.slaHoursRemaining = 12;
+  finding.escalationLevel += 1;
+  logAudit('finding', finding.id, 're-alerted — trip-wire fired, back to open for disposition');
+  res.json(stripServerFields(finding));
+});
+
+// ---------- Exit conditions (closure) ----------
+app.get('/api/v1/closure-kpis', (req, res) => res.json(closureKpisState[v4Industry(req)]));
+
+// Close the loop: mark an exit condition met, which closes its originating finding too.
+app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
+  const industry = v4Industry(req);
+  const closure = closureKpisState[industry].find((c) => c.id === req.params.id);
+  if (!closure) return res.status(404).json({ message: 'Exit condition not found' });
+  const now = new Date().toISOString();
+  closure.status = 'closed';
+  closure.current = closure.target;
+  closure.progressPct = 100;
+  closure.closedAt = now;
+  const finding = findingsState[industry].find((f) => f.id === closure.findingId);
+  if (finding) {
+    finding.status = 'closed';
+    logAudit('finding', finding.id, 'loop closed — exit condition met');
+  }
+  logAudit('kpi', closure.id, `exit condition met and closed: ${closure.name}`);
+  res.json(closure);
+});
+
 // ---------- Full-state snapshot, for persistence on serverless (see mock-server/kv.js) ----------
 // Reaches into every mutable collection above rather than threading a store
 // through each route — keeps this additive instead of rewriting ~40 handlers.
@@ -1039,6 +1332,10 @@ export function exportState() {
     agentSpecs: Object.fromEntries(agentSpecs),
     quickSolutions: Object.fromEntries(quickSolutions),
     signalDetails,
+    orgProfileState,
+    brainsState,
+    findingsState,
+    closureKpisState,
   };
 }
 
@@ -1061,6 +1358,10 @@ export function importState(snapshot) {
   if (snapshot.agentSpecs) { agentSpecs.clear(); for (const [k, v] of Object.entries(snapshot.agentSpecs)) agentSpecs.set(k, v); }
   if (snapshot.quickSolutions) { quickSolutions.clear(); for (const [k, v] of Object.entries(snapshot.quickSolutions)) quickSolutions.set(k, v); }
   if (snapshot.signalDetails) Object.assign(signalDetails, snapshot.signalDetails);
+  if (snapshot.orgProfileState) orgProfileState = snapshot.orgProfileState;
+  if (snapshot.brainsState) brainsState = snapshot.brainsState;
+  if (snapshot.findingsState) findingsState = snapshot.findingsState;
+  if (snapshot.closureKpisState) closureKpisState = snapshot.closureKpisState;
 }
 
 export default app;

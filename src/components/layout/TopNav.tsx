@@ -8,7 +8,7 @@ export function TopNav() {
 
   return (
     <div className="topnav">
-      <Link to="/" className="topnav-logo">
+      <Link to="/command" className="topnav-logo">
         <div className="logo-mark">R</div>
         <div>
           <div className="logo-name">Rewive</div>

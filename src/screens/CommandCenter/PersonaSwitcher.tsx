@@ -21,7 +21,7 @@ export function PersonaSwitcher({
   return (
     <div style={{ marginBottom: 16 }}>
       <div className="filters" style={{ marginBottom: 4 }}>
-        <button className={`fchip${persona === 'all' ? ' on' : ''}`} onClick={() => onChange('all')}>All signals</button>
+        <button className={`fchip${persona === 'all' ? ' on' : ''}`} onClick={() => onChange('all')}>All lenses</button>
         {PERSONAS.map((p) => (
           <button key={p} className={`fchip${persona === p ? ' on' : ''}`} onClick={() => onChange(p)}>
             {PERSONA_LABEL[p]}

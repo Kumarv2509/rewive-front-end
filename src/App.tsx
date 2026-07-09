@@ -12,12 +12,17 @@ import { ConnectorsScreen } from './screens/Connectors';
 import { AgentSpaceScreen } from './screens/AgentSpace';
 import { AgentDetailScreen } from './screens/AgentSpace/Detail';
 import { AgentStudioScreen } from './screens/AgentStudio';
-import { SignalStudioScreen } from './screens/SignalStudio';
 import { SignalDetailScreen } from './screens/SignalDetail';
+import { FindingsScreen } from './screens/Findings';
+import { FindingDetailScreen } from './screens/Findings/Detail';
 import { SolutionDesignScreen } from './screens/SolutionDesign';
 import { UnifiedAgentStudioScreen } from './screens/UnifiedAgentStudio';
 import { TasksScreen } from './screens/Tasks';
 import { KpiLibraryScreen } from './screens/KpiLibrary';
+import { KpiBrainScreen } from './screens/KpiBrain';
+import { LandingScreen } from './screens/Landing';
+import { ShadowOrgScreen } from './screens/ShadowOrg';
+import { ClosureScreen } from './screens/Closure';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,15 +36,21 @@ function App() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
-            <Route element={<AppLayout />}>
-              <Route index element={<CommandCenterScreen />} />
-              <Route path="operate" element={<Navigate to="/" replace />} />
+            {/* Public landing — the Agentic Operating Model, no app chrome */}
+            <Route path="/" element={<LandingScreen />} />
 
+            <Route element={<AppLayout />}>
+              <Route path="command" element={<CommandCenterScreen />} />
+              <Route path="operate" element={<Navigate to="/command" replace />} />
+
+              <Route path="operate/shadow" element={<ShadowOrgScreen />} />
               <Route path="operate/runs" element={<RunsScreen />} />
               <Route path="operate/decisions" element={<DecisionsScreen />} />
               <Route path="operate/tasks" element={<TasksScreen />} />
 
-              <Route path="build" element={<Navigate to="/build/kpis" replace />} />
+              <Route path="build" element={<Navigate to="/build/picture" replace />} />
+              <Route path="build/picture" element={<KpiBrainScreen />} />
+              <Route path="build/brain" element={<Navigate to="/build/picture" replace />} />
               <Route path="build/kpis" element={<KpiLibraryScreen />} />
               <Route path="build/create" element={<CreateAgentScreen />} />
               <Route path="build/connectors" element={<ConnectorsScreen />} />
@@ -54,7 +65,11 @@ function App() {
               <Route path="insights/people" element={<PeopleScreen />} />
               <Route path="insights/outcomes" element={<Navigate to="/insights/outcomes/latest" replace />} />
               <Route path="insights/outcomes/:runId" element={<OutcomesScreen />} />
-              <Route path="insights/signals" element={<SignalStudioScreen />} />
+              <Route path="insights/findings" element={<FindingsScreen />} />
+              <Route path="insights/findings/:findingId" element={<FindingDetailScreen />} />
+              <Route path="insights/closure" element={<ClosureScreen />} />
+              {/* v3 signals evolved into findings — the studio list redirects, detail stays for old signal links */}
+              <Route path="insights/signals" element={<Navigate to="/insights/findings" replace />} />
               <Route path="insights/signals/:signalId" element={<SignalDetailScreen />} />
 
               {/* v1 URL redirects, kept working for old bookmarks/links */}

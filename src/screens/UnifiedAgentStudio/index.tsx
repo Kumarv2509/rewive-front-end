@@ -158,7 +158,7 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
           </button>
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: spec.testRunResult ? 8 : 0 }}>
-            <button className="btn" style={{ background: 'var(--ink)', color: '#fff', borderColor: 'var(--ink)' }} disabled={testRun.isPending} onClick={() => testRun.mutate(undefined)}>
+            <button className="btn" disabled={testRun.isPending} onClick={() => testRun.mutate(undefined)}>
               Test run against fixtures
             </button>
             {spec.status === 'escalated' && (

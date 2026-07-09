@@ -759,3 +759,163 @@ export interface PlanningImportResult {
   budgetLinesImported: { name: string; amount: string }[];
   importedAt: string;
 }
+
+// ============ v4 — shadow organization ============
+
+// ---------- Org profile & industry templates ----------
+export type IndustryKey = 'fmcg' | 'healthcare' | 'manufacturing';
+
+export interface OrgProfile {
+  orgName: string;
+  industry: IndustryKey;
+}
+
+export interface IndustryOption {
+  id: IndustryKey;
+  name: string;
+  description: string;
+  streamCount: number;
+  kpiCount: number;
+}
+
+// ---------- KPI brain (graph: targets ← stream KPIs ← drivers) ----------
+export type BrainNodeKind = 'target' | 'stream_kpi' | 'driver';
+export type BrainNodeStatus = 'connected' | 'proposed' | 'needs_data' | 'declined';
+export type BrainHealth = 'on_track' | 'at_risk' | 'off_track';
+export type BrainEdgeWeight = 'strong' | 'moderate' | 'weak';
+
+export interface BrainNode {
+  id: string;
+  kind: BrainNodeKind;
+  name: string;
+  streamKey: string | null; // null for org-level targets
+  definition: string;
+  currentValue?: string;
+  targetValue?: string;
+  trend?: 'up' | 'down' | 'flat';
+  health?: BrainHealth;
+  status: BrainNodeStatus;
+  proposedBy?: string; // shadow agent name, when status === 'proposed'
+  dataSources: string[];
+}
+
+export interface BrainEdge {
+  id: string;
+  source: string; // contributes from (driver / stream KPI)
+  target: string; // contributes to (stream KPI / target)
+  weight: BrainEdgeWeight;
+  status: 'connected' | 'proposed';
+  rationale?: string;
+  proposedBy?: string;
+}
+
+export interface StreamDef {
+  key: string;
+  name: string;
+  answersTo: string;
+}
+
+export interface KpiBrain {
+  industry: IndustryKey;
+  streams: StreamDef[];
+  nodes: BrainNode[];
+  edges: BrainEdge[];
+}
+
+export interface CustomBrainNodeInput {
+  name: string;
+  streamKey: string;
+  definition: string;
+  dataSources: string[];
+  contributesTo: string; // node id the new KPI feeds
+}
+
+// ---------- Shadow org (agent counterparts per function stream) ----------
+export type ShadowAgentHealth = 'healthy' | 'attention' | 'critical';
+
+export interface ShadowAgent {
+  id: string;
+  name: string;
+  streamKey: string | null; // null = org-level chief of staff
+  humanOwner: { name: string; initials: string; avatarBg: string; role: string };
+  watchesNodeIds: string[];
+  openFindings: number;
+  slaBreaches: number;
+  temperament: number; // 0 quiet … 100 hair-trigger
+  health: ShadowAgentHealth;
+  lastFindingAt: string | null;
+  reportsToAgentId: string | null;
+}
+
+export interface ShadowOrg {
+  industry: IndustryKey;
+  agents: ShadowAgent[];
+}
+
+// ---------- Findings (evolved signals — every finding demands a disposition) ----------
+export type FindingDisposition = 'accept' | 'act' | 'acknowledge' | 'abandon';
+export type FindingStatus = 'open' | 'accepted' | 'acting' | 'acknowledged' | 'abandoned' | 'closed';
+export type FindingSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface ImpactPathStep {
+  nodeId: string;
+  nodeName: string;
+  kind: BrainNodeKind;
+  effect: string;
+}
+
+export interface FindingEvidenceItem {
+  label: string;
+  value: string;
+}
+
+export interface Finding {
+  id: string;
+  title: string;
+  summary: string;
+  raisedByAgentId: string;
+  raisedByAgentName: string;
+  streamKey: string;
+  linkedKpiNodeId: string;
+  severity: FindingSeverity;
+  impactPath: ImpactPathStep[]; // leaf → target
+  impactEstimate: string;
+  evidence: FindingEvidenceItem[];
+  status: FindingStatus;
+  disposition: FindingDisposition | null;
+  dispositionBy: string | null;
+  dispositionAt: string | null;
+  dispositionReason: string | null; // required for abandon
+  slaHoursRemaining: number;
+  escalationLevel: number; // 0 = stream owner, 1+ = up the shadow org
+  escalatedToAgentId: string | null;
+  closureKpiId: string | null; // set on accept
+  solutionDesignId: string | null; // set on act
+  reAlertCondition: string | null; // set on acknowledge
+  detectedAt: string;
+  persona: Persona;
+}
+
+export interface DispositionInput {
+  disposition: FindingDisposition;
+  reason?: string; // required for abandon
+  reAlertCondition?: string; // optional override for acknowledge
+}
+
+// ---------- Closure KPIs (measurable exit condition per accepted finding) ----------
+export type ClosureStatus = 'tracking' | 'closed' | 'regressed';
+
+export interface ClosureKpi {
+  id: string;
+  findingId: string;
+  findingTitle: string;
+  name: string;
+  baseline: string;
+  target: string;
+  current: string;
+  progressPct: number;
+  status: ClosureStatus;
+  watchedByAgentName: string;
+  createdAt: string;
+  closedAt: string | null;
+}
