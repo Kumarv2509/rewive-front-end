@@ -830,6 +830,15 @@ export interface CustomBrainNodeInput {
   contributesTo: string; // node id the new KPI feeds
 }
 
+export interface UpdateBrainNodeInput {
+  id: string;
+  name?: string;
+  definition?: string;
+  targetValue?: string;
+  streamKey?: string;
+  dataSources?: string[];
+}
+
 // ---------- Shadow org (agent counterparts per function stream) ----------
 export type ShadowAgentHealth = 'healthy' | 'attention' | 'critical';
 
@@ -892,6 +901,7 @@ export interface Finding {
   closureKpiId: string | null; // set on accept
   solutionDesignId: string | null; // set on act
   reAlertCondition: string | null; // set on acknowledge
+  assessorVerdict?: { verdict: Verdict; note: string; at: string } | null; // set when the loop closes
   detectedAt: string;
   persona: Persona;
 }

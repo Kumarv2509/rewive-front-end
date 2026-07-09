@@ -12,8 +12,9 @@ import '@xyflow/react/dist/style.css';
 import { useResolveBrainProposal } from '../../api/shadowOrg';
 import { useToast } from '../../components/shared/Toast';
 import { BrainNodeCard } from './BrainNodeCard';
+import { NodeEditor } from './NodeEditor';
 import { computePositions, toFlowEdges, tracePath, type BrainNodeData } from './layout';
-import type { KpiBrain } from '../../api/types';
+import type { BrainNode, KpiBrain } from '../../api/types';
 
 const nodeTypes = { brain: BrainNodeCard };
 
@@ -21,6 +22,9 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
   const { showToast } = useToast();
   const resolve = useResolveBrainProposal();
   const [selectedId, setSelectedId] = useState<string | null>(focusNodeId ?? null);
+  const [editing, setEditing] = useState<BrainNode | null>(null);
+
+  const handleEdit = useCallback((node: BrainNode) => setEditing(node), []);
 
   const streamName = useCallback(
     (key: string | null) => brain.streams.find((s) => s.key === key)?.name ?? '',
@@ -55,6 +59,7 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
             dimmed: false,
             focused: false,
             onResolve: handleResolve,
+            onEdit: handleEdit,
           } as BrainNodeData,
         })),
     );
@@ -104,6 +109,8 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
           ))}
         </div>
       )}
+
+      {editing && <NodeEditor node={editing} streams={brain.streams} onClose={() => setEditing(null)} />}
 
       <ReactFlow
         nodes={nodes}

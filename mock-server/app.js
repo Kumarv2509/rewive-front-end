@@ -1121,6 +1121,27 @@ app.post('/api/v1/kpi-brain/nodes/:id/decline', (req, res) => {
   res.json(hit.brain);
 });
 
+// Edit a node in the picture (mandate / intent / sense).
+app.patch('/api/v1/kpi-brain/nodes/:id', (req, res) => {
+  const hit = findBrainNode(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Node not found' });
+  const { node, brain } = hit;
+  const { name, definition, targetValue, streamKey, dataSources } = req.body;
+  if (typeof name === 'string' && name.trim()) node.name = name.trim();
+  if (typeof definition === 'string') node.definition = definition;
+  if (typeof targetValue === 'string') node.targetValue = targetValue;
+  if (typeof streamKey === 'string' && brain.streams.some((s) => s.key === streamKey)) node.streamKey = streamKey;
+  if (Array.isArray(dataSources)) {
+    node.dataSources = dataSources;
+    // keep data-status honest for non-petitioned nodes
+    if (node.status === 'connected' || node.status === 'needs_data') {
+      node.status = dataSources.length ? 'connected' : 'needs_data';
+    }
+  }
+  logAudit('kpi', node.id, `edited ${node.kind === 'stream_kpi' ? 'mandate' : node.kind}: ${node.name}`);
+  res.json(brain);
+});
+
 app.post('/api/v1/kpi-brain/edges/:id/accept', (req, res) => {
   for (const brain of Object.values(brainsState)) {
     const edge = brain.edges.find((e) => e.id === req.params.id);
@@ -1304,7 +1325,13 @@ app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
   const finding = findingsState[industry].find((f) => f.id === closure.findingId);
   if (finding) {
     finding.status = 'closed';
-    logAudit('finding', finding.id, 'loop closed — exit condition met');
+    // The assessor agent (independent of the validation that reviewed the plan) confirms the outcome.
+    finding.assessorVerdict = {
+      verdict: 'worked',
+      note: `Assessor agent confirmed the exit condition held: ${closure.name}. Closing the loop back to "${finding.title}".`,
+      at: now,
+    };
+    logAudit('finding', finding.id, 'loop closed — assessor confirmed the exit condition held');
   }
   logAudit('kpi', closure.id, `exit condition met and closed: ${closure.name}`);
   res.json(closure);

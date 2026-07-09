@@ -8,7 +8,7 @@ const healthColor: Record<BrainHealth, string> = { on_track: '#4ADE80', at_risk:
 const healthLabel: Record<BrainHealth, string> = { on_track: 'on track', at_risk: 'at risk', off_track: 'off track' };
 
 export function BrainNodeCard({ data }: NodeProps & { data: BrainNodeData }) {
-  const { node, streamName, dimmed, focused, onResolve } = data;
+  const { node, streamName, dimmed, focused, onResolve, onEdit } = data;
   const proposed = node.status === 'proposed';
   const needsData = node.status === 'needs_data';
   const accent = kindAccent[node.kind];
@@ -57,6 +57,17 @@ export function BrainNodeCard({ data }: NodeProps & { data: BrainNodeData }) {
             <button className="btn ghost sm" onClick={() => onResolve('node', node.id, 'decline')}>Decline</button>
           </div>
         </>
+      )}
+
+      {focused && !proposed && (
+        <div className="bn-actions">
+          <button
+            className="btn ghost sm"
+            onClick={(e) => { e.stopPropagation(); onEdit(node); }}
+          >
+            Edit {kindLabel[node.kind].toLowerCase()}
+          </button>
+        </div>
       )}
     </div>
   );

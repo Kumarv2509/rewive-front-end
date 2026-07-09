@@ -11,6 +11,7 @@ import type {
   OrgProfile,
   Persona,
   ShadowOrg,
+  UpdateBrainNodeInput,
 } from './types';
 
 // ---------- Org profile & industry templates ----------
@@ -58,6 +59,15 @@ export function useAddBrainNode() {
     mutationFn: async (input: CustomBrainNodeInput) =>
       (await apiClient.post('/kpi-brain/nodes', input)).data,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['kpi-brain'] }),
+  });
+}
+
+export function useUpdateBrainNode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...patch }: UpdateBrainNodeInput) =>
+      (await apiClient.patch<KpiBrain>(`/kpi-brain/nodes/${id}`, patch)).data,
+    onSuccess: (brain) => queryClient.setQueryData(['kpi-brain'], brain),
   });
 }
 

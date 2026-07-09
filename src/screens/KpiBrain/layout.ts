@@ -15,6 +15,7 @@ export interface BrainNodeData extends Record<string, unknown> {
   dimmed: boolean;
   focused: boolean;
   onResolve: (kind: 'node', id: string, action: 'accept' | 'decline') => void;
+  onEdit: (node: BrainNode) => void;
 }
 
 export function computePositions(brain: KpiBrain): Record<string, { x: number; y: number }> {

@@ -27,6 +27,7 @@ export function TopNav() {
         ))}
       </div>
       <div className="topnav-spacer" />
+      <Link to="/" className="topnav-help">How it works</Link>
     </div>
   );
 }

@@ -68,6 +68,15 @@ export function FindingDetailScreen() {
               <Link className="btn primary sm" to={`/build/solutions/${finding.solutionDesignId}`}>Open the solution design →</Link>
             </div>
           )}
+          {finding.assessorVerdict && (
+            <div style={{ marginTop: 10, border: '1px solid var(--border-green, rgba(74,222,128,.3))', borderRadius: 10, padding: '10px 14px', background: 'var(--green-soft)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <Pill tone="green">assessor · {finding.assessorVerdict.verdict.replace('_', ' ')}</Pill>
+                <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{new Date(finding.assessorVerdict.at).toLocaleString()}</span>
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>{finding.assessorVerdict.note}</div>
+            </div>
+          )}
           {closure && (
             <div style={{ marginTop: 10, border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
