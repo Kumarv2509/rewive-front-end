@@ -41,6 +41,7 @@ import {
   findingsSeed,
   closureKpisSeed,
 } from './v4data.js';
+import { opContent } from './v4content.js';
 
 const app = express();
 app.use(cors());
@@ -55,6 +56,21 @@ const agentSessions = new Map();
 const createdAgents = new Map();
 const outcomeReportsState = JSON.parse(JSON.stringify(outcomeReports));
 
+// Per-industry operational content (Command Center, Runs, Decisions, People, Outcomes).
+// Read-through packs by current org profile; interactive bits get their own mutable state.
+const opStateByIndustry = {};
+for (const _ind of Object.keys(opContent)) {
+  opStateByIndustry[_ind] = {
+    pending: JSON.parse(JSON.stringify(opContent[_ind].pendingDecisions)),
+    exceptions: JSON.parse(JSON.stringify(opContent[_ind].runExceptions)),
+    chases: JSON.parse(JSON.stringify(opContent[_ind].runChases)),
+    outcomes: JSON.parse(JSON.stringify(opContent[_ind].outcomeReports)),
+  };
+}
+// v4Industry (defined in the v4 section, hoisted) resolves the current industry at request time.
+const op = (req) => opContent[v4Industry(req)];
+const opS = (req) => opStateByIndustry[v4Industry(req)];
+
 // ---------- Current user ----------
 app.get('/api/v1/me', (req, res) => res.json(currentUser));
 
@@ -65,41 +81,44 @@ function filterByPersona(items, persona) {
 
 app.get('/api/v1/dashboard/summary', (req, res) => {
   const { persona } = req.query;
-  const decisionsForPersona = filterByPersona(pendingDecisionsState, persona);
-  const overrides = persona && persona !== 'all' ? personaKpiOverrides[persona] : undefined;
+  const pack = op(req);
+  const decisionsForPersona = filterByPersona(opS(req).pending, persona);
+  const overrides = persona && persona !== 'all' && pack.personaKpiOverrides ? pack.personaKpiOverrides[persona] : undefined;
   res.json({
-    ...dashboardSummary,
+    ...pack.dashboardSummary,
     kpis: {
-      ...dashboardSummary.kpis,
+      ...pack.dashboardSummary.kpis,
       ...overrides,
       decisionsPending: {
         value: decisionsForPersona.length,
         delta: persona && persona !== 'all'
           ? { label: 'in your queue', direction: 'flat' }
-          : dashboardSummary.kpis.decisionsPending.delta,
+          : pack.dashboardSummary.kpis.decisionsPending.delta,
       },
     },
   });
 });
 
-app.get('/api/v1/decisions/pending', (req, res) => res.json(filterByPersona(pendingDecisionsState, req.query.persona)));
+app.get('/api/v1/decisions/pending', (req, res) => res.json(filterByPersona(opS(req).pending, req.query.persona)));
 
 app.post('/api/v1/decisions/:id/approve', (req, res) => {
   const { id } = req.params;
-  const decision = pendingDecisionsState.find((d) => d.id === id);
-  pendingDecisionsState = pendingDecisionsState.filter((d) => d.id !== id);
+  const st = opS(req);
+  const decision = st.pending.find((d) => d.id === id);
+  st.pending = st.pending.filter((d) => d.id !== id);
   res.json(decision ?? { id });
 });
 
-app.get('/api/v1/pulse', (req, res) => res.json(pulse));
+app.get('/api/v1/pulse', (req, res) => res.json(op(req).pulse));
 
-app.get('/api/v1/runs/live', (req, res) => res.json(liveRuns));
+app.get('/api/v1/runs/live', (req, res) => res.json(op(req).liveRuns));
 
-app.get('/api/v1/people/top-performer', (req, res) => res.json(topPerformer));
+app.get('/api/v1/people/top-performer', (req, res) => res.json(op(req).topPerformer));
 
 // ---------- Runs & Actions ----------
 app.get('/api/v1/runs', (req, res) => {
   const { status } = req.query;
+  const runs = op(req).runs;
   const filtered = !status || status === 'all' ? runs : runs.filter((r) => r.status === status);
   res.json(filtered);
 });
@@ -107,26 +126,25 @@ app.get('/api/v1/runs', (req, res) => {
 // ---------- Runs: exception log and chase & escalate ----------
 // Registered before the generic '/runs/:id' route below, so literal paths like
 // '/runs/exceptions' and '/runs/chases' aren't swallowed as a run id lookup.
-let runExceptionsState = [...runExceptions];
-let runChasesState = [...runChases];
-
 app.get('/api/v1/runs/exceptions', (req, res) => {
   const { status } = req.query;
-  res.json(status && status !== 'all' ? runExceptionsState.filter((e) => e.status === status) : runExceptionsState);
+  const exceptions = opS(req).exceptions;
+  res.json(status && status !== 'all' ? exceptions.filter((e) => e.status === status) : exceptions);
 });
 
 app.post('/api/v1/runs/exceptions/:id/resolve', (req, res) => {
-  const exception = runExceptionsState.find((e) => e.id === req.params.id);
+  const exception = opS(req).exceptions.find((e) => e.id === req.params.id);
   if (!exception) return res.status(404).json({ message: 'Exception not found' });
   exception.status = 'resolved';
   logAudit('decision', exception.runId, `resolved exception: ${exception.message}`);
   res.json(exception);
 });
 
-app.get('/api/v1/runs/chases', (req, res) => res.json(runChasesState));
+app.get('/api/v1/runs/chases', (req, res) => res.json(opS(req).chases));
 
 app.post('/api/v1/runs/:runId/flag-feedback', (req, res) => {
-  const run = runs.find((r) => r.id === req.params.runId);
+  const st = opS(req);
+  const run = op(req).runs.find((r) => r.id === req.params.runId);
   if (!run) return res.status(404).json({ message: 'Run not found' });
   const chase = {
     id: `chase-${Date.now()}`,
@@ -137,13 +155,13 @@ app.post('/api/v1/runs/:runId/flag-feedback', (req, res) => {
     escalatedTo: 'the agent owner, for tuning',
     createdAt: new Date().toISOString(),
   };
-  runChasesState = [...runChasesState, chase];
+  st.chases = [...st.chases, chase];
   logAudit('decision', run.id, `feedback flagged and escalated: ${req.body.text}`);
   res.json(chase);
 });
 
 app.get('/api/v1/runs/:id', (req, res) => {
-  const detail = runDetails[req.params.id];
+  const detail = op(req).runDetails[req.params.id];
   if (!detail) return res.status(404).json({ message: 'Run not found' });
   res.json(detail);
 });
@@ -152,34 +170,35 @@ app.post('/api/v1/runs/:id/pause', (req, res) => res.json({ id: req.params.id, s
 app.post('/api/v1/runs/:id/resume', (req, res) => res.json({ id: req.params.id, status: 'running' }));
 
 // ---------- Decision Ledger ----------
-app.get('/api/v1/decisions/stats', (req, res) => res.json(decisionStats));
+app.get('/api/v1/decisions/stats', (req, res) => res.json(op(req).decisionStats));
 
 app.get('/api/v1/decisions', (req, res) => {
   const { function: fn, verdict } = req.query;
-  let result = decisionLedger;
+  let result = op(req).decisionLedger;
   if (fn && fn !== 'all') result = result.filter((d) => d.function === fn);
   if (verdict && verdict !== 'all') result = result.filter((d) => d.verdict === verdict);
   res.json(result);
 });
 
 // ---------- People & Agents ----------
-app.get('/api/v1/leaderboard/highlights', (req, res) => res.json(leaderboardHighlights));
+app.get('/api/v1/leaderboard/highlights', (req, res) => res.json(op(req).leaderboardHighlights));
 
 app.get('/api/v1/leaderboard', (req, res) => {
   const { type } = req.query;
+  const leaderboard = op(req).leaderboard;
   const result = !type || type === 'all' ? leaderboard : leaderboard.filter((l) => l.type === type);
   res.json(result);
 });
 
 // ---------- Outcomes ----------
 app.get('/api/v1/outcomes/:runId', (req, res) => {
-  const report = outcomeReportsState[req.params.runId];
+  const report = opS(req).outcomes[req.params.runId];
   if (!report) return res.status(404).json({ message: 'Outcome report not found' });
   res.json(report);
 });
 
 app.post('/api/v1/outcomes/:runId/actions/:actionId/assign', (req, res) => {
-  const report = outcomeReportsState[req.params.runId];
+  const report = opS(req).outcomes[req.params.runId];
   if (!report) return res.status(404).json({ message: 'Outcome report not found' });
   const action = report.actions.find((a) => a.id === req.params.actionId);
   if (action) action.assigned = true;
@@ -1342,12 +1361,9 @@ app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
 // through each route — keeps this additive instead of rewriting ~40 handlers.
 export function exportState() {
   return {
-    pendingDecisionsState,
     agentSessions: Object.fromEntries(agentSessions),
     createdAgents: Object.fromEntries(createdAgents),
-    outcomeReportsState,
-    runExceptionsState,
-    runChasesState,
+    opStateByIndustry,
     connectorTypesState,
     connectionsState,
     auditLogState,
@@ -1368,12 +1384,9 @@ export function exportState() {
 
 export function importState(snapshot) {
   if (!snapshot) return;
-  if (snapshot.pendingDecisionsState) pendingDecisionsState = snapshot.pendingDecisionsState;
   if (snapshot.agentSessions) { agentSessions.clear(); for (const [k, v] of Object.entries(snapshot.agentSessions)) agentSessions.set(k, v); }
   if (snapshot.createdAgents) { createdAgents.clear(); for (const [k, v] of Object.entries(snapshot.createdAgents)) createdAgents.set(k, v); }
-  if (snapshot.outcomeReportsState) Object.assign(outcomeReportsState, snapshot.outcomeReportsState);
-  if (snapshot.runExceptionsState) runExceptionsState = snapshot.runExceptionsState;
-  if (snapshot.runChasesState) runChasesState = snapshot.runChasesState;
+  if (snapshot.opStateByIndustry) Object.assign(opStateByIndustry, snapshot.opStateByIndustry);
   if (snapshot.connectorTypesState) connectorTypesState = snapshot.connectorTypesState;
   if (snapshot.connectionsState) connectionsState = snapshot.connectionsState;
   if (snapshot.auditLogState) auditLogState = snapshot.auditLogState;

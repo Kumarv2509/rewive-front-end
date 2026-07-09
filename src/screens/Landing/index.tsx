@@ -11,8 +11,9 @@ const INDUSTRIES: { id: IndustryKey; name: string; blurb: string; mandates: numb
 function useEnter() {
   const navigate = useNavigate();
   const setIndustry = useSetIndustry();
+  // Start in the Build area on the Operating Picture — the mandates for that industry.
   const enter = (id: IndustryKey) =>
-    setIndustry.mutate(id, { onSettled: () => navigate('/command') });
+    setIndustry.mutate(id, { onSettled: () => navigate('/build/picture') });
   return { enter, pending: setIndustry.isPending };
 }
 
