@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<title>Rewive · Demo launcher</title>
+<style>
+  :root{
+    --ground:#07070F; --ink:#F1F1F7; --ink-2:#A6A9C8; --ink-3:#63678B;
+    --grad:linear-gradient(120deg,#6366F1 0%,#8B5CF6 52%,#A855F7 100%);
+    --teal:#2DD4BF; --glass:rgba(255,255,255,.045); --glass-2:rgba(255,255,255,.08);
+    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Monaco,monospace;
+    --app:http://localhost:5173;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--sans);color:var(--ink);background:var(--ground);min-height:100vh;
+    display:flex;align-items:center;justify-content:center;padding:40px 24px;
+    background-image:
+      radial-gradient(1000px 700px at 80% -10%,rgba(139,92,246,.20),transparent 58%),
+      radial-gradient(900px 640px at -10% 110%,rgba(99,102,241,.16),transparent 60%);
+    background-attachment:fixed;
+  }
+  .panel{width:100%;max-width:860px}
+  .top{display:flex;align-items:center;gap:13px;margin-bottom:8px}
+  .top img{width:38px;height:38px}
+  .top .nm{font-size:22px;font-weight:700;letter-spacing:-.4px}
+  .top .tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+  .sub{color:var(--ink-2);font-size:14px;margin:2px 0 28px 51px}
+  .eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:26px 0 12px}
+  .primary{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .big{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--ink);border:1px solid var(--line-2);border-radius:16px;padding:22px;transition:transform .18s,border-color .18s,box-shadow .18s;background:var(--glass);backdrop-filter:blur(16px)}
+  .big:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.55);box-shadow:0 12px 34px rgba(0,0,0,.4),0 0 28px rgba(124,99,255,.18)}
+  .big.hero{background:var(--grad);border-color:rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 34px rgba(124,99,255,.35)}
+  .big .t{font-size:1.1rem;font-weight:700}
+  .big .d{font-size:.86rem;color:var(--ink-2)}
+  .big.hero .d{color:rgba(255,255,255,.85)}
+  .big .go{font-family:var(--mono);font-size:.72rem;margin-top:6px;color:var(--ink-3)}
+  .big.hero .go{color:rgba(255,255,255,.9)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .link{display:flex;flex-direction:column;gap:3px;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:13px;padding:15px 16px;background:var(--glass);backdrop-filter:blur(12px);transition:all .18s}
+  .link:hover{background:var(--glass-2);border-color:var(--line-2)}
+  .link .lt{font-size:.95rem;font-weight:600}
+  .link .ld{font-size:.78rem;color:var(--ink-3)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 9px var(--teal);display:inline-block;margin-right:7px;vertical-align:middle}
+  .note{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);margin-top:26px;line-height:1.7}
+  .note b{color:var(--ink-2);font-weight:500}
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="top"><img src="/favicon.svg" alt="" /><div><div class="nm">Rewive</div><div class="tag">Agentic operating model · demo</div></div></div>
+    <div class="sub"><span class="dot"></span>Live on <b style="font-family:var(--mono)">localhost:5173</b> — pick where to begin.</div>
+
+    <div class="eyebrow">Start here</div>
+    <div class="primary">
+      <a class="big" href="/story.html">
+        <div class="t">▶ The story</div>
+        <div class="d">The opening narrative — what the agentic operating model is and how the shadow organization works.</div>
+        <div class="go">open the storyline →</div>
+      </a>
+      <a class="big hero" href="http://localhost:5173/">
+        <div class="t">Enter Rewive</div>
+        <div class="d">Pick an operating context and step into the console — you land on the Operating Picture.</div>
+        <div class="go">launch the working demo →</div>
+      </a>
+    </div>
+
+    <div class="eyebrow">Jump straight to a screen</div>
+    <div class="grid">
+      <a class="link" href="http://localhost:5173/build/picture"><span class="lt">Operating Picture</span><span class="ld">intents · mandates · senses</span></a>
+      <a class="link" href="http://localhost:5173/insights/findings"><span class="lt">Findings</span><span class="ld">the 4-A disposition inbox</span></a>
+      <a class="link" href="http://localhost:5173/operate/shadow"><span class="lt">Shadow Org</span><span class="ld">agents shadowing owners</span></a>
+      <a class="link" href="http://localhost:5173/insights/closure"><span class="lt">Closure</span><span class="ld">exit conditions &amp; the loop</span></a>
+      <a class="link" href="http://localhost:5173/command"><span class="lt">Command Center</span><span class="ld">the daily operating view</span></a>
+      <a class="link" href="http://localhost:5173/operate/decisions"><span class="lt">Decision Ledger</span><span class="ld">the memory of judgment</span></a>
+    </div>
+
+    <p class="note">
+      <b>Demo tip:</b> the context you pick on entry (FMCG · Healthcare · Manufacturing) changes every page —
+      the Operating Picture, findings, shadow org, Command Center, ledger and outcomes all follow it.<br />
+      If a link 404s, the dev server is on a different port — start it with <b>npm run dev:all</b> and adjust the port.
+    </p>
+  </div>
+</body>
+</html>
