@@ -94,6 +94,32 @@ export function NavIcon({ icon }: { icon: AreaNavItem['icon'] }) {
           <path d="M8 12l2.5 2.5L16 9" />
         </svg>
       );
+    case 'brain':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="5" r="2.4" />
+          <circle cx="5.5" cy="18" r="2.4" />
+          <circle cx="18.5" cy="18" r="2.4" />
+          <path d="M11 7l-4 9M13 7l4 9M7.7 18h8.6" />
+        </svg>
+      );
+    case 'shadow':
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="3.4" />
+          <path d="M3 20c.7-3.2 3.1-5 6-5s5.3 1.8 6 5" />
+          <path d="M15.5 6.2a3.4 3.4 0 010 6.4M18.5 20c-.5-2.3-1.7-4-3.5-4.7" opacity="0.5" />
+        </svg>
+      );
+    case 'loop':
+      return (
+        <svg {...common}>
+          <path d="M4 12a8 8 0 0113.7-5.6L20 8" />
+          <path d="M20 3v5h-5" />
+          <path d="M20 12a8 8 0 01-13.7 5.6L4 16" />
+          <path d="M4 21v-5h5" />
+        </svg>
+      );
     default:
       return null;
   }

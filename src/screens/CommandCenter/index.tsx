@@ -3,7 +3,7 @@ import { useCurrentUser, useDashboardSummary } from '../../api/dashboard';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { KpiRow } from './KpiRow';
 import { DecisionsList } from './DecisionsList';
-import { SignalsList } from './SignalsList';
+import { FindingsList } from './FindingsList';
 import { PulseList } from './PulseList';
 import { LiveRunsList } from './LiveRunsList';
 import { TopPerformerCard } from './TopPerformerCard';
@@ -44,7 +44,7 @@ export function CommandCenterScreen() {
       <div className="grid home-cols">
         <div>
           <DecisionsList persona={persona} />
-          <SignalsList persona={persona} />
+          <FindingsList persona={persona} />
           <PulseList />
         </div>
         <div>

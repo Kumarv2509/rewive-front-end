@@ -3,7 +3,7 @@ export interface AreaNavItem {
   label: string;
   end?: boolean;
   badgeKey?: 'pendingDecisions';
-  icon: 'home' | 'clock' | 'check' | 'plus' | 'plug' | 'studio' | 'grid' | 'people' | 'chart' | 'signal' | 'tasks';
+  icon: 'home' | 'clock' | 'check' | 'plus' | 'plug' | 'studio' | 'grid' | 'people' | 'chart' | 'signal' | 'tasks' | 'brain' | 'shadow' | 'loop';
 }
 
 export interface Area {
@@ -17,9 +17,10 @@ export const AREAS: Area[] = [
   {
     key: 'operate',
     label: 'Operate',
-    basePath: '/',
+    basePath: '/command',
     items: [
-      { to: '/', label: 'Command Center', end: true, icon: 'home' },
+      { to: '/command', label: 'Command Center', end: true, icon: 'home' },
+      { to: '/operate/shadow', label: 'Shadow Org', icon: 'shadow' },
       { to: '/operate/runs', label: 'Runs & Actions', icon: 'clock', badgeKey: 'pendingDecisions' },
       { to: '/operate/decisions', label: 'Decision Ledger', icon: 'check' },
       { to: '/operate/tasks', label: 'Tasks', icon: 'tasks' },
@@ -30,7 +31,8 @@ export const AREAS: Area[] = [
     label: 'Build',
     basePath: '/build',
     items: [
-      { to: '/build/kpis', label: 'KPI Library', icon: 'chart' },
+      { to: '/build/picture', label: 'Operating Picture', icon: 'brain' },
+      { to: '/build/kpis', label: 'Mandate Library', icon: 'chart' },
       { to: '/build/create', label: 'Create an Agent', icon: 'plus' },
       { to: '/build/connectors', label: 'Data Connectors', icon: 'plug' },
       { to: '/build/studio', label: 'Agent Studio', icon: 'studio' },
@@ -44,7 +46,8 @@ export const AREAS: Area[] = [
       { to: '/insights/agents', label: 'Agent Space', icon: 'grid' },
       { to: '/insights/people', label: 'People & Agents', icon: 'people' },
       { to: '/insights/outcomes', label: 'Outcomes', icon: 'chart' },
-      { to: '/insights/signals', label: 'Signal Studio', icon: 'signal' },
+      { to: '/insights/findings', label: 'Findings', icon: 'signal' },
+      { to: '/insights/closure', label: 'Closure', icon: 'loop' },
     ],
   },
 ];
