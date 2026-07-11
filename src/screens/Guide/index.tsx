@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { markGuideSeen } from './seen';
 
 // Static help content — a new user's first loop as a full-screen intro scroller
 // (mobile-onboarding style: one step per screen, snap scrolling, dots, skip).
@@ -168,6 +169,11 @@ export function GuideScreen() {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+
+  // Shown once = seen; the auto-redirect never fires again.
+  useEffect(() => {
+    markGuideSeen();
+  }, []);
 
   useEffect(() => {
     const root = scrollRef.current;

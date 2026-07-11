@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCurrentUser, useDashboardSummary } from '../../api/dashboard';
+import { hasSeenGuide } from '../Guide/seen';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { KpiRow } from './KpiRow';
 import { DecisionsList } from './DecisionsList';
@@ -12,8 +14,15 @@ import { PERSONA_LABEL } from './personas';
 import type { Persona } from '../../api/types';
 
 export function CommandCenterScreen() {
+  const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser();
   const [personaOverride, setPersonaOverride] = useState<Persona | 'all' | null>(null);
+
+  // First visit: open the step-by-step tour instead. Only here (the entry
+  // screen), so demo deep links into other screens are never hijacked.
+  useEffect(() => {
+    if (!hasSeenGuide()) navigate('/guide', { replace: true });
+  }, [navigate]);
 
   // Non-admins are locked to their role's persona; admins default to "all" until they pick one.
   const persona: Persona | 'all' =
