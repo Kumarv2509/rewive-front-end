@@ -429,12 +429,12 @@ app.post('/api/v1/connections/:id/import-planning-data', (req, res) => {
 
 // ---------- Agent Space ----------
 app.get('/api/v1/agents/catalog', (req, res) => {
-  const { industry, function: fn, status, agentType, search } = req.query;
+  const { function: fn, status, agentType, search } = req.query;
   const studioAgents = [...createdAgents.entries()]
     .filter(([, a]) => a.catalogMeta)
     .map(([agentId, a]) => ({ agentId, ...a.preview, ...a.catalogMeta }));
-  let result = [...agentCatalog, ...studioAgents];
-  if (industry && industry !== 'all') result = result.filter((a) => a.industry === industry);
+  // Catalog is scoped to the current operating context; studio-built agents always show.
+  let result = [...op(req).agentCatalog, ...studioAgents];
   if (fn && fn !== 'all') result = result.filter((a) => a.function2 === fn);
   if (status && status !== 'all') result = result.filter((a) => a.catalogStatus === status);
   if (agentType && agentType !== 'all') result = result.filter((a) => a.creationPath === agentType);
@@ -443,7 +443,7 @@ app.get('/api/v1/agents/catalog', (req, res) => {
 });
 
 app.get('/api/v1/agents/:agentId/catalog-detail', (req, res) => {
-  const seedMatch = agentCatalog.find((a) => a.agentId === req.params.agentId);
+  const seedMatch = op(req).agentCatalog.find((a) => a.agentId === req.params.agentId);
   if (seedMatch) return res.json(seedMatch);
   const created = createdAgents.get(req.params.agentId);
   if (created?.catalogMeta) return res.json({ agentId: req.params.agentId, ...created.preview, ...created.catalogMeta });
@@ -1072,7 +1072,12 @@ function findFinding(id) {
 }
 
 // ---------- Org profile & industry templates ----------
-app.get('/api/v1/org-profile', (req, res) => res.json(orgProfileState));
+// Honour ?industry= so the client-driven context stays consistent even when the
+// serverless in-memory profile has reset (cold start).
+app.get('/api/v1/org-profile', (req, res) => {
+  const q = req.query.industry;
+  res.json(q && brainsState[q] ? { ...orgProfileState, industry: q } : orgProfileState);
+});
 
 app.get('/api/v1/industries', (req, res) => res.json(industryOptions));
 

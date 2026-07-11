@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { Pill } from '../../components/shared/Pill';
-import { industryLabel } from './industryLabels';
 import { PERSONA_LABEL } from '../CommandCenter/personas';
 import type { AgentCatalogEntry } from '../../api/types';
 
@@ -12,8 +11,7 @@ export function AgentCard({ agent }: { agent: AgentCatalogEntry }) {
       <div className="ac-name">{agent.name}</div>
       <div className="ac-desc">{agent.description}</div>
       <div className="ac-tags">
-        <Pill tone="indigo">{industryLabel[agent.industry]}</Pill>
-        <Pill tone="gray">{agent.function2}</Pill>
+        <Pill tone="indigo">{agent.function}</Pill>
         <Pill tone="teal">{PERSONA_LABEL[agent.persona]}</Pill>
         <Pill tone={statusTone[agent.catalogStatus]}>{agent.catalogStatus}</Pill>
         <Pill tone={agent.creationPath === 'studio' ? 'teal' : 'gray'}>{agent.creationPath === 'studio' ? 'Studio' : 'Chat'}</Pill>

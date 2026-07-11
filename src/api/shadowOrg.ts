@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from './client';
+import { apiClient, setActiveIndustry } from './client';
 import type {
   ClosureKpi,
   CustomBrainNodeInput,
@@ -32,8 +32,10 @@ export function useIndustries() {
 export function useSetIndustry() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (industry: OrgProfile['industry']) =>
-      (await apiClient.put<OrgProfile>('/org-profile', { industry })).data,
+    mutationFn: async (industry: OrgProfile['industry']) => {
+      setActiveIndustry(industry); // send on every subsequent request (survives serverless cold starts)
+      return (await apiClient.put<OrgProfile>('/org-profile', { industry })).data;
+    },
     onSuccess: (profile) => {
       queryClient.setQueryData(['org-profile'], profile);
       // Everything downstream of the brain is industry-scoped.

@@ -1,38 +1,31 @@
 import type { AgentCatalogFilters } from '../../api/types';
 
-const industries: { key: AgentCatalogFilters['industry']; label: string }[] = [
-  { key: 'all', label: 'All industries' },
-  { key: 'fnb', label: 'Food & Beverage' },
-  { key: 'healthcare', label: 'Healthcare' },
-  { key: 'retail', label: 'Retail' },
-  { key: 'manufacturing', label: 'Manufacturing' },
-  { key: 'logistics', label: 'Logistics' },
-  { key: 'technology', label: 'Technology' },
-  { key: 'financial_services', label: 'Financial Services' },
-  { key: 'real_estate', label: 'Real Estate' },
-  { key: 'general', label: 'General' },
+// Catalog is already scoped to the current operating context, so we filter within it
+// by lifecycle status and how the agent was built — not by industry.
+const statuses: { key: AgentCatalogFilters['status']; label: string }[] = [
+  { key: 'all', label: 'All agents' },
+  { key: 'live', label: 'Live' },
+  { key: 'paused', label: 'Paused' },
+  { key: 'draft', label: 'Draft' },
 ];
 
-const functions: { key: AgentCatalogFilters['function']; label: string }[] = [
-  { key: 'all', label: 'All functions' },
-  { key: 'finance', label: 'Finance' },
-  { key: 'hr', label: 'HR' },
-  { key: 'it', label: 'IT' },
-  { key: 'procurement', label: 'Procurement' },
-  { key: 'sales', label: 'Sales' },
+const types: { key: AgentCatalogFilters['agentType']; label: string }[] = [
+  { key: 'all', label: 'Any build' },
+  { key: 'chat', label: 'Chat-built' },
+  { key: 'studio', label: 'Studio-built' },
 ];
 
 export function FilterBar({ filters, onChange }: { filters: AgentCatalogFilters; onChange: (f: AgentCatalogFilters) => void }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <div className="filters">
-        {industries.map((i) => (
-          <button key={i.key} className={`fchip${filters.industry === i.key ? ' on' : ''}`} onClick={() => onChange({ ...filters, industry: i.key })}>{i.label}</button>
+        {statuses.map((s) => (
+          <button key={s.key} className={`fchip${(filters.status ?? 'all') === s.key ? ' on' : ''}`} onClick={() => onChange({ ...filters, status: s.key })}>{s.label}</button>
         ))}
       </div>
       <div className="filters" style={{ marginTop: 8 }}>
-        {functions.map((f) => (
-          <button key={f.key} className={`fchip${filters.function === f.key ? ' on' : ''}`} onClick={() => onChange({ ...filters, function: f.key })}>{f.label}</button>
+        {types.map((t) => (
+          <button key={t.key} className={`fchip${(filters.agentType ?? 'all') === t.key ? ' on' : ''}`} onClick={() => onChange({ ...filters, agentType: t.key })}>{t.label}</button>
         ))}
         <input
           placeholder="Search agents…"
