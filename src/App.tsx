@@ -43,10 +43,18 @@ function App() {
               <Route path="command" element={<CommandCenterScreen />} />
               <Route path="operate" element={<Navigate to="/command" replace />} />
 
-              <Route path="operate/shadow" element={<ShadowOrgScreen />} />
+              <Route path="operate/counterparts" element={<ShadowOrgScreen />} />
+              <Route path="operate/findings" element={<FindingsScreen />} />
+              <Route path="operate/findings/:findingId" element={<FindingDetailScreen />} />
+              <Route path="operate/closure" element={<ClosureScreen />} />
               <Route path="operate/runs" element={<RunsScreen />} />
               <Route path="operate/decisions" element={<DecisionsScreen />} />
               <Route path="operate/tasks" element={<TasksScreen />} />
+              {/* v4 URLs — findings/closure moved into Operate, shadow org became counterparts */}
+              <Route path="operate/shadow" element={<Navigate to="/operate/counterparts" replace />} />
+              <Route path="insights/findings" element={<Navigate to="/operate/findings" replace />} />
+              <Route path="insights/findings/:findingId" element={<LegacyFindingRedirect />} />
+              <Route path="insights/closure" element={<Navigate to="/operate/closure" replace />} />
 
               <Route path="build" element={<Navigate to="/build/picture" replace />} />
               <Route path="build/picture" element={<KpiBrainScreen />} />
@@ -59,17 +67,14 @@ function App() {
               <Route path="build/solutions/:solutionId" element={<SolutionDesignScreen />} />
               <Route path="build/agent-studio/:agentSpecId" element={<UnifiedAgentStudioScreen />} />
 
-              <Route path="insights" element={<Navigate to="/insights/agents" replace />} />
+              <Route path="insights" element={<Navigate to="/insights/outcomes/latest" replace />} />
               <Route path="insights/agents" element={<AgentSpaceScreen />} />
               <Route path="insights/agents/:agentId" element={<AgentDetailScreen />} />
               <Route path="insights/people" element={<PeopleScreen />} />
               <Route path="insights/outcomes" element={<Navigate to="/insights/outcomes/latest" replace />} />
               <Route path="insights/outcomes/:runId" element={<OutcomesScreen />} />
-              <Route path="insights/findings" element={<FindingsScreen />} />
-              <Route path="insights/findings/:findingId" element={<FindingDetailScreen />} />
-              <Route path="insights/closure" element={<ClosureScreen />} />
               {/* v3 signals evolved into findings — the studio list redirects, detail stays for old signal links */}
-              <Route path="insights/signals" element={<Navigate to="/insights/findings" replace />} />
+              <Route path="insights/signals" element={<Navigate to="/operate/findings" replace />} />
               <Route path="insights/signals/:signalId" element={<SignalDetailScreen />} />
 
               {/* v1 URL redirects, kept working for old bookmarks/links */}
@@ -90,6 +95,11 @@ function App() {
 function LegacyOutcomeRedirect() {
   const { runId } = useParams();
   return <Navigate to={`/insights/outcomes/${runId}`} replace />;
+}
+
+function LegacyFindingRedirect() {
+  const { findingId } = useParams();
+  return <Navigate to={`/operate/findings/${findingId}`} replace />;
 }
 
 export default App;

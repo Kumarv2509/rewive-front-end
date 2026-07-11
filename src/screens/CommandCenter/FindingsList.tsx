@@ -13,7 +13,7 @@ export function FindingsList({ persona }: { persona: Persona | 'all' }) {
     <div className="card" style={{ marginBottom: 16 }}>
       <div className="sec-head">
         <h3>Findings waiting on your disposition</h3>
-        <Link className="all" to="/insights/findings">All findings →</Link>
+        <Link className="all" to="/operate/findings">All findings →</Link>
       </div>
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
@@ -23,14 +23,14 @@ export function FindingsList({ persona }: { persona: Persona | 'all' }) {
           <div className="dec-ico" style={{ background: 'var(--accent-soft)' }}>🕵️</div>
           <div style={{ minWidth: 0 }}>
             <div className="t1">
-              <Link to={`/insights/findings/${f.id}`}>{f.title}</Link>{' '}
+              <Link to={`/operate/findings/${f.id}`}>{f.title}</Link>{' '}
               <Pill tone={severityTone[f.severity]}>{f.severity}</Pill>
             </div>
             <div className="t2">{f.raisedByAgentName} · {f.impactEstimate}</div>
           </div>
           <div className="acts" style={{ alignItems: 'center' }}>
             <Pill tone={slaTone(f.slaHoursRemaining)}>{f.slaHoursRemaining}h</Pill>
-            <Link className="btn primary sm" to={`/insights/findings/${f.id}`}>Disposition</Link>
+            <Link className="btn primary sm" to={`/operate/findings/${f.id}`}>Disposition</Link>
           </div>
         </div>
       ))}

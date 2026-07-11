@@ -13,6 +13,9 @@ export interface Area {
   items: AreaNavItem[];
 }
 
+// Operate walks the loop's hero path (findings → closure → ledger); Foundation
+// holds setup surfaces. Agent-building screens stay routable but are off the nav —
+// they're reached from a finding's Act disposition, not browsed to.
 export const AREAS: Area[] = [
   {
     key: 'operate',
@@ -20,22 +23,12 @@ export const AREAS: Area[] = [
     basePath: '/command',
     items: [
       { to: '/command', label: 'Command Center', end: true, icon: 'home' },
-      { to: '/operate/shadow', label: 'Shadow Org', icon: 'shadow' },
-      { to: '/operate/runs', label: 'Runs & Actions', icon: 'clock', badgeKey: 'pendingDecisions' },
+      { to: '/operate/findings', label: 'Findings', icon: 'signal' },
+      { to: '/operate/closure', label: 'Closure', icon: 'loop' },
       { to: '/operate/decisions', label: 'Decision Ledger', icon: 'check' },
+      { to: '/operate/counterparts', label: 'Counterparts', icon: 'shadow' },
+      { to: '/operate/runs', label: 'Runs & Actions', icon: 'clock', badgeKey: 'pendingDecisions' },
       { to: '/operate/tasks', label: 'Tasks', icon: 'tasks' },
-    ],
-  },
-  {
-    key: 'build',
-    label: 'Build',
-    basePath: '/build',
-    items: [
-      { to: '/build/picture', label: 'Operating Picture', icon: 'brain' },
-      { to: '/build/kpis', label: 'Mandate Library', icon: 'chart' },
-      { to: '/build/create', label: 'Create an Agent', icon: 'plus' },
-      { to: '/build/connectors', label: 'Data Connectors', icon: 'plug' },
-      { to: '/build/studio', label: 'Agent Studio', icon: 'studio' },
     ],
   },
   {
@@ -43,11 +36,19 @@ export const AREAS: Area[] = [
     label: 'Insights',
     basePath: '/insights',
     items: [
-      { to: '/insights/agents', label: 'Agent Space', icon: 'grid' },
-      { to: '/insights/people', label: 'People & Agents', icon: 'people' },
       { to: '/insights/outcomes', label: 'Outcomes', icon: 'chart' },
-      { to: '/insights/findings', label: 'Findings', icon: 'signal' },
-      { to: '/insights/closure', label: 'Closure', icon: 'loop' },
+      { to: '/insights/people', label: 'Performance', icon: 'people' },
+      { to: '/insights/agents', label: 'Agent Space', icon: 'grid' },
+    ],
+  },
+  {
+    key: 'build',
+    label: 'Foundation',
+    basePath: '/build',
+    items: [
+      { to: '/build/picture', label: 'Operating Picture', icon: 'brain' },
+      { to: '/build/kpis', label: 'Mandate Library', icon: 'chart' },
+      { to: '/build/connectors', label: 'Data Connectors', icon: 'plug' },
     ],
   },
 ];

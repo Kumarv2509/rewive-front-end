@@ -43,8 +43,9 @@ export function CommandCenterScreen() {
 
       <div className="grid home-cols">
         <div>
-          <DecisionsList persona={persona} />
+          {/* Obligations first: findings waiting on a disposition, then pending decisions */}
           <FindingsList persona={persona} />
+          <DecisionsList persona={persona} />
           <PulseList />
         </div>
         <div>

@@ -44,7 +44,7 @@ export function SolutionDesignScreen() {
   return (
     <section className="screen">
       <Link
-        to={fromFinding ? `/insights/findings/${solution.signalId}` : `/insights/signals/${solution.signalId}`}
+        to={fromFinding ? `/operate/findings/${solution.signalId}` : `/insights/signals/${solution.signalId}`}
         className="btn ghost sm"
         style={{ marginBottom: 14, display: 'inline-flex' }}
       >

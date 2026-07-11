@@ -19,7 +19,7 @@ function ExitConditionCard({ c }: { c: ClosureKpi }) {
         <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>watched by {c.watchedByAgentName}</span>
       </div>
       <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 4 }}>{c.name}</div>
-      <Link to={`/insights/findings/${c.findingId}`} style={{ fontSize: 11.5, color: 'var(--accent-deep)', textDecoration: 'none' }}>
+      <Link to={`/operate/findings/${c.findingId}`} style={{ fontSize: 11.5, color: 'var(--accent-deep)', textDecoration: 'none' }}>
         from finding: {c.findingTitle} →
       </Link>
 
@@ -51,7 +51,7 @@ function WatchingRow({ finding }: { finding: Finding }) {
     <div className="dec-item">
       <div className="dec-ico" style={{ background: 'var(--amber-soft)' }}>⏰</div>
       <div style={{ minWidth: 0 }}>
-        <div className="t1"><Link to={`/insights/findings/${finding.id}`}>{finding.title}</Link></div>
+        <div className="t1"><Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link></div>
         <div className="t2">{finding.reAlertCondition ?? 'Watching for change'}</div>
       </div>
       <div className="acts">

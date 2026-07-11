@@ -83,7 +83,7 @@ function AgentCard({ agent, mandateCount, findings }: { agent: ShadowAgent; mand
       </div>
 
       {open && openFindings.map((f) => (
-        <Link key={f.id} to={`/insights/findings/${f.id}`} className="dec-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link key={f.id} to={`/operate/findings/${f.id}`} className="dec-item" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: 12.5, fontWeight: 600 }}>{f.title}</div>
             <div style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>{f.impactEstimate}</div>

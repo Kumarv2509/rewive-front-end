@@ -22,7 +22,7 @@ export function FindingDetailScreen() {
 
   return (
     <section className="screen">
-      <Link to="/insights/findings" className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Findings</Link>
+      <Link to="/operate/findings" className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Findings</Link>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
         <Pill tone={severityTone[finding.severity]}>{finding.severity}</Pill>

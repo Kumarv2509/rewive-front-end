@@ -23,7 +23,7 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
       <div className="dec-ico" style={{ background: 'var(--accent-soft)' }}>🕵️</div>
       <div style={{ minWidth: 0 }}>
         <div className="t1">
-          <Link to={`/insights/findings/${finding.id}`}>{finding.title}</Link>{' '}
+          <Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link>{' '}
           <Pill tone={severityTone[finding.severity]}>{finding.severity}</Pill>
           {finding.escalationLevel > 0 && <> <Pill tone="red">escalated</Pill></>}
         </div>
@@ -36,7 +36,7 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
         {finding.status === 'open' ? (
           <>
             <Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h SLA</Pill>
-            <Link className="btn primary sm" to={`/insights/findings/${finding.id}`}>Disposition</Link>
+            <Link className="btn primary sm" to={`/operate/findings/${finding.id}`}>Disposition</Link>
           </>
         ) : (
           <Pill tone={statusTone[finding.status]}>{statusLabel[finding.status]}</Pill>
