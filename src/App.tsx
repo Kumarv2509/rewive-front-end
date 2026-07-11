@@ -37,11 +37,12 @@ function App() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public landing — the Agentic Operating Model, no app chrome */}
+            {/* Public landing — the Decision Accountability Layer, no app chrome */}
             <Route path="/" element={<LandingScreen />} />
+            {/* Full-screen intro scroller (mobile-onboarding style), no app chrome */}
+            <Route path="guide" element={<GuideScreen />} />
 
             <Route element={<AppLayout />}>
-              <Route path="guide" element={<GuideScreen />} />
               <Route path="command" element={<CommandCenterScreen />} />
               <Route path="operate" element={<Navigate to="/command" replace />} />
 

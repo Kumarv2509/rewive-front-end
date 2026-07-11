@@ -1,168 +1,271 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-// Static help content — a new user's first loop, step by step. No API data here;
-// every step deep-links into the live screen it describes.
+// Static help content — a new user's first loop as a full-screen intro scroller
+// (mobile-onboarding style: one step per screen, snap scrolling, dots, skip).
+// Every step deep-links into the live screen it describes.
 const STEPS: {
-  n: number;
   title: string;
   where: string;
   to: string;
+  cta: string;
   what: string;
   doThis: string[];
 }[] = [
   {
-    n: 1,
     title: 'Start your day in the Command Center',
     where: 'Operate · Command Center',
     to: '/command',
+    cta: 'Open the Command Center',
     what: 'The greeting tells you what Rewive executed since yesterday and how many calls are waiting on you. Below it: findings waiting on a disposition, decisions pending, the live pulse, and runs in flight.',
     doThis: [
       'Read the summary sentence — it is your morning briefing.',
-      'If you are an admin, switch the persona lens (Store manager / CFO / Operations head) to see the day through one role.',
-      'Anything in "Findings — waiting on you" is your first job. Click one.',
+      'Admins can switch the persona lens: Store manager, CFO, or Operations head.',
+      'Anything under "Findings — waiting on you" is your first job. Click one.',
     ],
   },
   {
-    n: 2,
     title: 'Open a finding and read the case',
     where: 'Operate · Findings',
     to: '/operate/findings',
-    what: 'A finding is what a counterpart raises when a number drifts from its mandate. Each one shows severity, the evidence behind it, an impact estimate, and an impact path tracing the drift all the way up to the company intent it threatens.',
+    cta: 'See the findings',
+    what: 'A finding is what a counterpart raises when a number drifts from its mandate — with severity, evidence, an impact estimate, and an impact path tracing the drift up to the intent it threatens.',
     doThis: [
-      'Check the SLA pill — findings escalate up the chain of counterparts if nobody answers in time.',
-      'Follow the impact path to see which intent is at risk; "View in the Operating Picture" shows it on the map.',
-      'Read the evidence before you decide — it is the counterpart\'s working, not just its conclusion.',
+      'Check the SLA pill — unanswered findings escalate up the chain of counterparts.',
+      'Follow the impact path to the intent at risk; view it on the Operating Picture.',
+      'Read the evidence before you decide — the counterpart shows its working.',
     ],
   },
   {
-    n: 3,
-    title: 'Make the call — one of four dispositions',
+    title: 'Make the call — four dispositions',
     where: 'On the finding',
     to: '/operate/findings',
-    what: 'Every finding demands exactly one answer, and each answer instructs the system differently. Accept: it\'s real — set a measurable exit condition and the counterpart watches it until met. Act: fix it now — opens a solution design with tasks. Acknowledge: known issue — parked on a trip-wire that re-alerts if it worsens. Abandon: not real — requires a reason, and the reason tunes the counterpart.',
+    cta: 'Try it on a finding',
+    what: 'Every finding demands exactly one answer. Accept: it\'s real — set an exit condition the counterpart watches until met. Act: fix it now — opens a solution design with tasks. Acknowledge: known — parked on a trip-wire. Abandon: not real — the reason you give tunes the counterpart.',
     doThis: [
-      'If it is real but needs no project, Accept and set the exit condition.',
-      'If it needs work, Act — you will land in a solution design (step 6).',
+      'Real but no project needed? Accept and set the exit condition.',
+      'Needs work? Act — you land in a solution design.',
       'Not yours? "Not mine — escalate" sends it up the chain instead of letting it sit.',
     ],
   },
   {
-    n: 4,
     title: 'Watch the loop stay open in Closure',
     where: 'Operate · Closure',
     to: '/operate/closure',
+    cta: 'Open Closure',
     what: 'Nothing is "done" until the number is back. Accepted findings live here as exit conditions with progress bars; acknowledged ones sit on their trip-wires. The counterpart keeps watching either way.',
     doThis: [
       'Track each exit condition\'s progress toward target.',
-      'Only "Mark met · close loop" when the number is truly back — that is the whole point.',
-      'Regressed conditions and tripped wires come back to the Command Center on their own.',
+      'Only "Mark met · close loop" when the number is truly back.',
+      'Regressed conditions and tripped wires resurface on their own.',
     ],
   },
   {
-    n: 5,
-    title: 'Check the Decision Ledger — the memory of judgment',
+    title: 'The Decision Ledger — the memory of judgment',
     where: 'Operate · Decision Ledger',
     to: '/operate/decisions',
-    what: 'Every decision is recorded: who made it (human or agent), what finding prompted it, what it cost or earned. Later, an assessor returns with a verdict — worked, didn\'t work, or too early to tell — next to the estimate that justified the call.',
+    cta: 'Open the ledger',
+    what: 'Every decision is recorded: who made it (human or agent), what finding prompted it, what it cost or earned. Later an assessor returns a verdict — worked, didn\'t, or too early — next to the estimate that justified the call.',
     doThis: [
-      'Use the verdict filters to see which calls actually paid off.',
-      'Each entry links back to its originating finding — the full trail is auditable.',
+      'Filter by verdict to see which calls actually paid off.',
+      'Each entry links back to its originating finding — the trail is auditable.',
     ],
   },
   {
-    n: 6,
     title: 'When you chose Act: the solution design',
     where: 'Reached from a finding\'s Act disposition',
-    to: '/operate/findings',
-    what: 'Act opens a solution design: the approach, the data needed, guardrails, and a task list — new agents to build, existing agents to reuse, human tasks. A validation agent reviews the plan (pros, cons, ROI) before it goes for approval. Approved tasks land in Tasks; agent builds continue in the studio.',
+    to: '/operate/tasks',
+    cta: 'See your tasks',
+    what: 'Act opens a solution design: approach, data needed, guardrails, and a task list — new agents to build, existing agents to reuse, human tasks. A validation agent reviews the plan before approval; agent builds continue in the studio.',
     doThis: [
-      'You do not browse to the build screens — they come to you when a finding needs them.',
-      'Track everything assigned to you or your team in Operate · Tasks.',
+      'You never browse to the build screens — they come to you when a finding needs them.',
+      'Everything assigned to you or your team lands in Operate · Tasks.',
     ],
   },
   {
-    n: 7,
     title: 'Meet your counterparts',
     where: 'Operate · Counterparts',
     to: '/operate/counterparts',
-    what: 'One agent per function, plus an org-level chief of staff watching the intents. Every mandate is held twice — once by a person, once by its counterpart. Each card shows whose mandates it holds, open findings, SLA breaches, and a temperament dial from quiet to hair-trigger.',
+    cta: 'Meet them',
+    what: 'One agent per function, plus an org-level chief of staff watching the intents. Every mandate is held twice — once by a person, once by its counterpart. Each card shows open findings, SLA breaches, and a temperament dial from quiet to hair-trigger.',
     doThis: [
       'Expand "What it\'s flagging" to jump straight to a counterpart\'s open findings.',
-      'A "needs you" pill means its findings are breaching SLA — someone is not answering.',
+      'A "needs you" pill means findings are breaching SLA — someone is not answering.',
     ],
   },
   {
-    n: 8,
     title: 'The Foundation: what everything runs on',
     where: 'Foundation area',
     to: '/build/picture',
-    what: 'The Operating Picture is the map the counterparts reason over: intents at the top, the mandates that carry them, the senses (data feeds) that verify them. The Mandate Library is where a new company starts — pick the mandates that matter or import them from a planning tool. Data Connectors wire up the senses; a mandate without a sense is blind.',
+    cta: 'Open the Operating Picture',
+    what: 'The Operating Picture is the map the counterparts reason over: intents, the mandates that carry them, the senses that verify them. The Mandate Library is where a new company starts; Data Connectors wire up the senses — a mandate without a sense is blind.',
     doThis: [
-      'Switch industry from the Operating Picture header if you want to see another context.',
-      'Counterparts petition for new nodes and edges here — approve or decline their proposals.',
+      'Switch industry from the Operating Picture header to see another context.',
+      'Counterparts petition for new nodes and edges — approve or decline their proposals.',
     ],
   },
   {
-    n: 9,
     title: 'Measure what is working in Insights',
     where: 'Insights area',
     to: '/insights/outcomes',
-    what: 'Outcomes turns runs into scorecards, insights, and recommended actions. Performance shows where the loop closes fastest — mandates, owners, counterparts, and how quickly drift comes back to target. Agent Space lists every agent running for your context, with ROI and token cost side by side.',
+    cta: 'Open Insights',
+    what: 'Outcomes turns runs into scorecards and recommended actions. Performance shows where the loop closes fastest. Agent Space lists every agent running for your context, ROI and token cost side by side.',
     doThis: [
       'Assign or schedule the recommended actions on an outcome report.',
-      'Use Agent Space to see what each agent costs against what it returns.',
+      'Use Agent Space to weigh what each agent costs against what it returns.',
     ],
   },
 ];
 
 const LOOP = ['Sense', 'Find', 'Decide', 'Act', 'Close'];
+const SLIDE_COUNT = STEPS.length + 2; // intro + steps + finale
+
+const css = `
+.gd{position:fixed;inset:0;z-index:60;background:#07070F;color:#F1F1F7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+.gd::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(1100px 720px at 82% -8%,rgba(139,92,246,.20),transparent 58%),
+             radial-gradient(900px 640px at -12% 22%,rgba(45,212,191,.08),transparent 55%),
+             radial-gradient(1000px 720px at 50% 118%,rgba(99,102,241,.16),transparent 60%)}
+.gd-top{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:18px 26px}
+.gd-brand{display:flex;align-items:center;gap:10px}
+.gd-brand .mk{width:28px;height:28px;border-radius:8px;background:linear-gradient(120deg,#6366F1,#8B5CF6,#A855F7);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px}
+.gd-brand .nm{font-weight:700;font-size:14px;letter-spacing:-.2px}
+.gd-skip{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.74rem;letter-spacing:.06em;color:#F1F1F7;text-decoration:none;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.045);border-radius:99px;padding:8px 16px;cursor:pointer;transition:background .2s}
+.gd-skip:hover{background:rgba(255,255,255,.1)}
+.gd-scroll{position:absolute;inset:0;overflow-y:auto;scroll-snap-type:y mandatory;scroll-behavior:smooth;z-index:1}
+.gd-slide{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;padding:72px 24px 84px}
+.gd-inner{max-width:640px;width:100%}
+.gd-eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#63678B;margin-bottom:14px}
+.gd-n{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.78rem;color:#A855F7;border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:5px 13px;display:inline-block;margin-bottom:18px}
+.gd h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0 0 18px;text-wrap:balance}
+.gd h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 14px;text-wrap:balance}
+.gd .grad{background:linear-gradient(120deg,#6366F1,#8B5CF6,#A855F7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.gd-what{font-size:clamp(.95rem,1.4vw,1.08rem);color:#A6A9C8;line-height:1.65;margin:0 0 18px}
+.gd-do{list-style:none;margin:0 0 24px;padding:0;display:flex;flex-direction:column;gap:9px}
+.gd-do li{display:flex;gap:11px;align-items:flex-start;font-size:.92rem;line-height:1.55;color:#F1F1F7}
+.gd-do li .m{color:#2DD4BF;font-family:ui-monospace,monospace;flex-shrink:0;margin-top:1px}
+.gd-cta{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;color:#fff;background:linear-gradient(120deg,#6366F1,#8B5CF6,#A855F7);border-radius:12px;padding:12px 22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 30px rgba(124,99,255,.35);transition:filter .2s}
+.gd-cta:hover{filter:brightness(1.1)}
+.gd-ghost{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;color:#F1F1F7;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.045);border-radius:12px;padding:12px 22px;transition:background .2s}
+.gd-ghost:hover{background:rgba(255,255,255,.1)}
+.gd-loopstrip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045);border-radius:14px;padding:14px 18px;margin-bottom:26px;backdrop-filter:blur(14px)}
+.gd-loopstrip .st{font-weight:600;font-size:.95rem}
+.gd-loopstrip .st.you{color:#2DD4BF}
+.gd-loopstrip .arr{color:#63678B;font-family:ui-monospace,monospace;font-size:.8rem}
+.gd-loopnote{font-size:.84rem;color:#A6A9C8;width:100%;margin-top:2px}
+.gd-dots{position:absolute;right:22px;top:50%;transform:translateY(-50%);z-index:3;display:flex;flex-direction:column;gap:10px}
+.gd-dot{width:9px;height:9px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:transparent;cursor:pointer;padding:0;transition:all .25s}
+.gd-dot.on{background:linear-gradient(120deg,#8B5CF6,#A855F7);border-color:transparent;box-shadow:0 0 10px rgba(139,92,246,.8);transform:scale(1.3)}
+.gd-next{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:9px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#A6A9C8;background:rgba(11,11,22,.7);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:9px 18px;cursor:pointer;backdrop-filter:blur(12px);transition:all .2s}
+.gd-next:hover{color:#F1F1F7;border-color:rgba(255,255,255,.3)}
+.gd-next .chev{animation:gd-bob 1.8s ease-in-out infinite}
+@keyframes gd-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+@media(prefers-reduced-motion:reduce){.gd-scroll{scroll-behavior:auto}.gd-next .chev{animation:none}}
+@media(max-width:640px){.gd-dots{right:10px}.gd-slide{padding:64px 18px 84px}}
+`;
 
 export function GuideScreen() {
+  const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const root = scrollRef.current;
+    if (!root) return;
+    const slides = Array.from(root.querySelectorAll('.gd-slide'));
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setActive(slides.indexOf(e.target));
+        }
+      },
+      { root, threshold: 0.6 },
+    );
+    slides.forEach((s) => io.observe(s));
+    return () => io.disconnect();
+  }, []);
+
+  const goTo = (i: number) => {
+    const root = scrollRef.current;
+    const slide = root?.querySelectorAll('.gd-slide')[i];
+    slide?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const last = active === SLIDE_COUNT - 1;
+
   return (
-    <section className="screen" style={{ maxWidth: 860 }}>
-      <h1 className="page">How to work in Rewive</h1>
-      <div className="sub">
-        Nothing drifts unanswered. Your counterparts watch the numbers and bring you findings; your job is to answer them
-        and let the loop close. This is the whole system, step by step.
+    <div className="gd">
+      <style>{css}</style>
+
+      <div className="gd-top">
+        <span className="gd-brand"><span className="mk">R</span><span className="nm">Rewive</span></span>
+        <button className="gd-skip" onClick={() => navigate('/command')}>Skip · enter the app →</button>
       </div>
 
-      <div className="card" style={{ padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.6px', color: 'var(--ink-3)' }}>The loop</span>
-        {LOOP.map((stage, i) => (
-          <span key={stage} style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontWeight: 600, fontSize: 13, color: stage === 'Decide' ? 'var(--accent-deep)' : 'var(--ink)' }}>{stage}</span>
-            {i < LOOP.length - 1 && <span style={{ color: 'var(--ink-3)' }}>→</span>}
-          </span>
+      <div className="gd-dots">
+        {Array.from({ length: SLIDE_COUNT }, (_, i) => (
+          <button key={i} className={`gd-dot${i === active ? ' on' : ''}`} aria-label={`Slide ${i + 1}`} onClick={() => goTo(i)} />
         ))}
-        <span style={{ fontSize: 12, color: 'var(--ink-2)', marginLeft: 'auto' }}>You own one stage: Decide. The counterparts run the rest.</span>
       </div>
 
-      {STEPS.map((s) => (
-        <div key={s.n} className="card" style={{ padding: '18px 20px', marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
-            <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13, color: 'var(--accent-deep)', border: '1px solid var(--border)', borderRadius: 8, padding: '2px 8px', flexShrink: 0 }}>{s.n}</span>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>{s.title}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.4px' }}>{s.where}</div>
+      {!last && (
+        <button className="gd-next" onClick={() => goTo(active + 1)}>
+          {active === 0 ? 'Start the tour' : `${active} / ${STEPS.length}`} <span className="chev">↓</span>
+        </button>
+      )}
+
+      <div className="gd-scroll" ref={scrollRef}>
+        {/* Intro slide */}
+        <section className="gd-slide">
+          <div className="gd-inner">
+            <div className="gd-eyebrow">How to work in Rewive</div>
+            <h1>Nothing drifts <span className="grad">unanswered</span> — here's your part in that.</h1>
+            <div className="gd-loopstrip">
+              {LOOP.map((stage, i) => (
+                <span key={stage} style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+                  <span className={`st${stage === 'Decide' ? ' you' : ''}`}>{stage}</span>
+                  {i < LOOP.length - 1 && <span className="arr">→</span>}
+                </span>
+              ))}
+              <span className="gd-loopnote">You own one stage: <b style={{ color: '#2DD4BF' }}>Decide</b>. The counterparts run the rest.</span>
             </div>
-            <Link to={s.to} className="btn ghost sm" style={{ marginLeft: 'auto', flexShrink: 0 }}>Go there →</Link>
+            <p className="gd-what">Nine screens, one loop. Scroll through — each step links straight into the live screen it describes.</p>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.6, margin: '8px 0 10px' }}>{s.what}</p>
-          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {s.doThis.map((d) => (
-              <li key={d} style={{ fontSize: 12.5, color: 'var(--ink)', lineHeight: 1.55 }}>{d}</li>
-            ))}
-          </ul>
-        </div>
-      ))}
+        </section>
 
-      <div className="card" style={{ padding: '16px 20px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>Want the story instead?</div>
-          <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>The landing page walks the same ideas as a narrative — the shift, the Operating Picture, the four dispositions.</div>
-        </div>
-        <Link to="/" className="btn primary sm">Read the story →</Link>
+        {/* Step slides */}
+        {STEPS.map((s, i) => (
+          <section key={s.title} className="gd-slide">
+            <div className="gd-inner">
+              <span className="gd-n">Step {i + 1} of {STEPS.length}</span>
+              <div className="gd-eyebrow">{s.where}</div>
+              <h2>{s.title}</h2>
+              <p className="gd-what">{s.what}</p>
+              <ul className="gd-do">
+                {s.doThis.map((d) => (
+                  <li key={d}><span className="m">→</span>{d}</li>
+                ))}
+              </ul>
+              <Link to={s.to} className="gd-ghost">{s.cta} →</Link>
+            </div>
+          </section>
+        ))}
+
+        {/* Finale */}
+        <section className="gd-slide">
+          <div className="gd-inner" style={{ textAlign: 'center' }}>
+            <div className="gd-eyebrow">That's the whole system</div>
+            <h1>Every mandate, <span className="grad">held twice</span>.</h1>
+            <p className="gd-what" style={{ maxWidth: 520, margin: '0 auto 26px' }}>
+              Your counterparts are already watching. Answer what they bring you, and let the loop close.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/command" className="gd-cta">Start in the Command Center →</Link>
+              <Link to="/" className="gd-ghost">Read the story</Link>
+            </div>
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
   );
 }
