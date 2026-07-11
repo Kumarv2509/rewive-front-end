@@ -1,6 +1,6 @@
 # Rewive Front End
 
-React + TypeScript + Vite front end for **Rewive — the Decision Accountability Layer**. Dashboards show you the number; Rewive makes someone answer for it: every mandate is held twice (a person and an agent counterpart), drift raises a finding that must be dispositioned (Accept / Act / Acknowledge / Abandon — silence escalates), accepted findings become exit conditions watched until the number is back, and every decision lands in a ledger with a verdict on whether it worked.
+React + TypeScript + Vite front end for **Rewive — the Decision Accountability Layer**. Nothing drifts unanswered: every mandate is held twice (a person and an agent counterpart), drift raises a finding that must be dispositioned (Accept / Act / Acknowledge / Abandon — silence escalates), accepted findings become exit conditions watched until the number is back, and every decision lands in a ledger with a verdict on whether it worked.
 
 Pick an operating context (FMCG or Healthcare) on the landing page and every screen — Command Center, Findings, Closure, Decision Ledger, Counterparts, Operating Picture, Outcomes — swaps to that industry's mandates and data. All of it is backed by a typed REST contract (`src/api/types.ts`) served by a mock Express API (`mock-server/`), so the app runs fully without a real backend.
 

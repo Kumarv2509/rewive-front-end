@@ -43,7 +43,7 @@ Agent-building screens (Create an Agent `/build/create`, Agent Studio `/build/st
 
 ## Positioning (keep copy consistent with this)
 
-Category: the decision accountability layer — "the system of record for operational decisions." Hero: "Dashboards show you the number. Rewive makes someone answer for it." The loop is **Sense → Find → Decide → Act → Close**. Keep-verbatim lines: "Every mandate, held twice." · "The company's memory of judgment." · "Nothing is 'done' until the number is back." Avoid: "shadow organization", "agentic operating model" (the latter survives only as the story-page essay framing), and any humans-vs-agents ranking framing.
+Category: the decision accountability layer — "the system of record for operational decisions." Hero: "Nothing drifts unanswered." (statement form — avoid "makes someone answer for it", which reads as blame). The loop is **Sense → Find → Decide → Act → Close**. Keep-verbatim lines: "Every mandate, held twice." · "The company's memory of judgment." · "Nothing is 'done' until the number is back." Avoid: "shadow organization", "agentic operating model" (the latter survives only as the story-page essay framing), and any humans-vs-agents ranking framing.
 
 ## Conventions
 

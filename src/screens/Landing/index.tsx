@@ -213,8 +213,8 @@ export function LandingScreen() {
       {/* HERO */}
       <section className="hero wrap">
         <span className="kicker"><span className="live" /> The Decision Accountability Layer</span>
-        <h1>Dashboards show you the number. Rewive makes <span className="grad-text">someone answer for it</span>.</h1>
-        <p className="lede">Every mandate in your business gets a counterpart — an agent that watches the same number its owner does, raises a finding the moment it drifts, and doesn't close the loop until the number is back.</p>
+        <h1>Nothing drifts <span className="grad-text">unanswered</span>.</h1>
+        <p className="lede">Every number has an owner and a counterpart. When it drifts, a finding demands a decision — and silence escalates until someone owns the call.</p>
         <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by its counterpart.</p>
         <IndustryPicker />
       </section>
@@ -376,7 +376,7 @@ export function LandingScreen() {
 
       {/* CLOSE */}
       <section className="close wrap">
-        <h2>A number that drifts is <span className="grad-text">no longer nobody's problem</span>.</h2>
+        <h2>A red number is <span className="grad-text">no longer nobody's problem</span>.</h2>
         <p className="lede">The organization does the work. Its counterparts make sure the work still serves the intent, catch it when it doesn't, and bring you the decision the moment it counts.</p>
         <div><a href="#start" className="cta">Choose your context <span className="arr">↑</span></a></div>
         <p className="sig">Every mandate, held twice.</p>
