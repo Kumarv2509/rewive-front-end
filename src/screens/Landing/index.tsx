@@ -2,18 +2,19 @@ import { useNavigate } from 'react-router-dom';
 import { useSetIndustry } from '../../api/shadowOrg';
 import type { IndustryKey } from '../../api/types';
 
+// Manufacturing pack exists but is hidden until it's as deep as the other two —
+// a shallow third industry weakens the "this understands my business" effect.
 const INDUSTRIES: { id: IndustryKey; name: string; blurb: string; mandates: number }[] = [
   { id: 'fmcg', name: 'FMCG / food & beverage', blurb: 'Manufacturing, distribution and trade across modern and traditional channels.', mandates: 26 },
   { id: 'healthcare', name: 'Healthcare', blurb: 'Clinical operations, revenue cycle, patient experience, pharmacy, finance and people.', mandates: 22 },
-  { id: 'manufacturing', name: 'Industrial manufacturing', blurb: 'Production, maintenance, supplier network, quality and safety.', mandates: 11 },
 ];
 
 function useEnter() {
   const navigate = useNavigate();
   const setIndustry = useSetIndustry();
-  // Start in the Build area on the Operating Picture — the mandates for that industry.
+  // Land on the Command Center — the "4 decisions are waiting on you" moment.
   const enter = (id: IndustryKey) =>
-    setIndustry.mutate(id, { onSettled: () => navigate('/build/picture') });
+    setIndustry.mutate(id, { onSettled: () => navigate('/command') });
   return { enter, pending: setIndustry.isPending };
 }
 
@@ -73,7 +74,7 @@ const css = `
 .om .cta .arr{font-family:var(--om-mono)}
 .om .ind-picker{scroll-margin-top:24px}
 .om .ind-picker-label{font-family:var(--om-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--om-ink-3);margin-bottom:14px}
-.om .ind-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.om .ind-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .om .ind-card{text-align:left;cursor:pointer;font-family:inherit;color:var(--om-ink);background:var(--om-glass);border:1px solid var(--om-line-2);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px;transition:transform .18s,border-color .18s,box-shadow .18s;backdrop-filter:blur(16px)}
 .om .ind-card:hover:not(:disabled){transform:translateY(-3px);border-color:rgba(139,92,246,.55);box-shadow:0 10px 34px rgba(0,0,0,.4),0 0 30px rgba(124,99,255,.18)}
 .om .ind-card:disabled{opacity:.5;cursor:default}
@@ -211,10 +212,10 @@ export function LandingScreen() {
 
       {/* HERO */}
       <section className="hero wrap">
-        <span className="kicker"><span className="live" /> The Agentic Operating Model</span>
-        <h1>Dashboards tell you what happened. A <span className="grad-text">shadow organization</span> does something about it.</h1>
-        <p className="lede">Give every function a tireless counterpart — an agent that watches the same numbers its human owner does, catches drift the moment it starts, and arrives with a decision instead of a report.</p>
-        <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by the agent shadowing them.</p>
+        <span className="kicker"><span className="live" /> The Decision Accountability Layer</span>
+        <h1>Dashboards show you the number. Rewive makes <span className="grad-text">someone answer for it</span>.</h1>
+        <p className="lede">Every mandate in your business gets a counterpart — an agent that watches the same number its owner does, raises a finding the moment it drifts, and doesn't close the loop until the number is back.</p>
+        <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by its counterpart.</p>
         <IndustryPicker />
       </section>
 
@@ -226,21 +227,21 @@ export function LandingScreen() {
           <div className="col old">
             <div className="col-tag">The reporting era</div>
             <ul>
-              <li><span className="m">—</span> A metric is a number you go and look at.</li>
+              <li><span className="m">—</span> A red number on a dashboard is nobody's obligation.</li>
               <li><span className="m">—</span> Insight waits for a human to notice it.</li>
               <li><span className="m">—</span> A problem becomes a meeting, then a deck.</li>
-              <li><span className="m">—</span> The business reacts on your calendar.</li>
-              <li><span className="m">—</span> Data ages while it waits for attention.</li>
+              <li><span className="m">—</span> Drift is caught on the calendar, not the moment.</li>
+              <li><span className="m">—</span> Nobody records whether the decision worked.</li>
             </ul>
           </div>
           <div className="col new">
-            <div className="col-tag">The agentic operating model</div>
+            <div className="col-tag">The accountability layer</div>
             <ul>
-              <li><span className="m">→</span> A metric is a <b>mandate</b> something enforces.</li>
+              <li><span className="m">→</span> A metric is a <b>mandate</b> with an owner and a counterpart.</li>
               <li><span className="m">→</span> Drift is caught the moment it starts.</li>
-              <li><span className="m">→</span> A problem arrives as a <b>decision with options</b>.</li>
-              <li><span className="m">→</span> The business moves at the speed of its data.</li>
-              <li><span className="m">→</span> You are interrupted only when it matters.</li>
+              <li><span className="m">→</span> A problem arrives as a <b>finding that must be answered</b>.</li>
+              <li><span className="m">→</span> Silence escalates until someone owns the call.</li>
+              <li><span className="m">→</span> Every decision gets a verdict: <b>did it work?</b></li>
             </ul>
           </div>
         </div>
@@ -250,7 +251,7 @@ export function LandingScreen() {
       <section className="wrap">
         <div className="sec-eyebrow"><span className="eyebrow">The Operating Picture</span><span className="tick" /></div>
         <h2>One live picture of what the company is trying to make true.</h2>
-        <p className="lede" style={{ marginTop: 18 }}>Not a dashboard you visit — a structure the whole shadow organization reasons over. Three layers, wired together, so a problem anywhere can be traced to the goal it threatens.</p>
+        <p className="lede" style={{ marginTop: 18 }}>Not a dashboard you visit — a structure every counterpart reasons over. Three layers, wired together, so a problem anywhere can be traced to the goal it threatens.</p>
         <div className="tiers">
           <div className="tier intent">
             <div className="t-label"><span className="dot" />Intents</div>
@@ -259,7 +260,7 @@ export function LandingScreen() {
           <div className="tier-arrow">▲ carried by</div>
           <div className="tier mandate">
             <div className="t-label"><span className="dot" />Mandates</div>
-            <div className="t-def"><b>Enforceable commitments each function owns.</b> "Case fill above 97%." "Waste under 3.5%." Not indicators to admire — promises with an owner and a shadow watching them.</div>
+            <div className="t-def"><b>Enforceable commitments each function owns.</b> "Case fill above 97%." "Waste under 3.5%." Not indicators to admire — promises with an owner and a counterpart watching them.</div>
           </div>
           <div className="tier-arrow">▲ verified by</div>
           <div className="tier sense">
@@ -267,7 +268,7 @@ export function LandingScreen() {
             <div className="t-def"><b>What the agents perceive through.</b> The data feeds behind every mandate — POS, plant telemetry, the planning system. A mandate without a sense is blind, and the picture says so.</div>
           </div>
         </div>
-        <p className="held">Every mandate is held twice — once by a person, once by their shadow. The person decides. The shadow never looks away.</p>
+        <p className="held">Every mandate is held twice — once by a person, once by its counterpart. The person decides. The counterpart never looks away.</p>
       </section>
 
       {/* THE LOOP */}
@@ -276,7 +277,7 @@ export function LandingScreen() {
         <h2>A loop that runs whether or not anyone is watching.</h2>
         <div className="loop">
           <div className="loop-svg-wrap">
-            <svg viewBox="0 0 600 600" role="img" aria-label="The five-stage operating loop: sense, find, decide, act, learn, repeating.">
+            <svg viewBox="0 0 600 600" role="img" aria-label="The five-stage operating loop: sense, find, decide, act, close, repeating.">
               <defs>
                 <linearGradient id="omring" x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0" stopColor="#6366F1" /><stop offset=".55" stopColor="#8B5CF6" /><stop offset="1" stopColor="#A855F7" />
@@ -304,16 +305,16 @@ export function LandingScreen() {
                 <text x="159" y="545" textAnchor="middle" fontSize="14" fill="#F1F1F7">Act</text>
                 <circle cx="72" cy="226" r="27" fill="#0B0B16" stroke="url(#omring)" strokeWidth="1.6" />
                 <text x="72" y="232" textAnchor="middle" fill="#B9C0FF">5</text>
-                <text x="72" y="277" textAnchor="middle" fontSize="14" fill="#F1F1F7">Learn</text>
+                <text x="72" y="277" textAnchor="middle" fontSize="14" fill="#F1F1F7">Close</text>
               </g>
             </svg>
           </div>
           <ol className="stages">
-            <li className="stage"><span className="n">1</span><div><h3>Sense</h3><p>Each shadow agent watches the data feeds behind its mandates — <b>continuously</b>, not on a reporting cadence.</p></div></li>
-            <li className="stage"><span className="n">2</span><div><h3>Find</h3><p>When reality drifts from a mandate, the agent raises a <b>finding</b> and traces its impact path up to the intent it threatens.</p></div></li>
-            <li className="stage"><span className="n">3</span><div><h3>Decide</h3><p>The finding demands a human call — one of <b>four dispositions</b>. Nothing proceeds without it; unanswered findings escalate up the shadow org.</p></div></li>
+            <li className="stage"><span className="n">1</span><div><h3>Sense</h3><p>Each counterpart watches the data feeds behind its mandates — <b>continuously</b>, not on a reporting cadence.</p></div></li>
+            <li className="stage"><span className="n">2</span><div><h3>Find</h3><p>When reality drifts from a mandate, the counterpart raises a <b>finding</b> and traces its impact path up to the intent it threatens.</p></div></li>
+            <li className="stage"><span className="n">3</span><div><h3>Decide</h3><p>The finding demands a human call — one of <b>four dispositions</b>. Nothing proceeds without it; unanswered findings escalate up the chain of counterparts.</p></div></li>
             <li className="stage"><span className="n">4</span><div><h3>Act</h3><p>The decision sets the machine in motion: a watched exit condition, a solution with tasks handed to agents, or a deliberate pause.</p></div></li>
-            <li className="stage"><span className="n">5</span><div><h3>Learn</h3><p>Outcomes close the loop — met exit conditions retire the finding, a dismissal <b>tunes the agent</b>, and the picture updates. Then back to sensing.</p></div></li>
+            <li className="stage"><span className="n">5</span><div><h3>Close</h3><p>Nothing is "done" until the number is back — met exit conditions retire the finding, a dismissal <b>tunes the counterpart</b>, and every decision lands in the ledger with a verdict. Then back to sensing.</p></div></li>
           </ol>
         </div>
       </section>
@@ -324,12 +325,34 @@ export function LandingScreen() {
         <h2>The agent brings the finding. The human owns the call.</h2>
         <p className="lede" style={{ marginTop: 18 }}>Every finding forces a choice — and each choice is a different instruction to the organization, not a status you set and forget.</p>
         <div className="dispo">
-          <div className="dcard accept"><span className="tag">it's real</span><div className="verb">Accept</div><p>Set a measurable exit condition. The shadow keeps watching until the number is truly back — then closes the loop itself.</p></div>
+          <div className="dcard accept"><span className="tag">it's real</span><div className="verb">Accept</div><p>Set a measurable exit condition. The counterpart keeps watching until the number is truly back — then closes the loop itself.</p></div>
           <div className="dcard act"><span className="tag">fix it now</span><div className="verb">Act</div><p>Open a solution, broken into tasks. New work goes to agents, existing agents are reused, humans own the rest.</p></div>
           <div className="dcard ack"><span className="tag">not yet</span><div className="verb">Acknowledge</div><p>A known issue, parked with a trip-wire. It comes back — louder — the moment it crosses the line you set.</p></div>
           <div className="dcard abandon"><span className="tag">not real</span><div className="verb">Abandon</div><p>Dismiss it with a reason. The reason isn't paperwork — it's the signal that <b>tunes the agent</b> so it learns what not to raise.</p></div>
         </div>
-        <p className="dispo-foot">No disposition is a decision too — <b>ignored findings escalate automatically</b> up the shadow organization until someone owns them.</p>
+        <p className="dispo-foot">No disposition is a decision too — <b>ignored findings escalate automatically</b> up the chain of counterparts until someone owns them.</p>
+      </section>
+
+      {/* THE PROOF — DECISION LEDGER */}
+      <section className="wrap">
+        <div className="sec-eyebrow"><span className="eyebrow">The proof — the Decision Ledger</span><span className="tick" /></div>
+        <h2>The company's <span className="grad-text">memory of judgment</span>.</h2>
+        <p className="lede" style={{ marginTop: 18 }}>Most companies can tell you what they measured. Almost none can tell you what they decided — or whether it worked. Rewive records both, and an assessor comes back later with the verdict.</p>
+        <div className="tiers">
+          <div className="tier intent">
+            <div className="t-label"><span className="dot" />Recorded</div>
+            <div className="t-def"><b>Every decision, the moment it's made.</b> Who made it, human or agent, what finding prompted it, and what it was expected to cost or earn.</div>
+          </div>
+          <div className="tier mandate">
+            <div className="t-label"><span className="dot" />Judged</div>
+            <div className="t-def"><b>An assessor returns with a verdict.</b> Worked, didn't work, or too early to tell — with the measured impact next to the estimate that justified the call.</div>
+          </div>
+          <div className="tier sense">
+            <div className="t-label"><span className="dot" />Closed</div>
+            <div className="t-def"><b>Nothing is "done" until the number is back.</b> Accepted findings become exit conditions the counterpart watches; acknowledged ones sit on a trip-wire.</div>
+          </div>
+        </div>
+        <p className="held">Auditable by a CFO, not just admired in a review meeting — the ledger is what the accountability layer produces.</p>
       </section>
 
       {/* WORKED EXAMPLE */}
@@ -338,7 +361,7 @@ export function LandingScreen() {
         <h2>What the loop looks like on a real problem.</h2>
         <div className="example">
           <div className="ex-head">
-            <span className="who">Raised by the Shadow Planning agent</span>
+            <span className="who">Raised by the Planning counterpart</span>
             <span className="impact">≈ AED 1.2M revenue at risk this quarter</span>
           </div>
           <div className="ex-flow">
@@ -346,15 +369,15 @@ export function LandingScreen() {
             <div className="ex-step"><span className="s-tag">2 · Find</span><span className="s-body">"Frozen forecast bias is starving modern trade." Traced up to the <b>Revenue growth</b> intent.</span></div>
             <div className="ex-step pivot"><span className="s-tag">3 · Decide</span><span className="s-body">The planning owner reviews the impact path and clicks <b>Accept</b>.</span></div>
             <div className="ex-step"><span className="s-tag">4 · Act</span><span className="s-body">Exit condition set: <b>frozen fill ≥ 96% for four straight weeks</b>, watched automatically.</span></div>
-            <div className="ex-step"><span className="s-tag">5 · Learn</span><span className="s-body">Fill recovers, the condition is met, the finding <b>closes itself</b> — and the picture updates.</span></div>
+            <div className="ex-step"><span className="s-tag">5 · Close</span><span className="s-body">Fill recovers, the condition is met, the finding <b>closes itself</b> — and the decision lands in the ledger with its verdict.</span></div>
           </div>
         </div>
       </section>
 
       {/* CLOSE */}
       <section className="close wrap">
-        <h2>An organization that <span className="grad-text">points at what you decided matters</span> — without being asked.</h2>
-        <p className="lede">One organization does the work. Its shadow makes sure the work still serves the intent, catches it when it doesn't, and brings you the decision the moment it counts.</p>
+        <h2>A number that drifts is <span className="grad-text">no longer nobody's problem</span>.</h2>
+        <p className="lede">The organization does the work. Its counterparts make sure the work still serves the intent, catch it when it doesn't, and bring you the decision the moment it counts.</p>
         <div><a href="#start" className="cta">Choose your context <span className="arr">↑</span></a></div>
         <p className="sig">Every mandate, held twice.</p>
       </section>

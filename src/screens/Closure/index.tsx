@@ -82,7 +82,7 @@ export function ClosureScreen() {
     <section className="screen" style={{ maxWidth: 1140 }}>
       <h1 className="page">Closure</h1>
       <div className="sub">
-        Where the loop closes. Accepted findings become exit conditions the shadow watches until they're truly met;
+        Where the loop closes. Accepted findings become exit conditions the counterpart watches until they're truly met;
         acknowledged findings sit on a trip-wire that fires when things worsen. Nothing is "done" until the number is back.
       </div>
 

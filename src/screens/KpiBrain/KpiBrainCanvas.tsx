@@ -96,7 +96,7 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
 
       {proposedEdges.length > 0 && (
         <div className="brain-proposals">
-          <div className="bp-title">{proposedEdges.length} petition{proposedEdges.length > 1 ? 's' : ''} from the shadow org</div>
+          <div className="bp-title">{proposedEdges.length} petition{proposedEdges.length > 1 ? 's' : ''} from the counterparts</div>
           {proposedEdges.map((e) => (
             <div key={e.id} className="bp-item">
               <div className="bp-rationale">{e.rationale ?? 'Agent-petitioned link'}</div>

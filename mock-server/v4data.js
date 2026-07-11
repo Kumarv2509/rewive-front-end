@@ -1,4 +1,4 @@
-// v4 seed data: shadow organization — KPI brains, shadow agents, findings, closure KPIs.
+// v4 seed data: counterpart org — KPI brains, counterpart agents, findings, closure KPIs.
 // Three industry templates. FMCG is the primary demo (Americana-style); Healthcare and
 // Manufacturing prove the brain is template-driven, not hardcoded.
 
@@ -81,7 +81,7 @@ const fmcgNodes = [
   { id: 'fmcg-d-tradeledger', kind: 'driver', name: 'Trade-spend ledger', streamKey: 'finance', definition: 'Promotions, listing fees and rebates by customer and brand.', status: 'needs_data', dataSources: [] },
 
   // Agent-proposed node awaiting accept / decline
-  { id: 'fmcg-k-otifmt', kind: 'stream_kpi', name: 'OTIF — modern trade split', streamKey: 'planning', definition: 'Case fill measured separately for modern trade, where penalties apply.', status: 'proposed', proposedBy: 'Shadow planning agent', dataSources: ['ERP order lines', 'Modern trade POS API'] },
+  { id: 'fmcg-k-otifmt', kind: 'stream_kpi', name: 'OTIF — modern trade split', streamKey: 'planning', definition: 'Case fill measured separately for modern trade, where penalties apply.', status: 'proposed', proposedBy: 'Planning counterpart', dataSources: ['ERP order lines', 'Modern trade POS API'] },
 ];
 
 const fmcgEdges = [
@@ -124,8 +124,8 @@ const fmcgEdges = [
   { id: 'fmcg-e-32', source: 'fmcg-k-croi', target: 'fmcg-t-rev', weight: 'weak', status: 'connected' },
 
   // agent-proposed edges awaiting accept / decline
-  { id: 'fmcg-e-p1', source: 'fmcg-k-cho', target: 'fmcg-k-yield', weight: 'moderate', status: 'proposed', proposedBy: 'Shadow manufacturing agent', rationale: 'Yield dips in the first hour after changeovers correlate 0.71 with changeover duration over the last 12 weeks.' },
-  { id: 'fmcg-e-p2', source: 'fmcg-k-otifmt', target: 'fmcg-k-osa', weight: 'strong', status: 'proposed', proposedBy: 'Shadow planning agent', rationale: 'Modern trade OTIF drives penalty exposure and shelf availability where measured share is won.' },
+  { id: 'fmcg-e-p1', source: 'fmcg-k-cho', target: 'fmcg-k-yield', weight: 'moderate', status: 'proposed', proposedBy: 'Manufacturing counterpart', rationale: 'Yield dips in the first hour after changeovers correlate 0.71 with changeover duration over the last 12 weeks.' },
+  { id: 'fmcg-e-p2', source: 'fmcg-k-otifmt', target: 'fmcg-k-osa', weight: 'strong', status: 'proposed', proposedBy: 'Planning counterpart', rationale: 'Modern trade OTIF drives penalty exposure and shelf availability where measured share is won.' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -293,45 +293,45 @@ export const brains = {
 };
 
 // ---------------------------------------------------------------------------
-// Shadow orgs (one agent per stream + an org-level chief of staff)
+// Counterpart orgs (one agent per stream + an org-level chief of staff)
 // ---------------------------------------------------------------------------
 export const shadowOrgs = {
   fmcg: {
     industry: 'fmcg',
     agents: [
-      { id: 'fmcg-sa-chief', name: 'Shadow chief of staff', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['fmcg-t-rev', 'fmcg-t-ebitda', 'fmcg-t-share', 'fmcg-t-cash'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-05T09:40:00Z', reportsToAgentId: null },
-      { id: 'fmcg-sa-commercial', name: 'Shadow commercial', streamKey: 'commercial', humanOwner: { name: 'Layla Nasser', initials: 'LN', avatarBg: '#0E7490', role: 'Commercial director' }, watchesNodeIds: ['fmcg-k-osa', 'fmcg-k-dist', 'fmcg-k-sellgap', 'fmcg-k-troi', 'fmcg-d-pos'], openFindings: 0, slaBreaches: 0, temperament: 55, health: 'attention', lastFindingAt: '2026-07-02T14:10:00Z', reportsToAgentId: 'fmcg-sa-chief' },
-      { id: 'fmcg-sa-planning', name: 'Shadow planning', streamKey: 'planning', humanOwner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309', role: 'Head of planning' }, watchesNodeIds: ['fmcg-k-mape', 'fmcg-k-fill', 'fmcg-k-invdays', 'fmcg-k-obs', 'fmcg-d-dcstock'], openFindings: 0, slaBreaches: 1, temperament: 60, health: 'critical', lastFindingAt: '2026-07-06T06:20:00Z', reportsToAgentId: 'fmcg-sa-chief' },
-      { id: 'fmcg-sa-manufacturing', name: 'Shadow manufacturing', streamKey: 'manufacturing', humanOwner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED', role: 'Plant director' }, watchesNodeIds: ['fmcg-k-oee', 'fmcg-k-yield', 'fmcg-k-waste', 'fmcg-k-cho', 'fmcg-d-linesensors'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: '2026-07-05T22:05:00Z', reportsToAgentId: 'fmcg-sa-chief' },
-      { id: 'fmcg-sa-logistics', name: 'Shadow logistics', streamKey: 'logistics', humanOwner: { name: 'Tariq Aziz', initials: 'TA', avatarBg: '#0F766E', role: 'Logistics head' }, watchesNodeIds: ['fmcg-k-cpc', 'fmcg-k-truck', 'fmcg-k-cold', 'fmcg-d-tempprobes'], openFindings: 0, slaBreaches: 1, temperament: 50, health: 'critical', lastFindingAt: '2026-07-06T04:45:00Z', reportsToAgentId: 'fmcg-sa-chief' },
-      { id: 'fmcg-sa-quality', name: 'Shadow quality', streamKey: 'quality', humanOwner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', role: 'Quality & food safety lead' }, watchesNodeIds: ['fmcg-k-ppm', 'fmcg-k-audit', 'fmcg-d-complaints'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: '2026-06-28T11:30:00Z', reportsToAgentId: 'fmcg-sa-chief' },
-      { id: 'fmcg-sa-finance', name: 'Shadow finance', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['fmcg-k-gm', 'fmcg-k-cogsvar', 'fmcg-k-wcd', 'fmcg-k-tradepct', 'fmcg-d-tradeledger'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: '2026-07-03T16:00:00Z', reportsToAgentId: 'fmcg-sa-chief' },
-      { id: 'fmcg-sa-marketing', name: 'Shadow marketing', streamKey: 'marketing', humanOwner: { name: 'Sara Idris', initials: 'SI', avatarBg: '#9333EA', role: 'Marketing director' }, watchesNodeIds: ['fmcg-k-npd', 'fmcg-k-croi'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'healthy', lastFindingAt: '2026-06-30T10:15:00Z', reportsToAgentId: 'fmcg-sa-chief' },
-      { id: 'fmcg-sa-people', name: 'Shadow people', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['fmcg-k-attr', 'fmcg-k-lti'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-25T08:00:00Z', reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-chief', name: 'Chief of staff counterpart', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['fmcg-t-rev', 'fmcg-t-ebitda', 'fmcg-t-share', 'fmcg-t-cash'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-05T09:40:00Z', reportsToAgentId: null },
+      { id: 'fmcg-sa-commercial', name: 'Commercial counterpart', streamKey: 'commercial', humanOwner: { name: 'Layla Nasser', initials: 'LN', avatarBg: '#0E7490', role: 'Commercial director' }, watchesNodeIds: ['fmcg-k-osa', 'fmcg-k-dist', 'fmcg-k-sellgap', 'fmcg-k-troi', 'fmcg-d-pos'], openFindings: 0, slaBreaches: 0, temperament: 55, health: 'attention', lastFindingAt: '2026-07-02T14:10:00Z', reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-planning', name: 'Planning counterpart', streamKey: 'planning', humanOwner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309', role: 'Head of planning' }, watchesNodeIds: ['fmcg-k-mape', 'fmcg-k-fill', 'fmcg-k-invdays', 'fmcg-k-obs', 'fmcg-d-dcstock'], openFindings: 0, slaBreaches: 1, temperament: 60, health: 'critical', lastFindingAt: '2026-07-06T06:20:00Z', reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-manufacturing', name: 'Manufacturing counterpart', streamKey: 'manufacturing', humanOwner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED', role: 'Plant director' }, watchesNodeIds: ['fmcg-k-oee', 'fmcg-k-yield', 'fmcg-k-waste', 'fmcg-k-cho', 'fmcg-d-linesensors'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: '2026-07-05T22:05:00Z', reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-logistics', name: 'Logistics counterpart', streamKey: 'logistics', humanOwner: { name: 'Tariq Aziz', initials: 'TA', avatarBg: '#0F766E', role: 'Logistics head' }, watchesNodeIds: ['fmcg-k-cpc', 'fmcg-k-truck', 'fmcg-k-cold', 'fmcg-d-tempprobes'], openFindings: 0, slaBreaches: 1, temperament: 50, health: 'critical', lastFindingAt: '2026-07-06T04:45:00Z', reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-quality', name: 'Quality counterpart', streamKey: 'quality', humanOwner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', role: 'Quality & food safety lead' }, watchesNodeIds: ['fmcg-k-ppm', 'fmcg-k-audit', 'fmcg-d-complaints'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: '2026-06-28T11:30:00Z', reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-finance', name: 'Finance counterpart', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['fmcg-k-gm', 'fmcg-k-cogsvar', 'fmcg-k-wcd', 'fmcg-k-tradepct', 'fmcg-d-tradeledger'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: '2026-07-03T16:00:00Z', reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-marketing', name: 'Marketing counterpart', streamKey: 'marketing', humanOwner: { name: 'Sara Idris', initials: 'SI', avatarBg: '#9333EA', role: 'Marketing director' }, watchesNodeIds: ['fmcg-k-npd', 'fmcg-k-croi'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'healthy', lastFindingAt: '2026-06-30T10:15:00Z', reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-people', name: 'People counterpart', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['fmcg-k-attr', 'fmcg-k-lti'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-25T08:00:00Z', reportsToAgentId: 'fmcg-sa-chief' },
     ],
   },
   healthcare: {
     industry: 'healthcare',
     agents: [
-      { id: 'hc-sa-chief', name: 'Shadow chief of staff', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['hc-t-margin', 'hc-t-quality', 'hc-t-access', 'hc-t-safety'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-04T12:00:00Z', reportsToAgentId: null },
-      { id: 'hc-sa-clinical', name: 'Shadow clinical ops', streamKey: 'clinical', humanOwner: { name: 'Dr. Maya Suresh', initials: 'MS', avatarBg: '#0E7490', role: 'Chief medical officer' }, watchesNodeIds: ['hc-k-alos', 'hc-k-bed', 'hc-k-orutil', 'hc-k-edwait', 'hc-k-hai', 'hc-k-mortality', 'hc-d-emr', 'hc-d-lab'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: '2026-07-01T09:00:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-revcycle', name: 'Shadow revenue cycle', streamKey: 'revcycle', humanOwner: { name: 'James Okafor', initials: 'JO', avatarBg: '#B45309', role: 'Revenue cycle director' }, watchesNodeIds: ['hc-k-ar', 'hc-k-denial', 'hc-k-cleanclaim', 'hc-k-poscash', 'hc-d-claims'], openFindings: 0, slaBreaches: 1, temperament: 55, health: 'critical', lastFindingAt: '2026-07-06T05:30:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-patientexp', name: 'Shadow patient experience', streamKey: 'patientexp', humanOwner: { name: 'Fatima Al Marri', initials: 'FA', avatarBg: '#BE185D', role: 'Patient experience lead' }, watchesNodeIds: ['hc-k-noshow', 'hc-k-nps', 'hc-k-clinicwait', 'hc-k-complaint', 'hc-d-sched', 'hc-d-survey'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-05T15:20:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-pharmacy', name: 'Shadow pharmacy', streamKey: 'pharmacy', humanOwner: { name: 'Ravi Menon', initials: 'RM', avatarBg: '#0F766E', role: 'Pharmacy operations head' }, watchesNodeIds: ['hc-k-generic', 'hc-k-mederror', 'hc-k-drugspend', 'hc-d-pharmacy'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-27T10:00:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-finance', name: 'Shadow finance', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['hc-k-labor', 'hc-k-costdischarge', 'hc-k-cashdays', 'hc-d-gl'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: '2026-07-02T13:45:00Z', reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-people', name: 'Shadow people', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['hc-k-nurseattr', 'hc-k-agency', 'hc-d-hr'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-29T09:30:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-chief', name: 'Chief of staff counterpart', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['hc-t-margin', 'hc-t-quality', 'hc-t-access', 'hc-t-safety'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-04T12:00:00Z', reportsToAgentId: null },
+      { id: 'hc-sa-clinical', name: 'Clinical ops counterpart', streamKey: 'clinical', humanOwner: { name: 'Dr. Maya Suresh', initials: 'MS', avatarBg: '#0E7490', role: 'Chief medical officer' }, watchesNodeIds: ['hc-k-alos', 'hc-k-bed', 'hc-k-orutil', 'hc-k-edwait', 'hc-k-hai', 'hc-k-mortality', 'hc-d-emr', 'hc-d-lab'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: '2026-07-01T09:00:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-revcycle', name: 'Revenue cycle counterpart', streamKey: 'revcycle', humanOwner: { name: 'James Okafor', initials: 'JO', avatarBg: '#B45309', role: 'Revenue cycle director' }, watchesNodeIds: ['hc-k-ar', 'hc-k-denial', 'hc-k-cleanclaim', 'hc-k-poscash', 'hc-d-claims'], openFindings: 0, slaBreaches: 1, temperament: 55, health: 'critical', lastFindingAt: '2026-07-06T05:30:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-patientexp', name: 'Patient experience counterpart', streamKey: 'patientexp', humanOwner: { name: 'Fatima Al Marri', initials: 'FA', avatarBg: '#BE185D', role: 'Patient experience lead' }, watchesNodeIds: ['hc-k-noshow', 'hc-k-nps', 'hc-k-clinicwait', 'hc-k-complaint', 'hc-d-sched', 'hc-d-survey'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-05T15:20:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-pharmacy', name: 'Pharmacy counterpart', streamKey: 'pharmacy', humanOwner: { name: 'Ravi Menon', initials: 'RM', avatarBg: '#0F766E', role: 'Pharmacy operations head' }, watchesNodeIds: ['hc-k-generic', 'hc-k-mederror', 'hc-k-drugspend', 'hc-d-pharmacy'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-27T10:00:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-finance', name: 'Finance counterpart', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['hc-k-labor', 'hc-k-costdischarge', 'hc-k-cashdays', 'hc-d-gl'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: '2026-07-02T13:45:00Z', reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-people', name: 'People counterpart', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['hc-k-nurseattr', 'hc-k-agency', 'hc-d-hr'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: '2026-06-29T09:30:00Z', reportsToAgentId: 'hc-sa-chief' },
     ],
   },
   manufacturing: {
     industry: 'manufacturing',
     agents: [
-      { id: 'mfg-sa-chief', name: 'Shadow chief of staff', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['mfg-t-otd', 'mfg-t-unitcost', 'mfg-t-safety'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-05T18:00:00Z', reportsToAgentId: null },
-      { id: 'mfg-sa-production', name: 'Shadow production', streamKey: 'production', humanOwner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED', role: 'Plant director' }, watchesNodeIds: ['mfg-k-oee', 'mfg-k-throughput', 'mfg-k-scrap', 'mfg-d-mes'], openFindings: 0, slaBreaches: 0, temperament: 50, health: 'attention', lastFindingAt: '2026-07-05T20:10:00Z', reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-maintenance', name: 'Shadow maintenance', streamKey: 'maintenance', humanOwner: { name: 'Hassan Jaber', initials: 'HJ', avatarBg: '#B45309', role: 'Maintenance manager' }, watchesNodeIds: ['mfg-k-unplanned', 'mfg-k-pmcomp', 'mfg-d-cmms'], openFindings: 0, slaBreaches: 1, temperament: 60, health: 'critical', lastFindingAt: '2026-07-06T03:15:00Z', reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-supplychain', name: 'Shadow supplier network', streamKey: 'supplychain', humanOwner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#0E7490', role: 'Supply chain manager' }, watchesNodeIds: ['mfg-k-supotd', 'mfg-k-rawdays', 'mfg-d-erp'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: '2026-07-04T16:40:00Z', reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-quality', name: 'Shadow quality', streamKey: 'quality', humanOwner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', role: 'Quality manager' }, watchesNodeIds: ['mfg-k-fpy', 'mfg-k-custppm'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: '2026-07-01T11:00:00Z', reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-safety', name: 'Shadow safety', streamKey: 'safety', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'EHS lead' }, watchesNodeIds: ['mfg-k-nearmiss'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: '2026-06-30T14:00:00Z', reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-finance', name: 'Shadow finance', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'Plant controller' }, watchesNodeIds: ['mfg-k-costvar'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: '2026-07-03T10:20:00Z', reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-chief', name: 'Chief of staff counterpart', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['mfg-t-otd', 'mfg-t-unitcost', 'mfg-t-safety'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: '2026-07-05T18:00:00Z', reportsToAgentId: null },
+      { id: 'mfg-sa-production', name: 'Production counterpart', streamKey: 'production', humanOwner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED', role: 'Plant director' }, watchesNodeIds: ['mfg-k-oee', 'mfg-k-throughput', 'mfg-k-scrap', 'mfg-d-mes'], openFindings: 0, slaBreaches: 0, temperament: 50, health: 'attention', lastFindingAt: '2026-07-05T20:10:00Z', reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-maintenance', name: 'Maintenance counterpart', streamKey: 'maintenance', humanOwner: { name: 'Hassan Jaber', initials: 'HJ', avatarBg: '#B45309', role: 'Maintenance manager' }, watchesNodeIds: ['mfg-k-unplanned', 'mfg-k-pmcomp', 'mfg-d-cmms'], openFindings: 0, slaBreaches: 1, temperament: 60, health: 'critical', lastFindingAt: '2026-07-06T03:15:00Z', reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-supplychain', name: 'Supplier network counterpart', streamKey: 'supplychain', humanOwner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#0E7490', role: 'Supply chain manager' }, watchesNodeIds: ['mfg-k-supotd', 'mfg-k-rawdays', 'mfg-d-erp'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: '2026-07-04T16:40:00Z', reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-quality', name: 'Quality counterpart', streamKey: 'quality', humanOwner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', role: 'Quality manager' }, watchesNodeIds: ['mfg-k-fpy', 'mfg-k-custppm'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: '2026-07-01T11:00:00Z', reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-safety', name: 'Safety counterpart', streamKey: 'safety', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'EHS lead' }, watchesNodeIds: ['mfg-k-nearmiss'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: '2026-06-30T14:00:00Z', reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-finance', name: 'Finance counterpart', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'Plant controller' }, watchesNodeIds: ['mfg-k-costvar'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: '2026-07-03T10:20:00Z', reportsToAgentId: 'mfg-sa-chief' },
     ],
   },
 };
@@ -345,7 +345,7 @@ export const findingsSeed = {
       id: 'fmcg-f-1',
       title: 'Frozen category forecast bias is starving modern trade',
       summary: 'The frozen range has been under-forecast by a persistent 11% for eight straight weeks. Replenishment is chasing demand it never planned for, fill rate is sliding, and top-40 stores are showing repeat stockouts on the four best-selling SKUs.',
-      raisedByAgentId: 'fmcg-sa-planning', raisedByAgentName: 'Shadow planning', streamKey: 'planning', linkedKpiNodeId: 'fmcg-k-mape', severity: 'critical',
+      raisedByAgentId: 'fmcg-sa-planning', raisedByAgentName: 'Planning counterpart', streamKey: 'planning', linkedKpiNodeId: 'fmcg-k-mape', severity: 'critical',
       impactPath: [
         { nodeId: 'fmcg-k-mape', nodeName: 'Forecast accuracy', kind: 'stream_kpi', effect: '-11% persistent under-forecast on frozen' },
         { nodeId: 'fmcg-k-fill', nodeName: 'Case fill rate (OTIF)', kind: 'stream_kpi', effect: 'frozen fill down to 88% vs 97% target' },
@@ -368,7 +368,7 @@ export const findingsSeed = {
       id: 'fmcg-f-2',
       title: 'Line 3 waste running 4.8% against a 3.5% standard',
       summary: 'Waste on Line 3 stepped up after the June changeover pattern shifted to shorter runs. Start-up losses per changeover are unchanged, but changeovers per week nearly doubled — the waste is structural to the new schedule, not an operator issue.',
-      raisedByAgentId: 'fmcg-sa-manufacturing', raisedByAgentName: 'Shadow manufacturing', streamKey: 'manufacturing', linkedKpiNodeId: 'fmcg-k-waste', severity: 'high',
+      raisedByAgentId: 'fmcg-sa-manufacturing', raisedByAgentName: 'Manufacturing counterpart', streamKey: 'manufacturing', linkedKpiNodeId: 'fmcg-k-waste', severity: 'high',
       impactPath: [
         { nodeId: 'fmcg-k-waste', nodeName: 'Waste & scrap', kind: 'stream_kpi', effect: '4.8% vs 3.5% standard since week 24' },
         { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: '+0.6pp of the +2.4% variance traced here' },
@@ -391,7 +391,7 @@ export const findingsSeed = {
       id: 'fmcg-f-3',
       title: 'Cold-chain excursions on the Dubai–Sharjah corridor doubled month over month',
       summary: 'Reefer excursions on corridor DXB-12 went from 6 to 14 in a month. Nine of the fourteen trace to two specific vehicles. If the pattern holds, quality complaints follow within 2-4 weeks based on prior episodes.',
-      raisedByAgentId: 'fmcg-sa-logistics', raisedByAgentName: 'Shadow logistics', streamKey: 'logistics', linkedKpiNodeId: 'fmcg-k-cold', severity: 'high',
+      raisedByAgentId: 'fmcg-sa-logistics', raisedByAgentName: 'Logistics counterpart', streamKey: 'logistics', linkedKpiNodeId: 'fmcg-k-cold', severity: 'high',
       impactPath: [
         { nodeId: 'fmcg-k-cold', nodeName: 'Cold-chain excursions', kind: 'stream_kpi', effect: '14 last month vs 6 prior' },
         { nodeId: 'fmcg-k-ppm', nodeName: 'Complaints per million', kind: 'stream_kpi', effect: 'complaint spike expected within 2-4 weeks' },
@@ -413,7 +413,7 @@ export const findingsSeed = {
       id: 'fmcg-f-4',
       title: 'Juice trade spend exceeding plan with flat sell-out',
       summary: 'Trade investment in juices is tracking 14.8% of revenue against a 13% plan, while POS sell-out is flat. The extra spend is buying display, not offtake.',
-      raisedByAgentId: 'fmcg-sa-finance', raisedByAgentName: 'Shadow finance', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-tradepct', severity: 'medium',
+      raisedByAgentId: 'fmcg-sa-finance', raisedByAgentName: 'Finance counterpart', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-tradepct', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-tradepct', nodeName: 'Trade spend % of revenue', kind: 'stream_kpi', effect: '14.8% vs 13% plan, concentrated in juices' },
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'juice margin down 1.1pp QTD' },
@@ -435,7 +435,7 @@ export const findingsSeed = {
       id: 'fmcg-f-5',
       title: 'On-shelf availability slipped below 94% in top-40 stores',
       summary: 'OSA in the top-40 stores dipped to 93.1%, driven by the frozen fill problem plus slow shelf recovery after weekend peaks. Accepted: tracked with a closure KPI while the frozen forecast finding is worked separately.',
-      raisedByAgentId: 'fmcg-sa-commercial', raisedByAgentName: 'Shadow commercial', streamKey: 'commercial', linkedKpiNodeId: 'fmcg-k-osa', severity: 'medium',
+      raisedByAgentId: 'fmcg-sa-commercial', raisedByAgentName: 'Commercial counterpart', streamKey: 'commercial', linkedKpiNodeId: 'fmcg-k-osa', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: '93.1% vs 96% target in top-40 stores' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'each OSA point ≈ AED 220k monthly revenue' },
@@ -455,7 +455,7 @@ export const findingsSeed = {
       id: 'fmcg-f-6',
       title: 'Complaint spike in week 22 across chilled desserts',
       summary: 'A 3x complaint spike in week 22 traced to a single reefer breakdown on one delivery, already repaired and stock withdrawn. No systemic pattern.',
-      raisedByAgentId: 'fmcg-sa-quality', raisedByAgentName: 'Shadow quality', streamKey: 'quality', linkedKpiNodeId: 'fmcg-k-ppm', severity: 'low',
+      raisedByAgentId: 'fmcg-sa-quality', raisedByAgentName: 'Quality counterpart', streamKey: 'quality', linkedKpiNodeId: 'fmcg-k-ppm', severity: 'low',
       impactPath: [
         { nodeId: 'fmcg-k-ppm', nodeName: 'Complaints per million', kind: 'stream_kpi', effect: 'one-week spike, reverted' },
         { nodeId: 'fmcg-t-share', nodeName: 'Market share', kind: 'target', effect: 'no measurable exposure' },
@@ -478,7 +478,7 @@ export const findingsSeed = {
       id: 'hc-f-1',
       title: 'First-pass denial rate jumped 3 points after the payer policy change',
       summary: 'Denials stepped from 8.9% to 11.8% in five weeks, concentrated in two payers that changed prior-authorization rules. Each denied claim adds 30-60 days of rework before payment.',
-      raisedByAgentId: 'hc-sa-revcycle', raisedByAgentName: 'Shadow revenue cycle', streamKey: 'revcycle', linkedKpiNodeId: 'hc-k-denial', severity: 'critical',
+      raisedByAgentId: 'hc-sa-revcycle', raisedByAgentName: 'Revenue cycle counterpart', streamKey: 'revcycle', linkedKpiNodeId: 'hc-k-denial', severity: 'critical',
       impactPath: [
         { nodeId: 'hc-k-denial', nodeName: 'Claim denial rate', kind: 'stream_kpi', effect: '11.8% vs 7% target, 2 payers drive the step' },
         { nodeId: 'hc-k-ar', nodeName: 'Days in AR', kind: 'stream_kpi', effect: 'AR days up 54 and climbing' },
@@ -500,7 +500,7 @@ export const findingsSeed = {
       id: 'hc-f-2',
       title: 'No-show rate creeping up in specialty clinics',
       summary: 'Specialty no-shows rose from 10.1% to 12.4% over two months, worst in dermatology and cardiology follow-ups booked more than 3 weeks out.',
-      raisedByAgentId: 'hc-sa-patientexp', raisedByAgentName: 'Shadow patient experience', streamKey: 'patientexp', linkedKpiNodeId: 'hc-k-noshow', severity: 'medium',
+      raisedByAgentId: 'hc-sa-patientexp', raisedByAgentName: 'Patient experience counterpart', streamKey: 'patientexp', linkedKpiNodeId: 'hc-k-noshow', severity: 'medium',
       impactPath: [
         { nodeId: 'hc-k-noshow', nodeName: 'No-show rate', kind: 'stream_kpi', effect: '12.4%, worst on 3+ week lead times' },
         { nodeId: 'hc-k-orutil', nodeName: 'OR utilization', kind: 'stream_kpi', effect: 'downstream block-time gaps' },
@@ -521,7 +521,7 @@ export const findingsSeed = {
       id: 'hc-f-3',
       title: 'ALOS drift in medical wards',
       summary: 'Case-mix-adjusted length of stay drifted from 4.5 to 4.9 days, mostly discharge delays waiting on social-care placement. Accepted and tracked.',
-      raisedByAgentId: 'hc-sa-clinical', raisedByAgentName: 'Shadow clinical ops', streamKey: 'clinical', linkedKpiNodeId: 'hc-k-alos', severity: 'medium',
+      raisedByAgentId: 'hc-sa-clinical', raisedByAgentName: 'Clinical ops counterpart', streamKey: 'clinical', linkedKpiNodeId: 'hc-k-alos', severity: 'medium',
       impactPath: [
         { nodeId: 'hc-k-alos', nodeName: 'Average length of stay', kind: 'stream_kpi', effect: '4.9 vs 4.3 target' },
         { nodeId: 'hc-k-bed', nodeName: 'Bed occupancy', kind: 'stream_kpi', effect: 'bed pressure on admission days' },
@@ -544,7 +544,7 @@ export const findingsSeed = {
       id: 'mfg-f-1',
       title: 'Unplanned downtime on the press line tripled as PM compliance slid',
       summary: 'PM compliance fell from 92% to 76% over a quarter as crews were pulled to expedites. Unplanned downtime followed exactly the 4-8 week lag the model predicts — now 22 h/wk on the constraint.',
-      raisedByAgentId: 'mfg-sa-maintenance', raisedByAgentName: 'Shadow maintenance', streamKey: 'maintenance', linkedKpiNodeId: 'mfg-k-unplanned', severity: 'critical',
+      raisedByAgentId: 'mfg-sa-maintenance', raisedByAgentName: 'Maintenance counterpart', streamKey: 'maintenance', linkedKpiNodeId: 'mfg-k-unplanned', severity: 'critical',
       impactPath: [
         { nodeId: 'mfg-k-pmcomp', nodeName: 'PM compliance', kind: 'stream_kpi', effect: '92% → 76% over the quarter' },
         { nodeId: 'mfg-k-unplanned', nodeName: 'Unplanned downtime', kind: 'stream_kpi', effect: '22 h/wk on the constraint line' },
@@ -567,7 +567,7 @@ export const findingsSeed = {
       id: 'mfg-f-2',
       title: 'Two suppliers drive the entire OTIF slide',
       summary: 'Supplier OTIF fell to 84%. Removing two castings suppliers puts the rest of the base at 96% — the problem is concentrated, not systemic.',
-      raisedByAgentId: 'mfg-sa-supplychain', raisedByAgentName: 'Shadow supplier network', streamKey: 'supplychain', linkedKpiNodeId: 'mfg-k-supotd', severity: 'high',
+      raisedByAgentId: 'mfg-sa-supplychain', raisedByAgentName: 'Supplier network counterpart', streamKey: 'supplychain', linkedKpiNodeId: 'mfg-k-supotd', severity: 'high',
       impactPath: [
         { nodeId: 'mfg-k-supotd', nodeName: 'Supplier OTIF', kind: 'stream_kpi', effect: '84%; two suppliers account for the slide' },
         { nodeId: 'mfg-t-otd', nodeName: 'On-time delivery', kind: 'target', effect: 'casting shortages gate final assembly' },
@@ -587,7 +587,7 @@ export const findingsSeed = {
       id: 'mfg-f-3',
       title: 'Scrap concentrated in one part family after tooling change',
       summary: 'Scrap on the B-housing family doubled after the May tooling refresh. Acknowledged pending the tooling vendor’s inspection report.',
-      raisedByAgentId: 'mfg-sa-production', raisedByAgentName: 'Shadow production', streamKey: 'production', linkedKpiNodeId: 'mfg-k-scrap', severity: 'medium',
+      raisedByAgentId: 'mfg-sa-production', raisedByAgentName: 'Production counterpart', streamKey: 'production', linkedKpiNodeId: 'mfg-k-scrap', severity: 'medium',
       impactPath: [
         { nodeId: 'mfg-k-scrap', nodeName: 'Scrap rate', kind: 'stream_kpi', effect: 'B-housing scrap 2x after tooling refresh' },
         { nodeId: 'mfg-k-costvar', nodeName: 'Cost variance vs standard', kind: 'stream_kpi', effect: '+0.8pp of variance from this family' },
@@ -614,11 +614,11 @@ export const findingsSeed = {
 // ---------------------------------------------------------------------------
 export const closureKpisSeed = {
   fmcg: [
-    { id: 'fmcg-c-1', findingId: 'fmcg-f-5', findingTitle: 'On-shelf availability slipped below 94% in top-40 stores', name: 'OSA in top-40 stores at or above 96% for 4 consecutive weeks', baseline: '93.1%', target: '96%', current: '94.9%', progressPct: 62, status: 'tracking', watchedByAgentName: 'Shadow commercial', createdAt: '2026-07-02T15:00:00Z', closedAt: null },
-    { id: 'fmcg-c-2', findingId: 'fmcg-f-0', findingTitle: 'Q1 obsolescence spike in canned range (closed)', name: 'Obsolescence write-offs below AED 120k/month for a full quarter', baseline: 'AED 310k/mo', target: 'AED 120k/mo', current: 'AED 96k/mo', progressPct: 100, status: 'closed', watchedByAgentName: 'Shadow planning', createdAt: '2026-03-14T09:00:00Z', closedAt: '2026-06-20T09:00:00Z' },
+    { id: 'fmcg-c-1', findingId: 'fmcg-f-5', findingTitle: 'On-shelf availability slipped below 94% in top-40 stores', name: 'OSA in top-40 stores at or above 96% for 4 consecutive weeks', baseline: '93.1%', target: '96%', current: '94.9%', progressPct: 62, status: 'tracking', watchedByAgentName: 'Commercial counterpart', createdAt: '2026-07-02T15:00:00Z', closedAt: null },
+    { id: 'fmcg-c-2', findingId: 'fmcg-f-0', findingTitle: 'Q1 obsolescence spike in canned range (closed)', name: 'Obsolescence write-offs below AED 120k/month for a full quarter', baseline: 'AED 310k/mo', target: 'AED 120k/mo', current: 'AED 96k/mo', progressPct: 100, status: 'closed', watchedByAgentName: 'Planning counterpart', createdAt: '2026-03-14T09:00:00Z', closedAt: '2026-06-20T09:00:00Z' },
   ],
   healthcare: [
-    { id: 'hc-c-1', findingId: 'hc-f-3', findingTitle: 'ALOS drift in medical wards', name: 'ALOS back to 4.3 days for a full month', baseline: '4.9', target: '4.3', current: '4.7', progressPct: 33, status: 'tracking', watchedByAgentName: 'Shadow clinical ops', createdAt: '2026-07-01T10:00:00Z', closedAt: null },
+    { id: 'hc-c-1', findingId: 'hc-f-3', findingTitle: 'ALOS drift in medical wards', name: 'ALOS back to 4.3 days for a full month', baseline: '4.9', target: '4.3', current: '4.7', progressPct: 33, status: 'tracking', watchedByAgentName: 'Clinical ops counterpart', createdAt: '2026-07-01T10:00:00Z', closedAt: null },
   ],
   manufacturing: [],
 };

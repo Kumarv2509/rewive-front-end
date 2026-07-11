@@ -54,11 +54,11 @@ function AgentCard({ agent, mandateCount, findings }: { agent: ShadowAgent; mand
           <Pill tone={healthTone[agent.health]}>{healthLabel[agent.health]}</Pill>
         </div>
 
-        {/* held twice — the shadow and its human */}
+        {/* held twice — the counterpart and its human */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 11, background: 'rgba(255,255,255,.03)', border: '1px solid var(--border)', marginBottom: 14 }}>
           <div className="avatar" style={{ background: o.avatarBg }}>{o.initials}</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--ink-3)' }}>shadows</div>
+            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--ink-3)' }}>counterpart to</div>
             <div style={{ fontWeight: 600, fontSize: 12.5 }}>{o.name}</div>
             <div style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>{o.role}</div>
           </div>
@@ -113,8 +113,8 @@ export function ShadowOrgScreen() {
   const { data: findings } = useFindings();
   const { data: brain } = useKpiBrain();
 
-  if (isLoading) return <section className="screen"><Loading label="Assembling the shadow organization…" /></section>;
-  if (isError || !org) return <section className="screen"><ErrorMessage message="Couldn't load the shadow organization." /></section>;
+  if (isLoading) return <section className="screen"><Loading label="Assembling the counterparts…" /></section>;
+  if (isError || !org) return <section className="screen"><ErrorMessage message="Couldn't load the counterparts." /></section>;
 
   const allFindings = findings ?? [];
   const chief = org.agents.find((a) => a.reportsToAgentId === null);
@@ -128,10 +128,10 @@ export function ShadowOrgScreen() {
 
   return (
     <section className="screen" style={{ maxWidth: 1280 }}>
-      <h1 className="page">Shadow organization</h1>
+      <h1 className="page">Counterparts</h1>
       <div className="sub">
-        A tireless counterpart for every function. Each agent watches its owner's mandates, raises findings when reality drifts,
-        and escalates up the org when no one responds. Every mandate is held twice — once by a person, once by their shadow.
+        A tireless counterpart for every function. Each agent watches its function's mandates, raises findings when reality drifts,
+        and escalates up the chain when no one responds. Every mandate is held twice — once by a person, once by its counterpart.
       </div>
 
       {chief && (
@@ -139,7 +139,7 @@ export function ShadowOrgScreen() {
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.6px', color: 'var(--accent-deep)', marginBottom: 4 }}>Org level · reports to no one</div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{chief.name}</div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>shadows {chief.humanOwner.name} · {chief.humanOwner.role} · watches the intents</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>counterpart to {chief.humanOwner.name} · {chief.humanOwner.role} · watches the intents</div>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <Stat label="open across org" value={totalOpen} tone={totalOpen ? 'amber' : undefined} />

@@ -60,7 +60,7 @@ export function FindingsScreen() {
     <section className="screen" style={{ maxWidth: 1280 }}>
       <h1 className="page">Findings</h1>
       <div className="sub">
-        Raised by your shadow organization, ranked by impact on intents. Every finding demands one of four dispositions —
+        Raised by your counterparts, ranked by impact on intents. Every finding demands one of four dispositions —
         accept, act, acknowledge, or abandon — and unanswered findings escalate on their SLA.
       </div>
 
@@ -107,7 +107,7 @@ export function FindingsScreen() {
       )}
 
       {findings && findings.length === 0 && (
-        <div className="card"><div className="state-msg">No findings match this filter — the shadow org is quiet here.</div></div>
+        <div className="card"><div className="state-msg">No findings match this filter — the counterparts are quiet here.</div></div>
       )}
     </section>
   );

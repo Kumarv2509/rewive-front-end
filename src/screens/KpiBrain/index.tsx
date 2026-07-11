@@ -99,8 +99,8 @@ export function KpiBrainScreen() {
       <h1 className="page">Operating Picture</h1>
       <div className="sub">
         What the organization is trying to make true — every intent decomposed into the mandates that carry it and the
-        senses that verify it. Every mandate is held twice: once by a person, once by their shadow. This is the picture
-        the shadow organization reasons over — a finding on any node traces its impact all the way up to an intent.
+        senses that verify it. Every mandate is held twice: once by a person, once by its counterpart. This is the picture
+        the counterparts reason over — a finding on any node traces its impact all the way up to an intent.
       </div>
 
       <IndustrySwitcher />

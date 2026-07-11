@@ -17,7 +17,7 @@ export function FindingsList({ persona }: { persona: Persona | 'all' }) {
       </div>
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
-      {data?.length === 0 && <div className="state-msg">Nothing waiting on you — the shadow org has no open findings for this lens.</div>}
+      {data?.length === 0 && <div className="state-msg">Nothing waiting on you — your counterparts have no open findings for this lens.</div>}
       {data?.slice(0, 3).map((f) => (
         <div className="dec-item" key={f.id}>
           <div className="dec-ico" style={{ background: 'var(--accent-soft)' }}>🕵️</div>
