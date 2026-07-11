@@ -1,13 +1,13 @@
 // v4 seed data: counterpart org — KPI brains, counterpart agents, findings, closure KPIs.
-// Three industry templates. FMCG is the primary demo (Americana-style); Healthcare and
-// Manufacturing prove the brain is template-driven, not hardcoded.
+// Industry templates. FMCG is the primary demo (Americana-style); Healthcare is the
+// second act. The Manufacturing pack is seeded but off the pickers until it's as deep
+// as the other two (11 mandates vs 26/22) — deep-linking with ?industry= still works.
 
 export const orgProfileSeed = { orgName: 'Americana Foods (demo)', industry: 'fmcg' };
 
 export const industryOptions = [
   { id: 'fmcg', name: 'FMCG / food & beverage', description: 'Consumer packaged food: manufacturing, distribution and trade across modern and traditional channels.', streamCount: 8, kpiCount: 26 },
   { id: 'healthcare', name: 'Healthcare', description: 'Hospital and clinic network: clinical operations, revenue cycle, patient experience, pharmacy, finance and people.', streamCount: 6, kpiCount: 22 },
-  { id: 'manufacturing', name: 'Industrial manufacturing', description: 'Discrete manufacturing: production, maintenance, supplier network, quality and safety.', streamCount: 6, kpiCount: 11 },
 ];
 
 // ---------------------------------------------------------------------------

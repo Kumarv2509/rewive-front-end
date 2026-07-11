@@ -1,4 +1,4 @@
-# Rewive feature inventory — v1 / v2 / v3
+# Rewive feature inventory — v1 / v2 / v3 / v4 / v5
 
 Status legend: **Built** = real code, working against the mock API · **Mockup only** = designed as an interactive prototype in chat, not in this codebase · **Partial** = some part built, rest still mockup-only.
 
@@ -75,6 +75,34 @@ Rebuilt from the static HTML prototype so every data point comes from an API ins
 | Assessor agent runs automatically over time | The verdict and note are seeded on two ledger entries to show the pattern; there's no simulated time-passage that generates these from a live run |
 | The standalone 12-screen click-through prototype shown earlier in chat | Reference only, its own sandboxed HTML/JS, never wired to real routes or data |
 
+## v4 — branch `v4`: the agentic operating model
+
+| Feature | Where |
+|---|---|
+| Public landing page with industry picker; every screen becomes industry-parameterized (FMCG / Healthcare / Manufacturing packs in `mock-server/v4data.js` + `v4content.js`) | `/` |
+| Operating Picture — intents ← mandates ← senses graph, editable, with agent-proposed nodes/edges | `/build/picture` |
+| Shadow Org — one agent per function stream + an org-level chief, temperament dial, SLA breaches | later renamed (v5) |
+| Findings with the four dispositions (Accept / Act / Acknowledge / Abandon), SLA escalation, impact paths | findings screens |
+| Closure — exit conditions with progress, trip-wires, closed loops | closure screen |
+| KPI Library rebranded Mandate Library; editable mandates; assessor verdict on close | `/build/kpis`, Decision Ledger |
+| Standalone story + demo launcher pages, Rewive branding | `public/story.html`, `public/demo.html` |
+
+## v5 — branch `v5`: repositioned as the Decision Accountability Layer
+
+The product's category, copy, and information architecture were repositioned; see `CLAUDE.md` → "Positioning".
+
+| Change | Detail |
+|---|---|
+| Category and hero | "Agentic operating model" → **the Decision Accountability Layer**; hero: "Dashboards show you the number. Rewive makes someone answer for it." |
+| "Shadow organization" retired from all user-facing copy | Agents are **counterparts** ("Planning counterpart", "counterpart to <owner>"); internal type/file names (`ShadowAgent`, `shadowOrg.ts`) unchanged |
+| The loop's fifth stage | Learn → **Close** ("nothing is 'done' until the number is back"); landing gains a Decision Ledger proof section ("the company's memory of judgment") |
+| Nav restructured around the loop | Operate = Command Center · Findings · Closure · Decision Ledger · Counterparts · Runs · Tasks; Insights = Outcomes · Performance · Agent Space; Build → **Foundation** (Operating Picture, Mandate Library, Data Connectors) |
+| Agent-building screens off the nav | Create an Agent, Agent Studio, Unified Agent Studio, Solution Design stay routable, reached via a finding's **Act** disposition |
+| People & Agents reframed | "Performance" — measures mandates and loop-closing speed, not humans-vs-agents ranking |
+| Entry flow | Industry pick lands on `/command` (obligations first: findings, then decisions); old v4 URLs redirect |
+| Manufacturing hidden from pickers | Pack still seeded; off `industryOptions` and the landing/story pages until it's as deep as FMCG (26) / Healthcare (22) — it has 11 mandates |
+| Agent Space scoped to the operating context | Per-industry agent catalogs; filters by lifecycle/build-path instead of industry/function |
+
 ## Net effect
 
-The full loop is real and runs end to end against the mock API: a signal surfaces on the Command Center landing page → solution design (or the quick-fix fast path) → the unified agent studio, with delegate identity and both the no-dev-needed and escalate/handback paths → published live in Agent Space → running with an exception log and chase/escalate → closing the loop in the Decision Ledger with an assessor agent verdict linked back to the originating signal. Everything in the second table is genuinely absent from the running app — flagged here so the next round can pick items deliberately instead of assuming they already exist.
+The full loop is real and runs end to end against the mock API, and now reads as one product: pick an industry → Command Center shows what's waiting on you → open a finding → disposition it (Accept sets an exit condition in Closure; Act opens a solution design that can flow into the agent studios) → the decision lands in the Decision Ledger and later gets an assessor verdict. Everything in the v3 "explicitly not built" table remains absent (no real integrations, no automatic assessor over time, canned agent-builder chat).
