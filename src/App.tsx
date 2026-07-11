@@ -21,6 +21,7 @@ import { TasksScreen } from './screens/Tasks';
 import { KpiLibraryScreen } from './screens/KpiLibrary';
 import { KpiBrainScreen } from './screens/KpiBrain';
 import { LandingScreen } from './screens/Landing';
+import { GuideScreen } from './screens/Guide';
 import { ShadowOrgScreen } from './screens/ShadowOrg';
 import { ClosureScreen } from './screens/Closure';
 
@@ -40,6 +41,7 @@ function App() {
             <Route path="/" element={<LandingScreen />} />
 
             <Route element={<AppLayout />}>
+              <Route path="guide" element={<GuideScreen />} />
               <Route path="command" element={<CommandCenterScreen />} />
               <Route path="operate" element={<Navigate to="/command" replace />} />
 
