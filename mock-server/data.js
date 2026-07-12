@@ -59,7 +59,7 @@ export let pendingDecisions = [
     icon: '⚠️',
     iconBg: 'var(--red-soft)',
     title: 'Pricing anomaly · SKU 4417 margin −6.2% in KSA',
-    subtitle: 'Anomaly Agent recommends repricing · est. impact +$84k / qtr',
+    subtitle: 'Anomaly Agent recommends repricing · est. impact +AED 84k / qtr',
     actionLabel: 'Act',
     actionVerb: 'act',
     persona: 'store_manager',
@@ -168,7 +168,7 @@ export const runs = [
   { id: 'run-cashflow-q3', name: 'Cash-flow Forecast · Q3', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Forecast Agent', status: 'running', duration: '6m 12s', outcome: '—' },
   { id: 'run-hr-eng', name: 'HR Screening · Eng cohort', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Screening Agent', status: 'running', duration: '8m 47s', outcome: '—' },
   { id: 'run-close-may', name: 'Month-end close · May', owner: { name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, agentName: 'Close Agent', status: 'needs_decision', duration: 'paused 3h', outcome: '2 exceptions' },
-  { id: 'run-profit-gcc', name: 'Profitability by customer · GCC', owner: { name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, agentName: 'Profitability Agent', status: 'completed', duration: '7m 31s', outcome: '+$84k found' },
+  { id: 'run-profit-gcc', name: 'Profitability by customer · GCC', owner: { name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, agentName: 'Profitability Agent', status: 'completed', duration: '7m 31s', outcome: '+AED 84k found' },
   { id: 'run-anomaly-daily', name: 'Pricing anomaly scan · daily', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Anomaly Agent', status: 'completed', duration: '3m 02s', outcome: '1 flag · SKU 4417' },
   { id: 'run-vendor-recon', name: 'Vendor reconciliation · weekly', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Recon Agent', status: 'failed', duration: '0m 41s', outcome: 'source timeout · retried ✓' },
 ];
@@ -187,21 +187,21 @@ export const decisionStats = {
   trackedQtd: { value: 142, delta: { label: '▲ 38 vs last qtr', direction: 'up' } },
   winRate: { value: '78%', delta: { label: '▲ from 61%', direction: 'up' } },
   medianTimeToDecision: { value: '4.0h', delta: { label: 'was 2.1 days', direction: 'up' } },
-  measuredImpactQtd: { value: '$1.2M', delta: { label: '31 decisions measured', direction: 'flat' } },
+  measuredImpactQtd: { value: 'AED 1.2M', delta: { label: '31 decisions measured', direction: 'flat' } },
 };
 
 export const decisionLedger = [
-  { id: 'led1', title: 'Reprice SKU 2210 family in UAE', subtitle: 'Margin leakage driver #1, May run', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+$210k / qtr', direction: 'up' }, function: 'finance', originatingSignalId: 'sig1', assessorNote: 'Assessor agent: margin on the SKU 4417/2210 family recovered from -6.2% to -1.1% within 6 weeks of repricing, well ahead of the 3-week target — independently confirmed against the same gross-margin field used to raise the original signal.' },
-  { id: 'led2', title: 'Consolidate 3 logistics vendors', subtitle: 'Cost optimization recommendation', madeBy: { type: 'human', name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, informedBy: { type: 'agent', name: 'Cost Agent' }, date: '28 Apr', verdict: 'worked', measuredImpact: { text: '+$95k / qtr', direction: 'up' }, function: 'procurement', originatingSignalId: 'sig3', assessorNote: 'Assessor agent: invoice overlap across the 3 flagged vendors dropped to zero after consolidation — confirmed against the same vendor invoice feed, closing the signal that raised it.' },
+  { id: 'led1', title: 'Reprice SKU 2210 family in UAE', subtitle: 'Margin leakage driver #1, May run', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+AED 210k / qtr', direction: 'up' }, function: 'finance', originatingSignalId: 'sig1', assessorNote: 'Assessor agent: margin on the SKU 4417/2210 family recovered from -6.2% to -1.1% within 6 weeks of repricing, well ahead of the 3-week target — independently confirmed against the same gross-margin field used to raise the original signal.' },
+  { id: 'led2', title: 'Consolidate 3 logistics vendors', subtitle: 'Cost optimization recommendation', madeBy: { type: 'human', name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, informedBy: { type: 'agent', name: 'Cost Agent' }, date: '28 Apr', verdict: 'worked', measuredImpact: { text: '+AED 95k / qtr', direction: 'up' }, function: 'procurement', originatingSignalId: 'sig3', assessorNote: 'Assessor agent: invoice overlap across the 3 flagged vendors dropped to zero after consolidation — confirmed against the same vendor invoice feed, closing the signal that raised it.' },
   { id: 'led3', title: 'Hold hiring for support roles', subtitle: 'Forecast showed demand dip', madeBy: { type: 'human', name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '21 Apr', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'hr' },
-  { id: 'led4', title: 'Extend payment terms — distributor KSA', subtitle: 'Cash-flow scenario B', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '14 Apr', verdict: 'not_worked', measuredImpact: { text: '−$40k DSO cost', direction: 'down' }, function: 'finance' },
+  { id: 'led4', title: 'Extend payment terms — distributor KSA', subtitle: 'Cash-flow scenario B', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '14 Apr', verdict: 'not_worked', measuredImpact: { text: '−AED 40k DSO cost', direction: 'down' }, function: 'finance' },
   { id: 'led5', title: 'Shift Q2 spend to performance channels', subtitle: 'Customer-mix insight, March run', madeBy: { type: 'human', name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '02 Apr', verdict: 'worked', measuredImpact: { text: '+18% ROAS', direction: 'up' }, function: 'finance' },
-  { id: 'led6', title: 'Auto-approve invoices < $500', subtitle: 'Process decision · agent autonomous', madeBy: { type: 'agent', name: 'Close Agent' }, informedBy: { type: 'policy', name: 'policy' }, date: 'ongoing', verdict: 'worked', measuredImpact: { text: '22h / month saved', direction: 'up' }, function: 'finance' },
+  { id: 'led6', title: 'Auto-approve invoices < AED 500', subtitle: 'Process decision · agent autonomous', madeBy: { type: 'agent', name: 'Close Agent' }, informedBy: { type: 'policy', name: 'policy' }, date: 'ongoing', verdict: 'worked', measuredImpact: { text: '22h / month saved', direction: 'up' }, function: 'finance' },
 ];
 
 export const leaderboardHighlights = [
   { id: 'h1', medal: '🥇', tag: 'Most efficient · people', name: 'Sanju Mathew', avatarBg: '#0D9488', initials: 'SJ', statLine: '31 actions · 96% on-time · 11h saved' },
-  { id: 'h2', medal: '🤖', tag: 'Top agent', name: 'Profitability Agent', avatarBg: '#4F46E5', initials: 'PA', statLine: '124 runs · 99.2% success · $389k impact' },
+  { id: 'h2', medal: '🤖', tag: 'Top agent', name: 'Profitability Agent', avatarBg: '#4F46E5', initials: 'PA', statLine: '124 runs · 99.2% success · AED 389k impact' },
   { id: 'h3', medal: '⚡', tag: 'Best human + agent pair', name: 'Praveen + Close Agent', avatarBg: '#D97706', initials: 'PJ', statLine: 'Close time 9 days → 3 days' },
 ];
 
@@ -221,7 +221,7 @@ export const outcomeReports = {
     runMeta: 'Margin Leakage Agent · run completed in 8m 41s · approved by Praveen',
     published: true,
     scoreCards: [
-      { id: 'sc1', label: 'Revenue', value: '$12.4M', deltaLabel: '▲ 6.2% vs budget', deltaTone: 'green', sparkline: [24, 21, 22, 16, 17, 12, 9, 5], sparklineColor: '#16A34A' },
+      { id: 'sc1', label: 'Revenue', value: 'AED 12.4M', deltaLabel: '▲ 6.2% vs budget', deltaTone: 'green', sparkline: [24, 21, 22, 16, 17, 12, 9, 5], sparklineColor: '#16A34A' },
       { id: 'sc2', label: 'Gross margin', value: '31.8%', deltaLabel: '▼ 1.4 pts vs budget', deltaTone: 'red', sparkline: [8, 10, 9, 13, 12, 17, 19, 22], sparklineColor: '#DC2626' },
       { id: 'sc3', label: 'Opex ratio', value: '18.2%', deltaLabel: '▲ on plan', deltaTone: 'green', sparkline: [15, 14, 16, 14, 15, 13, 14, 13], sparklineColor: '#16A34A' },
       { id: 'sc4', label: 'Cash conversion', value: '87 days', deltaLabel: '◷ watch', deltaTone: 'amber', sparkline: [18, 16, 17, 14, 16, 13, 15, 12], sparklineColor: '#D97706' },
@@ -230,10 +230,10 @@ export const outcomeReports = {
       { id: 'i1', icon: '🎯', iconBg: 'var(--red-soft)', title: 'Margin leakage is concentrated, not systemic', text: '82% of the 1.4-pt margin miss comes from just two SKU families (2210, 4417) in UAE and KSA — price erosion, not cost inflation.' },
       { id: 'i2', icon: '📉', iconBg: 'var(--amber-soft)', title: 'Discounting is outpacing volume gains', text: 'Channel discounts rose 3.1 pts QoQ but drove only 0.8 pts of volume — negative price-volume trade in 4 of 6 regions.' },
       { id: 'i3', icon: '💡', iconBg: 'var(--green-soft)', title: 'Top-20 customers are healthier than the book', text: 'Contribution margin for the top 20 is up 2.2 pts; leakage sits in the long tail — a mix problem you can fix with floor pricing.' },
-      { id: 'i4', icon: '🔁', iconBg: 'var(--teal-soft)', title: "Last quarter's repricing decision is confirmed", text: 'The SKU 2210 reprice (Decision Ledger, 12 May) is tracking +$210k/qtr — verdict updated to "Worked".' },
+      { id: 'i4', icon: '🔁', iconBg: 'var(--teal-soft)', title: "Last quarter's repricing decision is confirmed", text: 'The SKU 2210 reprice (Decision Ledger, 12 May) is tracking +AED 210k/qtr — verdict updated to "Worked".' },
     ],
     actions: [
-      { id: 'a1', title: 'Set floor pricing on SKU 4417 family — KSA', subtitle: 'Est. +$84k/qtr · owner suggested: Sanju', assigned: false, assignedTo: 'Sanju', actionType: 'assign' },
+      { id: 'a1', title: 'Set floor pricing on SKU 4417 family — KSA', subtitle: 'Est. +AED 84k/qtr · owner suggested: Sanju', assigned: false, assignedTo: 'Sanju', actionType: 'assign' },
       { id: 'a2', title: 'Cap channel discounts at 12% for long tail', subtitle: 'Est. +0.6 pts margin · owner suggested: Praveen', assigned: false, assignedTo: 'Praveen', actionType: 'assign' },
       { id: 'a3', title: 'Re-run analysis with June market data', subtitle: 'Scheduled run · 1 July 09:00', assigned: false, actionType: 'schedule' },
     ],
@@ -750,7 +750,7 @@ export const signalDetails = {
   sig2: {
     signalId: 'sig2',
     whySurfaced: 'Forecasted support ticket volume has fallen below plan for three straight weeks, a leading indicator that current hiring plans may overshoot demand.',
-    prognosis: { impactRange: '$40,000 - $70,000', confidence: 'medium', trend: 'down', timeframe: 'next 2 quarters' },
+    prognosis: { impactRange: 'AED 40,000 - 70,000', confidence: 'medium', trend: 'down', timeframe: 'next 2 quarters' },
     piiMasked: true,
     piiUnmaskRequested: false,
     datasetRows: [
@@ -758,13 +758,13 @@ export const signalDetails = {
       { date: '13 Jun', label: 'Weekly ticket volume, region 1', maskedField: 'M****07', variance: '-7.5%' },
     ],
     similarSignals: [
-      { id: 'sim3', label: 'North America support org saw the same dip last year', scope: 'same_group', priorSolution: { summary: 'Paused one open req and redeployed to onboarding.', verdict: 'worked', cost: '$0', valueGenerated: '$52,000', timeline: [{ label: 'Solution design started', date: '11 Jan' }, { label: 'Approved, no dev needed', date: '12 Jan' }, { label: 'Verdict: worked', date: '20 Mar' }] } },
+      { id: 'sim3', label: 'North America support org saw the same dip last year', scope: 'same_group', priorSolution: { summary: 'Paused one open req and redeployed to onboarding.', verdict: 'worked', cost: 'AED 0', valueGenerated: 'AED 52,000', timeline: [{ label: 'Solution design started', date: '11 Jan' }, { label: 'Approved, no dev needed', date: '12 Jan' }, { label: 'Verdict: worked', date: '20 Mar' }] } },
     ],
   },
   sig3: {
     signalId: 'sig3',
     whySurfaced: 'Three logistics vendors show overlapping invoice line items for the same lanes, a consolidation candidate that is not yet computable end to end.',
-    prognosis: { impactRange: '$18,000 - $30,000', confidence: 'low', trend: 'flat', timeframe: 'ongoing' },
+    prognosis: { impactRange: 'AED 18,000 - 30,000', confidence: 'low', trend: 'flat', timeframe: 'ongoing' },
     piiMasked: true,
     piiUnmaskRequested: false,
     datasetRows: [
@@ -775,7 +775,7 @@ export const signalDetails = {
   sig4: {
     signalId: 'sig4',
     whySurfaced: 'Channel discounts rose 3.1 points quarter over quarter but only drove 0.8 points of volume, a negative price-volume trade already approved for a KPI ticket.',
-    prognosis: { impactRange: '$95,000 - $140,000', confidence: 'high', trend: 'down', timeframe: 'this quarter' },
+    prognosis: { impactRange: 'AED 95,000 - 140,000', confidence: 'high', trend: 'down', timeframe: 'this quarter' },
     piiMasked: true,
     piiUnmaskRequested: false,
     datasetRows: [
