@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Avatar } from '../../components/shared/Avatar';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
@@ -29,6 +30,17 @@ export function DecisionsTable({ filters }: { filters: DecisionLedgerFilters }) 
               <td>
                 <b>{d.title}</b>
                 <div style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>{d.subtitle}</div>
+                {d.assessorNote && (
+                  <div style={{ fontSize: 11, color: 'var(--teal)', marginTop: 4, maxWidth: 320 }}>
+                    {d.assessorNote}
+                    {d.originatingSignalId && (
+                      <>
+                        {' '}
+                        <Link to={`/insights/signals/${d.originatingSignalId}`}>Closes the originating signal &rarr;</Link>
+                      </>
+                    )}
+                  </div>
+                )}
               </td>
               <td>
                 {d.madeBy.type === 'human' ? (

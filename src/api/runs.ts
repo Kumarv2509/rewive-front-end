@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { RunDetail, RunListItem, RunStatus } from './types';
+import type { ChaseEscalation, ExceptionStatus, RunDetail, RunException, RunListItem, RunStatus } from './types';
 
 export function useRuns(status: RunStatus | 'all' = 'all') {
   return useQuery({
@@ -37,5 +37,36 @@ export function useResumeRun() {
       queryClient.invalidateQueries({ queryKey: ['runs', 'detail', runId] });
       queryClient.invalidateQueries({ queryKey: ['runs', 'list'] });
     },
+  });
+}
+
+export function useRunExceptions(status: ExceptionStatus | 'all' = 'all') {
+  return useQuery({
+    queryKey: ['runs', 'exceptions', status],
+    queryFn: async () => (await apiClient.get<RunException[]>('/runs/exceptions', { params: { status } })).data,
+  });
+}
+
+export function useResolveException() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => (await apiClient.post<RunException>(`/runs/exceptions/${id}/resolve`)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['runs', 'exceptions'] }),
+  });
+}
+
+export function useRunChases() {
+  return useQuery({
+    queryKey: ['runs', 'chases'],
+    queryFn: async () => (await apiClient.get<ChaseEscalation[]>('/runs/chases')).data,
+  });
+}
+
+export function useFlagRunFeedback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: { runId: string; text: string }) =>
+      (await apiClient.post<ChaseEscalation>(`/runs/${vars.runId}/flag-feedback`, { text: vars.text })).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['runs', 'chases'] }),
   });
 }

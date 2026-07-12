@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Rewive front end — a React/TypeScript dashboard ("Accountability Layer" product) with 6 screens: Command Center, Create an Agent, Runs & Actions, Decision Ledger, People & Agents, and Outcomes. It was scaffolded from a static HTML prototype (`rewive_ui-redesign-prototype_v1.html`, not in this repo) and rebuilt so every data point is fetched from an API instead of hardcoded. No production backend exists yet — a mock Express server in `mock-server/` stands in for it, seeded with the prototype's original data, implementing the exact REST contract the frontend expects.
+Rewive front end — a React/TypeScript demo of **the Decision Accountability Layer**: every business mandate is held twice (once by a person, once by an agent "counterpart" watching the same number), drift becomes a **finding** that must be dispositioned (Accept / Act / Acknowledge / Abandon — silence escalates on an SLA), accepted findings become **exit conditions** watched until the number is back (Closure), and every decision lands in a **Decision Ledger** with a later assessor verdict (worked / didn't / too early). The signature line is "Every mandate, held twice."
+
+Everything is industry-parameterized: the public landing page (`/`) picks an operating context (FMCG or Healthcare; a Manufacturing pack is seeded but hidden from pickers until it's as deep as the other two) and every screen swaps its content accordingly. No production backend exists — a mock Express server in `mock-server/` implements the exact REST contract the frontend expects, with in-memory stateful mutations.
 
 ## Commands
 
@@ -17,30 +19,35 @@ npm run lint          # eslint .
 npm run preview       # Preview the production build
 ```
 
-There is no test suite configured. There is no single-test command since none exists yet.
+There is no test suite configured.
 
 ## Architecture
 
-**Data flow:** every screen is wired to the backend through TanStack Query. There is no hardcoded UI data — if a screen needs something, it goes through a hook in `src/api/`.
+**Information architecture** (`src/components/layout/areas.ts`, routes in `src/App.tsx`): a public landing page at `/`, then three nav areas under `AppLayout`:
 
-- `src/api/client.ts` — single axios instance, base URL from `VITE_API_BASE_URL` (set in `.env`, defaults to `/api/v1`).
-- `src/api/types.ts` — the shared TypeScript contract for every API resource (KPIs, runs, decisions, leaderboard rows, outcome reports, agent builder messages, etc). This file is the source of truth for API shapes — check here before changing a request/response shape anywhere.
-- `src/api/{dashboard,runs,decisions,people,outcomes,agentBuilder}.ts` — one module per domain, each exporting `useQuery`/`useMutation` hooks (e.g. `useDashboardSummary`, `useApproveDecision`, `useAssignAction`). Screens import these hooks directly; there is no separate "service" or "repository" layer.
-- Mutations follow a consistent pattern: optimistic cache update or `queryClient.invalidateQueries` in `onSuccess`, paired with a toast via `useToast()` (`src/components/shared/Toast.tsx`) called from the screen component, not from the hook.
-- Live/polling data (e.g. `useLiveRuns`, `useRunDetail`) uses React Query's `refetchInterval` rather than websockets.
+- **Operate** — the hero path: Command Center (`/command`), Findings (`/operate/findings`), Closure (`/operate/closure`), Decision Ledger (`/operate/decisions`), Counterparts (`/operate/counterparts`), Runs & Actions, Tasks.
+- **Insights** — Outcomes, Performance (the reframed leaderboard), Agent Space.
+- **Foundation** (URL prefix is still `/build`) — Operating Picture (`/build/picture`), Mandate Library (`/build/kpis`), Data Connectors.
 
-**Routing:** `src/App.tsx` sets up `BrowserRouter` + `QueryClientProvider` + `ToastProvider`. One route per screen under `AppLayout` (`src/components/layout/AppLayout.tsx`, which renders `Sidebar` + `Topbar` + an `<Outlet />`). `/outcomes` redirects to `/outcomes/latest`; the Outcomes screen is the only one parameterized by an ID (`runId`).
+Agent-building screens (Create an Agent `/build/create`, Agent Studio `/build/studio`, Unified Agent Studio `/build/agent-studio/:id`, Solution Design `/build/solutions/:id`) are **routable but off the nav** — they're reached through a finding's **Act** disposition (finding → solution design → agent spec), not browsed to. Old v1/v3/v4 URLs (`/runs`, `/insights/findings`, `/operate/shadow`, …) redirect; keep that convention when moving routes.
 
-**Screens:** each screen lives in `src/screens/<Name>/` with an `index.tsx` as the entry point and sibling components for sub-sections (e.g. `Decisions/StatsRow.tsx`, `Decisions/DecisionsTable.tsx`). Filter state (status chips, function/verdict filters) is local `useState` in the screen `index.tsx`, passed down as props/query params — there is no global filter store.
+**Naming note:** the user-facing term is **counterpart**; internal identifiers still use the older "shadow" naming (`ShadowAgent`, `useShadowOrg`, `src/api/shadowOrg.ts`, `src/screens/ShadowOrg/`). Don't reintroduce "shadow" in UI copy; renaming the internals is an optional cleanup.
 
-**Styling:** one global stylesheet, `src/styles/globals.css`, ported near-verbatim from the original HTML prototype (CSS variables in `:root`, utility classes like `.card`, `.pill`, `.btn`, `.agent-chip`, table styles). There is no CSS-in-JS or Tailwind — new UI should reuse these existing classes rather than introducing a new styling approach. Shared small components (`Avatar`, `Pill`, `Sparkline`, `Toast`, `StateMessage`) live in `src/components/shared/` and just apply these classes with props.
+**Data flow:** every screen fetches through TanStack Query hooks in `src/api/` (one module per domain; no service layer). `src/api/types.ts` is the source of truth for every API shape — check it before changing any request/response. `src/api/client.ts` holds the single axios instance; a request interceptor appends the chosen `?industry=` (persisted in localStorage) so the context survives serverless cold starts. Mutations invalidate/optimistically update the query cache and pair with a toast from the screen component. Live data uses `refetchInterval`, not websockets.
 
-**Mock API (`mock-server/`):** a standalone Express app (`server.js`) with in-memory seed data (`data.js`) mirroring the original prototype's numbers. It implements the full REST contract under `/api/v1/...` including stateful mutations (approving a decision removes it from `/decisions/pending`, assigning an outcome action flips its `assigned` flag, creating an agent transitions its preview from `draft` to `live`). When extending the frontend with a new data point, add the corresponding seed data + route here first, matching the shape in `src/api/types.ts`.
+**The v4/v5 core model** (in `src/api/types.ts`): `KpiBrain` (Operating Picture: intents ← mandates/stream-KPIs ← senses/drivers), `ShadowOrg`/`ShadowAgent` (counterparts, one per function stream + an org-level chief), `Finding` + `FindingDisposition` (the four-A call, SLA escalation), `ClosureKpi` (exit conditions), `DecisionLedgerItem` + `Verdict` (assessor verdicts). Personas (store manager / CFO / operations head) filter the Command Center.
 
-**Agent Builder flow** (`/create`, `src/screens/CreateAgent/`) is the most stateful screen: a client-generated `sessionId` (via `crypto.randomUUID()`) drives a chat session (`useAgentBuilderSession`), capability/data-context toggles (`useToggleSelection`), and a draft preview (`useSessionPreview`) that becomes a live `AgentPreview` (`useAgentPreview`) once `useCreateAgent` succeeds. The mock server's bot replies are currently canned/static, not real NLU — a real backend integration is the main gap here.
+**Mock API (`mock-server/`):** Express app (`app.js`) with seed data split across `data.js` (original v1/FMCG operational data), `v4data.js` (Operating Picture, counterparts, findings, closure per industry), and `v4content.js` (per-industry operational packs: dashboard, decisions, runs, leaderboard, outcomes, agent catalog). Industry-scoped endpoints pick a pack via the org profile or `?industry=`. When adding a data point: type in `src/api/types.ts` → hook in `src/api/<domain>.ts` → seed + route in `mock-server/`, per industry.
+
+**Styling:** one global stylesheet, `src/styles/globals.css` (CSS variables + utility classes like `.card`, `.pill`, `.btn`). No Tailwind/CSS-in-JS — reuse the existing classes. Shared atoms in `src/components/shared/`. The landing page and `public/story.html`/`public/demo.html` carry their own inline styles.
+
+## Positioning (keep copy consistent with this)
+
+Category: the decision accountability layer — "the system of record for operational decisions." Hero: "Nothing drifts unanswered." (statement form — avoid "makes someone answer for it", which reads as blame). The loop is **Sense → Find → Decide → Act → Close**. Keep-verbatim lines: "Every mandate, held twice." · "The company's memory of judgment." · "Nothing is 'done' until the number is back." Avoid: "shadow organization", "agentic operating model" (the latter survives only as the story-page essay framing), and any humans-vs-agents ranking framing.
 
 ## Conventions
 
-- Path imports are relative (no `@/` alias configured) — e.g. `../../api/dashboard`.
-- New API resources: define the type in `src/api/types.ts`, the hook in the relevant `src/api/<domain>.ts`, and the mock route + seed data in `mock-server/`.
-- Vite dev server proxies `/api` to `http://localhost:4000` (see `vite.config.ts`) — don't hardcode the mock server port elsewhere.
+- Path imports are relative (no `@/` alias configured).
+- Currency: AED for FMCG, USD for Healthcare. Seed org is "Americana Foods (demo)".
+- New API resources: type in `src/api/types.ts`, hook in `src/api/<domain>.ts`, mock route + per-industry seed in `mock-server/`.
+- Vite proxies `/api` to `http://localhost:4000` (see `vite.config.ts`) — don't hardcode the mock server port elsewhere.

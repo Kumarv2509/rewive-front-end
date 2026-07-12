@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useLiveRuns } from '../../api/dashboard';
 import { LiveRunCard } from './LiveRunCard';
 import { RunsTable } from './RunsTable';
+import { ExceptionLog } from './ExceptionLog';
+import { ChaseEscalateList } from './ChaseEscalateList';
 import type { RunStatus } from '../../api/types';
 
 const filters: { key: RunStatus | 'all'; label: string }[] = [
@@ -37,6 +39,11 @@ export function RunsScreen() {
       {primaryLiveRunId && <LiveRunCard runId={primaryLiveRunId} />}
 
       <RunsTable status={status} />
+
+      <div style={{ marginTop: 16 }}>
+        <ExceptionLog />
+        <ChaseEscalateList />
+      </div>
     </section>
   );
 }

@@ -4,8 +4,8 @@ import { LeaderboardTable } from './LeaderboardTable';
 export function PeopleScreen() {
   return (
     <section className="screen">
-      <h1 className="page">People &amp; Agents</h1>
-      <div className="sub">Who and what is actually moving the company — humans and agents measured on the same scoreboard.</div>
+      <h1 className="page">Performance</h1>
+      <div className="sub">Where the loop closes fastest — every mandate, its owner, its counterpart, and how quickly drift comes back to target.</div>
 
       <HighlightCards />
       <LeaderboardTable />

@@ -1,18 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { DashboardSummary, PendingDecision, PulseItem, LiveRunSummary, TopPerformer } from './types';
+import type { CurrentUser, DashboardSummary, PendingDecision, Persona, PulseItem, LiveRunSummary, TopPerformer } from './types';
 
-export function useDashboardSummary() {
+export function useCurrentUser() {
   return useQuery({
-    queryKey: ['dashboard', 'summary'],
-    queryFn: async () => (await apiClient.get<DashboardSummary>('/dashboard/summary')).data,
+    queryKey: ['me'],
+    queryFn: async () => (await apiClient.get<CurrentUser>('/me')).data,
+    staleTime: Infinity,
   });
 }
 
-export function usePendingDecisions() {
+export function useDashboardSummary(persona?: Persona | 'all') {
   return useQuery({
-    queryKey: ['decisions', 'pending'],
-    queryFn: async () => (await apiClient.get<PendingDecision[]>('/decisions/pending')).data,
+    queryKey: ['dashboard', 'summary', persona],
+    queryFn: async () => (await apiClient.get<DashboardSummary>('/dashboard/summary', { params: { persona } })).data,
+  });
+}
+
+export function usePendingDecisions(persona?: Persona | 'all') {
+  return useQuery({
+    queryKey: ['decisions', 'pending', persona],
+    queryFn: async () => (await apiClient.get<PendingDecision[]>('/decisions/pending', { params: { persona } })).data,
   });
 }
 
