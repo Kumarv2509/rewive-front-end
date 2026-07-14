@@ -1,11 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { DecisionLedgerItem, DecisionStats, PendingDecision, PlImpactLine } from './types';
+import type { DecisionLedgerItem, DecisionStats, PendingDecision, PlImpactLine, PlStatement } from './types';
 
 export function useDecisionStats() {
   return useQuery({
     queryKey: ['decisions', 'stats'],
     queryFn: async () => (await apiClient.get<DecisionStats>('/decisions/stats')).data,
+  });
+}
+
+// The full P&L: lines × SKU/channel, Actual vs Budget vs Forecast, with the
+// drift anomalies embedded as a task list.
+export function usePlStatement() {
+  return useQuery({
+    queryKey: ['decisions', 'pl-statement'],
+    queryFn: async () => (await apiClient.get<PlStatement>('/pl-statement')).data,
   });
 }
 

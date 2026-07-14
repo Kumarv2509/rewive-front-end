@@ -3,6 +3,7 @@ import { Intro } from '../../components/shared/Intro';
 import { StatsRow } from './StatsRow';
 import { DecisionsTable } from './DecisionsTable';
 import { PlImpactTable } from './PlImpactTable';
+import { PlStatement } from './PlStatement';
 import type { DecisionLedgerFilters } from '../../api/decisions';
 
 const functionFilters: { key: DecisionLedgerFilters['function']; label: string }[] = [
@@ -70,7 +71,15 @@ export function DecisionsScreen() {
         </>
       )}
 
-      {view === 'pl' && <PlImpactTable />}
+      {view === 'pl' && (
+        <>
+          <PlStatement />
+          <div className="sec-head" style={{ padding: '0 0 12px' }}>
+            <h3>Loop funnel by P&amp;L line</h3>
+          </div>
+          <PlImpactTable />
+        </>
+      )}
     </section>
   );
 }

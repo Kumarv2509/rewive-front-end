@@ -168,6 +168,68 @@ export interface PlImpactLine {
   translatedImpact: { text: string; direction: 'up' | 'down' | 'flat' };
 }
 
+// ---------- FP&A: the full P&L, with Budget and Forecast as the base of drift ----------
+// Values are pre-formatted numbers in the statement's unit (e.g. "128.4" with
+// unit "AED M"); variances are percentages vs budget / vs forecast. isCost
+// flips the good/bad direction for coloring.
+export interface PlBreakdownRow {
+  key: string;
+  label: string;
+  actual: string;
+  budget: string;
+  forecast: string;
+  varBudgetPct: number;
+  varForecastPct: number;
+  anomalyIds: string[];
+}
+
+export interface PlStatementLine {
+  key: string;
+  label: string;
+  kind: 'line' | 'subtotal';
+  isCost: boolean;
+  actual: string;
+  budget: string;
+  forecast: string;
+  varBudgetPct: number;
+  varForecastPct: number;
+  anomalyIds: string[];
+  /** Drill-downs; subtotal lines and overheads may have none. */
+  byDimA?: PlBreakdownRow[];
+  byDimB?: PlBreakdownRow[];
+}
+
+export type PlAnomalyStatus = 'raised' | 'watching' | 'cleared' | 'new';
+
+// A drift anomaly is a task: what drifted, against which base (budget /
+// forecast), on which P&L cell (line × dimA × dimB), whose call it is, and
+// where it stands in the loop. findingId links it to the thread when the
+// counterpart has raised it.
+export interface PlAnomalyTask {
+  id: string;
+  title: string;
+  plLineKey: string;
+  plLineLabel: string;
+  dimA?: string;
+  dimB?: string;
+  driftVsBudgetPct: number;
+  driftVsForecastPct: number;
+  impact: string;
+  severity: FindingSeverity;
+  routedTo: Persona;
+  status: PlAnomalyStatus;
+  findingId?: string;
+}
+
+export interface PlStatement {
+  period: string;
+  unit: string; // e.g. "AED M"
+  dimALabel: string; // e.g. "SKU family" / "Service line"
+  dimBLabel: string; // e.g. "Channel" / "Payer"
+  lines: PlStatementLine[];
+  anomalies: PlAnomalyTask[];
+}
+
 export interface LeaderboardHighlight {
   id: string;
   medal: string;

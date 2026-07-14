@@ -43,6 +43,7 @@ import {
   plImpactSeed,
 } from './v4data.js';
 import { opContent } from './v4content.js';
+import { plStatementSeed } from './pldata.js';
 
 const app = express();
 app.use(cors());
@@ -1234,6 +1235,12 @@ app.get('/api/v1/findings/:id', (req, res) => {
 // FP&A rollup: findings translated onto the P&L, per line item.
 app.get('/api/v1/pl-impact', (req, res) => {
   res.json(plImpactSeed[v4Industry(req)] ?? []);
+});
+
+// The full P&L: lines × two dimensions, Actual vs Budget vs Forecast,
+// with drift anomalies embedded as a task list.
+app.get('/api/v1/pl-statement', (req, res) => {
+  res.json(plStatementSeed[v4Industry(req)] ?? { period: '', unit: '', dimALabel: '', dimBLabel: '', lines: [], anomalies: [] });
 });
 
 app.post('/api/v1/findings/:id/disposition', (req, res) => {
