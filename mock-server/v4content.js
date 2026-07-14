@@ -79,7 +79,7 @@ const healthcare = {
   dashboardSummary: {
     greetingName: 'Kumara',
     summarySentence:
-      'Since yesterday, Rewive executed <b style="color:var(--ink)">63 actions</b> across the revenue cycle and clinical ops. <b style="color:var(--ink)">4 decisions</b> are waiting on you.',
+      'Since yesterday, Rewive executed <b style="color:var(--ink)">63 actions</b> across the revenue cycle and clinical ops. Your queue is below.',
     kpis: {
       actionsExecutedToday: { value: 63, delta: { label: '▲ 9% vs yesterday', direction: 'up' } },
       decisionsPending: { value: 4, delta: { label: '2 urgent', direction: 'flat' } },
@@ -139,7 +139,7 @@ const healthcare = {
     measuredImpactQtd: { value: '$2.4M', delta: { label: '19 decisions measured', direction: 'flat' } },
   },
   decisionLedger: [
-    { id: 'hc-led1', title: 'Batch-appeal denied claims (2 payers)', subtitle: 'Prior-auth denial surge, May', madeBy: { type: 'human', name: 'James', initials: 'JO', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Revenue Cycle Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+$620k recovered', direction: 'up' }, function: 'finance', originatingSignalId: 'hc-f-1', assessorNote: 'Assessor agent: first-pass denial rate for the two payers fell from 11.8% to 7.4% over six weeks — confirmed against the same clearinghouse feed that raised the finding.' },
+    { id: 'hc-led1', title: 'Batch-appeal denied claims (2 payers)', subtitle: 'Prior-auth denial surge, May', madeBy: { type: 'human', name: 'James', initials: 'JO', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Revenue Cycle Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+$620k recovered', direction: 'up' }, function: 'finance', findingId: 'hc-f-1', assessorNote: 'Assessor agent: first-pass denial rate for the two payers fell from 11.8% to 7.4% over six weeks — confirmed against the same clearinghouse feed that raised the finding.' },
     { id: 'hc-led2', title: 'Open a discharge lounge on medical wards', subtitle: 'ALOS driver — placement delays', madeBy: { type: 'human', name: 'Maya', initials: 'MS', avatarBg: '#0E7490' }, informedBy: { type: 'agent', name: 'Clinical Ops Agent' }, date: '30 Apr', verdict: 'worked', measuredImpact: { text: '−0.4 days ALOS', direction: 'up' }, function: 'operations' },
     { id: 'hc-led3', title: 'SMS + call reminders for high-risk no-shows', subtitle: 'Specialty clinics pilot', madeBy: { type: 'human', name: 'Fatima', initials: 'FA', avatarBg: '#BE185D' }, informedBy: { type: 'agent', name: 'Patient Experience Agent' }, date: '22 Apr', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'operations' },
     { id: 'hc-led4', title: 'Switch to biosimilar for infusion therapy', subtitle: 'Formulary review Q2', madeBy: { type: 'human', name: 'Ravi', initials: 'RM', avatarBg: '#0F766E' }, informedBy: { type: 'agent', name: 'Pharmacy Agent' }, date: '15 Apr', verdict: 'worked', measuredImpact: { text: '+$210k/yr', direction: 'up' }, function: 'pharmacy' },
@@ -207,7 +207,7 @@ const manufacturing = {
   dashboardSummary: {
     greetingName: 'Kumara',
     summarySentence:
-      'Since yesterday, Rewive executed <b style="color:var(--ink)">71 actions</b> across production and maintenance. <b style="color:var(--ink)">3 decisions</b> are waiting on you.',
+      'Since yesterday, Rewive executed <b style="color:var(--ink)">71 actions</b> across production and maintenance. Your queue is below.',
     kpis: {
       actionsExecutedToday: { value: 71, delta: { label: '▲ 11% vs yesterday', direction: 'up' } },
       decisionsPending: { value: 3, delta: { label: '1 urgent', direction: 'flat' } },
@@ -266,7 +266,7 @@ const manufacturing = {
     measuredImpactQtd: { value: '$1.8M', delta: { label: '17 decisions measured', direction: 'flat' } },
   },
   decisionLedger: [
-    { id: 'mfg-led1', title: 'Pull PMs forward on the press line', subtitle: 'Unplanned downtime driver, Q2', madeBy: { type: 'human', name: 'Hassan', initials: 'HJ', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Maintenance Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '−14 h/wk downtime', direction: 'up' }, function: 'maintenance', originatingSignalId: 'mfg-f-1', assessorNote: 'Assessor agent: unplanned downtime on the constraint line fell from 22 h/wk to 9 h/wk within four weeks of restoring PM compliance — confirmed against the same CMMS work-order feed.' },
+    { id: 'mfg-led1', title: 'Pull PMs forward on the press line', subtitle: 'Unplanned downtime driver, Q2', madeBy: { type: 'human', name: 'Hassan', initials: 'HJ', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Maintenance Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '−14 h/wk downtime', direction: 'up' }, function: 'maintenance', findingId: 'mfg-f-1', assessorNote: 'Assessor agent: unplanned downtime on the constraint line fell from 22 h/wk to 9 h/wk within four weeks of restoring PM compliance — confirmed against the same CMMS work-order feed.' },
     { id: 'mfg-led2', title: 'Dual-source two castings suppliers', subtitle: 'OTIF slide root cause', madeBy: { type: 'human', name: 'Omar', initials: 'OF', avatarBg: '#0E7490' }, informedBy: { type: 'agent', name: 'Supplier Agent' }, date: '29 Apr', verdict: 'worked', measuredImpact: { text: '+9 pts OTIF', direction: 'up' }, function: 'procurement' },
     { id: 'mfg-led3', title: 'Standardize changeovers on Line 3', subtitle: 'SMED pilot', madeBy: { type: 'human', name: 'Priya', initials: 'PR', avatarBg: '#7C3AED' }, informedBy: { type: 'agent', name: 'Production Agent' }, date: '21 Apr', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'operations' },
     { id: 'mfg-led4', title: 'Return B-housing tooling to vendor', subtitle: 'Scrap spike after refresh', madeBy: { type: 'human', name: 'Amira', initials: 'AH', avatarBg: '#BE185D' }, informedBy: { type: 'agent', name: 'Quality Agent' }, date: '15 Apr', verdict: 'worked', measuredImpact: { text: '−0.8 pt scrap', direction: 'up' }, function: 'quality' },

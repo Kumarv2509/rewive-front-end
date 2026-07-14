@@ -65,7 +65,7 @@ function sameRect(a: Rect | null, b: Rect): boolean {
 export function TourOverlay() {
   const { active, index } = useTour();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const step = active ? TOUR_STEPS[index] : undefined;
   const [rect, setRect] = useState<Rect | null>(null);
   const [missing, setMissing] = useState(false);
@@ -85,10 +85,14 @@ export function TourOverlay() {
     if (fromUrl !== null) goToStep(fromUrl);
   }, []);
 
-  // Each step owns a route; bring the app there when the step becomes current.
+  // Each step owns a route (and optionally a query, e.g. a lifecycle tab);
+  // bring the app there when the step becomes current. Two steps can share a
+  // pathname and differ only in search, so both must participate in the match.
   useEffect(() => {
-    if (step && pathname !== step.route) navigate(step.route);
-  }, [step, pathname, navigate]);
+    const wrongPath = pathname !== step?.route;
+    const wrongSearch = !!step?.search && search !== step.search;
+    if (step && (wrongPath || wrongSearch)) navigate(step.route + (step.search ?? ''));
+  }, [step, pathname, search, navigate]);
 
   // Find the step's anchor, scroll it into view, then keep tracking it
   // (the poll doubles as resize/scroll/layout-shift handling).

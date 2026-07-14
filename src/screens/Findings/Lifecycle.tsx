@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom';
-import { useClosureKpis, useCloseExitCondition, useFindings, useReAlertFinding } from '../../api/shadowOrg';
+import { useCloseExitCondition, useReAlertFinding } from '../../api/shadowOrg';
 import { Pill } from '../../components/shared/Pill';
-import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useToast } from '../../components/shared/Toast';
 import type { ClosureKpi, Finding } from '../../api/types';
 
 const closureTone = { tracking: 'teal', closed: 'green', regressed: 'red' } as const;
 
-function ExitConditionCard({ c }: { c: ClosureKpi }) {
+// A finding the owner Accepted lives on as an exit condition — the Watching
+// stage of its lifecycle, not a separate screen.
+export function ExitConditionCard({ c }: { c: ClosureKpi }) {
   const close = useCloseExitCondition();
   const { showToast } = useToast();
   const done = c.status === 'closed';
@@ -44,7 +45,9 @@ function ExitConditionCard({ c }: { c: ClosureKpi }) {
   );
 }
 
-function WatchingRow({ finding }: { finding: Finding }) {
+// Acknowledged findings sit on a trip-wire until the line they were parked
+// behind is crossed.
+export function TripWireRow({ finding }: { finding: Finding }) {
   const reAlert = useReAlertFinding(finding.id);
   const { showToast } = useToast();
   return (
@@ -52,7 +55,7 @@ function WatchingRow({ finding }: { finding: Finding }) {
       <div className="dec-ico" style={{ background: 'var(--amber-soft)' }}>⏰</div>
       <div style={{ minWidth: 0 }}>
         <div className="t1"><Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link></div>
-        <div className="t2">{finding.reAlertCondition ?? 'Watching for change'}</div>
+        <div className="t2">Trip-wire · {finding.reAlertCondition ?? 'watching for change'}</div>
       </div>
       <div className="acts">
         <button
@@ -64,60 +67,5 @@ function WatchingRow({ finding }: { finding: Finding }) {
         </button>
       </div>
     </div>
-  );
-}
-
-export function ClosureScreen() {
-  const { data: closures, isLoading, isError } = useClosureKpis();
-  const { data: findings } = useFindings({ status: 'acknowledged' });
-
-  if (isLoading) return <section className="screen"><Loading /></section>;
-  if (isError || !closures) return <section className="screen"><ErrorMessage message="Couldn't load closure." /></section>;
-
-  const inFlight = closures.filter((c) => c.status !== 'closed');
-  const closed = closures.filter((c) => c.status === 'closed');
-  const watching = findings ?? [];
-
-  return (
-    <section className="screen" style={{ maxWidth: 1140 }}>
-      <h1 className="page">Closure</h1>
-      <div className="sub">
-        Where the loop closes. Accepted findings become exit conditions the counterpart watches until they're truly met;
-        acknowledged findings sit on a trip-wire that fires when things worsen. Nothing is "done" until the number is back.
-      </div>
-
-      <div className="sec-head" style={{ padding: '0 0 12px' }}>
-        <h3>Exit conditions in flight</h3>
-        <Pill tone="teal">{inFlight.length}</Pill>
-      </div>
-      {inFlight.length === 0 && <div className="card"><div className="state-msg">No open exit conditions — accept a finding and one appears here.</div></div>}
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }} data-tour="closure-exit">
-        {inFlight.map((c) => <ExitConditionCard key={c.id} c={c} />)}
-      </div>
-
-      {watching.length > 0 && (
-        <>
-          <div className="sec-head" style={{ padding: '0 0 12px' }}>
-            <h3>Watching · on a trip-wire</h3>
-            <Pill tone="amber">{watching.length}</Pill>
-          </div>
-          <div className="card" style={{ marginBottom: 24 }}>
-            {watching.map((f) => <WatchingRow key={f.id} finding={f} />)}
-          </div>
-        </>
-      )}
-
-      {closed.length > 0 && (
-        <>
-          <div className="sec-head" style={{ padding: '0 0 12px' }}>
-            <h3>Closed loops</h3>
-            <Pill tone="green">{closed.length}</Pill>
-          </div>
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-            {closed.map((c) => <ExitConditionCard key={c.id} c={c} />)}
-          </div>
-        </>
-      )}
-    </section>
   );
 }

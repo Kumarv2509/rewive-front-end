@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useLiveRuns } from '../../api/dashboard';
+import { Intro } from '../../components/shared/Intro';
+import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { LiveRunCard } from './LiveRunCard';
 import { RunsTable } from './RunsTable';
 import { ExceptionLog } from './ExceptionLog';
@@ -21,8 +23,18 @@ export function RunsScreen() {
 
   return (
     <section className="screen">
-      <h1 className="page">Runs &amp; Actions</h1>
-      <div className="sub">Every execution, live and historical — what ran, who owns it, where it's waiting on a human.</div>
+      <h1 className="page">Execution</h1>
+      <Intro
+        line="Every execution, live and historical — what ran, who owns it, where it's waiting on a human."
+        more={
+          <>
+            Runs are agent executions; tasks are the human and agent work created by a finding's <b>Act</b> disposition;
+            outcomes are the reports a completed run publishes. When an outcome's actions land, the Decision Ledger
+            records whether they worked — the loop closes itself.
+          </>
+        }
+      />
+      <SectionTabs tabs={EXECUTION_TABS} />
 
       <div className="filters">
         {filters.map((f) => (

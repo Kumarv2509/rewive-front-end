@@ -17,7 +17,17 @@ export interface DashboardSummary {
   };
 }
 
-export type Persona = 'store_manager' | 'cfo' | 'operations_head';
+// Personas double as routing roles: every finding is addressed to the role
+// whose call it is. Sales execution → sales supervisor; cross-functional
+// sales + logistics → COO; returns / discounts / trade spend → commercial
+// finance. FP&A doesn't get a queue — it gets the P&L impact rollup.
+export type Persona =
+  | 'store_manager'
+  | 'cfo'
+  | 'operations_head'
+  | 'sales_supervisor'
+  | 'coo'
+  | 'commercial_finance';
 
 export interface CurrentUser {
   name: string;
@@ -139,7 +149,23 @@ export interface DecisionLedgerItem {
   verdict: Verdict;
   measuredImpact: { text: string; direction: 'up' | 'down' | 'flat' };
   originatingSignalId?: string;
+  /** The finding this decision dispositioned — links the ledger row to its thread. */
+  findingId?: string;
   assessorNote?: string;
+}
+
+// FP&A rollup: findings translated onto the P&L, one row per line item —
+// how many were identified, what happened to them, and the measured impact.
+export interface PlImpactLine {
+  key: string;
+  plLine: string;
+  topDrivers: string; // the findings that dominate this line, in plain words
+  identified: number;
+  accepted: number;
+  acting: number;
+  cleared: number; // loops closed — the number came back
+  openNow: number;
+  translatedImpact: { text: string; direction: 'up' | 'down' | 'flat' };
 }
 
 export interface LeaderboardHighlight {
@@ -729,7 +755,9 @@ export interface AgentSpec {
 }
 
 // ---------- KPI Library (onboarding: pick KPIs, or import drivers and budget) ----------
-export type KpiSegment = 'hospital' | 'clinic' | 'pharmacy';
+// Healthcare segments + FMCG segments; the Mandate Library shows the set that
+// matches the chosen industry context.
+export type KpiSegment = 'hospital' | 'clinic' | 'pharmacy' | 'manufacturing' | 'distribution' | 'retail_trade';
 export type KpiCategory = 'financial' | 'operational' | 'clinical' | 'patient_experience';
 
 export interface KpiDriver {

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFindings, useKpiBrain, useShadowOrg } from '../../api/shadowOrg';
+import { Intro } from '../../components/shared/Intro';
 import { Pill } from '../../components/shared/Pill';
+import { SectionTabs, AGENTS_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { severityTone, slaTone } from '../Findings/meta';
 import type { Finding, ShadowAgent, ShadowAgentHealth } from '../../api/types';
@@ -26,7 +28,15 @@ function relTime(iso: string | null): string {
   return `${Math.round(h / 24)}d ago`;
 }
 
-// Delegate temperament as an autonomy dial: quiet ↔ hair-trigger.
+// Delegate temperament as an autonomy dial: quiet ↔ hair-trigger. The hint
+// line spells out the consequence of where the dial sits, so it reads as a
+// setting rather than decoration.
+function temperamentHint(value: number): string {
+  if (value < 34) return 'raises only high-impact findings — quiet weeks are normal';
+  if (value < 67) return 'balanced — flags what a diligent owner would want to see';
+  return 'hair-trigger — flags early and often; expect more, smaller findings';
+}
+
 function TemperamentDial({ value }: { value: number }) {
   return (
     <div>
@@ -37,6 +47,7 @@ function TemperamentDial({ value }: { value: number }) {
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${value}%`, borderRadius: 99, background: 'var(--accent-grad)' }} />
         <div style={{ position: 'absolute', left: `calc(${value}% - 5px)`, top: -2, width: 10, height: 10, borderRadius: '50%', background: '#fff', boxShadow: '0 0 8px rgba(124,124,255,.9)' }} />
       </div>
+      <div style={{ fontSize: 10.5, color: 'var(--ink-3)', marginTop: 5 }}>{temperamentHint(value)}</div>
     </div>
   );
 }
@@ -73,15 +84,26 @@ function AgentCard({ agent, mandateCount, findings }: { agent: ShadowAgent; mand
         <TemperamentDial value={agent.temperament} />
       </div>
 
-      <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', padding: '10px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', padding: '10px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>last raised {relTime(agent.lastFindingAt)}</span>
-        {openFindings.length > 0 && (
+        {openFindings.length > 0 ? (
           <button className="btn ghost sm" onClick={() => setOpen((v) => !v)}>
             {open ? 'Hide' : `What it's flagging (${openFindings.length})`}
           </button>
+        ) : (
+          <Link to={`/operate/findings?stream=${agent.streamKey}`} style={{ fontSize: 11.5, color: 'var(--accent-deep)', textDecoration: 'none' }}>
+            Its findings →
+          </Link>
         )}
       </div>
 
+      {open && (
+        <div style={{ padding: '6px 18px 2px', textAlign: 'right' }}>
+          <Link to={`/operate/findings?stream=${agent.streamKey}`} style={{ fontSize: 11.5, color: 'var(--accent-deep)', textDecoration: 'none' }}>
+            View all in Findings →
+          </Link>
+        </div>
+      )}
       {open && openFindings.map((f) => (
         <Link key={f.id} to={`/operate/findings/${f.id}`} className="dec-item" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -128,11 +150,19 @@ export function ShadowOrgScreen() {
 
   return (
     <section className="screen" style={{ maxWidth: 1280 }}>
-      <h1 className="page">Counterparts</h1>
-      <div className="sub">
-        A tireless counterpart for every function. Each agent watches its function's mandates, raises findings when reality drifts,
-        and escalates up the chain when no one responds. Every mandate is held twice — once by a person, once by its counterpart.
-      </div>
+      <h1 className="page">Agents</h1>
+      <Intro
+        line="A tireless counterpart for every function — every mandate is held twice."
+        more={
+          <>
+            Each counterpart watches its function's mandates through their data feeds, raises findings when reality
+            drifts, and escalates up the chain of counterparts when no one responds. The org-level chief watches the
+            intents themselves. The temperament dial sets how eagerly a counterpart raises — quiet to hair-trigger —
+            and every dismissal you make tunes it further.
+          </>
+        }
+      />
+      <SectionTabs tabs={AGENTS_TABS} />
 
       {chief && (
         <div className="card" style={{ padding: '18px 22px', marginBottom: 20, borderColor: 'rgba(124,124,255,.28)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 20 }}>

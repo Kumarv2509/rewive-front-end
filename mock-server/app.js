@@ -40,6 +40,7 @@ import {
   shadowOrgs,
   findingsSeed,
   closureKpisSeed,
+  plImpactSeed,
 } from './v4data.js';
 import { opContent } from './v4content.js';
 
@@ -1228,6 +1229,11 @@ app.get('/api/v1/findings/:id', (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
   res.json(stripServerFields(hit.finding));
+});
+
+// FP&A rollup: findings translated onto the P&L, per line item.
+app.get('/api/v1/pl-impact', (req, res) => {
+  res.json(plImpactSeed[v4Industry(req)] ?? []);
 });
 
 app.post('/api/v1/findings/:id/disposition', (req, res) => {

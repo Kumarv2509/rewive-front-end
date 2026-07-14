@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Intro } from '../../components/shared/Intro';
 import { Pill } from '../../components/shared/Pill';
+import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useTasks, useAddTaskFeedback, useUpdateTaskStatus, useUpdateTaskChannel } from '../../api/solutionDesign';
 import type { SolutionTask, SolutionTaskStatus, SolutionTaskType, TaskChannel } from '../../api/types';
@@ -93,12 +95,22 @@ export function TasksScreen() {
 
   return (
     <section className="screen">
-      <h1 className="page">Tasks</h1>
-      <div className="sub">Everything assigned to you or your team from an approved solution design, in one place, with a spot to leave feedback.</div>
+      <h1 className="page">Execution</h1>
+      <Intro line="Everything assigned to you or your team from an approved solution design, with a spot to leave feedback." />
+      <SectionTabs tabs={EXECUTION_TABS} />
 
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
-      {data?.length === 0 && <div className="state-msg">No tasks assigned yet.</div>}
+      {data?.length === 0 && (
+        <div className="card" style={{ padding: '28px 24px', textAlign: 'center' }}>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>No tasks yet — and that's how it should start.</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-2)', maxWidth: 520, margin: '0 auto 14px', lineHeight: 1.6 }}>
+            Tasks are born when a finding's <b style={{ color: 'var(--ink)' }}>Act</b> disposition opens a solution:
+            the solution is broken into tasks, new work goes to agents, existing agents are reused, and humans own the rest.
+          </div>
+          <Link className="btn primary sm" to="/operate/findings">See open findings →</Link>
+        </div>
+      )}
       {data?.map((task) => <TaskRow key={task.id} task={task} />)}
     </section>
   );

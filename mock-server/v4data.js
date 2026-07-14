@@ -361,7 +361,7 @@ export const findingsSeed = {
       status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
       slaHoursRemaining: 14, escalationLevel: 0, escalatedToAgentId: null,
       closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
-      detectedAt: '2026-07-06T06:20:00Z', persona: 'operations_head',
+      detectedAt: '2026-07-06T06:20:00Z', persona: 'coo',
       closureTemplate: { name: 'Frozen category case fill back above 96% for 4 straight weeks', baseline: '88%', target: '96%' },
     },
     {
@@ -406,7 +406,7 @@ export const findingsSeed = {
       status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
       slaHoursRemaining: 6, escalationLevel: 1, escalatedToAgentId: 'fmcg-sa-chief',
       closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
-      detectedAt: '2026-07-06T04:45:00Z', persona: 'operations_head',
+      detectedAt: '2026-07-06T04:45:00Z', persona: 'coo',
       closureTemplate: { name: 'Corridor DXB-12 excursions below 5 per month for 2 months', baseline: '14 / mo', target: '< 5 / mo' },
     },
     {
@@ -428,7 +428,7 @@ export const findingsSeed = {
       slaHoursRemaining: 0, escalationLevel: 0, escalatedToAgentId: null,
       closureKpiId: null, solutionDesignId: null,
       reAlertCondition: 'Re-alert if juice trade spend passes 15.5% of revenue or sell-out stays flat another 4 weeks',
-      detectedAt: '2026-07-03T16:00:00Z', persona: 'cfo',
+      detectedAt: '2026-07-03T16:00:00Z', persona: 'commercial_finance',
       closureTemplate: { name: 'Juice trade spend back to 13% of revenue with sell-out up 2%', baseline: '14.8%', target: '13%' },
     },
     {
@@ -448,7 +448,7 @@ export const findingsSeed = {
       status: 'accepted', disposition: 'accept', dispositionBy: 'Layla Nasser', dispositionAt: '2026-07-02T15:00:00Z', dispositionReason: null,
       slaHoursRemaining: 0, escalationLevel: 0, escalatedToAgentId: null,
       closureKpiId: 'fmcg-c-1', solutionDesignId: null, reAlertCondition: null,
-      detectedAt: '2026-07-02T14:10:00Z', persona: 'store_manager',
+      detectedAt: '2026-07-02T14:10:00Z', persona: 'sales_supervisor',
       closureTemplate: { name: 'OSA in top-40 stores at or above 96% for 4 consecutive weeks', baseline: '93.1%', target: '96%' },
     },
     {
@@ -621,4 +621,30 @@ export const closureKpisSeed = {
     { id: 'hc-c-1', findingId: 'hc-f-3', findingTitle: 'ALOS drift in medical wards', name: 'ALOS back to 4.3 days for a full month', baseline: '4.9', target: '4.3', current: '4.7', progressPct: 33, status: 'tracking', watchedByAgentName: 'Clinical ops counterpart', createdAt: '2026-07-01T10:00:00Z', closedAt: null },
   ],
   manufacturing: [],
+};
+
+// ---------- FP&A P&L impact rollup (findings translated onto the P&L) ----------
+// One row per P&L line item: how many findings the counterparts identified
+// against it, what happened to them, and the measured impact so far.
+export const plImpactSeed = {
+  fmcg: [
+    { key: 'gross-revenue', plLine: 'Gross revenue', topDrivers: 'Frozen forecast bias · OSA in top-40 stores', identified: 9, accepted: 4, acting: 2, cleared: 2, openNow: 1, translatedImpact: { text: '+AED 1.42M protected / qtr', direction: 'up' } },
+    { key: 'returns', plLine: 'Returns & refusals', topDrivers: 'Cold-chain excursions · chilled desserts complaints', identified: 4, accepted: 2, acting: 1, cleared: 1, openNow: 0, translatedImpact: { text: '−AED 180k returns avoided', direction: 'up' } },
+    { key: 'trade-spend', plLine: 'Trade spend & discounts', topDrivers: 'Juice trade spend with flat sell-out · display compliance', identified: 6, accepted: 2, acting: 2, cleared: 2, openNow: 1, translatedImpact: { text: 'AED 480k spend re-aimed', direction: 'up' } },
+    { key: 'cogs-waste', plLine: 'COGS — waste & scrap', topDrivers: 'Line 3 waste vs standard · changeover start-up losses', identified: 5, accepted: 3, acting: 1, cleared: 1, openNow: 1, translatedImpact: { text: '+AED 260k margin held', direction: 'up' } },
+    { key: 'logistics-cost', plLine: 'Logistics & distribution cost', topDrivers: 'Corridor excursions traced to two vehicles · truck utilization', identified: 3, accepted: 1, acting: 1, cleared: 1, openNow: 1, translatedImpact: { text: '+AED 95k / qtr', direction: 'up' } },
+    { key: 'working-capital', plLine: 'Working capital', topDrivers: 'Distributor payment terms · obsolescence write-offs', identified: 2, accepted: 1, acting: 0, cleared: 1, openNow: 0, translatedImpact: { text: '−AED 40k DSO cost', direction: 'down' } },
+  ],
+  healthcare: [
+    { key: 'patient-revenue', plLine: 'Net patient revenue', topDrivers: 'First-pass denial surge · payer policy change', identified: 7, accepted: 3, acting: 2, cleared: 2, openNow: 1, translatedImpact: { text: '+$620k recovered', direction: 'up' } },
+    { key: 'denials', plLine: 'Denials & write-offs', topDrivers: 'Prior-auth denials, two payers', identified: 5, accepted: 2, acting: 1, cleared: 2, openNow: 1, translatedImpact: { text: '−4.4 pts first-pass denial rate', direction: 'up' } },
+    { key: 'supply-pharmacy', plLine: 'Supply & pharmacy cost', topDrivers: 'Biosimilar switch · infusion therapy formulary', identified: 4, accepted: 2, acting: 1, cleared: 1, openNow: 0, translatedImpact: { text: '+$210k / yr', direction: 'up' } },
+    { key: 'labor', plLine: 'Labor & premium pay', topDrivers: 'ALOS drift holding beds · discharge delays', identified: 3, accepted: 1, acting: 1, cleared: 0, openNow: 1, translatedImpact: { text: 'measuring…', direction: 'flat' } },
+    { key: 'ar', plLine: 'AR & working capital', topDrivers: 'Claim processing time · eligibility verification', identified: 2, accepted: 1, acting: 0, cleared: 1, openNow: 0, translatedImpact: { text: '−6 days in AR', direction: 'up' } },
+  ],
+  manufacturing: [
+    { key: 'revenue', plLine: 'Revenue — OTIF penalties', topDrivers: 'Two suppliers driving the OTIF slide', identified: 4, accepted: 2, acting: 1, cleared: 1, openNow: 1, translatedImpact: { text: '+9 pts OTIF', direction: 'up' } },
+    { key: 'cogs-scrap', plLine: 'COGS — scrap & rework', topDrivers: 'Scrap concentrated in one part family', identified: 3, accepted: 1, acting: 1, cleared: 1, openNow: 0, translatedImpact: { text: '−0.8 pt scrap', direction: 'up' } },
+    { key: 'maintenance', plLine: 'Maintenance & downtime', topDrivers: 'PM compliance slide on the press line', identified: 3, accepted: 2, acting: 0, cleared: 1, openNow: 1, translatedImpact: { text: '−14 h/wk downtime', direction: 'up' } },
+  ],
 };

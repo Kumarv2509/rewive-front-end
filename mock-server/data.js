@@ -33,7 +33,7 @@ export const personaKpiOverrides = {
 export const dashboardSummary = {
   greetingName: 'Kumara',
   summarySentence:
-    'Since yesterday, Rewive executed <b style="color:var(--ink)">87 actions</b> across Finance and HR. <b style="color:var(--ink)">4 decisions</b> are waiting on you.',
+    'Since yesterday, Rewive executed <b style="color:var(--ink)">87 actions</b> across Finance and HR. Your queue is below.',
   kpis: {
     actionsExecutedToday: { value: 87, delta: { label: '▲ 12% vs yesterday', direction: 'up' } },
     decisionsPending: { value: 4, delta: { label: '2 urgent', direction: 'flat' } },
@@ -62,7 +62,7 @@ export let pendingDecisions = [
     subtitle: 'Anomaly Agent recommends repricing · est. impact +AED 84k / qtr',
     actionLabel: 'Act',
     actionVerb: 'act',
-    persona: 'store_manager',
+    persona: 'commercial_finance',
   },
   {
     id: 'dec3',
@@ -191,6 +191,7 @@ export const decisionStats = {
 };
 
 export const decisionLedger = [
+  { id: 'led0', title: 'Accept — OSA back above 96% in top-40 stores', subtitle: 'On-shelf availability finding · exit condition watched', madeBy: { type: 'human', name: 'Layla Nasser', initials: 'LN', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Commercial counterpart' }, date: '02 Jun', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', findingId: 'fmcg-f-5' },
   { id: 'led1', title: 'Reprice SKU 2210 family in UAE', subtitle: 'Margin leakage driver #1, May run', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+AED 210k / qtr', direction: 'up' }, function: 'finance', originatingSignalId: 'sig1', assessorNote: 'Assessor agent: margin on the SKU 4417/2210 family recovered from -6.2% to -1.1% within 6 weeks of repricing, well ahead of the 3-week target — independently confirmed against the same gross-margin field used to raise the original signal.' },
   { id: 'led2', title: 'Consolidate 3 logistics vendors', subtitle: 'Cost optimization recommendation', madeBy: { type: 'human', name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, informedBy: { type: 'agent', name: 'Cost Agent' }, date: '28 Apr', verdict: 'worked', measuredImpact: { text: '+AED 95k / qtr', direction: 'up' }, function: 'procurement', originatingSignalId: 'sig3', assessorNote: 'Assessor agent: invoice overlap across the 3 flagged vendors dropped to zero after consolidation — confirmed against the same vendor invoice feed, closing the signal that raised it.' },
   { id: 'led3', title: 'Hold hiring for support roles', subtitle: 'Forecast showed demand dip', madeBy: { type: 'human', name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '21 Apr', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'hr' },
@@ -492,6 +493,46 @@ export const kpiCatalog = [
     definition: 'Proportion of days covered by refills for a chronic medication.',
     formula: 'Days covered by fills ÷ Days in period',
     driversNeeded: [{ name: 'Refill history', dataSource: 'Pharmacy dispensing system' }, { name: 'Claims history', dataSource: 'PBM claims feed' }] },
+
+  // FMCG — Manufacturing
+  { id: 'kpi-oee', name: 'Overall Equipment Effectiveness (OEE)', segment: 'manufacturing', category: 'operational',
+    definition: 'How much of planned production time is truly productive across availability, performance and quality.',
+    formula: 'Availability × Performance × Quality',
+    driversNeeded: [{ name: 'Line runtime & stops', dataSource: 'Plant telemetry / MES' }, { name: 'Good units vs total units', dataSource: 'MES quality log' }] },
+  { id: 'kpi-waste', name: 'Waste & Scrap %', segment: 'manufacturing', category: 'operational',
+    definition: 'Share of material lost to waste and scrap against the production standard.',
+    formula: 'Waste + scrap volume ÷ Total input volume',
+    driversNeeded: [{ name: 'Line waste log', dataSource: 'Line sensor telemetry' }, { name: 'Production volumes', dataSource: 'MES / production orders' }] },
+  { id: 'kpi-changeover', name: 'Changeover Time', segment: 'manufacturing', category: 'operational',
+    definition: 'Average time to switch a line between SKUs — the hidden capacity tax.',
+    formula: 'Sum(changeover minutes) ÷ Number of changeovers',
+    driversNeeded: [{ name: 'Changeover events', dataSource: 'MES / line schedule' }] },
+  // FMCG — Distribution
+  { id: 'kpi-otif', name: 'Case Fill Rate (OTIF)', segment: 'distribution', category: 'operational',
+    definition: 'Share of ordered cases delivered on time and in full to customers.',
+    formula: 'Cases delivered OTIF ÷ Cases ordered',
+    driversNeeded: [{ name: 'Customer orders', dataSource: 'ERP / order management' }, { name: 'Delivery confirmations', dataSource: 'TMS / EPOD' }] },
+  { id: 'kpi-coldchain', name: 'Cold-Chain Excursions', segment: 'distribution', category: 'operational',
+    definition: 'Temperature excursions per month across the refrigerated fleet.',
+    formula: 'Count(excursions above threshold) per month',
+    driversNeeded: [{ name: 'Reefer temperature probes', dataSource: 'Fleet telematics' }, { name: 'Route & vehicle master', dataSource: 'TMS' }] },
+  { id: 'kpi-truckutil', name: 'Truck Utilization', segment: 'distribution', category: 'financial',
+    definition: 'Share of available truck capacity actually used — cost per case follows it.',
+    formula: 'Loaded capacity ÷ Available capacity',
+    driversNeeded: [{ name: 'Load plans', dataSource: 'TMS' }, { name: 'Fleet availability', dataSource: 'Fleet management system' }] },
+  // FMCG — Retail & trade
+  { id: 'kpi-osa', name: 'On-Shelf Availability (OSA)', segment: 'retail_trade', category: 'operational',
+    definition: 'Share of SKUs on shelf and sellable in tracked stores — the revenue you can only lose once.',
+    formula: 'SKUs available on shelf ÷ SKUs listed',
+    driversNeeded: [{ name: 'Store POS feed', dataSource: 'Modern trade POS' }, { name: 'Store audits', dataSource: 'Field sales app' }] },
+  { id: 'kpi-tsroi', name: 'Trade-Spend ROI', segment: 'retail_trade', category: 'financial',
+    definition: 'Incremental sell-out generated per dirham of promotional spend.',
+    formula: 'Incremental sell-out value ÷ Trade spend',
+    driversNeeded: [{ name: 'Trade-spend ledger', dataSource: 'TPM / finance system' }, { name: 'Sell-out volumes', dataSource: 'Modern trade POS' }] },
+  { id: 'kpi-forecastacc', name: 'Forecast Accuracy', segment: 'retail_trade', category: 'operational',
+    definition: 'How close the demand forecast lands to actual sell-in, by category.',
+    formula: '1 − |Forecast − Actual| ÷ Actual',
+    driversNeeded: [{ name: 'Demand forecast', dataSource: 'Planning system' }, { name: 'Actual sell-in', dataSource: 'ERP shipments' }] },
 ];
 
 // ---------- Agent Space ----------

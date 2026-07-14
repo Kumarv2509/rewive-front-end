@@ -1,15 +1,28 @@
 import { useState } from 'react';
+import { getActiveIndustry } from '../../api/client';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useKpiCatalog, useTrackedKpis, useTrackKpi, useAddCustomKpi } from '../../api/kpiLibrary';
 import { useToast } from '../../components/shared/Toast';
 import type { KpiCategory, KpiDriver, KpiSegment } from '../../api/types';
 
-const segments: { key: KpiSegment; label: string }[] = [
-  { key: 'hospital', label: 'Hospital' },
-  { key: 'clinic', label: 'Clinic' },
-  { key: 'pharmacy', label: 'Pharmacy chain' },
-];
+// Segments follow the chosen operating context — FMCG never sees hospital KPIs.
+const SEGMENTS_BY_INDUSTRY: Record<string, { key: KpiSegment; label: string }[]> = {
+  fmcg: [
+    { key: 'manufacturing', label: 'Manufacturing' },
+    { key: 'distribution', label: 'Distribution' },
+    { key: 'retail_trade', label: 'Retail & trade' },
+  ],
+  healthcare: [
+    { key: 'hospital', label: 'Hospital' },
+    { key: 'clinic', label: 'Clinic' },
+    { key: 'pharmacy', label: 'Pharmacy chain' },
+  ],
+};
+
+function segmentsForIndustry() {
+  return SEGMENTS_BY_INDUSTRY[getActiveIndustry() ?? 'fmcg'] ?? SEGMENTS_BY_INDUSTRY.fmcg;
+}
 
 const categoryTone: Record<KpiCategory, 'indigo' | 'teal' | 'red' | 'amber'> = {
   financial: 'indigo',
@@ -75,7 +88,8 @@ function CustomKpiForm() {
 }
 
 export function SelectKpisTab() {
-  const [segment, setSegment] = useState<KpiSegment>('hospital');
+  const segments = segmentsForIndustry();
+  const [segment, setSegment] = useState<KpiSegment>(segments[0].key);
   const { data: catalog, isLoading, isError } = useKpiCatalog(segment);
   const { data: tracked } = useTrackedKpis();
   const trackKpi = useTrackKpi();

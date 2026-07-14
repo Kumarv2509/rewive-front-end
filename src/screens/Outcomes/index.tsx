@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useOutcomeReport, useExportOutcome, useShareOutcome } from '../../api/outcomes';
 import { useToast } from '../../components/shared/Toast';
+import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { ScoreCards } from './ScoreCards';
 import { InsightsList } from './InsightsList';
@@ -18,6 +19,7 @@ export function OutcomesScreen() {
 
   return (
     <section className="screen">
+      <SectionTabs tabs={EXECUTION_TABS} />
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
         <div>
           <h1 className="page">{data.title}</h1>

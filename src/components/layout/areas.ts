@@ -1,64 +1,58 @@
+export type NavIconKey =
+  | 'home' | 'clock' | 'check' | 'plus' | 'plug' | 'studio' | 'grid' | 'people'
+  | 'chart' | 'signal' | 'tasks' | 'brain' | 'shadow' | 'loop';
+
 export interface AreaNavItem {
   to: string;
   label: string;
   end?: boolean;
-  badgeKey?: 'pendingDecisions';
-  icon: 'home' | 'clock' | 'check' | 'plus' | 'plug' | 'studio' | 'grid' | 'people' | 'chart' | 'signal' | 'tasks' | 'brain' | 'shadow' | 'loop';
+  icon: NavIconKey;
+  /** Extra path prefixes that keep this item highlighted (merged surfaces). */
+  match?: string[];
 }
 
-export interface Area {
-  key: 'operate' | 'build' | 'insights';
-  label: string;
-  basePath: string;
-  items: AreaNavItem[];
-}
-
-// Operate walks the loop's hero path (findings → closure → ledger); Foundation
-// holds setup surfaces. Agent-building screens stay routable but are off the nav —
-// they're reached from a finding's Act disposition, not browsed to.
-export const AREAS: Area[] = [
-  {
-    key: 'operate',
-    label: 'Operate',
-    basePath: '/command',
-    items: [
-      { to: '/command', label: 'Command Center', end: true, icon: 'home' },
-      { to: '/operate/findings', label: 'Findings', icon: 'signal' },
-      { to: '/operate/closure', label: 'Closure', icon: 'loop' },
-      { to: '/operate/decisions', label: 'Decision Ledger', icon: 'check' },
-      { to: '/operate/counterparts', label: 'Counterparts', icon: 'shadow' },
-      { to: '/operate/runs', label: 'Runs & Actions', icon: 'clock', badgeKey: 'pendingDecisions' },
-      { to: '/operate/tasks', label: 'Tasks', icon: 'tasks' },
-    ],
-  },
-  {
-    key: 'insights',
-    label: 'Insights',
-    basePath: '/insights',
-    items: [
-      { to: '/insights/outcomes', label: 'Outcomes', icon: 'chart' },
-      { to: '/insights/people', label: 'Performance', icon: 'people' },
-      { to: '/insights/agents', label: 'Agent Space', icon: 'grid' },
-    ],
-  },
-  {
-    key: 'build',
-    label: 'Foundation',
-    basePath: '/build',
-    items: [
-      { to: '/build/picture', label: 'Operating Picture', icon: 'brain' },
-      { to: '/build/kpis', label: 'Mandate Library', icon: 'chart' },
-      { to: '/build/connectors', label: 'Data Connectors', icon: 'plug' },
-    ],
-  },
+// One flat rail, ordered by the loop: what needs you → find → decide → act →
+// who does the work → how fast the loop closes → setup. Merged surfaces
+// (Execution = runs+tasks+outcomes, Agents = counterparts+workforce) stay on
+// their original routes; `match` keeps the rail item lit across the set.
+export const NAV_ITEMS: AreaNavItem[] = [
+  { to: '/command', label: 'Today', end: true, icon: 'home' },
+  { to: '/operate/findings', label: 'Findings', icon: 'signal', match: ['/operate/findings', '/operate/closure', '/insights/signals'] },
+  { to: '/operate/decisions', label: 'Decisions', icon: 'check' },
+  { to: '/operate/runs', label: 'Execution', icon: 'clock', match: ['/operate/runs', '/operate/tasks', '/insights/outcomes'] },
+  { to: '/operate/counterparts', label: 'Agents', icon: 'shadow', match: ['/operate/counterparts', '/insights/agents'] },
+  { to: '/insights/people', label: 'Performance', icon: 'people' },
+  { to: '/build/picture', label: 'Foundation', icon: 'brain', match: ['/build'] },
 ];
 
-export function getAreaKeyFromPath(pathname: string): Area['key'] {
-  if (pathname.startsWith('/build')) return 'build';
-  if (pathname.startsWith('/insights')) return 'insights';
-  return 'operate';
+export function isNavItemActive(item: AreaNavItem, pathname: string): boolean {
+  if (item.end) return pathname === item.to;
+  const prefixes = item.match ?? [item.to];
+  return prefixes.some((p) => pathname.startsWith(p));
 }
 
-export function getArea(key: Area['key']): Area {
-  return AREAS.find((a) => a.key === key) ?? AREAS[0];
+// Off-rail screens still need a crumb title.
+const SPECIAL_TITLES: [prefix: string, title: string][] = [
+  ['/operate/findings/', 'Findings / Thread'],
+  ['/operate/tasks', 'Execution / Tasks'],
+  ['/operate/runs', 'Execution / Runs'],
+  ['/insights/outcomes', 'Execution / Outcomes'],
+  ['/operate/counterparts', 'Agents / Counterparts'],
+  ['/insights/agents', 'Agents / Workforce'],
+  ['/insights/signals', 'Findings / Signal'],
+  ['/build/picture', 'Foundation / Operating Picture'],
+  ['/build/kpis', 'Foundation / Mandate Library'],
+  ['/build/connectors', 'Foundation / Data Connectors'],
+  ['/build/agent-studio', 'Foundation / Unified Agent Studio'],
+  ['/build/solutions', 'Foundation / Solution Design'],
+  ['/build/studio', 'Foundation / Agent Studio'],
+  ['/build/create', 'Foundation / Create an Agent'],
+];
+
+export function crumbTitle(pathname: string): string {
+  for (const [prefix, title] of SPECIAL_TITLES) {
+    if (pathname.startsWith(prefix)) return title;
+  }
+  const item = NAV_ITEMS.find((i) => isNavItemActive(i, pathname));
+  return item?.label ?? 'Rewive';
 }

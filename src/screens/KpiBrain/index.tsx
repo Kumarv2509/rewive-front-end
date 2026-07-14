@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAddBrainNode, useIndustries, useKpiBrain, useOrgProfile, useSetIndustry } from '../../api/shadowOrg';
+import { Intro } from '../../components/shared/Intro';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useToast } from '../../components/shared/Toast';
 import { KpiBrainCanvas } from './KpiBrainCanvas';
@@ -97,11 +98,16 @@ export function KpiBrainScreen() {
   return (
     <section className="screen" style={{ maxWidth: 1280 }}>
       <h1 className="page">Operating Picture</h1>
-      <div className="sub">
-        What the organization is trying to make true — every intent decomposed into the mandates that carry it and the
-        senses that verify it. Every mandate is held twice: once by a person, once by its counterpart. This is the picture
-        the counterparts reason over — a finding on any node traces its impact all the way up to an intent.
-      </div>
+      <Intro
+        line="What the organization is trying to make true — intents, the mandates that carry them, the senses that verify them."
+        more={
+          <>
+            Every mandate is held twice: once by a person, once by its counterpart. This is the picture the
+            counterparts reason over — a finding on any node traces its impact all the way up to the intent it
+            threatens. A mandate without a sense is blind, and the picture says so.
+          </>
+        }
+      />
 
       <IndustrySwitcher />
       {brain && <AddKpiForm brain={brain} />}

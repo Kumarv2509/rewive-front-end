@@ -23,13 +23,18 @@ There is no test suite configured.
 
 ## Architecture
 
-**Information architecture** (`src/components/layout/areas.ts`, routes in `src/App.tsx`): a public landing page at `/`, then three nav areas under `AppLayout`:
+**Information architecture** (`src/components/layout/areas.ts`, routes in `src/App.tsx`): a public landing page at `/`, then one flat loop-ordered rail of 7 items under `AppLayout` (the old Operate/Insights/Foundation top-nav areas are retired):
 
-- **Operate** — the hero path: Command Center (`/command`), Findings (`/operate/findings`), Closure (`/operate/closure`), Decision Ledger (`/operate/decisions`), Counterparts (`/operate/counterparts`), Runs & Actions, Tasks.
-- **Insights** — Outcomes, Performance (the reframed leaderboard), Agent Space.
-- **Foundation** (URL prefix is still `/build`) — Operating Picture (`/build/picture`), Mandate Library (`/build/kpis`), Data Connectors.
+- **Today** (`/command`) — the single "waiting on you" queue (findings + approvals, one count — the only such number in the product).
+- **Findings** (`/operate/findings`) — lifecycle tabs `?tab=open|watching|closed`; the old Closure screen is the Watching/Closed tabs now (`/operate/closure` redirects). A finding's detail page is its **thread**: raised → decided → watching → closed + verdict.
+- **Decisions** (`/operate/decisions`) — the ledger; rows deep-link to the finding they answered (`findingId` on `DecisionLedgerItem`).
+- **Execution** — Runs (`/operate/runs`), Tasks (`/operate/tasks`), Outcomes (`/insights/outcomes/:runId`) share a `SectionTabs` header; routes unchanged.
+- **Agents** — Counterparts (`/operate/counterparts`) + Workforce (`/insights/agents`) share a `SectionTabs` header.
+- **Performance** (`/insights/people`), **Foundation** (`/build/picture`, `/build/kpis`, `/build/connectors`).
 
-Agent-building screens (Create an Agent `/build/create`, Agent Studio `/build/studio`, Unified Agent Studio `/build/agent-studio/:id`, Solution Design `/build/solutions/:id`) are **routable but off the nav** — they're reached through a finding's **Act** disposition (finding → solution design → agent spec), not browsed to. Old v1/v3/v4 URLs (`/runs`, `/insights/findings`, `/operate/shadow`, …) redirect; keep that convention when moving routes.
+The persona lens is global chrome (top bar, `personaLens.tsx`, persisted). Screen intros use the shared `Intro` component (one line + "How this works" disclosure) instead of paragraph subtitles. There is no global "+ New Agent" CTA — agent creation lives in Agents → Workforce and a finding's Act flow.
+
+Agent-building screens (Create an Agent `/build/create`, Agent Studio `/build/studio`, Unified Agent Studio `/build/agent-studio/:id`, Solution Design `/build/solutions/:id`) are **routable but off the nav** — they're reached through a finding's **Act** disposition (finding → solution design → agent spec), not browsed to. Old v1/v3/v4/v5 URLs (`/runs`, `/insights/findings`, `/operate/shadow`, `/operate/closure`, …) redirect; keep that convention when moving routes.
 
 **Naming note:** the user-facing term is **counterpart**; internal identifiers still use the older "shadow" naming (`ShadowAgent`, `useShadowOrg`, `src/api/shadowOrg.ts`, `src/screens/ShadowOrg/`). Don't reintroduce "shadow" in UI copy; renaming the internals is an optional cleanup.
 

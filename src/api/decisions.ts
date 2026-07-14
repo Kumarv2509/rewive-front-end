@@ -1,11 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { DecisionLedgerItem, DecisionStats, PendingDecision } from './types';
+import type { DecisionLedgerItem, DecisionStats, PendingDecision, PlImpactLine } from './types';
 
 export function useDecisionStats() {
   return useQuery({
     queryKey: ['decisions', 'stats'],
     queryFn: async () => (await apiClient.get<DecisionStats>('/decisions/stats')).data,
+  });
+}
+
+// FP&A rollup: findings translated onto the P&L, per line item.
+export function usePlImpact() {
+  return useQuery({
+    queryKey: ['decisions', 'pl-impact'],
+    queryFn: async () => (await apiClient.get<PlImpactLine[]>('/pl-impact')).data,
   });
 }
 

@@ -33,14 +33,17 @@ export function DecisionsTable({ filters }: { filters: DecisionLedgerFilters }) 
                 {d.assessorNote && (
                   <div style={{ fontSize: 11, color: 'var(--teal)', marginTop: 4, maxWidth: 320 }}>
                     {d.assessorNote}
-                    {d.originatingSignalId && (
-                      <>
-                        {' '}
-                        <Link to={`/insights/signals/${d.originatingSignalId}`}>Closes the originating signal &rarr;</Link>
-                      </>
-                    )}
                   </div>
                 )}
+                {d.findingId ? (
+                  <div style={{ fontSize: 11, marginTop: 4 }}>
+                    <Link to={`/operate/findings/${d.findingId}`}>View the finding it answered &rarr;</Link>
+                  </div>
+                ) : d.originatingSignalId ? (
+                  <div style={{ fontSize: 11, marginTop: 4 }}>
+                    <Link to={`/insights/signals/${d.originatingSignalId}`}>Closes the originating signal &rarr;</Link>
+                  </div>
+                ) : null}
               </td>
               <td>
                 {d.madeBy.type === 'human' ? (
