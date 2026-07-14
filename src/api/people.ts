@@ -1,11 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { LeaderboardHighlight, LeaderboardRow } from './types';
+import type { LeaderboardHighlight, LeaderboardRow, LoopSpeedRow } from './types';
 
 export function useLeaderboardHighlights() {
   return useQuery({
     queryKey: ['leaderboard', 'highlights'],
     queryFn: async () => (await apiClient.get<LeaderboardHighlight[]>('/leaderboard/highlights')).data,
+  });
+}
+
+export function useLoopSpeed() {
+  return useQuery({
+    queryKey: ['leaderboard', 'loop-speed'],
+    queryFn: async () => (await apiClient.get<LoopSpeedRow[]>('/leaderboard/loop-speed')).data,
   });
 }
 

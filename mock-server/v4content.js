@@ -30,6 +30,18 @@ const fmcgAgents = [
   { agentId: 'fmcg-a-waste', state: 'paused', name: 'Line Waste Agent', function: 'Manufacturing', capabilitiesCount: 3, dataInputs: 'Line sensors · material issues', reviewGate: 'Human approval · step 3', owner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED' }, guardrails: 'No line-speed changes without plant sign-off', estRuntime: '4–6 min', description: 'Correlates waste and scrap with changeover frequency and start-up losses to isolate structural vs operator causes.', industry: 'fnb', function2: 'it', persona: 'operations_head', catalogStatus: 'paused', creationPath: 'studio', inputsSummary: ['Line sensor telemetry', 'ERP material issues'], outputsSummary: ['Waste driver breakdown', 'Changeover recommendations'], roiToDate: { label: 'Margin recovered', value: '+35 bps', direction: 'up' }, tokenCostToDate: { tokens: 142000, estCost: '$13.10' }, runsCount: 58, lastRunAt: '1d ago' },
 ];
 
+// Loop speed by mandate (Performance screen): how fast drift on each mandate goes
+// from detected → dispositioned → number back at target. Sorted fastest close first.
+const fmcgLoopSpeed = [
+  { id: 'fmcg-ls-osa', mandate: 'On-shelf availability', stream: 'Commercial & sales', owner: { name: 'Layla Nasser', initials: 'LN', avatarBg: '#0E7490' }, counterpart: 'Commercial counterpart', findings90d: 4, medianTimeToDecide: '3.2h', medianTimeToClose: '6 days', closedInWindowPct: 86, trend: [16, 14, 12, 10, 8, 6], trendColor: '#16A34A' },
+  { id: 'fmcg-ls-ppm', mandate: 'Complaints per million', stream: 'Quality & food safety', owner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D' }, counterpart: 'Quality counterpart', findings90d: 2, medianTimeToDecide: '4.5h', medianTimeToClose: '8 days', closedInWindowPct: 90, trend: [13, 12, 12, 10, 9, 8], trendColor: '#16A34A' },
+  { id: 'fmcg-ls-fill', mandate: 'Case fill rate (OTIF)', stream: 'Demand & supply planning', owner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' }, counterpart: 'Planning counterpart', findings90d: 5, medianTimeToDecide: '9h', medianTimeToClose: '12 days', closedInWindowPct: 74, trend: [18, 17, 15, 14, 13, 12], trendColor: '#16A34A' },
+  { id: 'fmcg-ls-mape', mandate: 'Forecast accuracy', stream: 'Demand & supply planning', owner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' }, counterpart: 'Planning counterpart', findings90d: 3, medianTimeToDecide: '14h', medianTimeToClose: '21 days', closedInWindowPct: 62, trend: [24, 23, 23, 22, 21, 21], trendColor: '#A8A29E' },
+  { id: 'fmcg-ls-cold', mandate: 'Cold-chain excursions', stream: 'Logistics & distribution', owner: { name: 'Tariq Aziz', initials: 'TA', avatarBg: '#0F766E' }, counterpart: 'Logistics counterpart', findings90d: 3, medianTimeToDecide: '26h', medianTimeToClose: '24 days', closedInWindowPct: 55, trend: [20, 21, 22, 23, 23, 24], trendColor: '#D97706' },
+  { id: 'fmcg-ls-waste', mandate: 'Waste & scrap', stream: 'Manufacturing', owner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED' }, counterpart: 'Manufacturing counterpart', findings90d: 2, medianTimeToDecide: '18h', medianTimeToClose: '30 days', closedInWindowPct: 48, trend: [26, 27, 28, 29, 29, 30], trendColor: '#D97706' },
+  { id: 'fmcg-ls-trade', mandate: 'Trade spend % of revenue', stream: 'Finance', owner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8' }, counterpart: 'Finance counterpart', findings90d: 2, medianTimeToDecide: '31h', medianTimeToClose: '38 days', closedInWindowPct: 41, trend: [30, 32, 33, 35, 37, 38], trendColor: '#DC2626' },
+];
+
 const fmcg = {
   dashboardSummary: fmcgDashboard,
   personaKpiOverrides: fmcgPersonaKpi,
@@ -45,6 +57,7 @@ const fmcg = {
   decisionLedger: fmcgLedger,
   leaderboardHighlights: fmcgHighlights,
   leaderboard: fmcgLeaderboard,
+  loopSpeed: fmcgLoopSpeed,
   outcomeReports: fmcgOutcomes,
   agentCatalog: fmcgAgents,
 };
@@ -144,6 +157,14 @@ const healthcare = {
     { id: 'hc-l4', type: 'human', name: 'Fatima Al Marri', initials: 'FA', avatarBg: '#BE185D', actionsClosed: 17, onTimePct: 88, decisionWinRatePct: 72, timeSaved: '6h', trend: [10, 12, 9, 11, 8, 7], trendColor: '#D97706' },
     { id: 'hc-l5', type: 'agent', name: 'Clinical Risk Agent', initials: 'CR', avatarBg: '#4F46E5', actionsClosed: 64, onTimePct: 97, decisionWinRatePct: 71, timeSaved: '31h', trend: [8, 10, 7, 9, 10, 8], trendColor: '#A8A29E' },
     { id: 'hc-l6', type: 'human', name: 'Ravi Menon', initials: 'RM', avatarBg: '#0F766E', actionsClosed: 15, onTimePct: 86, decisionWinRatePct: 73, timeSaved: '5h', trend: [12, 10, 13, 10, 9, 9], trendColor: '#A8A29E' },
+  ],
+  loopSpeed: [
+    { id: 'hc-ls-denial', mandate: 'Claim denial rate', stream: 'Revenue cycle', owner: { name: 'James Okafor', initials: 'JO', avatarBg: '#B45309' }, counterpart: 'Revenue cycle counterpart', findings90d: 4, medianTimeToDecide: '4h', medianTimeToClose: '9 days', closedInWindowPct: 84, trend: [22, 19, 16, 13, 11, 9], trendColor: '#16A34A' },
+    { id: 'hc-ls-noshow', mandate: 'No-show rate', stream: 'Patient experience', owner: { name: 'Fatima Al Marri', initials: 'FA', avatarBg: '#BE185D' }, counterpart: 'Patient experience counterpart', findings90d: 3, medianTimeToDecide: '7h', medianTimeToClose: '14 days', closedInWindowPct: 76, trend: [20, 19, 17, 16, 15, 14], trendColor: '#16A34A' },
+    { id: 'hc-ls-cleanclaim', mandate: 'Clean claim rate', stream: 'Revenue cycle', owner: { name: 'James Okafor', initials: 'JO', avatarBg: '#B45309' }, counterpart: 'Revenue cycle counterpart', findings90d: 3, medianTimeToDecide: '11h', medianTimeToClose: '16 days', closedInWindowPct: 70, trend: [21, 20, 19, 18, 17, 16], trendColor: '#16A34A' },
+    { id: 'hc-ls-alos', mandate: 'Average length of stay', stream: 'Clinical operations', owner: { name: 'Dr. Maya Suresh', initials: 'MS', avatarBg: '#0E7490' }, counterpart: 'Clinical ops counterpart', findings90d: 2, medianTimeToDecide: '16h', medianTimeToClose: '25 days', closedInWindowPct: 60, trend: [28, 27, 27, 26, 25, 25], trendColor: '#A8A29E' },
+    { id: 'hc-ls-mederror', mandate: 'Medication error rate', stream: 'Pharmacy operations', owner: { name: 'Ravi Menon', initials: 'RM', avatarBg: '#0F766E' }, counterpart: 'Pharmacy counterpart', findings90d: 1, medianTimeToDecide: '9h', medianTimeToClose: '28 days', closedInWindowPct: 58, trend: [30, 29, 29, 28, 28, 28], trendColor: '#A8A29E' },
+    { id: 'hc-ls-agency', mandate: 'Agency staffing %', stream: 'People', owner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C' }, counterpart: 'People counterpart', findings90d: 2, medianTimeToDecide: '29h', medianTimeToClose: '41 days', closedInWindowPct: 39, trend: [33, 35, 36, 38, 40, 41], trendColor: '#DC2626' },
   ],
   outcomeReports: {
     latest: {
@@ -263,6 +284,14 @@ const manufacturing = {
     { id: 'mfg-l4', type: 'human', name: 'Omar Farouk', initials: 'OF', avatarBg: '#0E7490', actionsClosed: 18, onTimePct: 88, decisionWinRatePct: 73, timeSaved: '6h', trend: [10, 12, 9, 11, 8, 7], trendColor: '#D97706' },
     { id: 'mfg-l5', type: 'agent', name: 'Production Agent', initials: 'PA', avatarBg: '#4F46E5', actionsClosed: 61, onTimePct: 97, decisionWinRatePct: 70, timeSaved: '30h', trend: [8, 10, 7, 9, 10, 8], trendColor: '#A8A29E' },
     { id: 'mfg-l6', type: 'human', name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', actionsClosed: 16, onTimePct: 86, decisionWinRatePct: 74, timeSaved: '5h', trend: [12, 10, 13, 10, 9, 9], trendColor: '#A8A29E' },
+  ],
+  loopSpeed: [
+    { id: 'mfg-ls-unplanned', mandate: 'Unplanned downtime', stream: 'Maintenance', owner: { name: 'Hassan Jaber', initials: 'HJ', avatarBg: '#B45309' }, counterpart: 'Maintenance counterpart', findings90d: 3, medianTimeToDecide: '5h', medianTimeToClose: '8 days', closedInWindowPct: 82, trend: [20, 17, 14, 12, 10, 8], trendColor: '#16A34A' },
+    { id: 'mfg-ls-scrap', mandate: 'Scrap rate', stream: 'Production', owner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED' }, counterpart: 'Production counterpart', findings90d: 3, medianTimeToDecide: '8h', medianTimeToClose: '13 days', closedInWindowPct: 73, trend: [19, 18, 16, 15, 14, 13], trendColor: '#16A34A' },
+    { id: 'mfg-ls-supotd', mandate: 'Supplier OTIF', stream: 'Supplier network', owner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#0E7490' }, counterpart: 'Supplier network counterpart', findings90d: 2, medianTimeToDecide: '13h', medianTimeToClose: '22 days', closedInWindowPct: 64, trend: [26, 25, 24, 24, 23, 22], trendColor: '#16A34A' },
+    { id: 'mfg-ls-fpy', mandate: 'First-pass yield', stream: 'Quality', owner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D' }, counterpart: 'Quality counterpart', findings90d: 2, medianTimeToDecide: '15h', medianTimeToClose: '26 days', closedInWindowPct: 57, trend: [27, 27, 26, 26, 26, 26], trendColor: '#A8A29E' },
+    { id: 'mfg-ls-costvar', mandate: 'Cost variance vs standard', stream: 'Finance', owner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8' }, counterpart: 'Finance counterpart', findings90d: 2, medianTimeToDecide: '24h', medianTimeToClose: '34 days', closedInWindowPct: 45, trend: [29, 30, 31, 32, 33, 34], trendColor: '#D97706' },
+    { id: 'mfg-ls-nearmiss', mandate: 'Near-miss reporting', stream: 'Safety', owner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C' }, counterpart: 'Safety counterpart', findings90d: 1, medianTimeToDecide: '36h', medianTimeToClose: '44 days', closedInWindowPct: 35, trend: [36, 38, 39, 41, 43, 44], trendColor: '#DC2626' },
   ],
   outcomeReports: {
     latest: {

@@ -183,6 +183,8 @@ app.get('/api/v1/decisions', (req, res) => {
 // ---------- People & Agents ----------
 app.get('/api/v1/leaderboard/highlights', (req, res) => res.json(op(req).leaderboardHighlights));
 
+app.get('/api/v1/leaderboard/loop-speed', (req, res) => res.json(op(req).loopSpeed));
+
 app.get('/api/v1/leaderboard', (req, res) => {
   const { type } = req.query;
   const leaderboard = op(req).leaderboard;

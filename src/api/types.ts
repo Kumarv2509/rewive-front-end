@@ -166,6 +166,20 @@ export interface LeaderboardRow {
   trendColor: string;
 }
 
+export interface LoopSpeedRow {
+  id: string;
+  mandate: string;
+  stream: string;
+  owner: { name: string; initials: string; avatarBg: string };
+  counterpart: string;
+  findings90d: number;
+  medianTimeToDecide: string;
+  medianTimeToClose: string;
+  closedInWindowPct: number;
+  trend: number[];
+  trendColor: string;
+}
+
 export interface ScoreCard {
   id: string;
   label: string;
