@@ -28,7 +28,7 @@ const css = `
   --om-good:#4ADE80;--om-warn:#FBBF24;--om-crit:#F87171;
   --om-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --om-mono:ui-monospace,"SF Mono",Menlo,Monaco,"Cascadia Code",monospace;
-  --om-maxw:1080px;
+  --om-maxw:1120px;
   font-family:var(--om-sans);color:var(--om-ink);line-height:1.7;
   position:relative;overflow-x:hidden;min-height:100vh;background:var(--ground);
   padding:0 24px 0;
@@ -50,41 +50,81 @@ const css = `
 
 .om .eyebrow{font-family:var(--om-mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--om-ink-3)}
 .om h1,.om h2,.om h3{text-wrap:balance;font-weight:700;letter-spacing:-.02em;line-height:1.08;margin:0}
-.om h1{font-size:clamp(2.5rem,6vw,4.4rem)}
+.om h1{font-size:clamp(2.3rem,5vw,3.7rem)}
 .om h2{font-size:clamp(1.7rem,3.2vw,2.5rem)}
 .om h3{font-size:1.06rem;letter-spacing:-.01em}
 .om p{margin:0}
-.om .lede{font-size:clamp(1.05rem,1.7vw,1.35rem);color:var(--om-ink-2);line-height:1.6;max-width:60ch}
+.om .lede{font-size:clamp(1.02rem,1.6vw,1.28rem);color:var(--om-ink-2);line-height:1.6;max-width:60ch}
 .om .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .om .teal{color:var(--om-teal)}
 
-.om section{padding:clamp(56px,9vh,120px) 0;border-top:1px solid var(--om-line)}
-.om section.hero{border-top:none;padding-top:clamp(40px,7vh,92px)}
+.om section{padding:clamp(56px,9vh,110px) 0;border-top:1px solid var(--om-line)}
+.om section.hero{border-top:none;padding-top:clamp(28px,5vh,64px)}
 .om .sec-eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:26px}
 .om .sec-eyebrow .tick{width:26px;height:1px;background:var(--om-line-2)}
 
-.om .hero .kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--om-mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--om-ink-2);border:1px solid var(--om-line);background:var(--om-glass);border-radius:99px;padding:7px 15px;backdrop-filter:blur(12px);margin-bottom:34px}
+/* ---------- hero: story left, system working right ---------- */
+.om .hero-grid{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);gap:clamp(28px,4vw,60px);align-items:center}
+.om .hero .kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--om-mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--om-ink-2);border:1px solid var(--om-line);background:var(--om-glass);border-radius:99px;padding:7px 15px;backdrop-filter:blur(12px);margin-bottom:30px}
 .om .hero .kicker .live{width:7px;height:7px;border-radius:50%;background:var(--om-teal);box-shadow:0 0 10px var(--om-teal);animation:om-blink 2.4s ease-in-out infinite}
-.om .hero h1{max-width:16ch;margin-bottom:28px}
-.om .hero .lede{margin-bottom:34px}
-.om .hero .thesis-line{font-family:var(--om-mono);font-size:.92rem;color:var(--om-ink-2);border-left:2px solid var(--i2);padding-left:16px;max-width:56ch;margin-bottom:38px}
+.om .hero h1{max-width:16ch;margin-bottom:24px}
+.om .hero .lede{margin-bottom:26px}
+.om .hero .thesis-line{font-family:var(--om-mono);font-size:.9rem;color:var(--om-ink-2);border-left:2px solid var(--i2);padding-left:16px;max-width:56ch;margin-bottom:34px}
 .om .hero .thesis-line b{color:var(--om-ink);font-weight:500}
-.om .cta{display:inline-flex;align-items:center;gap:9px;font-family:var(--om-sans);font-size:1rem;font-weight:600;text-decoration:none;color:#fff;background:var(--grad);border-radius:13px;padding:14px 26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 34px rgba(124,99,255,.4);transition:filter .2s,transform .2s}
-.om .cta:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.om .cta .arr{font-family:var(--om-mono)}
 .om .ind-picker{scroll-margin-top:24px}
 .om .ind-picker-label{font-family:var(--om-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--om-ink-3);margin-bottom:14px}
-.om .ind-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-.om .ind-card{text-align:left;cursor:pointer;font-family:inherit;color:var(--om-ink);background:var(--om-glass);border:1px solid var(--om-line-2);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px;transition:transform .18s,border-color .18s,box-shadow .18s;backdrop-filter:blur(16px)}
+.om .ind-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:600px}
+.om .ind-card{text-align:left;cursor:pointer;font-family:inherit;color:var(--om-ink);background:var(--om-glass);border:1px solid var(--om-line-2);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px;transition:transform .18s,border-color .18s,box-shadow .18s;backdrop-filter:blur(16px)}
 .om .ind-card:hover:not(:disabled){transform:translateY(-3px);border-color:rgba(139,92,246,.55);box-shadow:0 10px 34px rgba(0,0,0,.4),0 0 30px rgba(124,99,255,.18)}
 .om .ind-card:disabled{opacity:.5;cursor:default}
-.om .ind-card .ind-name{font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
-.om .ind-card .ind-blurb{font-size:.86rem;color:var(--om-ink-2);line-height:1.5;flex:1}
+.om .ind-card .ind-name{font-size:1rem;font-weight:700;letter-spacing:-.01em}
+.om .ind-card .ind-blurb{font-size:.84rem;color:var(--om-ink-2);line-height:1.5;flex:1}
 .om .ind-card .ind-foot{display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:12px;border-top:1px solid var(--om-line)}
 .om .ind-card .ind-count{font-family:var(--om-mono);font-size:.72rem;color:var(--om-ink-3)}
 .om .ind-card .ind-go{font-size:.86rem;font-weight:600;color:var(--i3)}
 .om .ind-card .ind-go .arr{font-family:var(--om-mono)}
-@media(max-width:720px){.om .ind-cards{grid-template-columns:1fr}}
+
+/* the system, working — finding card inside the loop */
+.om .viz{position:relative;min-height:500px}
+.om .viz svg.wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.om .viz .node{position:absolute;display:flex;flex-direction:column;align-items:center;gap:8px;width:88px}
+.om .viz .node .bx{width:44px;height:44px;border-radius:12px;border:1.5px dashed var(--om-line-2);display:flex;align-items:center;justify-content:center;font-family:var(--om-mono);font-size:.78rem;color:var(--om-ink-2);background:rgba(255,255,255,.03);backdrop-filter:blur(8px)}
+.om .viz .node .lb{font-size:.8rem;color:var(--om-ink-2);font-weight:600}
+.om .viz .node.you .bx{border-color:rgba(45,212,191,.6);color:var(--om-teal)}
+.om .viz .node.you .lb{color:var(--om-teal)}
+.om .n-sense{top:0;left:0}
+.om .n-find{top:0;right:0}
+.om .n-act{bottom:0;right:0}
+.om .n-close{bottom:0;left:0}
+.om .fcard{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(340px,80%);background:rgba(16,16,29,.92);border:1px solid var(--om-line-2);border-radius:16px;padding:16px 16px 13px;box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 40px rgba(124,99,255,.12);backdrop-filter:blur(20px)}
+.om .fcard .fc-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.om .fcard .fc-ava{width:26px;height:26px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800}
+.om .fcard .fc-who{font-size:.8rem;font-weight:700}
+.om .fcard .fc-when{margin-left:auto;font-family:var(--om-mono);font-size:.64rem;color:var(--om-ink-3)}
+.om .fcard .fc-title{font-size:.94rem;font-weight:700;line-height:1.4;margin-bottom:7px}
+.om .fcard .fc-body{font-size:.8rem;color:var(--om-ink-2);line-height:1.5;margin-bottom:11px}
+.om .fcard .fc-body b{color:var(--om-ink);font-weight:600}
+.om .fcard .fc-chips{display:flex;gap:7px;margin-bottom:12px}
+.om .chip{font-family:var(--om-mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:3px 9px;font-weight:600}
+.om .chip.crit{color:var(--om-crit);background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3)}
+.om .chip.sla{color:var(--om-warn);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.28)}
+.om .fcard .fc-btns{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.om .fbtn{font-family:inherit;font-size:.76rem;font-weight:600;border-radius:9px;padding:7px 13px;border:1px solid var(--om-line-2);background:rgba(255,255,255,.04);color:var(--om-ink-2);cursor:default}
+.om .fbtn.primary{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 0 18px rgba(124,99,255,.35)}
+.om .fcard .fc-foot{font-family:var(--om-mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--om-ink-3);border-top:1px solid var(--om-line);padding-top:9px}
+.om .viz-cap{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);font-family:var(--om-mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--om-ink-3);white-space:nowrap}
+
+/* ---------- anatomy: the five primitives ---------- */
+.om .anatomy{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:34px}
+.om .acard{border:1px solid var(--om-line);border-radius:16px;background:var(--om-glass);backdrop-filter:blur(16px);padding:20px 18px;display:flex;flex-direction:column;gap:9px;transition:transform .2s,border-color .2s}
+.om .acard:hover{transform:translateY(-3px);border-color:var(--om-line-2)}
+.om .acard .a-where{font-family:var(--om-mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--om-ink-3)}
+.om .acard h3{font-size:1rem}
+.om .acard .a-what{font-family:var(--om-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--i3)}
+.om .acard p{font-size:.84rem;color:var(--om-ink-2);line-height:1.55}
+.om .acard p b{color:var(--om-ink);font-weight:500}
+.om .anatomy-foot{margin-top:22px;font-family:var(--om-mono);font-size:.82rem;color:var(--om-ink-3)}
+.om .anatomy-foot b{color:var(--om-ink-2);font-weight:500}
 
 .om .shift{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
 .om .col{border:1px solid var(--om-line);border-radius:16px;background:var(--om-glass);backdrop-filter:blur(18px);padding:26px 26px 12px}
@@ -141,6 +181,23 @@ const css = `
 .om .dispo-foot{margin-top:20px;font-family:var(--om-mono);font-size:.82rem;color:var(--om-ink-3);letter-spacing:.02em}
 .om .dispo-foot b{color:var(--om-crit);font-weight:500}
 
+/* ---------- proof: numbers + ledger ---------- */
+.om .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:34px}
+.om .stat{border:1px solid var(--om-line);border-radius:16px;background:var(--om-glass);backdrop-filter:blur(16px);padding:22px 20px}
+.om .stat .sv{font-size:clamp(1.8rem,3vw,2.5rem);font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,#fff 30%,#B9C0FF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.om .stat .sv em{font-style:normal;font-size:.55em}
+.om .stat .sk{font-size:.84rem;color:var(--om-ink-2);margin-top:6px;line-height:1.5}
+.om .stats-cap{margin-top:16px;font-family:var(--om-mono);font-size:.72rem;color:var(--om-ink-3);letter-spacing:.04em}
+
+/* ---------- for each seat ---------- */
+.om .seats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+.om .seat{border:1px solid var(--om-line);border-radius:16px;background:var(--om-glass);backdrop-filter:blur(18px);padding:24px 22px;display:flex;flex-direction:column;gap:12px}
+.om .seat .s-role{font-family:var(--om-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--i3)}
+.om .seat h3{font-size:1.14rem}
+.om .seat p{font-size:.9rem;color:var(--om-ink-2);line-height:1.6}
+.om .seat p b{color:var(--om-ink);font-weight:500}
+.om .seat .s-screen{margin-top:auto;padding-top:14px;border-top:1px solid var(--om-line);font-family:var(--om-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--om-ink-3)}
+
 .om .example{border:1px solid var(--om-line);border-radius:18px;background:var(--om-glass);backdrop-filter:blur(18px);margin-top:32px;overflow:hidden}
 .om .ex-head{padding:20px 26px;border-bottom:1px solid var(--om-line);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
 .om .ex-head .who{font-family:var(--om-mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--i3)}
@@ -157,12 +214,22 @@ const css = `
 .om .close{text-align:center;padding-bottom:clamp(70px,12vh,130px)}
 .om .close h2{max-width:20ch;margin:0 auto 22px}
 .om .close .lede{margin:0 auto 34px}
+.om .cta{display:inline-flex;align-items:center;gap:9px;font-family:var(--om-sans);font-size:1rem;font-weight:600;text-decoration:none;color:#fff;background:var(--grad);border-radius:13px;padding:14px 26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 34px rgba(124,99,255,.4);transition:filter .2s,transform .2s}
+.om .cta:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.om .cta .arr{font-family:var(--om-mono)}
 .om .close .sig{margin-top:40px;font-family:var(--om-mono);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--om-ink-3)}
 
 @keyframes om-blink{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes om-travel{to{stroke-dashoffset:-1508}}
 .om .om-pulse{animation:om-travel 6s linear infinite}
-@media (prefers-reduced-motion:reduce){.om .om-pulse{animation:none}.om .hero .kicker .live{animation:none}.om .dcard,.om .cta{transition:none}}
+@media (prefers-reduced-motion:reduce){.om .om-pulse{animation:none}.om .hero .kicker .live{animation:none}.om .dcard,.om .acard,.om .cta{transition:none}}
+@media(max-width:1020px){
+  .om .hero-grid{grid-template-columns:1fr}
+  .om .viz{display:none}
+  .om .anatomy{grid-template-columns:repeat(2,1fr)}
+  .om .seats{grid-template-columns:1fr}
+  .om .stats{grid-template-columns:repeat(2,1fr)}
+}
 @media(max-width:860px){
   .om .shift{grid-template-columns:1fr}
   .om .loop{grid-template-columns:1fr;gap:28px}
@@ -173,7 +240,8 @@ const css = `
   .om .ex-step:first-child{border-top:none}
   .om .tier{grid-template-columns:1fr;gap:8px}
 }
-@media(max-width:520px){.om .dispo{grid-template-columns:1fr}}
+@media(max-width:720px){.om .ind-cards{grid-template-columns:1fr}}
+@media(max-width:520px){.om .dispo{grid-template-columns:1fr}.om .anatomy{grid-template-columns:1fr}.om .stats{grid-template-columns:1fr}}
 `;
 
 function IndustryPicker() {
@@ -197,6 +265,53 @@ function IndustryPicker() {
   );
 }
 
+/** The system, caught mid-loop: a finding waiting on its human, inside Sense → Find → Decide → Act → Close. */
+function HeroViz() {
+  return (
+    <div className="viz" aria-hidden="true">
+      <svg className="wires" viewBox="0 0 560 500" fill="none" preserveAspectRatio="none">
+        <g stroke="rgba(255,255,255,.22)" strokeWidth="1.5" strokeDasharray="4 6">
+          <path d="M 92 22 H 468" markerEnd="url(#omArr)" />
+          <path d="M 514 48 V 430" markerEnd="url(#omArr)" />
+          <path d="M 468 478 H 92" markerEnd="url(#omArr)" />
+          <path d="M 46 430 V 48" markerEnd="url(#omArr)" />
+        </g>
+        <defs>
+          <marker id="omArr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8" fill="none" stroke="rgba(255,255,255,.35)" strokeWidth="1.5" />
+          </marker>
+        </defs>
+      </svg>
+      <div className="node n-sense"><span className="bx">1</span><span className="lb">Sense</span></div>
+      <div className="node n-find"><span className="bx">2</span><span className="lb">Find</span></div>
+      <div className="node n-act"><span className="bx">4</span><span className="lb">Act</span></div>
+      <div className="node n-close"><span className="bx">5</span><span className="lb">Close</span></div>
+
+      <div className="fcard">
+        <div className="fc-head">
+          <span className="fc-ava">P</span>
+          <span className="fc-who">Planning counterpart</span>
+          <span className="fc-when">raised 9:20 AM</span>
+        </div>
+        <div className="fc-title">Frozen category forecast bias is starving modern trade</div>
+        <div className="fc-body">≈ AED 1.2M revenue at risk this quarter — traced to the <b>Revenue growth</b> intent.</div>
+        <div className="fc-chips">
+          <span className="chip crit">critical</span>
+          <span className="chip sla">14h SLA</span>
+        </div>
+        <div className="fc-btns">
+          <span className="fbtn primary">Accept</span>
+          <span className="fbtn">Act</span>
+          <span className="fbtn">Acknowledge</span>
+          <span className="fbtn">Abandon</span>
+        </div>
+        <div className="fc-foot">3 · Decide — yours. The counterparts run the rest.</div>
+      </div>
+      <div className="viz-cap">A finding, waiting — decide, or it escalates on its SLA</div>
+    </div>
+  );
+}
+
 export function LandingScreen() {
   return (
     <div className="om">
@@ -210,13 +325,58 @@ export function LandingScreen() {
         <a href="#start" className="enter">Get started ↓</a>
       </header>
 
-      {/* HERO */}
+      {/* HERO — the story on the left, the system caught working on the right */}
       <section className="hero wrap">
-        <span className="kicker"><span className="live" /> The Decision Accountability Layer</span>
-        <h1>Nothing drifts <span className="grad-text">unanswered</span>.</h1>
-        <p className="lede">Every number has an owner and a counterpart. When it drifts, a finding demands a decision — and silence escalates until someone owns the call.</p>
-        <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by its counterpart.</p>
-        <IndustryPicker />
+        <div className="hero-grid">
+          <div>
+            <span className="kicker"><span className="live" /> The Decision Accountability Layer</span>
+            <h1>Nothing drifts <span className="grad-text">unanswered</span>.</h1>
+            <p className="lede">Every number has an owner and a counterpart. When it drifts, a finding demands a decision — and silence escalates until someone owns the call.</p>
+            <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by its counterpart.</p>
+            <IndustryPicker />
+          </div>
+          <HeroViz />
+        </div>
+      </section>
+
+      {/* THE SYSTEM, NAMED — five primitives, each anchored to the screen it lives in */}
+      <section className="wrap">
+        <div className="sec-eyebrow"><span className="eyebrow">The layer, named</span><span className="tick" /></div>
+        <h2>Five primitives make up the accountability layer.</h2>
+        <p className="lede" style={{ marginTop: 18 }}>Not features — a small vocabulary the whole system is built from. Learn these five and every screen inside will already make sense.</p>
+        <div className="anatomy">
+          <div className="acard">
+            <span className="a-where">Foundation</span>
+            <h3>Operating Picture</h3>
+            <span className="a-what">The map</span>
+            <p>What the company is trying to make true: <b>intents</b>, carried by <b>mandates</b>, verified by <b>senses</b> — one live structure, not a dashboard.</p>
+          </div>
+          <div className="acard">
+            <span className="a-where">Operate</span>
+            <h3>Counterparts</h3>
+            <span className="a-what">The second holder</span>
+            <p>One agent per function stream, plus an org-level chief. Each holds the same mandates its human owner does — and <b>never looks away</b>.</p>
+          </div>
+          <div className="acard">
+            <span className="a-where">Operate</span>
+            <h3>Findings</h3>
+            <span className="a-what">Drift, made answerable</span>
+            <p>When reality leaves a mandate, the counterpart raises a finding with the impact traced to an intent — and an <b>SLA that escalates silence</b>.</p>
+          </div>
+          <div className="acard">
+            <span className="a-where">Operate</span>
+            <h3>Closure</h3>
+            <span className="a-what">The exit condition</span>
+            <p>Accepted findings become measurable exit conditions, watched until met. <b>Nothing is "done" until the number is back.</b></p>
+          </div>
+          <div className="acard">
+            <span className="a-where">Operate</span>
+            <h3>Decision Ledger</h3>
+            <span className="a-what">The memory</span>
+            <p>Every disposition is recorded with its expected impact — and an assessor returns later with the verdict: <b>worked, didn't, too early</b>.</p>
+          </div>
+        </div>
+        <p className="anatomy-foot">Everything is industry-parameterized — the same five primitives, seeded for <b>FMCG</b> and <b>Healthcare</b> operating contexts.</p>
       </section>
 
       {/* THE SHIFT */}
@@ -333,11 +493,18 @@ export function LandingScreen() {
         <p className="dispo-foot">No disposition is a decision too — <b>ignored findings escalate automatically</b> up the chain of counterparts until someone owns them.</p>
       </section>
 
-      {/* THE PROOF — DECISION LEDGER */}
+      {/* THE PROOF — NUMBERS + DECISION LEDGER */}
       <section className="wrap">
         <div className="sec-eyebrow"><span className="eyebrow">The proof — the Decision Ledger</span><span className="tick" /></div>
         <h2>The company's <span className="grad-text">memory of judgment</span>.</h2>
         <p className="lede" style={{ marginTop: 18 }}>Most companies can tell you what they measured. Almost none can tell you what they decided — or whether it worked. Rewive records both, and an assessor comes back later with the verdict.</p>
+        <div className="stats">
+          <div className="stat"><div className="sv">142</div><div className="sk">Decisions tracked this quarter — each with an owner and a prompt</div></div>
+          <div className="stat"><div className="sv">78<em>%</em></div><div className="sk">Decision win rate, judged by the assessor after the fact — up from 61%</div></div>
+          <div className="stat"><div className="sv">4.0<em>h</em></div><div className="sk">Median time from finding to disposition — was 2.1 days</div></div>
+          <div className="stat"><div className="sv">AED 1.2<em>M</em></div><div className="sk">Measured impact this quarter, across 31 assessed decisions</div></div>
+        </div>
+        <p className="stats-cap">From the FMCG demo organization's current quarter.</p>
         <div className="tiers">
           <div className="tier intent">
             <div className="t-label"><span className="dot" />Recorded</div>
@@ -353,6 +520,32 @@ export function LandingScreen() {
           </div>
         </div>
         <p className="held">Auditable by a CFO, not just admired in a review meeting — the ledger is what the accountability layer produces.</p>
+      </section>
+
+      {/* FOR EACH SEAT */}
+      <section className="wrap">
+        <div className="sec-eyebrow"><span className="eyebrow">The same layer, from three seats</span><span className="tick" /></div>
+        <h2>What it means for the person holding the number.</h2>
+        <div className="seats">
+          <div className="seat">
+            <span className="s-role">Rewive for the store manager</span>
+            <h3>Your mandates, your findings, one tap to answer.</h3>
+            <p>The Command Center filters to the mandates you hold. A finding arrives sized to your store — <b>what drifted, what it costs, what the counterpart suggests</b> — and your disposition is one tap, with the SLA clock visible.</p>
+            <span className="s-screen">Command Center · persona: store manager</span>
+          </div>
+          <div className="seat">
+            <span className="s-role">Rewive for the operations head</span>
+            <h3>Every stream's drift and closure, in one picture.</h3>
+            <p>The Operating Picture shows where drift concentrates; escalations reach you <b>only when a finding sits unanswered</b> below you. Loop speed per mandate shows where decisions move fast — and where they stall.</p>
+            <span className="s-screen">Operating Picture · Performance</span>
+          </div>
+          <div className="seat">
+            <span className="s-role">Rewive for the CFO</span>
+            <h3>A ledger of judgment you can audit.</h3>
+            <p>Every decision is priced going in and measured coming out. Win rate, median time-to-decision, measured impact by quarter — <b>the memory of judgment, auditable</b>, not anecdotes in a review deck.</p>
+            <span className="s-screen">Decision Ledger · persona: CFO</span>
+          </div>
+        </div>
       </section>
 
       {/* WORKED EXAMPLE */}
