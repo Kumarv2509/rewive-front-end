@@ -14,7 +14,7 @@ export function LoopSpeedTable() {
   const { data, isLoading, isError } = useLoopSpeed();
 
   return (
-    <div className="card" style={{ overflow: 'hidden' }}>
+    <div className="card" style={{ overflow: 'hidden' }} data-tour="loop-speed">
       <table className="t">
         <thead>
           <tr>

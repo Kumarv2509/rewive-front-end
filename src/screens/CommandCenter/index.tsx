@@ -38,13 +38,15 @@ export function CommandCenterScreen() {
       {isError && <ErrorMessage message="Couldn't load dashboard summary." />}
       {summary && (
         <>
-          <h1 className="page">Good morning, {summary.greetingName}</h1>
-          <div className="sub">
-            {persona === 'all' ? (
-              <span dangerouslySetInnerHTML={{ __html: summary.summarySentence }} />
-            ) : (
-              <>Here's what needs the {PERSONA_LABEL[persona]} lens today.</>
-            )}
+          <div data-tour="cc-briefing">
+            <h1 className="page">Good morning, {summary.greetingName}</h1>
+            <div className="sub">
+              {persona === 'all' ? (
+                <span dangerouslySetInnerHTML={{ __html: summary.summarySentence }} />
+              ) : (
+                <>Here's what needs the {PERSONA_LABEL[persona]} lens today.</>
+              )}
+            </div>
           </div>
           <KpiRow summary={summary} />
         </>

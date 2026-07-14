@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { markGuideSeen } from './seen';
+import { startTour } from '../../components/tour/store';
 
 // Static help content — a new user's first loop as a full-screen intro scroller
 // (mobile-onboarding style: one step per screen, snap scrolling, dots, skip).
@@ -236,6 +237,9 @@ export function GuideScreen() {
               <span className="gd-loopnote">You own one stage: <b style={{ color: '#2DD4BF' }}>Decide</b>. The counterparts run the rest.</span>
             </div>
             <p className="gd-what">Nine screens, one loop. Scroll through — each step links straight into the live screen it describes.</p>
+            <button className="gd-cta" onClick={() => { startTour(); navigate('/command'); }}>
+              Show me on screen →
+            </button>
           </div>
         </section>
 
@@ -267,6 +271,7 @@ export function GuideScreen() {
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link to="/command" className="gd-cta">Start in the Command Center →</Link>
+              <button className="gd-ghost" onClick={() => { startTour(); navigate('/command'); }}>Show me on screen</button>
               <Link to="/" className="gd-ghost">Read the story</Link>
             </div>
           </div>

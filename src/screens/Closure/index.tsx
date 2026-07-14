@@ -91,7 +91,7 @@ export function ClosureScreen() {
         <Pill tone="teal">{inFlight.length}</Pill>
       </div>
       {inFlight.length === 0 && <div className="card"><div className="state-msg">No open exit conditions — accept a finding and one appears here.</div></div>}
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }} data-tour="closure-exit">
         {inFlight.map((c) => <ExitConditionCard key={c.id} c={c} />)}
       </div>
 

@@ -40,7 +40,9 @@ export function DecisionsScreen() {
         ))}
       </div>
 
-      <DecisionsTable filters={{ function: fn, verdict }} />
+      <div data-tour="ledger-table">
+        <DecisionsTable filters={{ function: fn, verdict }} />
+      </div>
 
       <div style={{ marginTop: 14, fontSize: 12, color: 'var(--ink-3)' }}>
         Verdicts are confirmed against measured KPIs 30–90 days after the decision. The ledger is the audit trail your board and your buyers can trust.

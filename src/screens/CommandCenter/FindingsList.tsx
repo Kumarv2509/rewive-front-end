@@ -10,7 +10,7 @@ export function FindingsList({ persona }: { persona: Persona | 'all' }) {
   const { data, isLoading, isError } = useFindings({ persona, status: 'open' });
 
   return (
-    <div className="card" style={{ marginBottom: 16 }}>
+    <div className="card" style={{ marginBottom: 16 }} data-tour="cc-findings">
       <div className="sec-head">
         <h3>Findings waiting on your disposition</h3>
         <Link className="all" to="/operate/findings">All findings →</Link>

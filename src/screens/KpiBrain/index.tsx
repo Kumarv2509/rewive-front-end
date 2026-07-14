@@ -108,7 +108,11 @@ export function KpiBrainScreen() {
 
       {isLoading && <Loading label="Assembling the picture…" />}
       {isError && <ErrorMessage message="Couldn't load the Operating Picture." />}
-      {brain && <KpiBrainCanvas brain={brain} focusNodeId={focusNodeId} />}
+      {brain && (
+        <div data-tour="picture-map">
+          <KpiBrainCanvas brain={brain} focusNodeId={focusNodeId} />
+        </div>
+      )}
     </section>
   );
 }

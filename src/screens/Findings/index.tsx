@@ -90,7 +90,7 @@ export function FindingsScreen() {
       {isError && <ErrorMessage />}
 
       {findings && open.length > 0 && (
-        <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card" style={{ marginBottom: 16 }} data-tour="findings-open">
           <div className="sec-head">
             <h3>Waiting on a disposition</h3>
             <Pill tone="red">{open.length}</Pill>

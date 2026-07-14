@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { TopNav } from './TopNav';
 import { AreaSidebar } from './AreaSidebar';
 import { Topbar } from './Topbar';
+import { TourOverlay } from '../tour/TourOverlay';
 
 export function AppLayout() {
   return (
@@ -16,6 +17,7 @@ export function AppLayout() {
           </div>
         </div>
       </div>
+      <TourOverlay />
     </div>
   );
 }

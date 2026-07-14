@@ -149,7 +149,7 @@ export function ShadowOrgScreen() {
         </div>
       )}
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }} data-tour="counterpart-grid">
         {streamAgents.map((a) => (
           <AgentCard key={a.id} agent={a} mandateCount={mandateCount(a)} findings={allFindings} />
         ))}
