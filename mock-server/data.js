@@ -28,6 +28,25 @@ export const personaKpiOverrides = {
     timeSavedThisWeek: { value: '14h', delta: { label: '▲ 4h vs last week', direction: 'up' } },
     onTimeExecution: { value: '93%', delta: { label: '▲ 1 pt', direction: 'up' } },
   },
+  // The COO sits above the whole ops line, so their numbers read as a rollup.
+  coo: {
+    actionsExecutedToday: { value: 52, delta: { label: '▲ 9% vs yesterday', direction: 'up' } },
+    agentsActiveNow: { value: 7, delta: { label: '3 running', direction: 'flat' } },
+    timeSavedThisWeek: { value: '26h', delta: { label: '▲ 6h vs last week', direction: 'up' } },
+    onTimeExecution: { value: '92%', delta: { label: '▲ 2 pts', direction: 'up' } },
+  },
+  sales_supervisor: {
+    actionsExecutedToday: { value: 18, delta: { label: '▲ 3 vs yesterday', direction: 'up' } },
+    agentsActiveNow: { value: 2, delta: { label: '1 running', direction: 'flat' } },
+    timeSavedThisWeek: { value: '7h', delta: { label: '▲ 2h vs last week', direction: 'up' } },
+    onTimeExecution: { value: '92%', delta: { label: '▲ 1 pt', direction: 'up' } },
+  },
+  commercial_finance: {
+    actionsExecutedToday: { value: 26, delta: { label: '▲ 5% vs yesterday', direction: 'up' } },
+    agentsActiveNow: { value: 3, delta: { label: '1 running', direction: 'flat' } },
+    timeSavedThisWeek: { value: '11h', delta: { label: '▲ 3h vs last week', direction: 'up' } },
+    onTimeExecution: { value: '95%', delta: { label: '▲ 1 pt', direction: 'up' } },
+  },
 };
 
 export const dashboardSummary = {
