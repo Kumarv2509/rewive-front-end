@@ -4,7 +4,6 @@
 // authored to match. The v4 endpoints pick a pack by the current org profile.
 import {
   dashboardSummary as fmcgDashboard,
-  personaKpiOverrides as fmcgPersonaKpi,
   pendingDecisions as fmcgPending,
   pulse as fmcgPulse,
   liveRuns as fmcgLiveRuns,
@@ -44,7 +43,6 @@ const fmcgLoopSpeed = [
 
 const fmcg = {
   dashboardSummary: fmcgDashboard,
-  personaKpiOverrides: fmcgPersonaKpi,
   pendingDecisions: fmcgPending,
   pulse: fmcgPulse,
   liveRuns: fmcgLiveRuns,
@@ -80,13 +78,6 @@ const healthcare = {
     greetingName: 'Kumara',
     summarySentence:
       'Since yesterday, Rewive executed <b style="color:var(--ink)">63 actions</b> across the revenue cycle and clinical ops. Your queue is below.',
-    kpis: {
-      actionsExecutedToday: { value: 63, delta: { label: '▲ 9% vs yesterday', direction: 'up' } },
-      decisionsPending: { value: 4, delta: { label: '2 urgent', direction: 'flat' } },
-      agentsActiveNow: { value: 9, delta: { label: '2 running', direction: 'flat' } },
-      timeSavedThisWeek: { value: '34h', delta: { label: '▲ 7h vs last week', direction: 'up' } },
-      onTimeExecution: { value: '92%', delta: { label: '▲ 1 pt', direction: 'up' } },
-    },
   },
   pendingDecisions: [
     { id: 'hc-dec1', icon: '🧾', iconBg: 'var(--red-soft)', title: 'Denial surge · 2 payers changed prior-auth rules', subtitle: 'Revenue Cycle Agent recommends a batch appeal · ≈ $380k/mo at stake', actionLabel: 'Act', actionVerb: 'act', persona: 'cfo' },
@@ -208,13 +199,6 @@ const manufacturing = {
     greetingName: 'Kumara',
     summarySentence:
       'Since yesterday, Rewive executed <b style="color:var(--ink)">71 actions</b> across production and maintenance. Your queue is below.',
-    kpis: {
-      actionsExecutedToday: { value: 71, delta: { label: '▲ 11% vs yesterday', direction: 'up' } },
-      decisionsPending: { value: 3, delta: { label: '1 urgent', direction: 'flat' } },
-      agentsActiveNow: { value: 8, delta: { label: '3 running', direction: 'flat' } },
-      timeSavedThisWeek: { value: '38h', delta: { label: '▲ 8h vs last week', direction: 'up' } },
-      onTimeExecution: { value: '90%', delta: { label: '▲ 2 pts', direction: 'up' } },
-    },
   },
   pendingDecisions: [
     { id: 'mfg-dec1', icon: '🛠️', iconBg: 'var(--red-soft)', title: 'Press line · PM overdue, breakdown risk in 5 days', subtitle: 'Maintenance Agent recommends pulling PMs forward · 22h/wk downtime at stake', actionLabel: 'Act', actionVerb: 'act', persona: 'operations_head' },

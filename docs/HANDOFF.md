@@ -141,12 +141,11 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 1. ~~Review & merge PR #3~~ — **done** (`17ea4e4`). Future work can branch
    from `master` or continue on `v5`.
-2. **Old-persona leftovers**: `personaKpiOverrides` (`data.js`) now covers all
-   six roles (FMCG only) — but note the whole `dashboardSummary.kpis` block is
-   **display-dead since v5.1**: no screen renders it (Today's three stats come
-   from findings/approvals/decision-stats, already role-scoped). Candidate
-   cleanup: drop the kpis block + overrides from the contract, or resurface
-   them. Tour/Guide copy still names only the old three personas
+2. **Old-persona leftovers**: the display-dead `dashboardSummary.kpis` block +
+   `personaKpiOverrides` were **dropped** from the contract, seeds and server —
+   `GET /dashboard/summary` now returns only `{ greetingName, summarySentence }`
+   (Today's stats come from findings/approvals/decision-stats, role-scoped).
+   Tour/Guide copy still names only the old three personas
    (`tour/steps.ts:19`, `Guide/index.tsx:25`).
 3. **Thin role slices** (see judgment calls above) — decide whether Sales
    supervisor / Store manager need more seeded content per industry.

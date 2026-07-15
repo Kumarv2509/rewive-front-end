@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import {
   currentUser,
-  personaKpiOverrides,
   dashboardSummary,
   pendingDecisions,
   pulse,
@@ -86,25 +85,10 @@ function filterByPersona(items, persona, scope) {
   return roles ? items.filter((d) => roles.has(d.persona)) : items;
 }
 
-app.get('/api/v1/dashboard/summary', (req, res) => {
-  const { persona, scope } = req.query;
-  const pack = op(req);
-  const decisionsForPersona = filterByPersona(opS(req).pending, persona, scope);
-  const overrides = persona && persona !== 'all' && pack.personaKpiOverrides ? pack.personaKpiOverrides[persona] : undefined;
-  res.json({
-    ...pack.dashboardSummary,
-    kpis: {
-      ...pack.dashboardSummary.kpis,
-      ...overrides,
-      decisionsPending: {
-        value: decisionsForPersona.length,
-        delta: persona && persona !== 'all'
-          ? { label: 'in your queue', direction: 'flat' }
-          : pack.dashboardSummary.kpis.decisionsPending.delta,
-      },
-    },
-  });
-});
+// Greeting + summary sentence only. The old kpis block (and its per-persona
+// overrides) was display-dead after v5.1 — Today computes its stats from
+// findings / approvals / decision-stats, which are role-scoped already.
+app.get('/api/v1/dashboard/summary', (req, res) => res.json(op(req).dashboardSummary));
 
 app.get('/api/v1/decisions/pending', (req, res) => res.json(filterByPersona(opS(req).pending, req.query.persona, req.query.scope)));
 

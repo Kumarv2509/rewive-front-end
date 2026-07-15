@@ -23,7 +23,7 @@ export function CommandCenterScreen() {
     if (!hasSeenGuide()) navigate('/guide', { replace: true });
   }, [navigate]);
 
-  const { data: summary, isLoading, isError } = useDashboardSummary(persona, scope);
+  const { data: summary, isLoading, isError } = useDashboardSummary();
 
   return (
     <section className="screen">

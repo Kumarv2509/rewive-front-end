@@ -9,57 +9,10 @@ export const currentUser = {
   defaultPersona: 'operations_head',
 };
 
-export const personaKpiOverrides = {
-  store_manager: {
-    actionsExecutedToday: { value: 22, delta: { label: '▲ 4 vs yesterday', direction: 'up' } },
-    agentsActiveNow: { value: 3, delta: { label: '1 running', direction: 'flat' } },
-    timeSavedThisWeek: { value: '9h', delta: { label: '▲ 2h vs last week', direction: 'up' } },
-    onTimeExecution: { value: '91%', delta: { label: '▼ 1 pt', direction: 'down' } },
-  },
-  cfo: {
-    actionsExecutedToday: { value: 34, delta: { label: '▲ 6% vs yesterday', direction: 'up' } },
-    agentsActiveNow: { value: 5, delta: { label: '2 running', direction: 'flat' } },
-    timeSavedThisWeek: { value: '18h', delta: { label: '▲ 3h vs last week', direction: 'up' } },
-    onTimeExecution: { value: '96%', delta: { label: '▲ 1 pt', direction: 'up' } },
-  },
-  operations_head: {
-    actionsExecutedToday: { value: 31, delta: { label: '▲ 8% vs yesterday', direction: 'up' } },
-    agentsActiveNow: { value: 4, delta: { label: '2 running', direction: 'flat' } },
-    timeSavedThisWeek: { value: '14h', delta: { label: '▲ 4h vs last week', direction: 'up' } },
-    onTimeExecution: { value: '93%', delta: { label: '▲ 1 pt', direction: 'up' } },
-  },
-  // The COO sits above the whole ops line, so their numbers read as a rollup.
-  coo: {
-    actionsExecutedToday: { value: 52, delta: { label: '▲ 9% vs yesterday', direction: 'up' } },
-    agentsActiveNow: { value: 7, delta: { label: '3 running', direction: 'flat' } },
-    timeSavedThisWeek: { value: '26h', delta: { label: '▲ 6h vs last week', direction: 'up' } },
-    onTimeExecution: { value: '92%', delta: { label: '▲ 2 pts', direction: 'up' } },
-  },
-  sales_supervisor: {
-    actionsExecutedToday: { value: 18, delta: { label: '▲ 3 vs yesterday', direction: 'up' } },
-    agentsActiveNow: { value: 2, delta: { label: '1 running', direction: 'flat' } },
-    timeSavedThisWeek: { value: '7h', delta: { label: '▲ 2h vs last week', direction: 'up' } },
-    onTimeExecution: { value: '92%', delta: { label: '▲ 1 pt', direction: 'up' } },
-  },
-  commercial_finance: {
-    actionsExecutedToday: { value: 26, delta: { label: '▲ 5% vs yesterday', direction: 'up' } },
-    agentsActiveNow: { value: 3, delta: { label: '1 running', direction: 'flat' } },
-    timeSavedThisWeek: { value: '11h', delta: { label: '▲ 3h vs last week', direction: 'up' } },
-    onTimeExecution: { value: '95%', delta: { label: '▲ 1 pt', direction: 'up' } },
-  },
-};
-
 export const dashboardSummary = {
   greetingName: 'Kumara',
   summarySentence:
     'Since yesterday, Rewive executed <b style="color:var(--ink)">87 actions</b> across Finance and HR. Your queue is below.',
-  kpis: {
-    actionsExecutedToday: { value: 87, delta: { label: '▲ 12% vs yesterday', direction: 'up' } },
-    decisionsPending: { value: 4, delta: { label: '2 urgent', direction: 'flat' } },
-    agentsActiveNow: { value: 12, delta: { label: '3 running', direction: 'flat' } },
-    timeSavedThisWeek: { value: '41h', delta: { label: '▲ 9h vs last week', direction: 'up' } },
-    onTimeExecution: { value: '94%', delta: { label: '▲ 2 pts', direction: 'up' } },
-  },
 };
 
 export let pendingDecisions = [

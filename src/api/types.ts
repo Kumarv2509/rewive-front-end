@@ -8,13 +8,6 @@ export type Delta = {
 export interface DashboardSummary {
   greetingName: string;
   summarySentence: string;
-  kpis: {
-    actionsExecutedToday: { value: number; delta: Delta };
-    decisionsPending: { value: number; delta: Delta };
-    agentsActiveNow: { value: number; delta: Delta };
-    timeSavedThisWeek: { value: string; delta: Delta };
-    onTimeExecution: { value: string; delta: Delta };
-  };
 }
 
 // Personas double as routing roles: every finding is addressed to the role
