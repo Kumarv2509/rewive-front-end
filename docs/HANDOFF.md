@@ -2,7 +2,10 @@
 
 ## Where things stand
 
-- **`v5` is 6+ commits ahead of `master`** (all pushed to origin, no PR opened yet):
+- **PR #3 is open: `v5` → `master`** —
+  https://github.com/Kumarv2509/rewive-front-end/pull/3 — carrying everything below.
+  Merge it there when reviewed.
+- **`v5` is 6+ commits ahead of `master`** (all pushed to origin):
   - `f4ac86f` — loop speed by mandate table on the Performance screen.
   - `51491f0` — on-screen spotlight tour.
   - `cdd2901` — landing retold: aampe-style product storytelling in Rewive's identity.
@@ -18,9 +21,8 @@
   change the same day. If it recurs: change network / drop the VPN, or register an
   SSH key, or get the FortiGate CA from IT and set repo-local
   `git config http.sslCAInfo`. Do **not** disable `http.sslVerify`.
-- Fold into `master` via a PR when ready. **`gh` CLI auth is also broken** (keyring
-  token invalid; a device-code refresh timed out on 2026-07-14) — rerun
-  `gh auth refresh -h github.com` before `gh pr create`, or open the PR on GitHub.
+- `gh` CLI auth **works again** (logged in as `rianpraveen`; the 2026-07-14 "broken
+  keyring" note is obsolete — PR #3 was created with `gh pr create`).
 - Build and lint are clean; no test suite exists.
 - Local dev: `npm run dev:all` (Vite :5173 + mock API :4000). Watch for stale mock-server
   processes holding :4000 — an old one serves stale seed data. `lsof -i :4000` and kill
@@ -124,23 +126,27 @@ updated for the new IA); per-version detail in `docs/FEATURE_INVENTORY.md`.
 
 ## Open threads / natural next steps
 
-1. **PR `v5` → `master`** for the six commits (needs `gh` auth fixed, see above).
+1. **Review & merge PR #3** (`v5` → `master`) — open, description covers all commits.
 2. **`docs/BLUEPRINT.md` is stale** — its screen map/redirect table describes the
    pre-v5.1 three-area nav. Refresh it (and `public/story.html`/`demo.html` if they
    reference Closure or Command Center by name).
-3. **Persona consolidation** — old personas (store_manager/cfo/operations_head) and
+3. **P&L discoverability** — the FP&A workspace lives as the second tab on Decisions
+   (`/operate/decisions` → "P&L impact · FP&A"), which the founder had to ask about.
+   Candidates: a bookmarkable route (`?view=pl` or `/operate/decisions/pl`), and/or a
+   P&L deep-link card on Today under the CFO / Commercial finance lens.
+4. **Persona consolidation** — old personas (store_manager/cfo/operations_head) and
    new routing roles (sales_supervisor/coo/commercial_finance) coexist; Command
    Center seeds and the agent catalog still use the old three. Decide whether to
    migrate to a single role set.
-4. **Manufacturing pack depth** — to re-enable the third industry: more mandates in
+5. **Manufacturing pack depth** — to re-enable the third industry: more mandates in
    `v4data.js` + content in `v4content.js`, re-add to `industryOptions`, the landing
    `INDUSTRIES` list, and `story.html`. (Loop-speed and P&L seeds already exist.)
-5. **Optional internal rename** — `ShadowAgent`/`shadowOrg.ts`/`ShadowOrg/` →
+6. **Optional internal rename** — `ShadowAgent`/`shadowOrg.ts`/`ShadowOrg/` →
    counterpart naming, if churn is acceptable.
-6. **"New" anomalies → findings**: P&L anomalies with status `new` are display-only
+7. **"New" anomalies → findings**: P&L anomalies with status `new` are display-only
    ("queued for counterpart review"); a "raise as finding" mutation would close that
    loop in the demo.
-7. **Keep-verbatim lines** for any new copy: "Every mandate, held twice." · "The
+8. **Keep-verbatim lines** for any new copy: "Every mandate, held twice." · "The
    company's memory of judgment." · "Nothing is 'done' until the number is back."
 
 ## Context that isn't in the code
