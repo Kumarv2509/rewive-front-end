@@ -2,10 +2,10 @@
 
 ## Where things stand
 
-- **PR #3 is open: `v5` → `master`** —
-  https://github.com/Kumarv2509/rewive-front-end/pull/3 — and now carries this
-  session's commits (**pushed after a network change**; the FortiGate MITM had
-  blocked the first attempts — see below):
+- **PR #3 (`v5` → `master`) is MERGED** (`17ea4e4`, 2026-07-15) —
+  https://github.com/Kumarv2509/rewive-front-end/pull/3 — `master` now carries
+  everything, including this session's commits (pushed after a network change;
+  the FortiGate MITM had blocked the first attempts — see below):
   - `090594b` — **fix(v5.1): wire every dead-end section end-to-end**.
   - `57148f8` — **feat(v5.1): role-scoped data everywhere + hierarchy mode**
     (the founder's ask: "every role will have their own set … no overlap or
@@ -139,7 +139,8 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-1. **Review & merge PR #3** — everything above is pushed.
+1. ~~Review & merge PR #3~~ — **done** (`17ea4e4`). Future work can branch
+   from `master` or continue on `v5`.
 2. **Old-persona leftovers**: `personaKpiOverrides` (`data.js`) still covers
    only store_manager/cfo/operations_head (FMCG only) — the three newer roles
    get no KPI overrides on Today. Tour/Guide copy still names only the old
