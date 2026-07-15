@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import { PersonaLensProvider } from './components/layout/personaLens';
 import { ToastProvider } from './components/shared/Toast';
 import { CommandCenterScreen } from './screens/CommandCenter';
 import { CreateAgentScreen } from './screens/CreateAgent';
@@ -23,7 +24,6 @@ import { KpiBrainScreen } from './screens/KpiBrain';
 import { LandingScreen } from './screens/Landing';
 import { GuideScreen } from './screens/Guide';
 import { ShadowOrgScreen } from './screens/ShadowOrg';
-import { ClosureScreen } from './screens/Closure';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +35,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
+        <PersonaLensProvider>
         <BrowserRouter>
           <Routes>
             {/* Public landing — the Decision Accountability Layer, no app chrome */}
@@ -49,7 +50,8 @@ function App() {
               <Route path="operate/counterparts" element={<ShadowOrgScreen />} />
               <Route path="operate/findings" element={<FindingsScreen />} />
               <Route path="operate/findings/:findingId" element={<FindingDetailScreen />} />
-              <Route path="operate/closure" element={<ClosureScreen />} />
+              {/* v5.1: Closure folded into Findings as the Watching/Closed lifecycle tabs */}
+              <Route path="operate/closure" element={<Navigate to="/operate/findings?tab=watching" replace />} />
               <Route path="operate/runs" element={<RunsScreen />} />
               <Route path="operate/decisions" element={<DecisionsScreen />} />
               <Route path="operate/tasks" element={<TasksScreen />} />
@@ -57,7 +59,7 @@ function App() {
               <Route path="operate/shadow" element={<Navigate to="/operate/counterparts" replace />} />
               <Route path="insights/findings" element={<Navigate to="/operate/findings" replace />} />
               <Route path="insights/findings/:findingId" element={<LegacyFindingRedirect />} />
-              <Route path="insights/closure" element={<Navigate to="/operate/closure" replace />} />
+              <Route path="insights/closure" element={<Navigate to="/operate/findings?tab=watching" replace />} />
 
               <Route path="build" element={<Navigate to="/build/picture" replace />} />
               <Route path="build/picture" element={<KpiBrainScreen />} />
@@ -90,6 +92,7 @@ function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </PersonaLensProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

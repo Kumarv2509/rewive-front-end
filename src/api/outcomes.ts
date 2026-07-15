@@ -20,6 +20,17 @@ export function useAssignAction(runId: string) {
   });
 }
 
+export function useScheduleAction(runId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (actionId: string) =>
+      (await apiClient.post(`/outcomes/${runId}/actions/${actionId}/schedule`)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['outcomes', runId] });
+    },
+  });
+}
+
 export function useExportOutcome(runId: string) {
   return useMutation({
     mutationFn: async (format: 'pptx' | 'pdf') =>

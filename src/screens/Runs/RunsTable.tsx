@@ -2,7 +2,8 @@ import { Avatar } from '../../components/shared/Avatar';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useRuns } from '../../api/runs';
-import type { RunListItem, RunStatus } from '../../api/types';
+import { PERSONA_LABEL } from '../CommandCenter/personas';
+import type { Persona, RoleScope, RunListItem, RunStatus } from '../../api/types';
 
 const statusPill: Record<RunStatus, { tone: 'indigo' | 'amber' | 'green' | 'red'; label: string }> = {
   running: { tone: 'indigo', label: 'Running' },
@@ -11,8 +12,8 @@ const statusPill: Record<RunStatus, { tone: 'indigo' | 'amber' | 'green' | 'red'
   failed: { tone: 'red', label: 'Failed' },
 };
 
-export function RunsTable({ status }: { status: RunStatus | 'all' }) {
-  const { data, isLoading, isError } = useRuns(status);
+export function RunsTable({ status, persona, scope }: { status: RunStatus | 'all'; persona?: Persona | 'all'; scope?: RoleScope }) {
+  const { data, isLoading, isError } = useRuns(status, persona, scope);
 
   return (
     <div className="card" style={{ overflow: 'hidden' }}>
@@ -31,7 +32,10 @@ export function RunsTable({ status }: { status: RunStatus | 'all' }) {
           )}
           {data?.map((run: RunListItem) => (
             <tr className="row-h" key={run.id}>
-              <td><b>{run.name}</b></td>
+              <td>
+                <b>{run.name}</b>
+                <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>→ {PERSONA_LABEL[run.persona]}</div>
+              </td>
               <td>
                 {run.owner ? (
                   <span className="human">

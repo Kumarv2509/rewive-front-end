@@ -1,9 +1,10 @@
-import { useAssignAction } from '../../api/outcomes';
+import { useAssignAction, useScheduleAction } from '../../api/outcomes';
 import { useToast } from '../../components/shared/Toast';
 import type { RecommendedAction } from '../../api/types';
 
 export function ActionsList({ runId, actions }: { runId: string; actions: RecommendedAction[] }) {
   const assign = useAssignAction(runId);
+  const schedule = useScheduleAction(runId);
   const { showToast } = useToast();
 
   return (
@@ -31,11 +32,16 @@ export function ActionsList({ runId, actions }: { runId: string; actions: Recomm
             >
               Assign
             </button>
+          ) : a.scheduled ? (
+            <span className="pill green" style={{ marginLeft: 'auto' }}>✓ Scheduled</span>
           ) : (
             <button
               className="btn ghost sm"
               style={{ marginLeft: 'auto' }}
-              onClick={() => showToast('Scheduled')}
+              disabled={schedule.isPending}
+              onClick={() =>
+                schedule.mutate(a.id, { onSuccess: () => showToast('Scheduled — tracked in ledger') })
+              }
             >
               Schedule
             </button>

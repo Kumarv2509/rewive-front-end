@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { DecisionLedgerItem, DecisionStats, PendingDecision } from './types';
+import type { DecisionLedgerItem, DecisionStats, PendingDecision, Persona, PlImpactLine, PlStatement, RoleScope } from './types';
 
 export function useDecisionStats() {
   return useQuery({
@@ -9,9 +9,28 @@ export function useDecisionStats() {
   });
 }
 
+// The full P&L: lines × SKU/channel, Actual vs Budget vs Forecast, with the
+// drift anomalies embedded as a task list.
+export function usePlStatement() {
+  return useQuery({
+    queryKey: ['decisions', 'pl-statement'],
+    queryFn: async () => (await apiClient.get<PlStatement>('/pl-statement')).data,
+  });
+}
+
+// FP&A rollup: findings translated onto the P&L, per line item.
+export function usePlImpact() {
+  return useQuery({
+    queryKey: ['decisions', 'pl-impact'],
+    queryFn: async () => (await apiClient.get<PlImpactLine[]>('/pl-impact')).data,
+  });
+}
+
 export interface DecisionLedgerFilters {
   function?: 'all' | 'finance' | 'hr' | 'procurement';
   verdict?: 'all' | 'worked' | 'not_worked';
+  persona?: Persona | 'all';
+  scope?: RoleScope;
 }
 
 export function useDecisionLedger(filters: DecisionLedgerFilters = {}) {

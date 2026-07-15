@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useEffectiveLens } from '../../components/layout/personaLens';
+import { Intro } from '../../components/shared/Intro';
 import { Pill } from '../../components/shared/Pill';
+import { ScopeBanner } from '../../components/shared/ScopeBanner';
+import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useTasks, useAddTaskFeedback, useUpdateTaskStatus, useUpdateTaskChannel } from '../../api/solutionDesign';
+import { PERSONA_LABEL } from '../CommandCenter/personas';
 import type { SolutionTask, SolutionTaskStatus, SolutionTaskType, TaskChannel } from '../../api/types';
 
 const typeTone: Record<SolutionTaskType, { tone: 'indigo' | 'teal' | 'gray'; label: string }> = {
@@ -35,6 +40,7 @@ function TaskRow({ task }: { task: SolutionTask }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <Pill tone={typeTone[task.type].tone}>{typeTone[task.type].label}</Pill>
         <div style={{ fontWeight: 600, fontSize: 13.5, flex: 1 }}>{task.title}</div>
+        <Pill tone="gray">→ {PERSONA_LABEL[task.persona]}</Pill>
         <Pill tone={statusTone[task.status]}>{task.status.replace('_', ' ')}</Pill>
       </div>
       <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 10 }}>
@@ -51,7 +57,7 @@ function TaskRow({ task }: { task: SolutionTask }) {
         >
           {(Object.keys(channelLabel) as TaskChannel[]).map((c) => <option key={c} value={c}>{channelLabel[c]}</option>)}
         </select>
-        <span style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>(preview only — not yet wired to a real channel)</span>
+        <span style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>(saved to the task — delivery is simulated in this demo)</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
@@ -89,16 +95,28 @@ function TaskRow({ task }: { task: SolutionTask }) {
 }
 
 export function TasksScreen() {
-  const { data, isLoading, isError } = useTasks();
+  const { persona, scope } = useEffectiveLens();
+  const { data, isLoading, isError } = useTasks('all', persona, scope);
 
   return (
     <section className="screen">
-      <h1 className="page">Tasks</h1>
-      <div className="sub">Everything assigned to you or your team from an approved solution design, in one place, with a spot to leave feedback.</div>
+      <h1 className="page">Execution</h1>
+      <Intro line="Everything assigned to you or your team from an approved solution design, with a spot to leave feedback." />
+      <SectionTabs tabs={EXECUTION_TABS} />
+      <ScopeBanner />
 
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
-      {data?.length === 0 && <div className="state-msg">No tasks assigned yet.</div>}
+      {data?.length === 0 && (
+        <div className="card" style={{ padding: '28px 24px', textAlign: 'center' }}>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>No tasks yet — and that's how it should start.</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-2)', maxWidth: 520, margin: '0 auto 14px', lineHeight: 1.6 }}>
+            Tasks are born when a finding's <b style={{ color: 'var(--ink)' }}>Act</b> disposition opens a solution:
+            the solution is broken into tasks, new work goes to agents, existing agents are reused, and humans own the rest.
+          </div>
+          <Link className="btn primary sm" to="/operate/findings">See open findings →</Link>
+        </div>
+      )}
       {data?.map((task) => <TaskRow key={task.id} task={task} />)}
     </section>
   );

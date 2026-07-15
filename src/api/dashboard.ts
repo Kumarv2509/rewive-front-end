@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { CurrentUser, DashboardSummary, PendingDecision, Persona, PulseItem, LiveRunSummary, TopPerformer } from './types';
+import type { CurrentUser, DashboardSummary, PendingDecision, Persona, PulseItem, LiveRunSummary, RoleScope, TopPerformer } from './types';
 
 export function useCurrentUser() {
   return useQuery({
@@ -10,17 +10,17 @@ export function useCurrentUser() {
   });
 }
 
-export function useDashboardSummary(persona?: Persona | 'all') {
+export function useDashboardSummary(persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['dashboard', 'summary', persona],
-    queryFn: async () => (await apiClient.get<DashboardSummary>('/dashboard/summary', { params: { persona } })).data,
+    queryKey: ['dashboard', 'summary', persona, scope],
+    queryFn: async () => (await apiClient.get<DashboardSummary>('/dashboard/summary', { params: { persona, scope } })).data,
   });
 }
 
-export function usePendingDecisions(persona?: Persona | 'all') {
+export function usePendingDecisions(persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['decisions', 'pending', persona],
-    queryFn: async () => (await apiClient.get<PendingDecision[]>('/decisions/pending', { params: { persona } })).data,
+    queryKey: ['decisions', 'pending', persona, scope],
+    queryFn: async () => (await apiClient.get<PendingDecision[]>('/decisions/pending', { params: { persona, scope } })).data,
   });
 }
 
@@ -31,10 +31,10 @@ export function usePulse() {
   });
 }
 
-export function useLiveRuns() {
+export function useLiveRuns(persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['runs', 'live'],
-    queryFn: async () => (await apiClient.get<LiveRunSummary[]>('/runs/live')).data,
+    queryKey: ['runs', 'live', persona, scope],
+    queryFn: async () => (await apiClient.get<LiveRunSummary[]>('/runs/live', { params: { persona, scope } })).data,
     refetchInterval: 4000,
   });
 }

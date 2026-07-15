@@ -17,7 +17,21 @@ export interface DashboardSummary {
   };
 }
 
-export type Persona = 'store_manager' | 'cfo' | 'operations_head';
+// Personas double as routing roles: every finding is addressed to the role
+// whose call it is. Sales execution → sales supervisor; cross-functional
+// sales + logistics → COO; returns / discounts / trade spend → commercial
+// finance. FP&A doesn't get a queue — it gets the P&L impact rollup.
+export type Persona =
+  | 'store_manager'
+  | 'cfo'
+  | 'operations_head'
+  | 'sales_supervisor'
+  | 'coo'
+  | 'commercial_finance';
+
+// The lens looks at one role ('role') or the role plus everyone who reports
+// into it ('team' — hierarchy mode, for seeing what's impacted below you).
+export type RoleScope = 'role' | 'team';
 
 export interface CurrentUser {
   name: string;
@@ -47,6 +61,7 @@ export interface PulseItem {
 
 export interface LiveRunSummary {
   id: string;
+  persona: Persona;
   name: string;
   eta: string;
   percent: number;
@@ -67,6 +82,7 @@ export type RunStatus = 'running' | 'needs_decision' | 'completed' | 'failed';
 
 export interface RunListItem {
   id: string;
+  persona: Persona;
   name: string;
   owner: { name: string; initials: string; avatarBg: string } | null;
   agentName: string;
@@ -91,6 +107,7 @@ export interface RunDetail {
   name: string;
   meta: string;
   isLive: boolean;
+  paused?: boolean;
   steps: TimelineStep[];
 }
 
@@ -131,6 +148,7 @@ export type Verdict = 'worked' | 'not_worked' | 'too_early';
 
 export interface DecisionLedgerItem {
   id: string;
+  persona: Persona;
   title: string;
   subtitle: string;
   madeBy: { type: 'human' | 'agent'; name: string; initials?: string; avatarBg?: string };
@@ -139,7 +157,85 @@ export interface DecisionLedgerItem {
   verdict: Verdict;
   measuredImpact: { text: string; direction: 'up' | 'down' | 'flat' };
   originatingSignalId?: string;
+  /** The finding this decision dispositioned — links the ledger row to its thread. */
+  findingId?: string;
   assessorNote?: string;
+}
+
+// FP&A rollup: findings translated onto the P&L, one row per line item —
+// how many were identified, what happened to them, and the measured impact.
+export interface PlImpactLine {
+  key: string;
+  plLine: string;
+  topDrivers: string; // the findings that dominate this line, in plain words
+  identified: number;
+  accepted: number;
+  acting: number;
+  cleared: number; // loops closed — the number came back
+  openNow: number;
+  translatedImpact: { text: string; direction: 'up' | 'down' | 'flat' };
+}
+
+// ---------- FP&A: the full P&L, with Budget and Forecast as the base of drift ----------
+// Values are pre-formatted numbers in the statement's unit (e.g. "128.4" with
+// unit "AED M"); variances are percentages vs budget / vs forecast. isCost
+// flips the good/bad direction for coloring.
+export interface PlBreakdownRow {
+  key: string;
+  label: string;
+  actual: string;
+  budget: string;
+  forecast: string;
+  varBudgetPct: number;
+  varForecastPct: number;
+  anomalyIds: string[];
+}
+
+export interface PlStatementLine {
+  key: string;
+  label: string;
+  kind: 'line' | 'subtotal';
+  isCost: boolean;
+  actual: string;
+  budget: string;
+  forecast: string;
+  varBudgetPct: number;
+  varForecastPct: number;
+  anomalyIds: string[];
+  /** Drill-downs; subtotal lines and overheads may have none. */
+  byDimA?: PlBreakdownRow[];
+  byDimB?: PlBreakdownRow[];
+}
+
+export type PlAnomalyStatus = 'raised' | 'watching' | 'cleared' | 'new';
+
+// A drift anomaly is a task: what drifted, against which base (budget /
+// forecast), on which P&L cell (line × dimA × dimB), whose call it is, and
+// where it stands in the loop. findingId links it to the thread when the
+// counterpart has raised it.
+export interface PlAnomalyTask {
+  id: string;
+  title: string;
+  plLineKey: string;
+  plLineLabel: string;
+  dimA?: string;
+  dimB?: string;
+  driftVsBudgetPct: number;
+  driftVsForecastPct: number;
+  impact: string;
+  severity: FindingSeverity;
+  routedTo: Persona;
+  status: PlAnomalyStatus;
+  findingId?: string;
+}
+
+export interface PlStatement {
+  period: string;
+  unit: string; // e.g. "AED M"
+  dimALabel: string; // e.g. "SKU family" / "Service line"
+  dimBLabel: string; // e.g. "Channel" / "Payer"
+  lines: PlStatementLine[];
+  anomalies: PlAnomalyTask[];
 }
 
 export interface LeaderboardHighlight {
@@ -154,6 +250,7 @@ export interface LeaderboardHighlight {
 
 export interface LeaderboardRow {
   id: string;
+  persona: Persona;
   type: 'human' | 'agent';
   name: string;
   initials: string;
@@ -162,6 +259,21 @@ export interface LeaderboardRow {
   onTimePct: number;
   decisionWinRatePct: number;
   timeSaved: string;
+  trend: number[];
+  trendColor: string;
+}
+
+export interface LoopSpeedRow {
+  id: string;
+  persona: Persona;
+  mandate: string;
+  stream: string;
+  owner: { name: string; initials: string; avatarBg: string };
+  counterpart: string;
+  findings90d: number;
+  medianTimeToDecide: string;
+  medianTimeToClose: string;
+  closedInWindowPct: number;
   trend: number[];
   trendColor: string;
 }
@@ -191,6 +303,7 @@ export interface RecommendedAction {
   assigned: boolean;
   assignedTo?: string;
   actionType: 'assign' | 'schedule';
+  scheduled?: boolean;
 }
 
 export interface OutcomeReport {
@@ -298,12 +411,14 @@ export interface DataConnection {
   lastSyncedAt: string | null;
   config: Record<string, string>;
   errorMessage?: string;
+  forKpiId?: string;
 }
 
 export interface CreateConnectionInput {
   connectorTypeId: ConnectorTypeKey;
   name: string;
   config: Record<string, string>;
+  forKpiId?: string;
 }
 
 export interface CreateCustomConnectorTypeInput {
@@ -356,6 +471,8 @@ export interface AgentCatalogFilters {
   status?: AgentCatalogStatus | 'all';
   agentType?: AgentCreationPath | 'all';
   search?: string;
+  persona?: Persona | 'all';
+  scope?: RoleScope;
 }
 
 // ---------- Agent Studio ----------
@@ -603,6 +720,7 @@ export interface TaskComment {
 
 export interface SolutionTask {
   id: string;
+  persona: Persona;
   type: SolutionTaskType;
   title: string;
   owner: string;
@@ -715,7 +833,9 @@ export interface AgentSpec {
 }
 
 // ---------- KPI Library (onboarding: pick KPIs, or import drivers and budget) ----------
-export type KpiSegment = 'hospital' | 'clinic' | 'pharmacy';
+// Healthcare segments + FMCG segments; the Mandate Library shows the set that
+// matches the chosen industry context.
+export type KpiSegment = 'hospital' | 'clinic' | 'pharmacy' | 'manufacturing' | 'distribution' | 'retail_trade';
 export type KpiCategory = 'financial' | 'operational' | 'clinical' | 'patient_experience';
 
 export interface KpiDriver {
@@ -734,7 +854,7 @@ export interface KpiCatalogEntry {
 }
 
 export type TrackedKpiSource = 'catalog' | 'custom' | 'planning_import';
-export type TrackedKpiDataStatus = 'connected' | 'needs_connection';
+export type TrackedKpiDataStatus = 'connected' | 'needs_connection' | 'pending_approval';
 
 export interface TrackedKpi {
   id: string;
@@ -844,6 +964,7 @@ export type ShadowAgentHealth = 'healthy' | 'attention' | 'critical';
 
 export interface ShadowAgent {
   id: string;
+  persona: Persona;
   name: string;
   streamKey: string | null; // null = org-level chief of staff
   humanOwner: { name: string; initials: string; avatarBg: string; role: string };

@@ -40,8 +40,11 @@ import {
   shadowOrgs,
   findingsSeed,
   closureKpisSeed,
+  plImpactSeed,
 } from './v4data.js';
 import { opContent } from './v4content.js';
+import { plStatementSeed } from './pldata.js';
+import { personaScope } from './roles.js';
 
 const app = express();
 app.use(cors());
@@ -65,6 +68,7 @@ for (const _ind of Object.keys(opContent)) {
     exceptions: JSON.parse(JSON.stringify(opContent[_ind].runExceptions)),
     chases: JSON.parse(JSON.stringify(opContent[_ind].runChases)),
     outcomes: JSON.parse(JSON.stringify(opContent[_ind].outcomeReports)),
+    runDetails: JSON.parse(JSON.stringify(opContent[_ind].runDetails)),
   };
 }
 // v4Industry (defined in the v4 section, hoisted) resolves the current industry at request time.
@@ -75,14 +79,17 @@ const opS = (req) => opStateByIndustry[v4Industry(req)];
 app.get('/api/v1/me', (req, res) => res.json(currentUser));
 
 // ---------- Dashboard / Command Center ----------
-function filterByPersona(items, persona) {
-  return !persona || persona === 'all' ? items : items.filter((d) => d.persona === persona);
+// Every collection item belongs to exactly one persona (role). scope='team'
+// widens the lens to the role's whole reporting subtree (hierarchy mode).
+function filterByPersona(items, persona, scope) {
+  const roles = personaScope(persona, scope);
+  return roles ? items.filter((d) => roles.has(d.persona)) : items;
 }
 
 app.get('/api/v1/dashboard/summary', (req, res) => {
-  const { persona } = req.query;
+  const { persona, scope } = req.query;
   const pack = op(req);
-  const decisionsForPersona = filterByPersona(opS(req).pending, persona);
+  const decisionsForPersona = filterByPersona(opS(req).pending, persona, scope);
   const overrides = persona && persona !== 'all' && pack.personaKpiOverrides ? pack.personaKpiOverrides[persona] : undefined;
   res.json({
     ...pack.dashboardSummary,
@@ -99,7 +106,7 @@ app.get('/api/v1/dashboard/summary', (req, res) => {
   });
 });
 
-app.get('/api/v1/decisions/pending', (req, res) => res.json(filterByPersona(opS(req).pending, req.query.persona)));
+app.get('/api/v1/decisions/pending', (req, res) => res.json(filterByPersona(opS(req).pending, req.query.persona, req.query.scope)));
 
 app.post('/api/v1/decisions/:id/approve', (req, res) => {
   const { id } = req.params;
@@ -111,14 +118,14 @@ app.post('/api/v1/decisions/:id/approve', (req, res) => {
 
 app.get('/api/v1/pulse', (req, res) => res.json(op(req).pulse));
 
-app.get('/api/v1/runs/live', (req, res) => res.json(op(req).liveRuns));
+app.get('/api/v1/runs/live', (req, res) => res.json(filterByPersona(op(req).liveRuns, req.query.persona, req.query.scope)));
 
 app.get('/api/v1/people/top-performer', (req, res) => res.json(op(req).topPerformer));
 
 // ---------- Runs & Actions ----------
 app.get('/api/v1/runs', (req, res) => {
-  const { status } = req.query;
-  const runs = op(req).runs;
+  const { status, persona, scope } = req.query;
+  const runs = filterByPersona(op(req).runs, persona, scope);
   const filtered = !status || status === 'all' ? runs : runs.filter((r) => r.status === status);
   res.json(filtered);
 });
@@ -161,20 +168,35 @@ app.post('/api/v1/runs/:runId/flag-feedback', (req, res) => {
 });
 
 app.get('/api/v1/runs/:id', (req, res) => {
-  const detail = op(req).runDetails[req.params.id];
+  const detail = opS(req).runDetails[req.params.id];
   if (!detail) return res.status(404).json({ message: 'Run not found' });
   res.json(detail);
 });
 
-app.post('/api/v1/runs/:id/pause', (req, res) => res.json({ id: req.params.id, status: 'paused' }));
-app.post('/api/v1/runs/:id/resume', (req, res) => res.json({ id: req.params.id, status: 'running' }));
+app.post('/api/v1/runs/:id/pause', (req, res) => {
+  const detail = opS(req).runDetails[req.params.id];
+  if (!detail) return res.status(404).json({ message: 'Run not found' });
+  detail.paused = true;
+  detail.isLive = false;
+  logAudit('decision', detail.id, `paused run "${detail.name}"`);
+  res.json({ id: detail.id, status: 'paused' });
+});
+
+app.post('/api/v1/runs/:id/resume', (req, res) => {
+  const detail = opS(req).runDetails[req.params.id];
+  if (!detail) return res.status(404).json({ message: 'Run not found' });
+  detail.paused = false;
+  detail.isLive = true;
+  logAudit('decision', detail.id, `resumed run "${detail.name}"`);
+  res.json({ id: detail.id, status: 'running' });
+});
 
 // ---------- Decision Ledger ----------
 app.get('/api/v1/decisions/stats', (req, res) => res.json(op(req).decisionStats));
 
 app.get('/api/v1/decisions', (req, res) => {
-  const { function: fn, verdict } = req.query;
-  let result = op(req).decisionLedger;
+  const { function: fn, verdict, persona, scope } = req.query;
+  let result = filterByPersona(op(req).decisionLedger, persona, scope);
   if (fn && fn !== 'all') result = result.filter((d) => d.function === fn);
   if (verdict && verdict !== 'all') result = result.filter((d) => d.verdict === verdict);
   res.json(result);
@@ -183,9 +205,11 @@ app.get('/api/v1/decisions', (req, res) => {
 // ---------- People & Agents ----------
 app.get('/api/v1/leaderboard/highlights', (req, res) => res.json(op(req).leaderboardHighlights));
 
+app.get('/api/v1/leaderboard/loop-speed', (req, res) => res.json(filterByPersona(op(req).loopSpeed, req.query.persona, req.query.scope)));
+
 app.get('/api/v1/leaderboard', (req, res) => {
-  const { type } = req.query;
-  const leaderboard = op(req).leaderboard;
+  const { type, persona, scope } = req.query;
+  const leaderboard = filterByPersona(op(req).leaderboard, persona, scope);
   const result = !type || type === 'all' ? leaderboard : leaderboard.filter((l) => l.type === type);
   res.json(result);
 });
@@ -203,6 +227,16 @@ app.post('/api/v1/outcomes/:runId/actions/:actionId/assign', (req, res) => {
   const action = report.actions.find((a) => a.id === req.params.actionId);
   if (action) action.assigned = true;
   res.json(action ?? {});
+});
+
+app.post('/api/v1/outcomes/:runId/actions/:actionId/schedule', (req, res) => {
+  const report = opS(req).outcomes[req.params.runId];
+  if (!report) return res.status(404).json({ message: 'Outcome report not found' });
+  const action = report.actions.find((a) => a.id === req.params.actionId);
+  if (!action) return res.status(404).json({ message: 'Action not found' });
+  action.scheduled = true;
+  logAudit('decision', req.params.runId, `scheduled action: ${action.title}`);
+  res.json(action);
 });
 
 app.post('/api/v1/outcomes/:runId/export', (req, res) => {
@@ -296,8 +330,16 @@ app.get('/api/v1/connections', (req, res) => {
   res.json(result);
 });
 
+// A connection created from a tracked KPI's "Connect" flow carries forKpiId;
+// the KPI's dataStatus follows the connection through its approval lifecycle.
+function setTrackedKpiDataStatus(kpiId, dataStatus) {
+  const kpi = trackedKpisState.find((t) => t.id === kpiId);
+  if (kpi) kpi.dataStatus = dataStatus;
+  return kpi;
+}
+
 app.post('/api/v1/connections', (req, res) => {
-  const { connectorTypeId, name, config } = req.body;
+  const { connectorTypeId, name, config, forKpiId } = req.body;
   const type = connectorTypesState.find((t) => t.id === connectorTypeId);
   const newConnection = {
     id: `conn-${Date.now()}`,
@@ -309,9 +351,15 @@ app.post('/api/v1/connections', (req, res) => {
     createdDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
     lastSyncedAt: null,
     config: config || {},
+    ...(forKpiId ? { forKpiId } : {}),
   };
   connectionsState = [...connectionsState, newConnection];
-  logAudit('connection', newConnection.id, 'created connection');
+  if (forKpiId) {
+    const kpi = setTrackedKpiDataStatus(forKpiId, 'pending_approval');
+    if (kpi) logAudit('connection', newConnection.id, `created connection for KPI "${kpi.name}"`);
+  } else {
+    logAudit('connection', newConnection.id, 'created connection');
+  }
   res.json(newConnection);
 });
 
@@ -320,6 +368,10 @@ app.post('/api/v1/connections/:id/approve', (req, res) => {
   if (!conn) return res.status(404).json({ message: 'Connection not found' });
   conn.status = 'approved';
   logAudit('connection', conn.id, 'approved connection');
+  if (conn.forKpiId) {
+    const kpi = setTrackedKpiDataStatus(conn.forKpiId, 'connected');
+    if (kpi) logAudit('signal', kpi.id, `data connected for KPI "${kpi.name}" via ${conn.name}`);
+  }
   res.json(conn);
 });
 
@@ -328,6 +380,7 @@ app.post('/api/v1/connections/:id/reject', (req, res) => {
   if (!conn) return res.status(404).json({ message: 'Connection not found' });
   conn.status = 'rejected';
   logAudit('connection', conn.id, 'rejected connection');
+  if (conn.forKpiId) setTrackedKpiDataStatus(conn.forKpiId, 'needs_connection');
   res.json(conn);
 });
 
@@ -429,12 +482,12 @@ app.post('/api/v1/connections/:id/import-planning-data', (req, res) => {
 
 // ---------- Agent Space ----------
 app.get('/api/v1/agents/catalog', (req, res) => {
-  const { function: fn, status, agentType, search } = req.query;
+  const { function: fn, status, agentType, search, persona, scope } = req.query;
   const studioAgents = [...createdAgents.entries()]
     .filter(([, a]) => a.catalogMeta)
     .map(([agentId, a]) => ({ agentId, ...a.preview, ...a.catalogMeta }));
   // Catalog is scoped to the current operating context; studio-built agents always show.
-  let result = [...op(req).agentCatalog, ...studioAgents];
+  let result = filterByPersona([...op(req).agentCatalog, ...studioAgents], persona, scope);
   if (fn && fn !== 'all') result = result.filter((a) => a.function2 === fn);
   if (status && status !== 'all') result = result.filter((a) => a.catalogStatus === status);
   if (agentType && agentType !== 'all') result = result.filter((a) => a.creationPath === agentType);
@@ -664,11 +717,11 @@ app.post('/api/v1/kpi-tickets/:id/comments', (req, res) => {
 const solutionDesigns = new Map();
 const agentSpecs = new Map();
 
-function makeDefaultTaskList(solutionId, signalName) {
+function makeDefaultTaskList(solutionId, signalName, persona = 'operations_head') {
   return [
-    { id: `${solutionId}-t1`, type: 'new_agent', title: `${signalName.split(' - ')[0].split(' erosion')[0]} response agent`, owner: 'Platform team', status: 'proposed', channel: 'app', comments: [] },
-    { id: `${solutionId}-t2`, type: 'existing_agent', title: 'Notification agent', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [] },
-    { id: `${solutionId}-t3`, type: 'human_task', title: 'Confirm the proposed fix with the business owner', owner: 'You', status: 'needs_review', channel: 'app', comments: [] },
+    { id: `${solutionId}-t1`, type: 'new_agent', title: `${signalName.split(' - ')[0].split(' erosion')[0]} response agent`, owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona },
+    { id: `${solutionId}-t2`, type: 'existing_agent', title: 'Notification agent', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona },
+    { id: `${solutionId}-t3`, type: 'human_task', title: 'Confirm the proposed fix with the business owner', owner: 'You', status: 'needs_review', channel: 'app', comments: [], persona },
   ];
 }
 
@@ -724,7 +777,7 @@ app.post('/api/v1/solutions', (req, res) => {
     owner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5' },
     guardrails: 'Pause and ask before any change with a projected impact over $2,000.',
     copiedFromLabel: null,
-    taskList: makeDefaultTaskList(id, signal.name),
+    taskList: makeDefaultTaskList(id, signal.name, signal.persona),
     validation: null,
     createdAt: now,
     updatedAt: now,
@@ -785,11 +838,11 @@ app.post('/api/v1/solutions/:id/approve', (req, res) => {
 // ---------- Solution in hand (fast path — reviewer already has a fix) ----------
 const quickSolutions = new Map();
 
-function makeQuickSolutionTasks() {
+function makeQuickSolutionTasks(persona = 'operations_head') {
   const stamp = Date.now();
   return [
-    { id: `qt-${stamp}-1`, type: 'human_task', title: 'Carry out the described fix', owner: 'You', status: 'proposed', channel: 'app', comments: [] },
-    { id: `qt-${stamp}-2`, type: 'human_task', title: 'Confirm the fix resolved the signal', owner: 'You', status: 'proposed', channel: 'app', comments: [] },
+    { id: `qt-${stamp}-1`, type: 'human_task', title: 'Carry out the described fix', owner: 'You', status: 'proposed', channel: 'app', comments: [], persona },
+    { id: `qt-${stamp}-2`, type: 'human_task', title: 'Confirm the fix resolved the signal', owner: 'You', status: 'proposed', channel: 'app', comments: [], persona },
   ];
 }
 
@@ -803,7 +856,7 @@ app.post('/api/v1/quick-solutions', (req, res) => {
     signalId,
     description,
     status: 'pending_confirmation',
-    tasks: makeQuickSolutionTasks(),
+    tasks: makeQuickSolutionTasks(signal.persona),
     createdAt: new Date().toISOString(),
   };
   quickSolutions.set(id, quick);
@@ -827,7 +880,7 @@ app.post('/api/v1/quick-solutions/:id/confirm', (req, res) => {
 
 // ---------- Tasks (assigned across all solution designs, and confirmed quick solutions) ----------
 app.get('/api/v1/tasks', (req, res) => {
-  const { status } = req.query;
+  const { status, persona, scope } = req.query;
   const all = [];
   for (const solution of solutionDesigns.values()) {
     for (const task of solution.taskList) {
@@ -841,7 +894,8 @@ app.get('/api/v1/tasks', (req, res) => {
       all.push({ ...task, solutionId: quick.id, solutionName: `Quick fix: ${signal?.name ?? quick.signalId}` });
     }
   }
-  res.json(status && status !== 'all' ? all.filter((t) => t.status === status) : all);
+  const scoped = filterByPersona(all, persona, scope);
+  res.json(status && status !== 'all' ? scoped.filter((t) => t.status === status) : scoped);
 });
 
 app.post('/api/v1/tasks/:taskId/feedback', (req, res) => {
@@ -886,7 +940,7 @@ app.post('/api/v1/agent-specs', (req, res) => {
   const spec = {
     id,
     name: task.title,
-    persona: 'operations_head',
+    persona: task.persona ?? 'operations_head',
     solutionDesignId: solutionId,
     taskId,
     status: 'drafting',
@@ -1205,15 +1259,15 @@ app.get('/api/v1/shadow-org', (req, res) => {
     const health = breaches.length ? 'critical' : open.length ? 'attention' : 'healthy';
     return { ...agent, openFindings: open.length, slaBreaches: breaches.length, health };
   });
-  res.json({ industry, agents });
+  res.json({ industry, agents: filterByPersona(agents, req.query.persona, req.query.scope) });
 });
 
 // ---------- Findings & the 4-A disposition engine ----------
 app.get('/api/v1/findings', (req, res) => {
   const industry = v4Industry(req);
   let result = findingsState[industry].map(stripServerFields);
-  const { persona, stream, status } = req.query;
-  if (persona && persona !== 'all') result = result.filter((f) => f.persona === persona);
+  const { persona, stream, status, scope } = req.query;
+  result = filterByPersona(result, persona, scope);
   if (stream && stream !== 'all') result = result.filter((f) => f.streamKey === stream);
   if (status && status !== 'all') result = result.filter((f) => f.status === status);
   const sevRank = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -1226,6 +1280,17 @@ app.get('/api/v1/findings/:id', (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
   res.json(stripServerFields(hit.finding));
+});
+
+// FP&A rollup: findings translated onto the P&L, per line item.
+app.get('/api/v1/pl-impact', (req, res) => {
+  res.json(plImpactSeed[v4Industry(req)] ?? []);
+});
+
+// The full P&L: lines × two dimensions, Actual vs Budget vs Forecast,
+// with drift anomalies embedded as a task list.
+app.get('/api/v1/pl-statement', (req, res) => {
+  res.json(plStatementSeed[v4Industry(req)] ?? { period: '', unit: '', dimALabel: '', dimBLabel: '', lines: [], anomalies: [] });
 });
 
 app.post('/api/v1/findings/:id/disposition', (req, res) => {
@@ -1272,7 +1337,7 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
       owner: { name: currentUser.name, initials: currentUser.initials, avatarBg: currentUser.avatarBg },
       guardrails: 'Pause and ask before any change with a projected impact over $2,000.',
       copiedFromLabel: null,
-      taskList: makeDefaultTaskList(solutionId, finding.title),
+      taskList: makeDefaultTaskList(solutionId, finding.title, finding.persona),
       validation: null,
       createdAt: now,
       updatedAt: now,

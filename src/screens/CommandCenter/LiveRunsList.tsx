@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useLiveRuns } from '../../api/dashboard';
+import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 
 export function LiveRunsList() {
-  const { data, isLoading, isError } = useLiveRuns();
+  const { persona, scope } = useEffectiveLens();
+  const { data, isLoading, isError } = useLiveRuns(persona, scope);
 
   return (
     <div className="card" style={{ marginBottom: 16 }}>

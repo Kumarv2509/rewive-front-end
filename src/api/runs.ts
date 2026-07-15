@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { ChaseEscalation, ExceptionStatus, RunDetail, RunException, RunListItem, RunStatus } from './types';
+import type { ChaseEscalation, ExceptionStatus, Persona, RoleScope, RunDetail, RunException, RunListItem, RunStatus } from './types';
 
-export function useRuns(status: RunStatus | 'all' = 'all') {
+export function useRuns(status: RunStatus | 'all' = 'all', persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['runs', 'list', status],
-    queryFn: async () => (await apiClient.get<RunListItem[]>('/runs', { params: { status } })).data,
+    queryKey: ['runs', 'list', status, persona, scope],
+    queryFn: async () => (await apiClient.get<RunListItem[]>('/runs', { params: { status, persona, scope } })).data,
   });
 }
 

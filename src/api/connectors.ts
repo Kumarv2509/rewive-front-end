@@ -44,7 +44,10 @@ export function useCreateConnection() {
   return useMutation({
     mutationFn: async (input: CreateConnectionInput) =>
       (await apiClient.post<DataConnection>('/connections', input)).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['connections'] }),
+    onSuccess: (_created, input) => {
+      queryClient.invalidateQueries({ queryKey: ['connections'] });
+      if (input.forKpiId) queryClient.invalidateQueries({ queryKey: ['tracked-kpis'] });
+    },
   });
 }
 
@@ -56,6 +59,7 @@ export function useApproveConnection() {
       queryClient.setQueriesData<DataConnection[]>({ queryKey: ['connections'] }, (prev) =>
         prev ? prev.map((c) => (c.id === updated.id ? updated : c)) : prev
       );
+      if (updated.forKpiId) queryClient.invalidateQueries({ queryKey: ['tracked-kpis'] });
     },
   });
 }
@@ -68,6 +72,7 @@ export function useRejectConnection() {
       queryClient.setQueriesData<DataConnection[]>({ queryKey: ['connections'] }, (prev) =>
         prev ? prev.map((c) => (c.id === updated.id ? updated : c)) : prev
       );
+      if (updated.forKpiId) queryClient.invalidateQueries({ queryKey: ['tracked-kpis'] });
     },
   });
 }

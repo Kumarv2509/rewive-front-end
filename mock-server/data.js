@@ -33,7 +33,7 @@ export const personaKpiOverrides = {
 export const dashboardSummary = {
   greetingName: 'Kumara',
   summarySentence:
-    'Since yesterday, Rewive executed <b style="color:var(--ink)">87 actions</b> across Finance and HR. <b style="color:var(--ink)">4 decisions</b> are waiting on you.',
+    'Since yesterday, Rewive executed <b style="color:var(--ink)">87 actions</b> across Finance and HR. Your queue is below.',
   kpis: {
     actionsExecutedToday: { value: 87, delta: { label: '▲ 12% vs yesterday', direction: 'up' } },
     decisionsPending: { value: 4, delta: { label: '2 urgent', direction: 'flat' } },
@@ -62,7 +62,7 @@ export let pendingDecisions = [
     subtitle: 'Anomaly Agent recommends repricing · est. impact +AED 84k / qtr',
     actionLabel: 'Act',
     actionVerb: 'act',
-    persona: 'store_manager',
+    persona: 'commercial_finance',
   },
   {
     id: 'dec3',
@@ -116,21 +116,21 @@ export const pulse = [
 
 export const liveRuns = [
   {
-    id: 'run-fpa-may',
+    id: 'run-fpa-may', persona: 'cfo',
     name: 'FP&A Full Analysis · May data',
     eta: '~4 min left',
     percent: 62,
     stepDescription: 'Step 4 of 6 — building margin waterfall',
   },
   {
-    id: 'run-cashflow-q3',
+    id: 'run-cashflow-q3', persona: 'cfo',
     name: 'Cash-flow Forecast · Q3',
     eta: '~2 min left',
     percent: 81,
     stepDescription: 'Step 5 of 6 — scenario synthesis',
   },
   {
-    id: 'run-hr-eng',
+    id: 'run-hr-eng', persona: 'coo',
     name: 'HR Screening · Eng cohort',
     eta: 'finishing',
     percent: 93,
@@ -150,7 +150,7 @@ export const topPerformer = {
 
 export const runDetails = {
   'run-fpa-may': {
-    id: 'run-fpa-may',
+    id: 'run-fpa-may', persona: 'cfo',
     name: 'FP&A Full Analysis — May 2026 actuals',
     meta: 'Margin Leakage Agent · started 14:02 by Sanju · est. finish 14:11 (9 min total)',
     isLive: true,
@@ -165,12 +165,12 @@ export const runDetails = {
 };
 
 export const runs = [
-  { id: 'run-cashflow-q3', name: 'Cash-flow Forecast · Q3', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Forecast Agent', status: 'running', duration: '6m 12s', outcome: '—' },
-  { id: 'run-hr-eng', name: 'HR Screening · Eng cohort', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Screening Agent', status: 'running', duration: '8m 47s', outcome: '—' },
-  { id: 'run-close-may', name: 'Month-end close · May', owner: { name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, agentName: 'Close Agent', status: 'needs_decision', duration: 'paused 3h', outcome: '2 exceptions' },
-  { id: 'run-profit-gcc', name: 'Profitability by customer · GCC', owner: { name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, agentName: 'Profitability Agent', status: 'completed', duration: '7m 31s', outcome: '+AED 84k found' },
-  { id: 'run-anomaly-daily', name: 'Pricing anomaly scan · daily', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Anomaly Agent', status: 'completed', duration: '3m 02s', outcome: '1 flag · SKU 4417' },
-  { id: 'run-vendor-recon', name: 'Vendor reconciliation · weekly', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Recon Agent', status: 'failed', duration: '0m 41s', outcome: 'source timeout · retried ✓' },
+  { id: 'run-cashflow-q3', persona: 'cfo', name: 'Cash-flow Forecast · Q3', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Forecast Agent', status: 'running', duration: '6m 12s', outcome: '—' },
+  { id: 'run-hr-eng', persona: 'coo', name: 'HR Screening · Eng cohort', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Screening Agent', status: 'running', duration: '8m 47s', outcome: '—' },
+  { id: 'run-close-may', persona: 'cfo', name: 'Month-end close · May', owner: { name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, agentName: 'Close Agent', status: 'needs_decision', duration: 'paused 3h', outcome: '2 exceptions' },
+  { id: 'run-profit-gcc', persona: 'commercial_finance', name: 'Profitability by customer · GCC', owner: { name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, agentName: 'Profitability Agent', status: 'completed', duration: '7m 31s', outcome: '+AED 84k found' },
+  { id: 'run-anomaly-daily', persona: 'commercial_finance', name: 'Pricing anomaly scan · daily', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Anomaly Agent', status: 'completed', duration: '3m 02s', outcome: '1 flag · SKU 4417' },
+  { id: 'run-vendor-recon', persona: 'operations_head', name: 'Vendor reconciliation · weekly', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Recon Agent', status: 'failed', duration: '0m 41s', outcome: 'source timeout · retried ✓' },
 ];
 
 export const runExceptions = [
@@ -191,12 +191,13 @@ export const decisionStats = {
 };
 
 export const decisionLedger = [
-  { id: 'led1', title: 'Reprice SKU 2210 family in UAE', subtitle: 'Margin leakage driver #1, May run', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+AED 210k / qtr', direction: 'up' }, function: 'finance', originatingSignalId: 'sig1', assessorNote: 'Assessor agent: margin on the SKU 4417/2210 family recovered from -6.2% to -1.1% within 6 weeks of repricing, well ahead of the 3-week target — independently confirmed against the same gross-margin field used to raise the original signal.' },
-  { id: 'led2', title: 'Consolidate 3 logistics vendors', subtitle: 'Cost optimization recommendation', madeBy: { type: 'human', name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, informedBy: { type: 'agent', name: 'Cost Agent' }, date: '28 Apr', verdict: 'worked', measuredImpact: { text: '+AED 95k / qtr', direction: 'up' }, function: 'procurement', originatingSignalId: 'sig3', assessorNote: 'Assessor agent: invoice overlap across the 3 flagged vendors dropped to zero after consolidation — confirmed against the same vendor invoice feed, closing the signal that raised it.' },
-  { id: 'led3', title: 'Hold hiring for support roles', subtitle: 'Forecast showed demand dip', madeBy: { type: 'human', name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '21 Apr', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'hr' },
-  { id: 'led4', title: 'Extend payment terms — distributor KSA', subtitle: 'Cash-flow scenario B', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '14 Apr', verdict: 'not_worked', measuredImpact: { text: '−AED 40k DSO cost', direction: 'down' }, function: 'finance' },
-  { id: 'led5', title: 'Shift Q2 spend to performance channels', subtitle: 'Customer-mix insight, March run', madeBy: { type: 'human', name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '02 Apr', verdict: 'worked', measuredImpact: { text: '+18% ROAS', direction: 'up' }, function: 'finance' },
-  { id: 'led6', title: 'Auto-approve invoices < AED 500', subtitle: 'Process decision · agent autonomous', madeBy: { type: 'agent', name: 'Close Agent' }, informedBy: { type: 'policy', name: 'policy' }, date: 'ongoing', verdict: 'worked', measuredImpact: { text: '22h / month saved', direction: 'up' }, function: 'finance' },
+  { id: 'led0', persona: 'sales_supervisor', title: 'Accept — OSA back above 96% in top-40 stores', subtitle: 'On-shelf availability finding · exit condition watched', madeBy: { type: 'human', name: 'Layla Nasser', initials: 'LN', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Commercial counterpart' }, date: '02 Jun', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', findingId: 'fmcg-f-5' },
+  { id: 'led1', persona: 'commercial_finance', title: 'Reprice SKU 2210 family in UAE', subtitle: 'Margin leakage driver #1, May run', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+AED 210k / qtr', direction: 'up' }, function: 'finance', originatingSignalId: 'sig1', assessorNote: 'Assessor agent: margin on the SKU 4417/2210 family recovered from -6.2% to -1.1% within 6 weeks of repricing, well ahead of the 3-week target — independently confirmed against the same gross-margin field used to raise the original signal.' },
+  { id: 'led2', persona: 'operations_head', title: 'Consolidate 3 logistics vendors', subtitle: 'Cost optimization recommendation', madeBy: { type: 'human', name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, informedBy: { type: 'agent', name: 'Cost Agent' }, date: '28 Apr', verdict: 'worked', measuredImpact: { text: '+AED 95k / qtr', direction: 'up' }, function: 'procurement', originatingSignalId: 'sig3', assessorNote: 'Assessor agent: invoice overlap across the 3 flagged vendors dropped to zero after consolidation — confirmed against the same vendor invoice feed, closing the signal that raised it.' },
+  { id: 'led3', persona: 'coo', title: 'Hold hiring for support roles', subtitle: 'Forecast showed demand dip', madeBy: { type: 'human', name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '21 Apr', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'hr' },
+  { id: 'led4', persona: 'cfo', title: 'Extend payment terms — distributor KSA', subtitle: 'Cash-flow scenario B', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '14 Apr', verdict: 'not_worked', measuredImpact: { text: '−AED 40k DSO cost', direction: 'down' }, function: 'finance' },
+  { id: 'led5', persona: 'commercial_finance', title: 'Shift Q2 spend to performance channels', subtitle: 'Customer-mix insight, March run', madeBy: { type: 'human', name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '02 Apr', verdict: 'worked', measuredImpact: { text: '+18% ROAS', direction: 'up' }, function: 'finance' },
+  { id: 'led6', persona: 'cfo', title: 'Auto-approve invoices < AED 500', subtitle: 'Process decision · agent autonomous', madeBy: { type: 'agent', name: 'Close Agent' }, informedBy: { type: 'policy', name: 'policy' }, date: 'ongoing', verdict: 'worked', measuredImpact: { text: '22h / month saved', direction: 'up' }, function: 'finance' },
 ];
 
 export const leaderboardHighlights = [
@@ -206,12 +207,12 @@ export const leaderboardHighlights = [
 ];
 
 export const leaderboard = [
-  { id: 'l1', type: 'human', name: 'Sanju Mathew', initials: 'SJ', avatarBg: '#0D9488', actionsClosed: 31, onTimePct: 96, decisionWinRatePct: 83, timeSaved: '11h', trend: [16, 13, 14, 9, 7, 3], trendColor: '#16A34A' },
-  { id: 'l2', type: 'agent', name: 'Profitability Agent', initials: 'PA', avatarBg: '#4F46E5', actionsClosed: 124, onTimePct: 99.2, decisionWinRatePct: 81, timeSaved: '64h', trend: [14, 12, 10, 10, 6, 4], trendColor: '#16A34A' },
-  { id: 'l3', type: 'human', name: 'Praveen Jagadeesan', initials: 'PJ', avatarBg: '#D97706', actionsClosed: 22, onTimePct: 91, decisionWinRatePct: 88, timeSaved: '—', trend: [15, 11, 12, 8, 8, 5], trendColor: '#16A34A' },
-  { id: 'l4', type: 'human', name: 'Devaki Habib', initials: 'DH', avatarBg: '#0D9488', actionsClosed: 19, onTimePct: 87, decisionWinRatePct: 74, timeSaved: '6h', trend: [10, 12, 9, 11, 8, 7], trendColor: '#D97706' },
-  { id: 'l5', type: 'agent', name: 'Forecast Agent', initials: 'FA', avatarBg: '#4F46E5', actionsClosed: 58, onTimePct: 98, decisionWinRatePct: 69, timeSaved: '29h', trend: [8, 10, 7, 9, 10, 8], trendColor: '#A8A29E' },
-  { id: 'l6', type: 'human', name: 'Ganesh Rajasekaran', initials: 'GR', avatarBg: '#4F46E5', actionsClosed: 17, onTimePct: 84, decisionWinRatePct: 71, timeSaved: '4h', trend: [12, 10, 13, 10, 9, 9], trendColor: '#A8A29E' },
+  { id: 'l1', persona: 'commercial_finance', type: 'human', name: 'Sanju Mathew', initials: 'SJ', avatarBg: '#0D9488', actionsClosed: 31, onTimePct: 96, decisionWinRatePct: 83, timeSaved: '11h', trend: [16, 13, 14, 9, 7, 3], trendColor: '#16A34A' },
+  { id: 'l2', persona: 'commercial_finance', type: 'agent', name: 'Profitability Agent', initials: 'PA', avatarBg: '#4F46E5', actionsClosed: 124, onTimePct: 99.2, decisionWinRatePct: 81, timeSaved: '64h', trend: [14, 12, 10, 10, 6, 4], trendColor: '#16A34A' },
+  { id: 'l3', persona: 'cfo', type: 'human', name: 'Praveen Jagadeesan', initials: 'PJ', avatarBg: '#D97706', actionsClosed: 22, onTimePct: 91, decisionWinRatePct: 88, timeSaved: '—', trend: [15, 11, 12, 8, 8, 5], trendColor: '#16A34A' },
+  { id: 'l4', persona: 'coo', type: 'human', name: 'Devaki Habib', initials: 'DH', avatarBg: '#0D9488', actionsClosed: 19, onTimePct: 87, decisionWinRatePct: 74, timeSaved: '6h', trend: [10, 12, 9, 11, 8, 7], trendColor: '#D97706' },
+  { id: 'l5', persona: 'cfo', type: 'agent', name: 'Forecast Agent', initials: 'FA', avatarBg: '#4F46E5', actionsClosed: 58, onTimePct: 98, decisionWinRatePct: 69, timeSaved: '29h', trend: [8, 10, 7, 9, 10, 8], trendColor: '#A8A29E' },
+  { id: 'l6', persona: 'operations_head', type: 'human', name: 'Ganesh Rajasekaran', initials: 'GR', avatarBg: '#4F46E5', actionsClosed: 17, onTimePct: 84, decisionWinRatePct: 71, timeSaved: '4h', trend: [12, 10, 13, 10, 9, 9], trendColor: '#A8A29E' },
 ];
 
 export const outcomeReports = {
@@ -492,6 +493,46 @@ export const kpiCatalog = [
     definition: 'Proportion of days covered by refills for a chronic medication.',
     formula: 'Days covered by fills ÷ Days in period',
     driversNeeded: [{ name: 'Refill history', dataSource: 'Pharmacy dispensing system' }, { name: 'Claims history', dataSource: 'PBM claims feed' }] },
+
+  // FMCG — Manufacturing
+  { id: 'kpi-oee', name: 'Overall Equipment Effectiveness (OEE)', segment: 'manufacturing', category: 'operational',
+    definition: 'How much of planned production time is truly productive across availability, performance and quality.',
+    formula: 'Availability × Performance × Quality',
+    driversNeeded: [{ name: 'Line runtime & stops', dataSource: 'Plant telemetry / MES' }, { name: 'Good units vs total units', dataSource: 'MES quality log' }] },
+  { id: 'kpi-waste', name: 'Waste & Scrap %', segment: 'manufacturing', category: 'operational',
+    definition: 'Share of material lost to waste and scrap against the production standard.',
+    formula: 'Waste + scrap volume ÷ Total input volume',
+    driversNeeded: [{ name: 'Line waste log', dataSource: 'Line sensor telemetry' }, { name: 'Production volumes', dataSource: 'MES / production orders' }] },
+  { id: 'kpi-changeover', name: 'Changeover Time', segment: 'manufacturing', category: 'operational',
+    definition: 'Average time to switch a line between SKUs — the hidden capacity tax.',
+    formula: 'Sum(changeover minutes) ÷ Number of changeovers',
+    driversNeeded: [{ name: 'Changeover events', dataSource: 'MES / line schedule' }] },
+  // FMCG — Distribution
+  { id: 'kpi-otif', name: 'Case Fill Rate (OTIF)', segment: 'distribution', category: 'operational',
+    definition: 'Share of ordered cases delivered on time and in full to customers.',
+    formula: 'Cases delivered OTIF ÷ Cases ordered',
+    driversNeeded: [{ name: 'Customer orders', dataSource: 'ERP / order management' }, { name: 'Delivery confirmations', dataSource: 'TMS / EPOD' }] },
+  { id: 'kpi-coldchain', name: 'Cold-Chain Excursions', segment: 'distribution', category: 'operational',
+    definition: 'Temperature excursions per month across the refrigerated fleet.',
+    formula: 'Count(excursions above threshold) per month',
+    driversNeeded: [{ name: 'Reefer temperature probes', dataSource: 'Fleet telematics' }, { name: 'Route & vehicle master', dataSource: 'TMS' }] },
+  { id: 'kpi-truckutil', name: 'Truck Utilization', segment: 'distribution', category: 'financial',
+    definition: 'Share of available truck capacity actually used — cost per case follows it.',
+    formula: 'Loaded capacity ÷ Available capacity',
+    driversNeeded: [{ name: 'Load plans', dataSource: 'TMS' }, { name: 'Fleet availability', dataSource: 'Fleet management system' }] },
+  // FMCG — Retail & trade
+  { id: 'kpi-osa', name: 'On-Shelf Availability (OSA)', segment: 'retail_trade', category: 'operational',
+    definition: 'Share of SKUs on shelf and sellable in tracked stores — the revenue you can only lose once.',
+    formula: 'SKUs available on shelf ÷ SKUs listed',
+    driversNeeded: [{ name: 'Store POS feed', dataSource: 'Modern trade POS' }, { name: 'Store audits', dataSource: 'Field sales app' }] },
+  { id: 'kpi-tsroi', name: 'Trade-Spend ROI', segment: 'retail_trade', category: 'financial',
+    definition: 'Incremental sell-out generated per dirham of promotional spend.',
+    formula: 'Incremental sell-out value ÷ Trade spend',
+    driversNeeded: [{ name: 'Trade-spend ledger', dataSource: 'TPM / finance system' }, { name: 'Sell-out volumes', dataSource: 'Modern trade POS' }] },
+  { id: 'kpi-forecastacc', name: 'Forecast Accuracy', segment: 'retail_trade', category: 'operational',
+    definition: 'How close the demand forecast lands to actual sell-in, by category.',
+    formula: '1 − |Forecast − Actual| ÷ Actual',
+    driversNeeded: [{ name: 'Demand forecast', dataSource: 'Planning system' }, { name: 'Actual sell-in', dataSource: 'ERP shipments' }] },
 ];
 
 // ---------- Agent Space ----------

@@ -23,19 +23,24 @@ There is no test suite configured.
 
 ## Architecture
 
-**Information architecture** (`src/components/layout/areas.ts`, routes in `src/App.tsx`): a public landing page at `/`, then three nav areas under `AppLayout`:
+**Information architecture** (`src/components/layout/areas.ts`, routes in `src/App.tsx`): a public landing page at `/`, then one flat loop-ordered rail of 7 items under `AppLayout` (the old Operate/Insights/Foundation top-nav areas are retired):
 
-- **Operate** — the hero path: Command Center (`/command`), Findings (`/operate/findings`), Closure (`/operate/closure`), Decision Ledger (`/operate/decisions`), Counterparts (`/operate/counterparts`), Runs & Actions, Tasks.
-- **Insights** — Outcomes, Performance (the reframed leaderboard), Agent Space.
-- **Foundation** (URL prefix is still `/build`) — Operating Picture (`/build/picture`), Mandate Library (`/build/kpis`), Data Connectors.
+- **Today** (`/command`) — the single "waiting on you" queue (findings + approvals, one count — the only such number in the product).
+- **Findings** (`/operate/findings`) — lifecycle tabs `?tab=open|watching|closed`; the old Closure screen is the Watching/Closed tabs now (`/operate/closure` redirects). A finding's detail page is its **thread**: raised → decided → watching → closed + verdict.
+- **Decisions** (`/operate/decisions`) — the ledger; rows deep-link to the finding they answered (`findingId` on `DecisionLedgerItem`).
+- **Execution** — Runs (`/operate/runs`), Tasks (`/operate/tasks`), Outcomes (`/insights/outcomes/:runId`) share a `SectionTabs` header; routes unchanged.
+- **Agents** — Counterparts (`/operate/counterparts`) + Workforce (`/insights/agents`) share a `SectionTabs` header.
+- **Performance** (`/insights/people`), **Foundation** (`/build/picture`, `/build/kpis`, `/build/connectors`).
 
-Agent-building screens (Create an Agent `/build/create`, Agent Studio `/build/studio`, Unified Agent Studio `/build/agent-studio/:id`, Solution Design `/build/solutions/:id`) are **routable but off the nav** — they're reached through a finding's **Act** disposition (finding → solution design → agent spec), not browsed to. Old v1/v3/v4 URLs (`/runs`, `/insights/findings`, `/operate/shadow`, …) redirect; keep that convention when moving routes.
+The persona lens is global chrome (top bar, `personaLens.tsx`, persisted). Screen intros use the shared `Intro` component (one line + "How this works" disclosure) instead of paragraph subtitles. There is no global "+ New Agent" CTA — agent creation lives in Agents → Workforce and a finding's Act flow.
+
+Agent-building screens (Create an Agent `/build/create`, Agent Studio `/build/studio`, Unified Agent Studio `/build/agent-studio/:id`, Solution Design `/build/solutions/:id`) are **routable but off the nav** — they're reached through a finding's **Act** disposition (finding → solution design → agent spec), not browsed to. Old v1/v3/v4/v5 URLs (`/runs`, `/insights/findings`, `/operate/shadow`, `/operate/closure`, …) redirect; keep that convention when moving routes.
 
 **Naming note:** the user-facing term is **counterpart**; internal identifiers still use the older "shadow" naming (`ShadowAgent`, `useShadowOrg`, `src/api/shadowOrg.ts`, `src/screens/ShadowOrg/`). Don't reintroduce "shadow" in UI copy; renaming the internals is an optional cleanup.
 
 **Data flow:** every screen fetches through TanStack Query hooks in `src/api/` (one module per domain; no service layer). `src/api/types.ts` is the source of truth for every API shape — check it before changing any request/response. `src/api/client.ts` holds the single axios instance; a request interceptor appends the chosen `?industry=` (persisted in localStorage) so the context survives serverless cold starts. Mutations invalidate/optimistically update the query cache and pair with a toast from the screen component. Live data uses `refetchInterval`, not websockets.
 
-**The v4/v5 core model** (in `src/api/types.ts`): `KpiBrain` (Operating Picture: intents ← mandates/stream-KPIs ← senses/drivers), `ShadowOrg`/`ShadowAgent` (counterparts, one per function stream + an org-level chief), `Finding` + `FindingDisposition` (the four-A call, SLA escalation), `ClosureKpi` (exit conditions), `DecisionLedgerItem` + `Verdict` (assessor verdicts). Personas (store manager / CFO / operations head) filter the Command Center.
+**The v4/v5 core model** (in `src/api/types.ts`): `KpiBrain` (Operating Picture: intents ← mandates/stream-KPIs ← senses/drivers), `ShadowOrg`/`ShadowAgent` (counterparts, one per function stream + an org-level chief), `Finding` + `FindingDisposition` (the four-A call, SLA escalation), `ClosureKpi` (exit conditions), `DecisionLedgerItem` + `Verdict` (assessor verdicts). Personas are **roles in a hierarchy** (COO → operations head → store manager, COO → sales supervisor; CFO → commercial finance — defined in `src/screens/CommandCenter/personas.ts` and mirrored in `mock-server/roles.js`, keep them identical). Every collection item (finding, approval, run, task, counterpart, agent, leaderboard/loop-speed row, ledger row) carries exactly one `persona` — roles partition the data with no overlap. The global lens filters every data screen via `useEffectiveLens()` (`personaLens.tsx`); the "+ their team" toggle sends `scope=team` so a senior role sees its whole reporting subtree. When seeding new items, always set `persona`.
 
 **Mock API (`mock-server/`):** Express app (`app.js`) with seed data split across `data.js` (original v1/FMCG operational data), `v4data.js` (Operating Picture, counterparts, findings, closure per industry), and `v4content.js` (per-industry operational packs: dashboard, decisions, runs, leaderboard, outcomes, agent catalog). Industry-scoped endpoints pick a pack via the org profile or `?industry=`. When adding a data point: type in `src/api/types.ts` → hook in `src/api/<domain>.ts` → seed + route in `mock-server/`, per industry.
 

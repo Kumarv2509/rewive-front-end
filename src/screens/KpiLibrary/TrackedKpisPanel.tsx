@@ -27,10 +27,15 @@ export function TrackedKpisPanel() {
             <div style={{ fontWeight: 600, fontSize: 13, flex: 1 }}>{k.name}</div>
             {k.dataStatus === 'connected' ? (
               <Pill tone="green">data connected</Pill>
+            ) : k.dataStatus === 'pending_approval' ? (
+              <>
+                <Pill tone="indigo">connection pending approval</Pill>
+                <Link className="btn ghost sm" to="/build/connectors?status=pending">View &rarr;</Link>
+              </>
             ) : (
               <>
                 <Pill tone="amber">needs data</Pill>
-                <Link className="btn ghost sm" to="/build/connectors">Connect &rarr;</Link>
+                <Link className="btn ghost sm" to={`/build/connectors?forKpi=${encodeURIComponent(k.id)}`}>Connect &rarr;</Link>
               </>
             )}
             <button className="btn ghost sm" onClick={() => untrack.mutate(k.id)}>Remove</button>

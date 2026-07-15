@@ -51,7 +51,7 @@ Rebuilt from the static HTML prototype so every data point comes from an API ins
 | Test run against fixture data | Unified Agent Studio, Developer altitude |
 | Publish — works for agents that never needed a developer (publish straight from Business altitude) and agents that did (publish after handback); creates a real, live entry in Agent Space either way | Unified Agent Studio → Agent Space |
 | **Tasks** (new) — every task from every approved solution *and* confirmed quick solutions in one place, with per-task feedback/comments and a status progression | `/operate/tasks` |
-| Notification channel selector per task (In app / Teams / Slack / ServiceNow) | Tasks screen — **UI preview only, not wired to a real integration** |
+| Notification channel selector per task (In app / Teams / Slack / ServiceNow) | Tasks screen — persisted per task via the mock API; actual delivery is simulated (no real Teams/Slack/ServiceNow integration) |
 | Command Center persona lens — locked to the signed-in user's role for regular users, admin-switchable (Store Manager / CFO / Operations Head / All) | Command Center |
 | Persona-driven KPIs and pending-decisions filtering | Command Center |
 | **Command Center — "Signals waiting on you"** — persona-filtered signals right on the landing page, each with a one-click "Solution design" action; this was designed in the very first mockup but had never actually been added to the real screen until this round | Command Center |

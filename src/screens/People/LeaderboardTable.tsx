@@ -1,11 +1,13 @@
 import { useLeaderboard } from '../../api/people';
+import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Avatar } from '../../components/shared/Avatar';
 import { Pill } from '../../components/shared/Pill';
 import { Sparkline } from '../../components/shared/Sparkline';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 
 export function LeaderboardTable() {
-  const { data, isLoading, isError } = useLeaderboard('all');
+  const { persona, scope } = useEffectiveLens();
+  const { data, isLoading, isError } = useLeaderboard('all', persona, scope);
 
   return (
     <div className="card" style={{ overflow: 'hidden' }}>
