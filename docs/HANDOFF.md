@@ -2,23 +2,22 @@
 
 ## Where things stand
 
-- **`v5` is 6 commits ahead of `master`. The four newest are LOCAL ONLY — push is
-  currently blocked** (see gotcha below):
-  - `f4ac86f` — loop speed by mandate table on the Performance screen (pushed).
-  - `51491f0` — on-screen spotlight tour (pushed).
+- **`v5` is 6+ commits ahead of `master`** (all pushed to origin, no PR opened yet):
+  - `f4ac86f` — loop speed by mandate table on the Performance screen.
+  - `51491f0` — on-screen spotlight tour.
   - `cdd2901` — landing retold: aampe-style product storytelling in Rewive's identity.
   - `4b7462b` — **v5.1 comprehension & navigation redesign** (see below — this is the big one).
   - `7964225` — **full P&L by SKU & channel with drift anomalies as a task list** (FP&A workspace).
-  - plus this handoff refresh.
-- **Push gotcha (2026-07-15): the network MITMs GitHub HTTPS.** `git push` fails with
-  "SSL certificate problem" because a FortiGate firewall re-signs github.com
-  (issuer `CN=FG201FT922921744, O=Fortinet`) and its CA is not on this machine
-  (only "FortiClient DNS Root" is in the keychains — the leaf doesn't chain to it,
-  and the firewall serves no intermediate). SSH to GitHub connects but no SSH key is
-  registered (`Permission denied (publickey)`). To push: (a) switch off the VPN /
-  change network — plain push worked on 2026-07-14; or (b) register an SSH key on
-  GitHub and push via `git@github.com:…`; or (c) get the FortiGate CA from IT and set
-  repo-local `git config http.sslCAInfo`. Do **not** disable `http.sslVerify`.
+  - `142083b`+ — handoff refresh.
+- **Push gotcha (intermittent): one of this machine's networks MITMs GitHub HTTPS.**
+  On that network `git push` fails with "SSL certificate problem" — a FortiGate
+  firewall re-signs github.com (issuer `CN=FG201FT922921744, O=Fortinet`) and its CA
+  is not on this machine (only "FortiClient DNS Root" is in the keychains; the leaf
+  doesn't chain to it and no intermediate is served). SSH reaches GitHub but no SSH
+  key is registered. Observed blocking on 2026-07-15, then cleared after a network
+  change the same day. If it recurs: change network / drop the VPN, or register an
+  SSH key, or get the FortiGate CA from IT and set repo-local
+  `git config http.sslCAInfo`. Do **not** disable `http.sslVerify`.
 - Fold into `master` via a PR when ready. **`gh` CLI auth is also broken** (keyring
   token invalid; a device-code refresh timed out on 2026-07-14) — rerun
   `gh auth refresh -h github.com` before `gh pr create`, or open the PR on GitHub.
