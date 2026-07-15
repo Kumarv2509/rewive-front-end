@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   useAgentBuilderSession,
   useSendAgentBuilderMessage,
@@ -18,6 +18,12 @@ export function ChatPanel({ sessionId, onAgentCreated }: { sessionId: string; on
   const [draft, setDraft] = useState('');
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleRefine = () => {
+    if (!draft) setDraft('Refine the plan: ');
+    inputRef.current?.focus();
+  };
 
   const handleSend = () => {
     const text = draft.trim();
@@ -89,7 +95,7 @@ export function ChatPanel({ sessionId, onAgentCreated }: { sessionId: string; on
                   <button className="btn primary" disabled={creating || created} onClick={handleCreate}>
                     {created ? '✓ Agent created' : creating ? 'Building agent…' : 'Create agent'}
                   </button>
-                  <button className="btn ghost">Refine plan</button>
+                  <button className="btn ghost" onClick={handleRefine}>Refine plan</button>
                 </div>
               </>
             )}
@@ -98,6 +104,7 @@ export function ChatPanel({ sessionId, onAgentCreated }: { sessionId: string; on
       </div>
       <div className="chat-input">
         <input
+          ref={inputRef}
           placeholder="Reply or refine — e.g. 'add a Saudi market comparison'"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

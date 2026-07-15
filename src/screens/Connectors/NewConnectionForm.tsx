@@ -1,9 +1,19 @@
 import { useState } from 'react';
 import { useCreateConnection } from '../../api/connectors';
 import { useToast } from '../../components/shared/Toast';
-import type { ConnectorType } from '../../api/types';
+import type { ConnectorType, TrackedKpi } from '../../api/types';
 
-export function NewConnectionForm({ connectorType, onClose }: { connectorType: ConnectorType; onClose: () => void }) {
+export function NewConnectionForm({
+  connectorType,
+  forKpi,
+  onCreated,
+  onClose,
+}: {
+  connectorType: ConnectorType;
+  forKpi?: TrackedKpi;
+  onCreated?: () => void;
+  onClose: () => void;
+}) {
   const [name, setName] = useState('');
   const [config, setConfig] = useState<Record<string, string>>({});
   const create = useCreateConnection();
@@ -11,10 +21,15 @@ export function NewConnectionForm({ connectorType, onClose }: { connectorType: C
 
   const handleSubmit = () => {
     create.mutate(
-      { connectorTypeId: connectorType.id, name, config },
+      { connectorTypeId: connectorType.id, name, config, forKpiId: forKpi?.id },
       {
         onSuccess: () => {
-          showToast('Connection submitted for approval');
+          showToast(
+            forKpi
+              ? `Connection submitted for approval — "${forKpi.name}" connects once it's approved`
+              : 'Connection submitted for approval'
+          );
+          onCreated?.();
           onClose();
         },
       }
