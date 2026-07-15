@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
+import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { StatsRow } from './StatsRow';
 import { DecisionsTable } from './DecisionsTable';
 import { PlImpactTable } from './PlImpactTable';
@@ -18,6 +20,7 @@ const verdictFilters: { key: DecisionLedgerFilters['verdict']; label: string }[]
 ];
 
 export function DecisionsScreen() {
+  const { persona, scope } = useEffectiveLens();
   const [fn, setFn] = useState<DecisionLedgerFilters['function']>('all');
   const [verdict, setVerdict] = useState<DecisionLedgerFilters['verdict']>('all');
   const [view, setView] = useState<'ledger' | 'pl'>('ledger');
@@ -46,6 +49,7 @@ export function DecisionsScreen() {
 
       {view === 'ledger' && (
         <>
+          <ScopeBanner />
           <div className="filters">
             {functionFilters.map((f) => (
               <button key={f.key} className={`fchip${fn === f.key ? ' on' : ''}`} onClick={() => setFn(f.key)}>{f.label}</button>
@@ -62,7 +66,7 @@ export function DecisionsScreen() {
           </div>
 
           <div data-tour="ledger-table">
-            <DecisionsTable filters={{ function: fn, verdict }} />
+            <DecisionsTable filters={{ function: fn, verdict, persona, scope }} />
           </div>
 
           <div style={{ marginTop: 14, fontSize: 12, color: 'var(--ink-3)' }}>

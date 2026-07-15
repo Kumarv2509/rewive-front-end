@@ -1,15 +1,15 @@
 import { usePendingDecisions } from '../../api/dashboard';
 import { useDecisionStats } from '../../api/decisions';
 import { useFindings } from '../../api/shadowOrg';
-import type { Persona } from '../../api/types';
+import type { Persona, RoleScope } from '../../api/types';
 
 const SLA_AT_RISK_HOURS = 8;
 
 // Three numbers, not five — and the first one is the same count the queue
 // below shows, so "waiting on you" has exactly one source of truth.
-export function TodayStats({ persona }: { persona: Persona | 'all' }) {
-  const { data: findings } = useFindings({ persona, status: 'open' });
-  const { data: decisions } = usePendingDecisions(persona);
+export function TodayStats({ persona, scope }: { persona: Persona | 'all'; scope?: RoleScope }) {
+  const { data: findings } = useFindings({ persona, scope, status: 'open' });
+  const { data: decisions } = usePendingDecisions(persona, scope);
   const { data: stats } = useDecisionStats();
 
   const waiting = (findings?.length ?? 0) + (decisions?.length ?? 0);

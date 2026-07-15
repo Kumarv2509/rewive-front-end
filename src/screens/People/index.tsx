@@ -1,3 +1,4 @@
+import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { HighlightCards } from './HighlightCards';
 import { LeaderboardTable } from './LeaderboardTable';
 import { LoopSpeedTable } from './LoopSpeedTable';
@@ -7,6 +8,7 @@ export function PeopleScreen() {
     <section className="screen">
       <h1 className="page">Performance</h1>
       <div className="sub">Where the loop closes fastest — every mandate, its owner, its counterpart, and how quickly drift comes back to target.</div>
+      <ScopeBanner />
 
       <HighlightCards />
 

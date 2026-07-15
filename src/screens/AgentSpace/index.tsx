@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
+import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { SectionTabs, AGENTS_TABS } from '../../components/shared/SectionTabs';
 import { FilterBar } from './FilterBar';
 import { AgentGrid } from './AgentGrid';
@@ -10,6 +12,7 @@ import type { AgentCatalogFilters } from '../../api/types';
 // Agent creation lives here (and in a finding's Act flow) — not as a global CTA.
 export function AgentSpaceScreen() {
   const navigate = useNavigate();
+  const { persona, scope } = useEffectiveLens();
   const [filters, setFilters] = useState<AgentCatalogFilters>({ status: 'all', agentType: 'all' });
 
   return (
@@ -24,9 +27,10 @@ export function AgentSpaceScreen() {
         </button>
       </div>
       <SectionTabs tabs={AGENTS_TABS} />
+      <ScopeBanner />
 
       <FilterBar filters={filters} onChange={setFilters} />
-      <AgentGrid filters={filters} />
+      <AgentGrid filters={{ ...filters, persona, scope }} />
     </section>
   );
 }

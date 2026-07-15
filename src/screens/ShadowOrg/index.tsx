@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFindings, useKpiBrain, useShadowOrg } from '../../api/shadowOrg';
+import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
+import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { Pill } from '../../components/shared/Pill';
 import { SectionTabs, AGENTS_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
@@ -131,8 +133,9 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: 'am
 }
 
 export function ShadowOrgScreen() {
-  const { data: org, isLoading, isError } = useShadowOrg();
-  const { data: findings } = useFindings();
+  const { persona, scope } = useEffectiveLens();
+  const { data: org, isLoading, isError } = useShadowOrg(persona, scope);
+  const { data: findings } = useFindings({ persona, scope });
   const { data: brain } = useKpiBrain();
 
   if (isLoading) return <section className="screen"><Loading label="Assembling the counterparts…" /></section>;
@@ -163,6 +166,7 @@ export function ShadowOrgScreen() {
         }
       />
       <SectionTabs tabs={AGENTS_TABS} />
+      <ScopeBanner />
 
       {chief && (
         <div className="card" style={{ padding: '18px 22px', marginBottom: 20, borderColor: 'rgba(124,124,255,.28)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 20 }}>

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { QuickSolution, SolutionDesign, SolutionTask, SolutionTaskStatus, TaskChannel } from './types';
+import type { Persona, QuickSolution, RoleScope, SolutionDesign, SolutionTask, SolutionTaskStatus, TaskChannel } from './types';
 
 export function useSolutionDesign(id: string | undefined) {
   return useQuery({
@@ -71,10 +71,10 @@ export function useConfirmQuickSolution(id: string) {
 }
 
 // ---------- Tasks (assigned across all solution designs, "Operate → Tasks") ----------
-export function useTasks(status?: SolutionTaskStatus | 'all') {
+export function useTasks(status?: SolutionTaskStatus | 'all', persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['tasks', status],
-    queryFn: async () => (await apiClient.get<SolutionTask[]>('/tasks', { params: { status } })).data,
+    queryKey: ['tasks', status, persona, scope],
+    queryFn: async () => (await apiClient.get<SolutionTask[]>('/tasks', { params: { status, persona, scope } })).data,
   });
 }
 

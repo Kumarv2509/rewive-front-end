@@ -7,7 +7,7 @@ import { useApproveDecision } from '../../api/decisions';
 import { useFindings } from '../../api/shadowOrg';
 import { severityTone, slaTone } from '../Findings/meta';
 import { PERSONA_LABEL } from './personas';
-import type { PendingDecision, Persona } from '../../api/types';
+import type { PendingDecision, Persona, RoleScope } from '../../api/types';
 
 const actionLabelDefaults: Record<PendingDecision['actionVerb'], string> = {
   approve: 'Approve',
@@ -20,9 +20,9 @@ const actionLabelDefaults: Record<PendingDecision['actionVerb'], string> = {
 // approval, in one ranked list with one count — the only "waiting on you"
 // number anywhere in the product. Findings first (they carry an SLA clock),
 // most urgent on top.
-export function UnifiedQueue({ persona }: { persona: Persona | 'all' }) {
-  const findingsQ = useFindings({ persona, status: 'open' });
-  const decisionsQ = usePendingDecisions(persona);
+export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; scope?: RoleScope }) {
+  const findingsQ = useFindings({ persona, scope, status: 'open' });
+  const decisionsQ = usePendingDecisions(persona, scope);
   const approve = useApproveDecision();
   const { showToast } = useToast();
 

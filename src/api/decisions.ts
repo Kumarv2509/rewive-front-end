@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
-import type { DecisionLedgerItem, DecisionStats, PendingDecision, PlImpactLine, PlStatement } from './types';
+import type { DecisionLedgerItem, DecisionStats, PendingDecision, Persona, PlImpactLine, PlStatement, RoleScope } from './types';
 
 export function useDecisionStats() {
   return useQuery({
@@ -29,6 +29,8 @@ export function usePlImpact() {
 export interface DecisionLedgerFilters {
   function?: 'all' | 'finance' | 'hr' | 'procurement';
   verdict?: 'all' | 'worked' | 'not_worked';
+  persona?: Persona | 'all';
+  scope?: RoleScope;
 }
 
 export function useDecisionLedger(filters: DecisionLedgerFilters = {}) {

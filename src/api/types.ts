@@ -29,6 +29,10 @@ export type Persona =
   | 'coo'
   | 'commercial_finance';
 
+// The lens looks at one role ('role') or the role plus everyone who reports
+// into it ('team' — hierarchy mode, for seeing what's impacted below you).
+export type RoleScope = 'role' | 'team';
+
 export interface CurrentUser {
   name: string;
   initials: string;
@@ -57,6 +61,7 @@ export interface PulseItem {
 
 export interface LiveRunSummary {
   id: string;
+  persona: Persona;
   name: string;
   eta: string;
   percent: number;
@@ -77,6 +82,7 @@ export type RunStatus = 'running' | 'needs_decision' | 'completed' | 'failed';
 
 export interface RunListItem {
   id: string;
+  persona: Persona;
   name: string;
   owner: { name: string; initials: string; avatarBg: string } | null;
   agentName: string;
@@ -101,6 +107,7 @@ export interface RunDetail {
   name: string;
   meta: string;
   isLive: boolean;
+  paused?: boolean;
   steps: TimelineStep[];
 }
 
@@ -141,6 +148,7 @@ export type Verdict = 'worked' | 'not_worked' | 'too_early';
 
 export interface DecisionLedgerItem {
   id: string;
+  persona: Persona;
   title: string;
   subtitle: string;
   madeBy: { type: 'human' | 'agent'; name: string; initials?: string; avatarBg?: string };
@@ -242,6 +250,7 @@ export interface LeaderboardHighlight {
 
 export interface LeaderboardRow {
   id: string;
+  persona: Persona;
   type: 'human' | 'agent';
   name: string;
   initials: string;
@@ -256,6 +265,7 @@ export interface LeaderboardRow {
 
 export interface LoopSpeedRow {
   id: string;
+  persona: Persona;
   mandate: string;
   stream: string;
   owner: { name: string; initials: string; avatarBg: string };
@@ -293,6 +303,7 @@ export interface RecommendedAction {
   assigned: boolean;
   assignedTo?: string;
   actionType: 'assign' | 'schedule';
+  scheduled?: boolean;
 }
 
 export interface OutcomeReport {
@@ -400,12 +411,14 @@ export interface DataConnection {
   lastSyncedAt: string | null;
   config: Record<string, string>;
   errorMessage?: string;
+  forKpiId?: string;
 }
 
 export interface CreateConnectionInput {
   connectorTypeId: ConnectorTypeKey;
   name: string;
   config: Record<string, string>;
+  forKpiId?: string;
 }
 
 export interface CreateCustomConnectorTypeInput {
@@ -458,6 +471,8 @@ export interface AgentCatalogFilters {
   status?: AgentCatalogStatus | 'all';
   agentType?: AgentCreationPath | 'all';
   search?: string;
+  persona?: Persona | 'all';
+  scope?: RoleScope;
 }
 
 // ---------- Agent Studio ----------
@@ -705,6 +720,7 @@ export interface TaskComment {
 
 export interface SolutionTask {
   id: string;
+  persona: Persona;
   type: SolutionTaskType;
   title: string;
   owner: string;
@@ -838,7 +854,7 @@ export interface KpiCatalogEntry {
 }
 
 export type TrackedKpiSource = 'catalog' | 'custom' | 'planning_import';
-export type TrackedKpiDataStatus = 'connected' | 'needs_connection';
+export type TrackedKpiDataStatus = 'connected' | 'needs_connection' | 'pending_approval';
 
 export interface TrackedKpi {
   id: string;
@@ -948,6 +964,7 @@ export type ShadowAgentHealth = 'healthy' | 'attention' | 'critical';
 
 export interface ShadowAgent {
   id: string;
+  persona: Persona;
   name: string;
   streamKey: string | null; // null = org-level chief of staff
   humanOwner: { name: string; initials: string; avatarBg: string; role: string };

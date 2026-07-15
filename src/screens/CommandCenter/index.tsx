@@ -1,21 +1,21 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCurrentUser, useDashboardSummary } from '../../api/dashboard';
+import { useDashboardSummary } from '../../api/dashboard';
 import { hasSeenGuide } from '../Guide/seen';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
-import { usePersonaLens } from '../../components/layout/personaLens';
+import { useEffectiveLens } from '../../components/layout/personaLens';
+import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { TodayStats } from './TodayStats';
 import { UnifiedQueue } from './UnifiedQueue';
 import { PulseList } from './PulseList';
 import { LiveRunsList } from './LiveRunsList';
 import { TopPerformerCard } from './TopPerformerCard';
 import { PERSONA_LABEL } from './personas';
-import type { Persona } from '../../api/types';
 
 export function CommandCenterScreen() {
   const navigate = useNavigate();
-  const { data: currentUser } = useCurrentUser();
-  const { lens } = usePersonaLens();
+  // Non-admins are locked to their role; hierarchy mode widens to their team.
+  const { persona, scope } = useEffectiveLens();
 
   // First visit: open the step-by-step tour instead. Only here (the entry
   // screen), so demo deep links into other screens are never hijacked.
@@ -23,10 +23,7 @@ export function CommandCenterScreen() {
     if (!hasSeenGuide()) navigate('/guide', { replace: true });
   }, [navigate]);
 
-  // Non-admins are locked to their role's persona; admins follow the global lens.
-  const persona: Persona | 'all' = currentUser && !currentUser.isAdmin ? currentUser.defaultPersona : lens;
-
-  const { data: summary, isLoading, isError } = useDashboardSummary(persona);
+  const { data: summary, isLoading, isError } = useDashboardSummary(persona, scope);
 
   return (
     <section className="screen">
@@ -44,14 +41,15 @@ export function CommandCenterScreen() {
               )}
             </div>
           </div>
-          <TodayStats persona={persona} />
+          <ScopeBanner />
+          <TodayStats persona={persona} scope={scope} />
         </>
       )}
 
       <div className="grid home-cols">
         <div>
           {/* THE queue — the only "waiting on you" list and count in the product */}
-          <UnifiedQueue persona={persona} />
+          <UnifiedQueue persona={persona} scope={scope} />
           <PulseList />
         </div>
         <div>

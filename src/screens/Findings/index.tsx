@@ -1,7 +1,8 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { useClosureKpis, useFindings, useKpiBrain } from '../../api/shadowOrg';
-import { usePersonaLens } from '../../components/layout/personaLens';
+import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
+import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { PERSONA_LABEL } from '../CommandCenter/personas';
@@ -52,14 +53,14 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
 
 export function FindingsScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { lens } = usePersonaLens();
+  const { persona, scope } = useEffectiveLens();
   const tab = (TABS.some((t) => t.key === searchParams.get('tab')) ? searchParams.get('tab') : 'open') as TabKey;
   const stream = searchParams.get('stream') ?? 'all';
 
   // The global lens routes here too: a sales supervisor sees sales findings,
   // Commercial finance sees returns / discounts / trade spend, the COO sees
-  // the cross-functional ones.
-  const { data: findings, isLoading, isError } = useFindings({ stream, persona: lens });
+  // the cross-functional ones — plus their whole team in hierarchy mode.
+  const { data: findings, isLoading, isError } = useFindings({ stream, persona, scope });
   const { data: closures } = useClosureKpis();
   const { data: brain } = useKpiBrain();
 
@@ -101,6 +102,7 @@ export function FindingsScreen() {
           </>
         }
       />
+      <ScopeBanner />
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
         <div className="tabs" style={{ marginBottom: 0, borderBottom: 'none', flex: 1 }}>

@@ -10,6 +10,7 @@ import type {
   KpiBrain,
   OrgProfile,
   Persona,
+  RoleScope,
   ShadowOrg,
   UpdateBrainNodeInput,
 } from './types';
@@ -83,10 +84,10 @@ export function useResolveBrainProposal() {
 }
 
 // ---------- Shadow org ----------
-export function useShadowOrg() {
+export function useShadowOrg(persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['shadow-org'],
-    queryFn: async () => (await apiClient.get<ShadowOrg>('/shadow-org')).data,
+    queryKey: ['shadow-org', persona, scope],
+    queryFn: async () => (await apiClient.get<ShadowOrg>('/shadow-org', { params: { persona, scope } })).data,
     refetchInterval: 30_000,
   });
 }
@@ -94,6 +95,7 @@ export function useShadowOrg() {
 // ---------- Findings ----------
 export interface FindingFilters {
   persona?: Persona | 'all';
+  scope?: RoleScope;
   stream?: string | 'all';
   status?: FindingStatus | 'all';
 }

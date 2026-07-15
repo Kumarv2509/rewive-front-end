@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useLiveRuns } from '../../api/dashboard';
+import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
+import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { LiveRunCard } from './LiveRunCard';
 import { RunsTable } from './RunsTable';
@@ -18,7 +20,8 @@ const filters: { key: RunStatus | 'all'; label: string }[] = [
 
 export function RunsScreen() {
   const [status, setStatus] = useState<RunStatus | 'all'>('all');
-  const { data: liveRuns } = useLiveRuns();
+  const { persona, scope } = useEffectiveLens();
+  const { data: liveRuns } = useLiveRuns(persona, scope);
   const primaryLiveRunId = liveRuns?.[0]?.id;
 
   return (
@@ -35,6 +38,7 @@ export function RunsScreen() {
         }
       />
       <SectionTabs tabs={EXECUTION_TABS} />
+      <ScopeBanner />
 
       <div className="filters">
         {filters.map((f) => (
@@ -50,7 +54,7 @@ export function RunsScreen() {
 
       {primaryLiveRunId && <LiveRunCard runId={primaryLiveRunId} />}
 
-      <RunsTable status={status} />
+      <RunsTable status={status} persona={persona} scope={scope} />
 
       <div style={{ marginTop: 16 }}>
         <ExceptionLog />

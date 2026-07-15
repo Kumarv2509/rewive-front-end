@@ -1,4 +1,5 @@
 import { useLoopSpeed } from '../../api/people';
+import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Avatar } from '../../components/shared/Avatar';
 import { Pill } from '../../components/shared/Pill';
 import { Sparkline } from '../../components/shared/Sparkline';
@@ -11,7 +12,8 @@ function windowColor(pct: number) {
 }
 
 export function LoopSpeedTable() {
-  const { data, isLoading, isError } = useLoopSpeed();
+  const { persona, scope } = useEffectiveLens();
+  const { data, isLoading, isError } = useLoopSpeed(persona, scope);
 
   return (
     <div className="card" style={{ overflow: 'hidden' }} data-tour="loop-speed">
