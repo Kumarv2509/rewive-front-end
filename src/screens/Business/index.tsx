@@ -81,6 +81,29 @@ export function BusinessOverviewScreen() {
         </div>
       </div>
 
+      {/* Facts — market, seasonality, footprint, costs */}
+      {overview.factSections && overview.factSections.length > 0 && (
+        <>
+          <div className="sec-head" style={{ padding: '4px 0 10px' }}><h3>The facts behind the mandates</h3></div>
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, marginBottom: 16 }}>
+            {overview.factSections.map((section) => (
+              <div key={section.title} className="card" style={{ padding: '16px 20px' }}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>{section.title}</div>
+                {section.items.map((f) => (
+                  <div key={f.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 12.5 }}>
+                    <div style={{ color: 'var(--ink-2)' }}>
+                      {f.label}
+                      {f.note && <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }}>{f.note}</div>}
+                    </div>
+                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{f.value}</div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* How to act */}
       <div className="sec-head" style={{ padding: '4px 0 10px' }}><h3>How to act on what you see here</h3></div>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12, marginBottom: 16 }}>

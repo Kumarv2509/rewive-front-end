@@ -1142,6 +1142,8 @@ export interface BusinessOverview {
   divisions: BusinessDivision[];
   entities: { name: string; region: string; role: string }[];
   channels: { name: string; share: string; note: string }[];
+  /** Grouped facts — market position, seasonality, footprint, cost structure. */
+  factSections?: { title: string; items: { label: string; value: string; note?: string }[] }[];
   /** How to read this section and act on it — the loop, in the business's own words. */
   actGuide: { title: string; body: string }[];
 }

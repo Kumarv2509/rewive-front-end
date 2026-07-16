@@ -42,6 +42,44 @@ export const businessContextSeed = {
         { name: 'Food service', share: '14%', note: 'QSR and catering contracts, steady margins' },
         { name: 'E-com & q-com', share: '12%', note: 'Fastest growing; promo OSA during quarter-end load-in drifts here' },
       ],
+      factSections: [
+        {
+          title: 'Market position',
+          items: [
+            { label: 'Value share, measured retail', value: '21.4%', note: '#2 overall · target 22.5%' },
+            { label: 'Frozen poultry share', value: '34%', note: '#1 — the category we defend' },
+            { label: 'Main branded competitors', value: 'Al Islami · Sadia · Almarai', note: 'plus private label at 11% and growing' },
+            { label: 'NPD contribution', value: '8.9%', note: 'revenue from products < 24 months old · target 12%' },
+          ],
+        },
+        {
+          title: 'Seasonality — the calendar that moves the numbers',
+          items: [
+            { label: 'Ramadan (G&I peak)', value: '+35% G&I demand', note: 'build starts 10 weeks out — the current build finding is this' },
+            { label: 'Summer (Jun–Aug)', value: 'F&V shrink risk', note: 'cold-chain excursions peak; BBQ spikes lift Protein weekends' },
+            { label: 'Quarter closes', value: 'load-in distortion', note: 'distributor sell-in prioritized over store replenishment' },
+            { label: 'Q4', value: 'gifting & tenders', note: 'KSA tender season locks pricing — repricing windows close early' },
+          ],
+        },
+        {
+          title: 'Footprint & people',
+          items: [
+            { label: 'Plants', value: '6', note: 'UAE ×2 · KSA ×3 · Egypt ×1' },
+            { label: 'Distribution centers', value: '9', note: 'incl. 4 cold-chain DCs' },
+            { label: 'Employees', value: '4,800', note: '2,900 frontline — DC picker attrition is a live finding' },
+            { label: 'Routes served daily', value: '~1,100', note: 'own fleet + 3PL mix' },
+          ],
+        },
+        {
+          title: 'Cost structure — where margin is won and lost',
+          items: [
+            { label: 'COGS', value: '62% of net revenue', note: 'poultry inputs and palm oil are the two biggest swings' },
+            { label: 'Trade spend', value: '14.8% of gross revenue', note: 'target 13% — the most-watched commercial number' },
+            { label: 'Logistics', value: '7.2% of net revenue', note: 'cost per case AED 3.90 vs 3.40 target' },
+            { label: 'Working capital', value: '52 days', note: 'target 45 — receivables findings live here' },
+          ],
+        },
+      ],
       actGuide: [
         { title: 'Start from the number', body: 'Sales by SKU and Sales by customer are the base data. A row marked “drifting” means the counterpart watching that number has already raised a finding — the link takes you to its thread.' },
         { title: 'The finding is the unit of work', body: 'Each finding names the drift, the evidence, and the role whose call it is. It waits in that role\'s Today queue with an SLA clock. Silence is not neutral: past the SLA it escalates up the org — function → division COO → Group CEO.' },
@@ -54,7 +92,7 @@ export const businessContextSeed = {
       { id: 'sku-breaded', family: 'Breaded chicken', division: 'Protein', revenueYtd: 'AED 486M', growthYoyPct: 6.8, grossMarginPct: 31.2, fillRatePct: 95, health: 'watch', note: 'Line 2 first-pass yield slipped to 91% — margin drag if the trend holds', findingId: 'fmcg-f-protein-yield' },
       { id: 'sku-fresh-poultry', family: 'Fresh poultry', division: 'Protein', revenueYtd: 'AED 624M', growthYoyPct: 4.4, grossMarginPct: 24.1, fillRatePct: 97, health: 'ok', note: 'On plan across entities' },
       { id: 'sku-noodles', family: 'Instant noodles', division: 'G&I', revenueYtd: 'AED 388M', growthYoyPct: 9.2, grossMarginPct: 34.6, fillRatePct: 94, health: 'watch', note: 'Ramadan build 9 days behind plan on the two hero SKUs', findingId: 'fmcg-f-gi-rushbuild' },
-      { id: 'sku-rice', family: 'Rice & grains', division: 'G&I', revenueYtd: 'AED 402M', growthYoyPct: 2.6, grossMarginPct: 22.8, fillRatePct: 98, health: 'ok', note: 'Steady; long shelf life buffers planning noise' },
+      { id: 'sku-rice', family: 'Rice & grains', division: 'G&I', revenueYtd: 'AED 402M', growthYoyPct: 2.6, grossMarginPct: 22.8, fillRatePct: 98, health: 'watch', note: 'KSA flour-subsidy pass-through lapsed — margin eroding 60 bps/month until repriced', findingId: 'fmcg-f-gi-commfin-margin' },
       { id: 'sku-breakfast', family: 'Breakfast mixes', division: 'G&I', revenueYtd: 'AED 168M', growthYoyPct: 14.9, grossMarginPct: 36.1, fillRatePct: 96, health: 'watch', note: 'September launch double-booked on co-pack line 2', findingId: 'fmcg-f-gi-capacity' },
       { id: 'sku-berries', family: 'Fresh berries & salads', division: 'F&V', revenueYtd: 'AED 296M', growthYoyPct: 11.3, grossMarginPct: 29.7, fillRatePct: 93, health: 'drifting', note: 'Shrink at 6.1% vs 4.0% standard since the inbound QC change', findingId: 'fmcg-f-fnv-shrink' },
       { id: 'sku-frozen-veg', family: 'Frozen vegetables', division: 'F&V', revenueYtd: 'AED 214M', growthYoyPct: 5.0, grossMarginPct: 26.3, fillRatePct: 97, health: 'ok', note: 'On plan' },
@@ -106,6 +144,23 @@ export const businessContextSeed = {
         { name: 'Commercial payers', share: '48%', note: 'Two national contracts; denial rates are the watch item' },
         { name: 'Medicare / Medicaid', share: '41%', note: 'Volume anchor, thinnest margins' },
         { name: 'Self-pay & other', share: '11%', note: 'Point-of-service collections drive the cash line' },
+      ],
+      factSections: [
+        {
+          title: 'Market position',
+          items: [
+            { label: 'Regional inpatient share', value: '27%', note: '#2 system in the metro' },
+            { label: 'Main competitors', value: 'St. Vincent Health · CarePoint', note: 'plus two ambulatory chains on the surgical side' },
+          ],
+        },
+        {
+          title: 'Footprint & people',
+          items: [
+            { label: 'Licensed beds', value: '412', note: 'Metro General' },
+            { label: 'Clinics', value: '14', note: 'Northside network' },
+            { label: 'Employees', value: '6,100', note: 'nurse agency spend is a watched number' },
+          ],
+        },
       ],
       actGuide: [
         { title: 'Start from the number', body: 'Service-line and payer rows marked “drifting” already have a finding — the link opens its thread.' },
