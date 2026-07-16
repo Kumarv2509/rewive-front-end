@@ -87,9 +87,9 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
   return (
     <div className="brain-canvas card" style={{ height: 640, position: 'relative', overflow: 'hidden' }}>
       <div className="brain-legend">
-        <span><i className="lg-dot" style={{ background: '#2DD4BF' }} /> Intent</span>
-        <span><i className="lg-dot" style={{ background: '#7C7CFF' }} /> Mandate</span>
-        <span><i className="lg-dot" style={{ background: '#63678B' }} /> Sense</span>
+        <span><i className="lg-dot" style={{ background: 'var(--teal)' }} /> Intent</span>
+        <span><i className="lg-dot" style={{ background: 'var(--accent)' }} /> Mandate</span>
+        <span><i className="lg-dot" style={{ background: 'var(--ink-3)' }} /> Sense</span>
         <span style={{ color: 'var(--ink-3)' }}>click any node to trace its impact path</span>
         {selectedId && <button className="btn ghost sm" onClick={() => setSelectedId(null)}>Clear focus</button>}
       </div>
@@ -119,13 +119,13 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
         onNodeClick={(_, n) => setSelectedId((cur) => (cur === n.id ? null : n.id))}
         onPaneClick={() => setSelectedId(null)}
         nodeTypes={memoNodeTypes}
-        colorMode="dark"
+        colorMode="light"
         minZoom={0.15}
         fitView
         fitViewOptions={{ padding: 0.15, maxZoom: 0.85 }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={22} color="rgba(255,255,255,.05)" />
+        <Background gap={22} color="rgba(26,26,46,.10)" />
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>

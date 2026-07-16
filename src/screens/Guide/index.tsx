@@ -123,43 +123,39 @@ const LOOP = ['Sense', 'Find', 'Decide', 'Act', 'Close'];
 const SLIDE_COUNT = STEPS.length + 2; // intro + steps + finale
 
 const css = `
-.gd{position:fixed;inset:0;z-index:60;background:#07070F;color:#F1F1F7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
-.gd::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(1100px 720px at 82% -8%,rgba(139,92,246,.20),transparent 58%),
-             radial-gradient(900px 640px at -12% 22%,rgba(45,212,191,.08),transparent 55%),
-             radial-gradient(1000px 720px at 50% 118%,rgba(99,102,241,.16),transparent 60%)}
+.gd{position:fixed;inset:0;z-index:60;background:var(--bg);color:var(--ink);font-family:var(--font-body)}
 .gd-top{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:18px 26px}
 .gd-brand{display:flex;align-items:center;gap:10px}
-.gd-brand .mk{width:28px;height:28px;border-radius:8px;background:linear-gradient(120deg,#6366F1,#8B5CF6,#A855F7);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px}
-.gd-brand .nm{font-weight:700;font-size:14px;letter-spacing:-.2px}
-.gd-skip{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.74rem;letter-spacing:.06em;color:#F1F1F7;text-decoration:none;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.045);border-radius:99px;padding:8px 16px;cursor:pointer;transition:background .2s}
-.gd-skip:hover{background:rgba(255,255,255,.1)}
+.gd-brand .mk{width:28px;height:28px;border-radius:8px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px;font-family:var(--font-display)}
+.gd-brand .nm{font-weight:700;font-size:14px;letter-spacing:-.2px;font-family:var(--font-display)}
+.gd-skip{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.06em;color:var(--ink-2);text-decoration:none;border:1px solid var(--border);background:var(--surface);border-radius:99px;padding:8px 16px;cursor:pointer;transition:all .2s}
+.gd-skip:hover{color:var(--ink);border-color:var(--border-strong)}
 .gd-scroll{position:absolute;inset:0;overflow-y:auto;scroll-snap-type:y mandatory;scroll-behavior:smooth;z-index:1}
 .gd-slide{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;padding:72px 24px 84px}
 .gd-inner{max-width:640px;width:100%}
-.gd-eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#63678B;margin-bottom:14px}
-.gd-n{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.78rem;color:#A855F7;border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:5px 13px;display:inline-block;margin-bottom:18px}
-.gd h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0 0 18px;text-wrap:balance}
-.gd h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 14px;text-wrap:balance}
-.gd .grad{background:linear-gradient(120deg,#6366F1,#8B5CF6,#A855F7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.gd-what{font-size:clamp(.95rem,1.4vw,1.08rem);color:#A6A9C8;line-height:1.65;margin:0 0 18px}
+.gd-eyebrow{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
+.gd-n{font-family:var(--font-mono);font-size:.78rem;color:var(--accent);border:1px solid var(--border);background:var(--surface);border-radius:99px;padding:5px 13px;display:inline-block;margin-bottom:18px}
+.gd h1{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0 0 18px;text-wrap:balance}
+.gd h2{font-family:var(--font-display);font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 14px;text-wrap:balance}
+.gd .grad{color:var(--accent-deep)}
+.gd-what{font-size:clamp(.95rem,1.4vw,1.08rem);color:var(--ink-2);line-height:1.65;margin:0 0 18px}
 .gd-do{list-style:none;margin:0 0 24px;padding:0;display:flex;flex-direction:column;gap:9px}
-.gd-do li{display:flex;gap:11px;align-items:flex-start;font-size:.92rem;line-height:1.55;color:#F1F1F7}
-.gd-do li .m{color:#2DD4BF;font-family:ui-monospace,monospace;flex-shrink:0;margin-top:1px}
-.gd-cta{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;color:#fff;background:linear-gradient(120deg,#6366F1,#8B5CF6,#A855F7);border-radius:12px;padding:12px 22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 30px rgba(124,99,255,.35);transition:filter .2s}
-.gd-cta:hover{filter:brightness(1.1)}
-.gd-ghost{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;color:#F1F1F7;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.045);border-radius:12px;padding:12px 22px;transition:background .2s}
-.gd-ghost:hover{background:rgba(255,255,255,.1)}
-.gd-loopstrip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045);border-radius:14px;padding:14px 18px;margin-bottom:26px;backdrop-filter:blur(14px)}
+.gd-do li{display:flex;gap:11px;align-items:flex-start;font-size:.92rem;line-height:1.55;color:var(--ink)}
+.gd-do li .m{color:var(--teal);font-family:var(--font-mono);flex-shrink:0;margin-top:1px}
+.gd-cta{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;border:none;color:#fff;background:var(--accent);border-radius:var(--radius);padding:12px 22px;box-shadow:var(--shadow);cursor:pointer;transition:background .2s}
+.gd-cta:hover{background:var(--accent-deep)}
+.gd-ghost{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;color:var(--ink);border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:12px 22px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s}
+.gd-ghost:hover{border-color:var(--border-strong);background:var(--glass-hover)}
+.gd-loopstrip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:14px 18px;margin-bottom:26px;box-shadow:var(--shadow)}
 .gd-loopstrip .st{font-weight:600;font-size:.95rem}
-.gd-loopstrip .st.you{color:#2DD4BF}
-.gd-loopstrip .arr{color:#63678B;font-family:ui-monospace,monospace;font-size:.8rem}
-.gd-loopnote{font-size:.84rem;color:#A6A9C8;width:100%;margin-top:2px}
+.gd-loopstrip .st.you{color:var(--teal)}
+.gd-loopstrip .arr{color:var(--ink-3);font-family:var(--font-mono);font-size:.8rem}
+.gd-loopnote{font-size:.84rem;color:var(--ink-2);width:100%;margin-top:2px}
 .gd-dots{position:absolute;right:22px;top:50%;transform:translateY(-50%);z-index:3;display:flex;flex-direction:column;gap:10px}
-.gd-dot{width:9px;height:9px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:transparent;cursor:pointer;padding:0;transition:all .25s}
-.gd-dot.on{background:linear-gradient(120deg,#8B5CF6,#A855F7);border-color:transparent;box-shadow:0 0 10px rgba(139,92,246,.8);transform:scale(1.3)}
-.gd-next{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:9px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#A6A9C8;background:rgba(11,11,22,.7);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:9px 18px;cursor:pointer;backdrop-filter:blur(12px);transition:all .2s}
-.gd-next:hover{color:#F1F1F7;border-color:rgba(255,255,255,.3)}
+.gd-dot{width:9px;height:9px;border-radius:50%;border:1px solid var(--border-strong);background:transparent;cursor:pointer;padding:0;transition:all .25s}
+.gd-dot.on{background:var(--accent);border-color:var(--accent);transform:scale(1.3)}
+.gd-next{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:9px 18px;cursor:pointer;box-shadow:var(--shadow);transition:all .2s}
+.gd-next:hover{color:var(--ink);border-color:var(--border-strong)}
 .gd-next .chev{animation:gd-bob 1.8s ease-in-out infinite}
 @keyframes gd-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
 @media(prefers-reduced-motion:reduce){.gd-scroll{scroll-behavior:auto}.gd-next .chev{animation:none}}
@@ -234,7 +230,7 @@ export function GuideScreen() {
                   {i < LOOP.length - 1 && <span className="arr">→</span>}
                 </span>
               ))}
-              <span className="gd-loopnote">You own one stage: <b style={{ color: '#2DD4BF' }}>Decide</b>. The counterparts run the rest.</span>
+              <span className="gd-loopnote">You own one stage: <b style={{ color: 'var(--teal)' }}>Decide</b>. The counterparts run the rest.</span>
             </div>
             <p className="gd-what">Nine screens, one loop. Scroll through — each step links straight into the live screen it describes.</p>
             <button className="gd-cta" onClick={() => { startTour(); navigate('/command'); }}>

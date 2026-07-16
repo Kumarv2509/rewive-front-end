@@ -3,8 +3,8 @@ import type { BrainHealth, BrainNodeKind } from '../../api/types';
 import type { BrainNodeData } from './layout';
 
 const kindLabel: Record<BrainNodeKind, string> = { target: 'Intent', stream_kpi: 'Mandate', driver: 'Sense' };
-const kindAccent: Record<BrainNodeKind, string> = { target: '#2DD4BF', stream_kpi: '#7C7CFF', driver: '#63678B' };
-const healthColor: Record<BrainHealth, string> = { on_track: '#4ADE80', at_risk: '#FBBF24', off_track: '#F87171' };
+const kindAccent: Record<BrainNodeKind, string> = { target: 'var(--teal)', stream_kpi: 'var(--accent)', driver: 'var(--ink-3)' };
+const healthColor: Record<BrainHealth, string> = { on_track: 'var(--green)', at_risk: 'var(--amber)', off_track: 'var(--red)' };
 const healthLabel: Record<BrainHealth, string> = { on_track: 'on track', at_risk: 'at risk', off_track: 'off track' };
 
 export function BrainNodeCard({ data }: NodeProps & { data: BrainNodeData }) {
@@ -17,9 +17,9 @@ export function BrainNodeCard({ data }: NodeProps & { data: BrainNodeData }) {
     <div
       className="brain-node"
       style={{
-        borderTop: `2.5px solid ${proposed ? '#8B5CF6' : accent}`,
+        borderTop: `2.5px solid ${proposed ? 'var(--accent)' : accent}`,
         opacity: dimmed ? 0.3 : 1,
-        boxShadow: focused ? `0 0 0 1.5px ${accent}, 0 0 26px rgba(124,99,255,.4)` : undefined,
+        boxShadow: focused ? `0 0 0 1.5px ${accent}, var(--shadow-lg)` : undefined,
         borderStyle: proposed ? 'dashed' : 'solid',
       }}
     >
@@ -35,8 +35,8 @@ export function BrainNodeCard({ data }: NodeProps & { data: BrainNodeData }) {
             {healthLabel[node.health]}
           </span>
         )}
-        {proposed && <span className="bn-health" style={{ color: '#B9C0FF' }}>petition</span>}
-        {needsData && <span className="bn-health" style={{ color: '#FBBF24' }}>needs a sense</span>}
+        {proposed && <span className="bn-health" style={{ color: 'var(--accent-deep)' }}>petition</span>}
+        {needsData && <span className="bn-health" style={{ color: 'var(--amber)' }}>needs a sense</span>}
       </div>
 
       <div className="bn-name">{node.name}</div>

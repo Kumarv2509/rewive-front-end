@@ -128,7 +128,7 @@ export function SolutionDesignScreen() {
 
       <div className="card" style={{ marginBottom: 16, padding: '16px 20px', background: 'var(--teal-soft)', border: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontWeight: 700, fontSize: 12.5, color: '#0D9488' }}>Validation agent review</span>
+          <span style={{ fontWeight: 700, fontSize: 12.5, color: 'var(--teal)' }}>Validation agent review</span>
           {solution.validation && <Pill tone={solution.validation.recommendation === 'dev_handoff' ? 'amber' : 'green'} style={{ marginLeft: 'auto' }}>
             recommends: {solution.validation.recommendation === 'dev_handoff' ? 'hand off to dev / IT' : 'ready for Runs & Actions'}
           </Pill>}

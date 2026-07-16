@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Intro } from '../../components/shared/Intro';
 import { ConnectorTypeGrid } from './ConnectorTypeGrid';
 import { NewConnectionForm } from './NewConnectionForm';
 import { NewConnectorTypeForm } from './NewConnectorTypeForm';
@@ -34,10 +35,10 @@ export function ConnectorsScreen() {
   return (
     <section className="screen">
       <h1 className="page">Data Connectors</h1>
-      <div className="sub">Connect new data sources yourself — every connection goes through a quick approval before it's usable in Agent Studio or Signal Studio.</div>
+      <Intro line="Connect new data sources yourself — every connection goes through a quick approval before it's usable in Agent Studio or Signal Studio." />
 
       {forKpi && (
-        <div className="card" style={{ padding: '14px 20px', marginBottom: 20, borderLeft: '3px solid var(--indigo, #4F46E5)' }}>
+        <div className="card" style={{ padding: '14px 20px', marginBottom: 20, borderLeft: '3px solid var(--accent)' }}>
           <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>Connecting data for “{forKpi.name}”</div>
           <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
             Data needed: {forKpi.driversNeeded.map((d) => `${d.name} (${d.dataSource})`).join(', ') || 'none specified'}.

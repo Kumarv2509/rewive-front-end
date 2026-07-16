@@ -45,9 +45,9 @@ function TemperamentDial({ value }: { value: number }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--ink-3)', marginBottom: 4, fontFamily: 'var(--font-mono, ui-monospace)' }}>
         <span>quiet</span><span>hair-trigger</span>
       </div>
-      <div style={{ position: 'relative', height: 6, borderRadius: 99, background: 'rgba(255,255,255,.09)' }}>
+      <div style={{ position: 'relative', height: 6, borderRadius: 99, background: 'var(--glass-hover)' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${value}%`, borderRadius: 99, background: 'var(--accent-grad)' }} />
-        <div style={{ position: 'absolute', left: `calc(${value}% - 5px)`, top: -2, width: 10, height: 10, borderRadius: '50%', background: '#fff', boxShadow: '0 0 8px rgba(124,124,255,.9)' }} />
+        <div style={{ position: 'absolute', left: `calc(${value}% - 5px)`, top: -2, width: 10, height: 10, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 1.5px var(--accent)' }} />
       </div>
       <div style={{ fontSize: 10.5, color: 'var(--ink-3)', marginTop: 5 }}>{temperamentHint(value)}</div>
     </div>
@@ -68,7 +68,7 @@ function AgentCard({ agent, mandateCount, findings }: { agent: ShadowAgent; mand
         </div>
 
         {/* held twice — the counterpart and its human */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 11, background: 'rgba(255,255,255,.03)', border: '1px solid var(--border)', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 11, background: 'var(--glass)', border: '1px solid var(--border)', marginBottom: 14 }}>
           <div className="avatar" style={{ background: o.avatarBg }}>{o.initials}</div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--ink-3)' }}>counterpart to</div>
@@ -169,7 +169,7 @@ export function ShadowOrgScreen() {
       <ScopeBanner />
 
       {chief && (
-        <div className="card" style={{ padding: '18px 22px', marginBottom: 20, borderColor: 'rgba(124,124,255,.28)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 20 }}>
+        <div className="card" style={{ padding: '18px 22px', marginBottom: 20, borderColor: 'rgba(59,59,196,.28)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 20 }}>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.6px', color: 'var(--accent-deep)', marginBottom: 4 }}>Org level · reports to no one</div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{chief.name}</div>

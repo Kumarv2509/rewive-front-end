@@ -5,6 +5,7 @@ import { StudioToolbar } from './StudioToolbar';
 import { SimulationPanel } from './SimulationPanel';
 import { useWorkflow, useCreateWorkflow, useSaveWorkflow, useSimulateWorkflow, usePublishWorkflow } from '../../api/agentStudio';
 import { useToast } from '../../components/shared/Toast';
+import { Intro } from '../../components/shared/Intro';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import type { SimulationResult, StudioEdge, StudioNode } from '../../api/types';
 
@@ -24,7 +25,7 @@ export function AgentStudioScreen() {
     return (
       <section className="screen">
         <h1 className="page">Agent Studio</h1>
-        <div className="sub">Build agents visually — drag, connect, and simulate before publishing.</div>
+        <Intro line="Build agents visually — drag, connect, and simulate before publishing." />
         <div className="card" style={{ padding: 40, textAlign: 'center' }}>
           <button
             className="btn primary"

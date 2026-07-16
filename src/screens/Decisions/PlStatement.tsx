@@ -90,7 +90,7 @@ export function PlStatement() {
                     className={breakdown?.length ? 'row-h' : undefined}
                     style={{
                       cursor: breakdown?.length ? 'pointer' : undefined,
-                      background: sub ? 'rgba(255,255,255,.035)' : undefined,
+                      background: sub ? 'var(--glass)' : undefined,
                       scrollMarginTop: 80,
                     }}
                     onClick={breakdown?.length ? () => toggle(line.key) : undefined}
@@ -111,7 +111,7 @@ export function PlStatement() {
                     </td>
                   </tr>
                   {isOpen && breakdown?.map((row) => (
-                    <tr key={row.key} style={{ background: 'rgba(255,255,255,.02)' }}>
+                    <tr key={row.key} style={{ background: 'rgba(26,26,46,.02)' }}>
                       <td style={{ paddingLeft: 42, color: 'var(--ink-2)' }}>{row.label}</td>
                       <Num v={row.actual} />
                       <Num v={row.budget} />

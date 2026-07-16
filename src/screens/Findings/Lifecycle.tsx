@@ -26,8 +26,8 @@ export function ExitConditionCard({ c }: { c: ClosureKpi }) {
         from finding: {c.findingTitle} →
       </Link>
 
-      <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,.09)', overflow: 'hidden', margin: '12px 0 8px' }}>
-        <div style={{ height: '100%', width: `${c.progressPct}%`, borderRadius: 99, background: done ? 'var(--green)' : 'var(--accent-grad)', boxShadow: done ? 'none' : '0 0 10px rgba(124,99,255,.5)', transition: 'width .4s' }} />
+      <div style={{ height: 8, borderRadius: 99, background: 'var(--glass-hover)', overflow: 'hidden', margin: '12px 0 8px' }}>
+        <div style={{ height: '100%', width: `${c.progressPct}%`, borderRadius: 99, background: done ? 'var(--green)' : 'var(--accent-grad)', transition: 'width .4s' }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>

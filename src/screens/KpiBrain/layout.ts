@@ -51,7 +51,7 @@ export function toFlowEdges(edges: BrainEdge[], litEdgeIds: Set<string> | null):
     const proposed = e.status === 'proposed';
     const lit = litEdgeIds?.has(e.id) ?? false;
     const dim = litEdgeIds !== null && !lit;
-    const color = proposed ? '#8B5CF6' : lit ? '#7C7CFF' : '#3a3d5c';
+    const color = proposed ? 'var(--accent)' : lit ? 'var(--accent-deep)' : 'rgba(26,26,46,.28)';
     return {
       id: e.id,
       source: e.source,
@@ -62,7 +62,6 @@ export function toFlowEdges(edges: BrainEdge[], litEdgeIds: Set<string> | null):
         strokeWidth: (WEIGHT_WIDTH[e.weight] ?? 1.5) + (lit ? 0.8 : 0),
         strokeDasharray: proposed ? '5 4' : undefined,
         opacity: dim ? 0.18 : 1,
-        filter: lit ? 'drop-shadow(0 0 5px rgba(124,124,255,.7))' : undefined,
       },
     } as Edge;
   });

@@ -9,6 +9,7 @@ import {
   useHandbackAgentSpec,
   usePublishAgentSpec,
 } from '../../api/agentSpec';
+import { Intro } from '../../components/shared/Intro';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { HandoffCard } from '../../components/shared/HandoffCard';
@@ -62,7 +63,7 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
         <Pill tone={statusTone[spec.status]}>{spec.status.replace(/_/g, ' ')}</Pill>
         <Pill tone="gray">v{spec.version}</Pill>
       </div>
-      <div className="sub">One spec, two altitudes &mdash; business and developer edit the same agent, not separate copies.</div>
+      <Intro line="One spec, two altitudes — business and developer edit the same agent, not separate copies." />
 
       <div className="filters" style={{ marginBottom: 16 }}>
         <button className={`fchip${altitude === 'business' ? ' on' : ''}`} onClick={() => setAltitude('business')}>Business</button>
