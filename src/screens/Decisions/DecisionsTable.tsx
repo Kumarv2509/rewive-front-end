@@ -30,6 +30,11 @@ export function DecisionsTable({ filters }: { filters: DecisionLedgerFilters }) 
               <td>
                 <b>{d.title}</b>
                 <div style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>{d.subtitle}</div>
+                {(d.entity || d.region) && (
+                  <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>
+                    {[d.entity, d.region].filter(Boolean).join(' · ')}
+                  </div>
+                )}
                 {d.assessorNote && (
                   <div style={{ fontSize: 11, color: 'var(--teal)', marginTop: 4, maxWidth: 320 }}>
                     {d.assessorNote}
