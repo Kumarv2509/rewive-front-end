@@ -701,6 +701,31 @@ app.post('/api/v1/kpi-tickets/:id/comments', (req, res) => {
 const solutionDesigns = new Map();
 const agentSpecs = new Map();
 
+// Pre-seeded loop: fmcg-f-7 was dispositioned Act on 18 Jun, so its solution
+// design (and the tasks it fans out) exist from the seed, not only after a
+// live Act in this session.
+solutionDesigns.set('sol-fmcg-riyadh-otif', {
+  id: 'sol-fmcg-riyadh-otif',
+  signalId: 'fmcg-f-7',
+  signalName: 'Riyadh DC case fill sliding — key-account penalties accruing',
+  signalCategory: 'laggard',
+  status: 'drafting',
+  approach: 'Resize safety stock on the two fast movers, add a weekly velocity-to-cover check, and stand up an OTIF recovery agent scoped to the Riyadh DC.',
+  dataNeeded: 'ERP order lines; DC stock snapshots; key-account penalty notices',
+  owner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' },
+  guardrails: 'No allocation change that deprioritises a strategic account without sign-off.',
+  copiedFromLabel: null,
+  taskList: [
+    { id: 'sol-fmcg-riyadh-otif-t1', type: 'new_agent', title: 'OTIF recovery agent — Riyadh DC', owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona: 'operations_head' },
+    { id: 'sol-fmcg-riyadh-otif-t2', type: 'human_task', title: 'Resize safety stock on the two fast-moving lines', owner: 'Omar Farouk', status: 'confirmed', channel: 'app', comments: [], persona: 'operations_head' },
+    { id: 'sol-fmcg-riyadh-otif-t3', type: 'human_task', title: 'Negotiate penalty waiver with the two key accounts', owner: 'Layla Nasser', status: 'needs_review', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-fmcg-riyadh-otif-t4', type: 'existing_agent', title: 'Notification agent — weekly cover check to planning', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'operations_head' },
+  ],
+  validation: null,
+  createdAt: '2026-06-18T09:00:00Z',
+  updatedAt: '2026-06-18T09:00:00Z',
+});
+
 function makeDefaultTaskList(solutionId, signalName, persona = 'operations_head') {
   return [
     { id: `${solutionId}-t1`, type: 'new_agent', title: `${signalName.split(' - ')[0].split(' erosion')[0]} response agent`, owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona },

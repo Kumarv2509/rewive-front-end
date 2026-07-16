@@ -135,6 +135,35 @@ export interface DecisionStats {
   winRate: { value: string; delta: Delta };
   medianTimeToDecision: { value: string; delta: Delta };
   measuredImpactQtd: { value: string; delta: Delta };
+  /** Half-year review — the loop's history bucketed by month, entity and region. */
+  halfYear?: HalfYearReview;
+}
+
+// ---------- Half-year review (Decisions screen) ----------
+// Monthly loop counts plus rollups by business entity and region. Seeded per
+// industry in the mock; a real backend would bucket the ledger by date.
+export interface HalfYearMonth {
+  month: string; // 'Jan' … 'Jun'
+  raised: number; // findings raised
+  decided: number; // dispositions made
+  closed: number; // loops closed (number came back)
+  winRatePct: number; // verdicts 'worked' among assessed decisions
+}
+
+export interface HalfYearBreakdownRow {
+  name: string; // entity or region
+  decisions: number;
+  workedPct: number;
+  openNow: number;
+  impact: string; // measured impact, pre-formatted
+}
+
+export interface HalfYearReview {
+  label: string; // e.g. 'H1 2026 · Jan–Jun'
+  summary: string; // one-line narrative
+  months: HalfYearMonth[];
+  byEntity: HalfYearBreakdownRow[];
+  byRegion: HalfYearBreakdownRow[];
 }
 
 export type Verdict = 'worked' | 'not_worked' | 'too_early';
@@ -153,6 +182,9 @@ export interface DecisionLedgerItem {
   /** The finding this decision dispositioned — links the ledger row to its thread. */
   findingId?: string;
   assessorNote?: string;
+  /** Business entity and region the decision applied to (multi-entity orgs). */
+  entity?: string;
+  region?: string;
 }
 
 // FP&A rollup: findings translated onto the P&L, one row per line item —
@@ -1018,6 +1050,9 @@ export interface Finding {
   assessorVerdict?: { verdict: Verdict; note: string; at: string } | null; // set when the loop closes
   detectedAt: string;
   persona: Persona;
+  /** Business entity and region the drift sits in (multi-entity orgs). */
+  entity?: string;
+  region?: string;
 }
 
 export interface DispositionInput {
@@ -1042,4 +1077,6 @@ export interface ClosureKpi {
   watchedByAgentName: string;
   createdAt: string;
   closedAt: string | null;
+  entity?: string;
+  region?: string;
 }
