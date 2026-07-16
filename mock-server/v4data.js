@@ -307,7 +307,7 @@ export const shadowOrgs = {
   fmcg: {
     industry: 'fmcg',
     agents: [
-      { id: 'fmcg-sa-chief', persona: 'coo', name: 'Chief of staff counterpart', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['fmcg-t-rev', 'fmcg-t-ebitda', 'fmcg-t-share', 'fmcg-t-cash'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: hoursAgo(26), reportsToAgentId: null },
+      { id: 'fmcg-sa-chief', persona: 'group_ceo', name: 'Chief of staff counterpart', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['fmcg-t-rev', 'fmcg-t-ebitda', 'fmcg-t-share', 'fmcg-t-cash'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: hoursAgo(26), reportsToAgentId: null },
       { id: 'fmcg-sa-commercial', persona: 'sales_supervisor', name: 'Commercial counterpart', streamKey: 'commercial', humanOwner: { name: 'Layla Nasser', initials: 'LN', avatarBg: '#0E7490', role: 'Commercial director' }, watchesNodeIds: ['fmcg-k-osa', 'fmcg-k-dist', 'fmcg-k-sellgap', 'fmcg-k-troi', 'fmcg-d-pos'], openFindings: 0, slaBreaches: 0, temperament: 55, health: 'attention', lastFindingAt: hoursAgo(94), reportsToAgentId: 'fmcg-sa-chief' },
       { id: 'fmcg-sa-planning', persona: 'operations_head', name: 'Planning counterpart', streamKey: 'planning', humanOwner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309', role: 'Head of planning' }, watchesNodeIds: ['fmcg-k-mape', 'fmcg-k-fill', 'fmcg-k-invdays', 'fmcg-k-obs', 'fmcg-d-dcstock'], openFindings: 0, slaBreaches: 1, temperament: 60, health: 'critical', lastFindingAt: hoursAgo(6), reportsToAgentId: 'fmcg-sa-chief' },
       { id: 'fmcg-sa-manufacturing', persona: 'operations_head', name: 'Manufacturing counterpart', streamKey: 'manufacturing', humanOwner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED', role: 'Plant director' }, watchesNodeIds: ['fmcg-k-oee', 'fmcg-k-yield', 'fmcg-k-waste', 'fmcg-k-cho', 'fmcg-d-linesensors'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(14), reportsToAgentId: 'fmcg-sa-chief' },
@@ -315,7 +315,17 @@ export const shadowOrgs = {
       { id: 'fmcg-sa-quality', persona: 'operations_head', name: 'Quality counterpart', streamKey: 'quality', humanOwner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', role: 'Quality & food safety lead' }, watchesNodeIds: ['fmcg-k-ppm', 'fmcg-k-audit', 'fmcg-d-complaints'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: hoursAgo(49), reportsToAgentId: 'fmcg-sa-chief' },
       { id: 'fmcg-sa-finance', persona: 'cfo', name: 'Finance counterpart', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['fmcg-k-gm', 'fmcg-k-cogsvar', 'fmcg-k-wcd', 'fmcg-k-tradepct', 'fmcg-d-tradeledger'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: hoursAgo(68), reportsToAgentId: 'fmcg-sa-chief' },
       { id: 'fmcg-sa-marketing', persona: 'commercial_finance', name: 'Marketing counterpart', streamKey: 'marketing', humanOwner: { name: 'Sara Idris', initials: 'SI', avatarBg: '#9333EA', role: 'Marketing director' }, watchesNodeIds: ['fmcg-k-npd', 'fmcg-k-croi'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'healthy', lastFindingAt: hoursAgo(2), reportsToAgentId: 'fmcg-sa-chief' },
-      { id: 'fmcg-sa-people', persona: 'coo', name: 'People counterpart', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['fmcg-k-attr', 'fmcg-k-lti'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: hoursAgo(124), reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-people', persona: 'hr_services', name: 'People counterpart', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['fmcg-k-attr', 'fmcg-k-lti'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: hoursAgo(124), reportsToAgentId: 'fmcg-sa-chief' },
+      // Division supply-chain counterparts — the same mandate held once per division.
+      { id: 'fmcg-sa-protein-supply', persona: 'protein_supply_chain', name: 'Supply chain counterpart · Protein', streamKey: 'planning', humanOwner: { name: 'Imran Siddiqui', initials: 'IS', avatarBg: '#B91C1C', role: 'Supply chain lead — Protein' }, watchesNodeIds: ['fmcg-k-fill', 'fmcg-k-invdays'], openFindings: 1, slaBreaches: 1, temperament: 55, health: 'critical', lastFindingAt: hoursAgo(3), reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-gi-supply', persona: 'gi_supply_chain', name: 'Supply chain counterpart · G&I', streamKey: 'planning', humanOwner: { name: 'Mona Abdelrahman', initials: 'MA', avatarBg: '#0369A1', role: 'Supply chain lead — G&I' }, watchesNodeIds: ['fmcg-k-mape', 'fmcg-k-obs'], openFindings: 2, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(11), reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-fnv-supply', persona: 'fnv_supply_chain', name: 'Supply chain counterpart · F&V', streamKey: 'logistics', humanOwner: { name: 'Deepak Nair', initials: 'DN', avatarBg: '#15803D', role: 'Supply chain lead — F&V' }, watchesNodeIds: ['fmcg-k-cold', 'fmcg-k-cpc'], openFindings: 1, slaBreaches: 0, temperament: 50, health: 'critical', lastFindingAt: hoursAgo(8), reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-ambient-supply', persona: 'ambient_supply_chain', name: 'Supply chain counterpart · Ambient', streamKey: 'planning', humanOwner: { name: 'Huda Salem', initials: 'HS', avatarBg: '#A16207', role: 'Supply chain lead — Ambient Foods' }, watchesNodeIds: ['fmcg-k-osa', 'fmcg-k-dist'], openFindings: 1, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: hoursAgo(19), reportsToAgentId: 'fmcg-sa-chief' },
+      // Division commercial finance: solid line to the division COO, dotted to the CFO.
+      { id: 'fmcg-sa-protein-commfin', persona: 'protein_commercial_finance', name: 'Commercial finance counterpart · Protein', streamKey: 'finance', humanOwner: { name: 'Farah Al Rashid', initials: 'FR', avatarBg: '#BE185D', role: 'Commercial finance lead — Protein' }, watchesNodeIds: ['fmcg-k-tradepct', 'fmcg-k-troi'], openFindings: 1, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(5), reportsToAgentId: 'fmcg-sa-chief' },
+      // Group functions: FP&A consolidates the divisions; Procurement is horizontal.
+      { id: 'fmcg-sa-fpa', persona: 'fpa', name: 'FP&A counterpart', streamKey: 'finance', humanOwner: { name: 'Meera Krishnan', initials: 'MK', avatarBg: '#6D28D9', role: 'Group FP&A manager' }, watchesNodeIds: ['fmcg-k-gm', 'fmcg-k-cogsvar'], openFindings: 1, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: hoursAgo(26), reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-procurement', persona: 'procurement', name: 'Procurement counterpart', streamKey: 'finance', humanOwner: { name: 'Yusuf Al Hammadi', initials: 'YA', avatarBg: '#0F766E', role: 'Group procurement director' }, watchesNodeIds: ['fmcg-k-cogsvar'], openFindings: 1, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(15), reportsToAgentId: 'fmcg-sa-chief' },
     ],
   },
   healthcare: {
@@ -349,6 +359,188 @@ export const shadowOrgs = {
 // ---------------------------------------------------------------------------
 export const findingsSeed = {
   fmcg: [
+    // --- Division findings: one per division supply chain, plus group functions.
+    // The Protein one is the demo's escalation hero: its SLA is nearly breached,
+    // so escalating walks it up the tree — supply chain → COO Protein → Group CEO.
+    {
+      id: 'fmcg-f-protein-fill',
+      title: 'Frozen chicken case fill collapsed to 84% in modern trade',
+      summary: 'Case fill on the frozen chicken range dropped from 95% to 84% in two weeks. Import consignments from two Brazilian suppliers are clearing customs 4–6 days late, and DC safety stock is exhausted on the six fastest movers. Key-account penalty clauses trigger at 85%.',
+      raisedByAgentId: 'fmcg-sa-protein-supply', raisedByAgentName: 'Supply chain counterpart · Protein', streamKey: 'planning', linkedKpiNodeId: 'fmcg-k-fill', severity: 'critical',
+      impactPath: [
+        { nodeId: 'fmcg-k-fill', nodeName: 'Case fill rate (OTIF)', kind: 'stream_kpi', effect: 'frozen chicken fill at 84% vs 97% target' },
+        { nodeId: 'fmcg-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: 'poultry OSA down 5pts in top-40 stores' },
+        { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: '≈ AED 1.8M revenue + penalties at risk this quarter' },
+      ],
+      impactEstimate: '≈ AED 1.8M revenue and key-account penalties at risk this quarter',
+      evidence: [
+        { label: 'Case fill, frozen chicken (2 weeks)', value: '84% vs 97% target' },
+        { label: 'Customs clearance delay, 2 suppliers', value: '4–6 days vs 1-day standard' },
+        { label: 'DC safety stock, top-6 SKUs', value: 'exhausted since Tuesday' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 4, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(3), persona: 'protein_supply_chain', entity: 'UAE Trading Co.', region: 'UAE',
+      closureTemplate: { name: 'Frozen chicken case fill back above 96% for 4 straight weeks', baseline: '84%', target: '96%' },
+    },
+    // The dotted-line demo: this sits with Protein's commercial finance (solid
+    // line to COO — Protein), and its SLA is nearly breached. Escalating it
+    // forks: ownership moves to the division COO, and the CFO gets it flagged
+    // on the functional line — the same drift held by two chains.
+    {
+      id: 'fmcg-f-protein-tradespend',
+      title: 'Protein trade-spend accruals running 2.3x ahead of the promo calendar',
+      summary: 'Trade-spend accruals in the Protein division are building 2.3x faster than the promo calendar justifies. Key-account managers are booking display allowances against next quarter\'s activity to protect this quarter\'s sell-in — the division P&L looks on-plan while a margin liability quietly builds.',
+      raisedByAgentId: 'fmcg-sa-protein-commfin', raisedByAgentName: 'Commercial finance counterpart · Protein', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-tradepct', severity: 'high',
+      impactPath: [
+        { nodeId: 'fmcg-k-tradepct', nodeName: 'Trade spend % of revenue', kind: 'stream_kpi', effect: 'Protein accruals 2.3x the promo-calendar run rate' },
+        { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: '≈ AED 1.1M unrecognized margin liability building' },
+        { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'hits the group P&L when the accruals true up' },
+      ],
+      impactEstimate: '≈ AED 1.1M margin liability building ahead of the true-up',
+      evidence: [
+        { label: 'Accrual build vs promo calendar', value: '2.3x the justified run rate' },
+        { label: 'Allowances booked against next quarter', value: 'AED 680k across 4 key accounts' },
+        { label: 'Same pattern last year', value: 'Q3 true-up cost 45 bps of division margin' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 5, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(5), persona: 'protein_commercial_finance', entity: 'UAE Trading Co.', region: 'UAE',
+      closureTemplate: { name: 'Trade-spend accruals within 1.1x of the promo calendar for 2 closes', baseline: '2.3x', target: '≤ 1.1x' },
+    },
+    {
+      id: 'fmcg-f-gi-rushbuild',
+      title: 'Ramadan stock build for G&I running 9 days behind plan',
+      summary: 'The pre-Ramadan build for grains & instants is at 61% of plan with 5 weeks to go. Co-packer line allocation slipped twice in June, and the shortfall is concentrated in the two hero SKUs that carry the Ramadan promo commitments.',
+      raisedByAgentId: 'fmcg-sa-gi-supply', raisedByAgentName: 'Supply chain counterpart · G&I', streamKey: 'planning', linkedKpiNodeId: 'fmcg-k-invdays', severity: 'high',
+      impactPath: [
+        { nodeId: 'fmcg-k-invdays', nodeName: 'Inventory days', kind: 'stream_kpi', effect: 'hero-SKU cover 9 days short of the build plan' },
+        { nodeId: 'fmcg-k-fill', nodeName: 'Case fill rate (OTIF)', kind: 'stream_kpi', effect: 'promo-window fill risk if build not recovered' },
+        { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'Ramadan promo commitments ≈ AED 3.4M sell-in' },
+      ],
+      impactEstimate: '≈ AED 3.4M Ramadan sell-in exposed if the build is not recovered',
+      evidence: [
+        { label: 'Build completion vs plan', value: '61% vs 78% planned by now' },
+        { label: 'Co-packer slots lost in June', value: '2 full line-weeks' },
+        { label: 'Exposure concentration', value: '2 hero SKUs carry 70% of the gap' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 18, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(11), persona: 'gi_supply_chain', entity: 'KSA Manufacturing Co.', region: 'KSA',
+      closureTemplate: { name: 'Ramadan build back on the planned curve for 3 straight weeks', baseline: '61% of plan', target: 'on plan' },
+    },
+    {
+      id: 'fmcg-f-gi-capacity',
+      title: 'Two G&I launches claim the same co-pack line in September',
+      summary: 'The instant-noodle relaunch and the new breakfast-mix launch are both scheduled onto co-pack line 2 in September. Neither commercial plan has been resequenced, and the conflict spans supply, production and the launch calendar — it needs the division call, not a functional one.',
+      raisedByAgentId: 'fmcg-sa-gi-supply', raisedByAgentName: 'Supply chain counterpart · G&I', streamKey: 'planning', linkedKpiNodeId: 'fmcg-k-oee', severity: 'medium',
+      impactPath: [
+        { nodeId: 'fmcg-k-oee', nodeName: 'OEE', kind: 'stream_kpi', effect: 'line 2 double-booked at 130% of capacity' },
+        { nodeId: 'fmcg-k-npd', nodeName: 'NPD contribution', kind: 'stream_kpi', effect: 'one launch slips a quarter unless resequenced' },
+        { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'launch-quarter revenue for the slipped SKU' },
+      ],
+      impactEstimate: 'One launch slips a quarter unless the calendar is resequenced',
+      evidence: [
+        { label: 'Line 2 September load', value: '130% of available hours' },
+        { label: 'Launches in conflict', value: 'noodle relaunch · breakfast mix' },
+        { label: 'Functions involved', value: 'supply chain · production · commercial' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 30, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(20), persona: 'coo_gi', entity: 'KSA Manufacturing Co.', region: 'KSA',
+      closureTemplate: { name: 'September launch calendar resequenced and line 2 under 95% load', baseline: '130% load', target: '< 95% load' },
+    },
+    {
+      id: 'fmcg-f-fnv-shrink',
+      title: 'F&V shrink at 6.1% against a 4.0% standard across UAE DCs',
+      summary: 'Fresh produce shrink stepped up in both UAE DCs after the switch to the new inbound QC schedule. Rejections at receipt are down, but in-DC spoilage is up — the produce that would have been rejected is now aging out inside the network instead.',
+      raisedByAgentId: 'fmcg-sa-fnv-supply', raisedByAgentName: 'Supply chain counterpart · F&V', streamKey: 'logistics', linkedKpiNodeId: 'fmcg-k-cold', severity: 'high',
+      impactPath: [
+        { nodeId: 'fmcg-k-cold', nodeName: 'Cold-chain excursions', kind: 'stream_kpi', effect: 'excursions up 40% on inbound produce lanes' },
+        { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: 'shrink adds +0.4pp to division COGS variance' },
+        { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ AED 190k/month margin drag at current rate' },
+      ],
+      impactEstimate: '≈ AED 190k/month margin drag at the current shrink rate',
+      evidence: [
+        { label: 'Shrink rate, UAE DCs (4 weeks)', value: '6.1% vs 4.0% standard' },
+        { label: 'Inbound rejections at receipt', value: 'down 55% since QC change' },
+        { label: 'In-DC spoilage write-offs', value: 'up 70% over the same window' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 20, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(8), persona: 'fnv_supply_chain', entity: 'UAE Trading Co.', region: 'UAE',
+      closureTemplate: { name: 'F&V shrink back under 4.0% for 3 consecutive weeks', baseline: '6.1%', target: '4.0%' },
+    },
+    {
+      id: 'fmcg-f-ambient-osa',
+      title: 'Ambient promo OSA dipping during quarter-end load-in',
+      summary: 'On-shelf availability for promoted ambient lines dips 3–4 points in the last week of each quarter. Distributor warehouses prioritize quarter-end sell-in loads over store replenishment drops — the pattern has repeated three quarters running.',
+      raisedByAgentId: 'fmcg-sa-ambient-supply', raisedByAgentName: 'Supply chain counterpart · Ambient', streamKey: 'planning', linkedKpiNodeId: 'fmcg-k-osa', severity: 'medium',
+      impactPath: [
+        { nodeId: 'fmcg-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: 'promo lines dip 3–4pts in quarter-close week' },
+        { nodeId: 'fmcg-k-sellgap', nodeName: 'Sell-in vs sell-out gap', kind: 'stream_kpi', effect: 'quarter-end loads widen the gap they report against' },
+        { nodeId: 'fmcg-t-share', nodeName: 'Market share', kind: 'target', effect: 'repeat availability gaps on promoted lines' },
+      ],
+      impactEstimate: '≈ AED 260k promo sell-out lost per quarter-close week',
+      evidence: [
+        { label: 'Promo OSA, quarter-close weeks', value: '−3.6pts vs quarter average' },
+        { label: 'Quarters showing the pattern', value: '3 consecutive' },
+        { label: 'Distributor drop compliance, close week', value: '81% vs 94% normal' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 36, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(19), persona: 'ambient_supply_chain', entity: 'Gulf Distribution Co.', region: 'UAE',
+      closureTemplate: { name: 'Promo OSA within 1pt of quarter average through a full quarter close', baseline: '−3.6pts', target: 'within 1pt' },
+    },
+    {
+      id: 'fmcg-f-fpa-bridge',
+      title: 'Q3 gross-margin bridge has an unexplained AED 4.2M gap',
+      summary: 'The consolidation of division margin bridges leaves AED 4.2M unexplained between division submissions and the group P&L. Protein and Ambient both restate input-cost inflation using different indices, so the same commodity moves are counted differently on either side of the bridge.',
+      raisedByAgentId: 'fmcg-sa-fpa', raisedByAgentName: 'FP&A counterpart', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-gm', severity: 'medium',
+      impactPath: [
+        { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'AED 4.2M of bridge unexplained at consolidation' },
+        { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'forecast confidence degraded for the Q3 review' },
+      ],
+      impactEstimate: 'AED 4.2M of margin bridge unexplained going into the Q3 review',
+      evidence: [
+        { label: 'Unexplained bridge amount', value: 'AED 4.2M' },
+        { label: 'Divisions with index mismatch', value: 'Protein · Ambient Foods' },
+        { label: 'Affected commodity lines', value: 'poultry inputs · palm oil · packaging board' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 40, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(26), persona: 'fpa', entity: 'UAE Trading Co.', region: 'UAE',
+      closureTemplate: { name: 'Margin bridge fully reconciled on a single cost index for 2 closes', baseline: 'AED 4.2M unexplained', target: 'fully reconciled' },
+    },
+    {
+      id: 'fmcg-f-proc-palmoil',
+      title: 'Palm-oil re-price lands +7% next month and hits all four divisions',
+      summary: 'The group palm-oil contract re-prices +7% from next month. Procurement is horizontal: the same input flows into Protein coating lines, G&I instants, F&V dressings and Ambient sauces, so no single division sees the full AED 3.1M annualized exposure — only the group does.',
+      raisedByAgentId: 'fmcg-sa-procurement', raisedByAgentName: 'Procurement counterpart', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-cogsvar', severity: 'high',
+      impactPath: [
+        { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: '+0.5pp group COGS variance from one input' },
+        { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'margin drag spread across all four divisions' },
+        { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ AED 3.1M annualized if unmitigated' },
+      ],
+      impactEstimate: '≈ AED 3.1M annualized across all four divisions',
+      evidence: [
+        { label: 'Contract re-price, effective next month', value: '+7%' },
+        { label: 'Divisions exposed', value: 'Protein · G&I · F&V · Ambient Foods' },
+        { label: 'Hedge cover remaining', value: '6 weeks at current usage' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 24, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(15), persona: 'procurement', entity: 'UAE Trading Co.', region: 'UAE',
+      closureTemplate: { name: 'Palm-oil exposure mitigated to under AED 1M annualized', baseline: 'AED 3.1M', target: '< AED 1M' },
+    },
     {
       id: 'fmcg-f-1',
       title: 'Frozen category forecast bias is starving modern trade',

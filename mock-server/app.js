@@ -43,7 +43,7 @@ import {
 } from './v4data.js';
 import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
-import { personaScope } from './roles.js';
+import { personaScope, ROLE_PARENT, DOTTED_PARENT } from './roles.js';
 
 const app = express();
 app.use(cors());
@@ -80,9 +80,11 @@ app.get('/api/v1/me', (req, res) => res.json(currentUser));
 // ---------- Dashboard / Command Center ----------
 // Every collection item belongs to exactly one persona (role). scope='team'
 // widens the lens to the role's whole reporting subtree (hierarchy mode).
+// Items visible via the dotted line (findings carry dottedPersona once an
+// escalation forks) count as in-scope for the functional parent too.
 function filterByPersona(items, persona, scope) {
   const roles = personaScope(persona, scope);
-  return roles ? items.filter((d) => roles.has(d.persona)) : items;
+  return roles ? items.filter((d) => roles.has(d.persona) || (d.dottedPersona && roles.has(d.dottedPersona))) : items;
 }
 
 // Greeting + summary sentence only. The old kpis block (and its per-persona
@@ -1387,7 +1389,15 @@ app.post('/api/v1/findings/:id/escalate', (req, res) => {
   finding.escalationLevel += 1;
   finding.escalatedToAgentId = `${industry}-sa-chief`;
   finding.slaHoursRemaining = 12;
-  logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} up the shadow org`);
+  // Escalation is the stitch between levels of the org: an unanswered finding
+  // becomes the parent role's call. Supply chain → division COO → Group CEO.
+  // Roles with a dotted line fork: ownership moves up the solid line, and the
+  // functional parent (e.g. the CFO) gets the finding flagged in their queue.
+  const dottedRole = DOTTED_PARENT[finding.persona];
+  if (dottedRole) finding.dottedPersona = dottedRole;
+  const parentRole = ROLE_PARENT[finding.persona];
+  if (parentRole) finding.persona = parentRole;
+  logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} — now ${parentRole ? `${parentRole}'s` : 'the top role’s'} call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`);
   res.json(stripServerFields(finding));
 });
 
@@ -1403,7 +1413,11 @@ app.post('/api/v1/findings/:id/re-alert', (req, res) => {
   finding.dispositionAt = null;
   finding.slaHoursRemaining = 12;
   finding.escalationLevel += 1;
-  logAudit('finding', finding.id, 're-alerted — trip-wire fired, back to open for disposition');
+  const reAlertDotted = DOTTED_PARENT[finding.persona];
+  if (reAlertDotted) finding.dottedPersona = reAlertDotted;
+  const reAlertParent = ROLE_PARENT[finding.persona];
+  if (reAlertParent) finding.persona = reAlertParent;
+  logAudit('finding', finding.id, 're-alerted — trip-wire fired, back to open one level up');
   res.json(stripServerFields(finding));
 });
 

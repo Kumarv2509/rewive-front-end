@@ -10,7 +10,7 @@ import { UnifiedQueue } from './UnifiedQueue';
 import { PulseList } from './PulseList';
 import { LiveRunsList } from './LiveRunsList';
 import { TopPerformerCard } from './TopPerformerCard';
-import { PERSONA_LABEL } from './personas';
+import { personaLabel } from './personas';
 
 export function CommandCenterScreen() {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ export function CommandCenterScreen() {
               {persona === 'all' ? (
                 <span dangerouslySetInnerHTML={{ __html: summary.summarySentence }} />
               ) : (
-                <>Here's what needs the {PERSONA_LABEL[persona]} lens today.</>
+                <>Here's what needs the {personaLabel(persona)} lens today.</>
               )}
             </div>
           </div>

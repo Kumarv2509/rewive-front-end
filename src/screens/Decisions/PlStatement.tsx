@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { usePlStatement } from '../../api/decisions';
-import { PERSONA_LABEL } from '../CommandCenter/personas';
+import { personaLabel } from '../CommandCenter/personas';
 import { severityTone } from '../Findings/meta';
 import type { PlAnomalyStatus, PlStatementLine } from '../../api/types';
 
@@ -146,7 +146,7 @@ export function PlStatement() {
               <div className="t1">
                 {a.findingId ? <Link to={`/operate/findings/${a.findingId}`}>{a.title}</Link> : a.title}{' '}
                 <Pill tone={severityTone[a.severity]}>{a.severity}</Pill>
-                {' '}<Pill tone="gray">→ {PERSONA_LABEL[a.routedTo]}</Pill>
+                {' '}<Pill tone="gray">→ {personaLabel(a.routedTo)}</Pill>
               </div>
               <div className="t2">
                 <a href={`#pl-line-${a.plLineKey}`} style={{ color: 'var(--accent-deep)', textDecoration: 'none' }}>

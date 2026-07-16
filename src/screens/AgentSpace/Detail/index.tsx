@@ -4,7 +4,7 @@ import { Avatar } from '../../../components/shared/Avatar';
 import { Pill } from '../../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../../components/shared/StateMessage';
 import { industryLabel } from '../industryLabels';
-import { PERSONA_LABEL } from '../../CommandCenter/personas';
+import { personaLabel } from '../../CommandCenter/personas';
 
 export function AgentDetailScreen() {
   const { agentId } = useParams();
@@ -21,7 +21,7 @@ export function AgentDetailScreen() {
       <div className="card preview" style={{ maxWidth: 520 }}>
         <div className="ph">⚡ Agent detail <Pill tone={data.state === 'live' ? 'green' : 'gray'} style={{ marginLeft: 'auto' }}>{data.state}</Pill></div>
         <div className="pv-row"><span className="l">Function</span><span className="v">{data.function}</span></div>
-        <div className="pv-row"><span className="l">Persona</span><span className="v">{PERSONA_LABEL[data.persona]}</span></div>
+        <div className="pv-row"><span className="l">Persona</span><span className="v">{personaLabel(data.persona)}</span></div>
         <div className="pv-row"><span className="l">Industry</span><span className="v">{industryLabel[data.industry]}</span></div>
         <div className="pv-row"><span className="l">Inputs</span><span className="v">{data.inputsSummary.join(', ')}</span></div>
         <div className="pv-row"><span className="l">Outputs</span><span className="v">{data.outputsSummary.join(', ')}</span></div>

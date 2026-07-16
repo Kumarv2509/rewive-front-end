@@ -6,7 +6,7 @@ import { usePendingDecisions } from '../../api/dashboard';
 import { useApproveDecision } from '../../api/decisions';
 import { useFindings } from '../../api/shadowOrg';
 import { severityTone, slaTone } from '../Findings/meta';
-import { PERSONA_LABEL } from './personas';
+import { personaLabel } from './personas';
 import type { PendingDecision, Persona, RoleScope } from '../../api/types';
 
 const actionLabelDefaults: Record<PendingDecision['actionVerb'], string> = {
@@ -53,7 +53,8 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
             <div className="t1">
               <Link to={`/operate/findings/${f.id}`}>{f.title}</Link>{' '}
               <Pill tone={severityTone[f.severity]}>{f.severity}</Pill>
-              {' '}<Pill tone="gray">→ {PERSONA_LABEL[f.persona]}</Pill>
+              {' '}<Pill tone="gray">→ {personaLabel(f.persona)}</Pill>
+              {f.dottedPersona && <> <Pill tone="amber">⋯ {personaLabel(f.dottedPersona)} · functional line</Pill></>}
             </div>
             <div className="t2">Finding · {f.raisedByAgentName} · {f.impactEstimate}</div>
           </div>

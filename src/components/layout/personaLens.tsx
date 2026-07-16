@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import type { Persona, RoleScope } from '../../api/types';
 import { useCurrentUser } from '../../api/dashboard';
-import { ROLE_CHILDREN, roleSubtree } from '../../screens/CommandCenter/personas';
+import { PERSONAS, ROLE_CHILDREN, roleSubtree, dottedReports } from '../../screens/CommandCenter/personas';
 
 // The persona lens is global chrome: pick it once in the top bar and every
 // screen that filters by persona sees the same choice. Persisted so the lens
@@ -21,9 +21,7 @@ interface LensContextValue {
 
 const LensContext = createContext<LensContextValue | null>(null);
 
-const VALID_LENSES: PersonaLens[] = [
-  'all', 'store_manager', 'cfo', 'operations_head', 'sales_supervisor', 'coo', 'commercial_finance',
-];
+const VALID_LENSES: PersonaLens[] = ['all', ...PERSONAS];
 
 function readStoredLens(): PersonaLens {
   try {
@@ -69,12 +67,15 @@ export function useEffectiveLens(): {
   rolesInScope: Persona[] | null;
   /** Roles below the lens role that hierarchy mode pulls in. */
   reports: Persona[];
+  /** Roles reporting into the lens role on the dotted (functional) line. */
+  dotted: Persona[];
 } {
   const { lens, hierarchy } = usePersonaLens();
   const { data: currentUser } = useCurrentUser();
   const persona = currentUser && !currentUser.isAdmin ? currentUser.defaultPersona : lens;
   const scope: RoleScope = hierarchy ? 'team' : 'role';
   const reports = persona === 'all' ? [] : ROLE_CHILDREN[persona].flatMap(roleSubtree);
-  const rolesInScope = persona === 'all' ? null : hierarchy ? [persona, ...reports] : [persona];
-  return { persona, scope, rolesInScope, reports };
+  const dotted = persona === 'all' ? [] : dottedReports(persona);
+  const rolesInScope = persona === 'all' ? null : hierarchy ? [persona, ...reports, ...dotted] : [persona];
+  return { persona, scope, rolesInScope, reports, dotted };
 }

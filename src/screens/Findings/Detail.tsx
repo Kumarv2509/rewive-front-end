@@ -4,7 +4,7 @@ import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { ImpactPath } from './ImpactPath';
 import { DispositionBar } from './DispositionBar';
-import { PERSONA_LABEL } from '../CommandCenter/personas';
+import { personaLabel } from '../CommandCenter/personas';
 import { severityTone, slaTone, statusLabel, statusTone } from './meta';
 import type { ReactNode } from 'react';
 
@@ -65,6 +65,7 @@ export function FindingDetailScreen() {
         {finding.entity && <>{finding.entity}{finding.region ? ` (${finding.region})` : ''} · </>}
         {finding.impactEstimate}
         {finding.escalationLevel > 0 && <> {' '}<Pill tone="red">escalated ×{finding.escalationLevel}</Pill></>}
+        {finding.dottedPersona && <> {' '}<Pill tone="amber">⋯ flagged to {personaLabel(finding.dottedPersona)} · functional line</Pill></>}
         {isOpen
           ? <> {' '}<Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h left on SLA</Pill></>
           : <> {' '}<Pill tone={statusTone[finding.status]}>{statusLabel[finding.status]}</Pill></>}
@@ -95,7 +96,7 @@ export function FindingDetailScreen() {
 
           {/* 2 — DECIDED */}
           {isOpen ? (
-            <ThreadStep n={2} state="now" title={`Decide — ${PERSONA_LABEL[finding.persona]}'s call`} when={`${finding.slaHoursRemaining}h before this escalates`}>
+            <ThreadStep n={2} state="now" title={`Decide — ${personaLabel(finding.persona)}'s call`} when={`${finding.slaHoursRemaining}h before this escalates`}>
               <DispositionBar finding={finding} />
             </ThreadStep>
           ) : (

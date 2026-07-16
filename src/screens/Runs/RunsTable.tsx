@@ -2,7 +2,7 @@ import { Avatar } from '../../components/shared/Avatar';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useRuns } from '../../api/runs';
-import { PERSONA_LABEL } from '../CommandCenter/personas';
+import { personaLabel } from '../CommandCenter/personas';
 import type { Persona, RoleScope, RunListItem, RunStatus } from '../../api/types';
 
 const statusPill: Record<RunStatus, { tone: 'indigo' | 'amber' | 'green' | 'red'; label: string }> = {
@@ -34,7 +34,7 @@ export function RunsTable({ status, persona, scope }: { status: RunStatus | 'all
             <tr className="row-h" key={run.id}>
               <td>
                 <b>{run.name}</b>
-                <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>→ {PERSONA_LABEL[run.persona]}</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>→ {personaLabel(run.persona)}</div>
               </td>
               <td>
                 {run.owner ? (

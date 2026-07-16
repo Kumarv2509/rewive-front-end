@@ -7,7 +7,7 @@ import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useTasks, useAddTaskFeedback, useUpdateTaskStatus, useUpdateTaskChannel } from '../../api/solutionDesign';
-import { PERSONA_LABEL } from '../CommandCenter/personas';
+import { personaLabel } from '../CommandCenter/personas';
 import type { SolutionTask, SolutionTaskStatus, SolutionTaskType, TaskChannel } from '../../api/types';
 
 const typeTone: Record<SolutionTaskType, { tone: 'indigo' | 'teal' | 'gray'; label: string }> = {
@@ -40,7 +40,7 @@ function TaskRow({ task }: { task: SolutionTask }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <Pill tone={typeTone[task.type].tone}>{typeTone[task.type].label}</Pill>
         <div style={{ fontWeight: 600, fontSize: 13.5, flex: 1 }}>{task.title}</div>
-        <Pill tone="gray">→ {PERSONA_LABEL[task.persona]}</Pill>
+        <Pill tone="gray">→ {personaLabel(task.persona)}</Pill>
         <Pill tone={statusTone[task.status]}>{task.status.replace('_', ' ')}</Pill>
       </div>
       <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 10 }}>

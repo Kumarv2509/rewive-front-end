@@ -5,7 +5,7 @@ import { Intro } from '../../components/shared/Intro';
 import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
-import { PERSONA_LABEL } from '../CommandCenter/personas';
+import { personaLabel } from '../CommandCenter/personas';
 import { ExitConditionCard, TripWireRow } from './Lifecycle';
 import { severityTone, slaTone, statusLabel, statusTone } from './meta';
 import type { Finding } from '../../api/types';
@@ -30,7 +30,8 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
           <Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link>{' '}
           <Pill tone={severityTone[finding.severity]}>{finding.severity}</Pill>
           {finding.escalationLevel > 0 && <> <Pill tone="red">escalated</Pill></>}
-          {' '}<Pill tone="gray">→ {PERSONA_LABEL[finding.persona]}</Pill>
+          {' '}<Pill tone="gray">→ {personaLabel(finding.persona)}</Pill>
+          {finding.dottedPersona && <> <Pill tone="amber">⋯ {personaLabel(finding.dottedPersona)} · functional line</Pill></>}
         </div>
         <div className="t2">
           {finding.raisedByAgentName}

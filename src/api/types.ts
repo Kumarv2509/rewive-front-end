@@ -20,7 +20,38 @@ export type Persona =
   | 'operations_head'
   | 'sales_supervisor'
   | 'coo'
-  | 'commercial_finance';
+  | 'commercial_finance'
+  // Group leadership + FP&A (reports to the CFO).
+  | 'group_ceo'
+  | 'fpa'
+  // Division COOs. The legacy 'coo' persona is the Protein division's COO in
+  // the FMCG context (see FMCG_LABEL_OVERRIDES in personas.ts).
+  | 'coo_gi'
+  | 'coo_fnv'
+  | 'coo_ambient'
+  // Division functions — every division holds the same four.
+  | 'protein_supply_chain'
+  | 'protein_production'
+  | 'protein_commercial_finance'
+  | 'protein_analysts'
+  | 'gi_supply_chain'
+  | 'gi_production'
+  | 'gi_commercial_finance'
+  | 'gi_analysts'
+  | 'fnv_supply_chain'
+  | 'fnv_production'
+  | 'fnv_commercial_finance'
+  | 'fnv_analysts'
+  | 'ambient_supply_chain'
+  | 'ambient_production'
+  | 'ambient_commercial_finance'
+  | 'ambient_analysts'
+  // Extended functions — horizontal, serving every division, so they hang off
+  // the Group CEO rather than any one COO.
+  | 'shared_services'
+  | 'procurement'
+  | 'hr_services'
+  | 'audit';
 
 // The lens looks at one role ('role') or the role plus everyone who reports
 // into it ('team' — hierarchy mode, for seeing what's impacted below you).
@@ -1050,6 +1081,10 @@ export interface Finding {
   assessorVerdict?: { verdict: Verdict; note: string; at: string } | null; // set when the loop closes
   detectedAt: string;
   persona: Persona;
+  /** Set when an escalation forks along the dotted line: the functional
+      parent (e.g. the CFO for division commercial finance) sees this finding
+      in their queue too, while ownership moves up the solid line. */
+  dottedPersona?: Persona | null;
   /** Business entity and region the drift sits in (multi-entity orgs). */
   entity?: string;
   region?: string;

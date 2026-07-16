@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom';
 import { crumbTitle } from './areas';
 import { usePersonaLens, useEffectiveLens, type PersonaLens } from './personaLens';
 import { useCurrentUser } from '../../api/dashboard';
-import { PERSONA_LABEL, PERSONAS, ROLE_CHILDREN } from '../../screens/CommandCenter/personas';
+import { personaLabel, personaGroupsForIndustry, ROLE_CHILDREN } from '../../screens/CommandCenter/personas';
 
 // Hierarchy mode: only offered when the lens role actually has reports.
 function HierarchyToggle() {
@@ -13,7 +13,7 @@ function HierarchyToggle() {
   return (
     <label
       className="lens-picker"
-      title={`Also show everything owned by ${reports.map((r) => PERSONA_LABEL[r]).join(', ')} — the roles that report into ${PERSONA_LABEL[persona]}`}
+      title={`Also show everything owned by ${reports.map((r) => personaLabel(r)).join(', ')} — the roles that report into ${personaLabel(persona)}`}
       style={{ cursor: 'pointer', userSelect: 'none' }}
     >
       <input
@@ -37,7 +37,7 @@ function LensPicker() {
   if (!currentUser.isAdmin) {
     return (
       <>
-        <span className="lens-locked">{PERSONA_LABEL[currentUser.defaultPersona]} view</span>
+        <span className="lens-locked">{personaLabel(currentUser.defaultPersona)} view</span>
         <HierarchyToggle />
       </>
     );
@@ -49,8 +49,12 @@ function LensPicker() {
         <span className="lens-label">Lens</span>
         <select value={lens} onChange={(e) => setLens(e.target.value as PersonaLens)}>
           <option value="all">All lenses</option>
-          {PERSONAS.map((p) => (
-            <option key={p} value={p}>{PERSONA_LABEL[p]}</option>
+          {personaGroupsForIndustry().map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.roles.map((p) => (
+                <option key={p} value={p}>{personaLabel(p)}</option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </label>
