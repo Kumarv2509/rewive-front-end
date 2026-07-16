@@ -1115,3 +1115,69 @@ export interface ClosureKpi {
   entity?: string;
   region?: string;
 }
+
+// ---------- Business context (the base data the mandates stand on) ----------
+// Company-wide context surfaces: not persona-partitioned — every lens sees
+// the same business. Rows that a counterpart has raised drift on carry the
+// findingId of their thread.
+export type BaseDataHealth = 'ok' | 'watch' | 'drifting';
+
+export interface BusinessDivision {
+  key: string;
+  name: string;
+  leader: string;
+  role: string; // display label, e.g. "COO — Protein"
+  revenueShare: string;
+  brands: string[];
+  note: string;
+  /** Which counterparts hold this division's mandates. */
+  watchedBy?: string;
+}
+
+export interface BusinessOverview {
+  orgName: string;
+  tagline: string;
+  narrative: string[];
+  stats: { label: string; value: string; note?: string }[];
+  divisions: BusinessDivision[];
+  entities: { name: string; region: string; role: string }[];
+  channels: { name: string; share: string; note: string }[];
+  /** How to read this section and act on it — the loop, in the business's own words. */
+  actGuide: { title: string; body: string }[];
+}
+
+export interface SkuSalesRow {
+  id: string;
+  family: string;
+  division: string;
+  revenueYtd: string;
+  growthYoyPct: number;
+  grossMarginPct: number;
+  fillRatePct: number;
+  health: BaseDataHealth;
+  note: string;
+  findingId?: string | null;
+}
+
+export interface CustomerSalesRow {
+  id: string;
+  customer: string;
+  channel: string;
+  region: string;
+  revenueYtd: string;
+  growthYoyPct: number;
+  tradeSpendPct: number;
+  osaPct: number;
+  dsoDays: number;
+  health: BaseDataHealth;
+  note: string;
+  findingId?: string | null;
+}
+
+export interface BusinessContext {
+  overview: BusinessOverview;
+  skuDimension: string; // "SKU family" / "Service line"
+  customerDimension: string; // "Customer" / "Payer"
+  skus: SkuSalesRow[];
+  customers: CustomerSalesRow[];
+}

@@ -24,6 +24,10 @@ import { KpiBrainScreen } from './screens/KpiBrain';
 import { LandingScreen } from './screens/Landing';
 import { GuideScreen } from './screens/Guide';
 import { ShadowOrgScreen } from './screens/ShadowOrg';
+import { BusinessOverviewScreen } from './screens/Business';
+import { SkuSalesScreen } from './screens/Business/SkuSales';
+import { CustomerSalesScreen } from './screens/Business/CustomerSales';
+import { BusinessPlScreen } from './screens/Business/BusinessPl';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +64,13 @@ function App() {
               <Route path="insights/findings" element={<Navigate to="/operate/findings" replace />} />
               <Route path="insights/findings/:findingId" element={<LegacyFindingRedirect />} />
               <Route path="insights/closure" element={<Navigate to="/operate/findings?tab=watching" replace />} />
+
+              {/* Business — the base data the mandates stand on */}
+              <Route path="business" element={<Navigate to="/business/overview" replace />} />
+              <Route path="business/overview" element={<BusinessOverviewScreen />} />
+              <Route path="business/sku" element={<SkuSalesScreen />} />
+              <Route path="business/customers" element={<CustomerSalesScreen />} />
+              <Route path="business/pl" element={<BusinessPlScreen />} />
 
               <Route path="build" element={<Navigate to="/build/picture" replace />} />
               <Route path="build/picture" element={<KpiBrainScreen />} />

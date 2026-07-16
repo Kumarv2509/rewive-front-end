@@ -43,6 +43,7 @@ import {
 } from './v4data.js';
 import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
+import { businessContextSeed } from './businessdata.js';
 import { personaScope, ROLE_PARENT, DOTTED_PARENT } from './roles.js';
 
 const app = express();
@@ -1302,6 +1303,12 @@ app.get('/api/v1/pl-impact', (req, res) => {
 // with drift anomalies embedded as a task list.
 app.get('/api/v1/pl-statement', (req, res) => {
   res.json(plStatementSeed[v4Industry(req)] ?? { period: '', unit: '', dimALabel: '', dimBLabel: '', lines: [], anomalies: [] });
+});
+
+// Business context: the base data the mandates stand on — what the company
+// is, sales by SKU/customer, with drifting rows linked to their findings.
+app.get('/api/v1/business-context', (req, res) => {
+  res.json(businessContextSeed[v4Industry(req)] ?? businessContextSeed.fmcg);
 });
 
 app.post('/api/v1/findings/:id/disposition', (req, res) => {

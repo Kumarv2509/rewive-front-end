@@ -24,6 +24,7 @@ export const NAV_ITEMS: AreaNavItem[] = [
   { to: '/operate/runs', label: 'Execution', icon: 'clock', match: ['/operate/runs', '/operate/tasks', '/insights/outcomes'] },
   { to: '/operate/counterparts', label: 'Agents', icon: 'shadow', match: ['/operate/counterparts', '/insights/agents'] },
   { to: '/insights/people', label: 'Performance', icon: 'people' },
+  { to: '/business/overview', label: 'Business', icon: 'chart', match: ['/business'] },
   { to: '/build/picture', label: 'Foundation', icon: 'brain', match: ['/build/picture', '/build/kpis', '/build/connectors'] },
 ];
 
@@ -36,6 +37,10 @@ export function isNavItemActive(item: AreaNavItem, pathname: string): boolean {
 // Off-rail screens still need a crumb title.
 const SPECIAL_TITLES: [prefix: string, title: string][] = [
   ['/operate/findings/', 'Findings / Thread'],
+  ['/business/overview', 'Business / Overview'],
+  ['/business/sku', 'Business / Sales by SKU'],
+  ['/business/customers', 'Business / Customers'],
+  ['/business/pl', 'Business / P&L'],
   ['/operate/tasks', 'Execution / Tasks'],
   ['/operate/runs', 'Execution / Runs'],
   ['/insights/outcomes', 'Execution / Outcomes'],
