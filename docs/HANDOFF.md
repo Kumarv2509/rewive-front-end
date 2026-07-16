@@ -1,32 +1,142 @@
-# Handoff — H1 2026 lifecycle history, entities & regions, self-refreshing demo clock (2026-07-16)
+# Handoff — paper-ledger redesign + the founder's multi-division org tree (2026-07-16, later session)
 
 ## Where things stand
 
-- **PR #4 (`v5` → `master`) is MERGED** (`4eb7320`, 2026-07-16) —
-  https://github.com/Kumarv2509/rewive-front-end/pull/4 — three commits:
-  `f645682` (mock+api: H1 history, entity/region, clock-relative seeds),
-  `2c9d76a` (decisions+findings: half-year panel + entity/region surfaces),
-  `da02eb0` (this handoff). Build + eslint clean; verified live against the
-  mock API (curl) **and** driven headlessly in Chromium (Playwright
-  screenshots of every screen — zero console errors / failed requests).
-- **Processes at session end**: Vite dev on :5173 (user's own `dev:all`
-  session, untouched) + a **detached** mock API on :4000 (`nohup node
-  mock-server/server.js`, log at the session scratchpad's `mock-api.log`).
-  It was launched detached because harness-managed background tasks kept
-  getting reaped between turns, taking the API down (the user's tab then
-  showed error states everywhere). To take over: `lsof -ti:4000 | xargs
-  kill`, then `npm run mock-server`. The mock server has **no watch mode**:
-  seed edits in `mock-server/` need a restart.
-- **Push gotcha (intermittent, from 2026-07-15): one of this machine's
-  networks MITMs GitHub HTTPS.** `git push` fails with "SSL certificate
-  problem" — a FortiGate firewall re-signs github.com (issuer
-  `CN=FG201FT922921744, O=Fortinet`). Fix: change network / drop the VPN, or
-  use an SSH key, or set repo-local `http.sslCAInfo`. Do **not** disable
-  `http.sslVerify`. (`gh` CLI auth works — `rianpraveen`.)
-- PR #3 (`v5` → `master`) merged 2026-07-15 (`17ea4e4`); `master` carries
-  everything up to `1cba44e`.
+- **`v5` is 3 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
+  1. `e0e365e` — **paper-ledger redesign** (this session, documented below):
+     25 files, 397+/407−.
+  2. `53257e4` — **`feat(org): full multi-division role tree +
+     commercial-finance dotted line to CFO`** — committed by the founder
+     from a parallel/other session, mid-way through this one (documented
+     below from its commit message + diff; this session didn't write it).
+  3. this handoff commit.
+- **Both changes build + lint clean together** (verified at HEAD after
+  `53257e4` landed). The redesign's Playwright verification (12 routes +
+  DOM probes) ran **before** `53257e4` — the new grouped lens dropdown,
+  amber ⋯ dotted-line pills, and new-role seeds have **not** been visually
+  re-checked on the new theme. Cheap to redo: recipe below.
+- **Processes at handoff**: the founder's own Vite dev on :5173 and the
+  detached mock API on :4000 are both still up (this session's temporary
+  `dev:all` was stopped). Mock server still has no watch mode — restart
+  after seed edits, and note :4000 is running **pre-`53257e4` code** until
+  restarted.
+- **Push gotcha (intermittent, from 2026-07-15)** still applies: one of this
+  machine's networks MITMs GitHub HTTPS (FortiGate re-signs github.com).
+  Fix: change network / SSH remote over :443 (see memory
+  `fortinet-git-push`), or repo-local `http.sslCAInfo`. Never disable
+  `http.sslVerify`.
+- PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
 
-## New this session (2026-07-16)
+## The founder's org-tree commit (`53257e4`) — context for whoever touches roles next
+
+From its commit message and diff (verify against code before relying on it):
+
+- **Option 1 — the org as the role tree**: `group_ceo` root; CFO holds FP&A
+  + group commercial finance; four division COOs (Protein, G&I, F&V,
+  Ambient) each with supply chain / production / commercial finance /
+  analysts; shared services, procurement, HR services, audit horizontal
+  under the CEO. Legacy roles re-parented into Protein; `coo` relabeled
+  "COO — Protein" **in the FMCG context only** (`personas.ts` now reads
+  `getActiveIndustry()`; healthcare/manufacturing keep the flat six-role
+  lens). Lens dropdown grouped by org branch.
+- **Option 2 — the matrix**: `DOTTED_PARENT` maps division commercial
+  finance to the CFO. CFO team scope rolls up dotted roles (amber ⋯ pills in
+  `ScopeBanner`); **escalation/re-alert now move a finding's `persona` up
+  `ROLE_PARENT`** and set `dottedPersona` for the functional parent —
+  `filterByPersona` counts `dottedPersona` as in-scope.
+- Seeds: division counterparts, seven findings across the tree (incl. an
+  escalation hero and a cross-division palm-oil re-price), ledger rows for
+  the new roles. Both role trees (`mock-server/roles.js` ↔
+  `src/screens/CommandCenter/personas.ts`) were updated — the
+  keep-identical convention still applies.
+
+## New this session (2026-07-16, later): the paper-ledger redesign
+
+## New this session (2026-07-16, later): the paper-ledger redesign
+
+The founder's ask: *"can we redesign the entire look and feel of the
+product, it seems having a disconnect in a flow"*. Offered three directions
+(unify-only / system-of-record rebrand / loop-first shell); they chose the
+**"system of record" rebrand** with a **light "paper ledger"** default (both
+choices made explicitly via option pickers).
+
+### The new visual system — `src/styles/globals.css` rewritten in place
+
+- **Every class and CSS-variable NAME kept; only values changed** — that's
+  why 375 existing `var(--…)` references needed no edits. Tokens now: paper
+  bg `#FAF9F6`, surface `#FFFFFF`, ink ramp `#1A1A2E/#5A5D72/#9A9DB0`, ONE
+  flat accent `#3B3BC4` (deep `#2E2EA8`), semantic `#1B7F4D/#9A6700/#B42318/
+  #0D7E74`, hairline borders `rgba(26,26,46,.10/.18)`, radius 16→10px.
+- **New font tokens**: `--font-display` (system serif — Iowan/Palatino/
+  Georgia) on `h1.page`, crumb, KPI values, logo; `--font-mono` on eyebrows,
+  table `th`, nav-label, IDs/durations; `tabular-nums` on figures.
+- **Banned and removed everywhere**: backdrop-filter blur, glow shadows,
+  multi-color gradients, gradient-clipped text, the radial-gradient body
+  backdrop. `--accent-grad` still EXISTS but resolves to flat accent — do
+  not reintroduce real gradients through it.
+- Dead `.topnav-areas` CSS (never rendered) deleted.
+
+### One design system across all four surfaces
+
+- **App**: cascades from globals; plus a sweep of ~145 dark-coupled inline
+  colors/hexes across ~12 screen files onto tokens (ShadowOrg, HalfYearReview,
+  PlStatement, KpiBrain×4, Findings/Lifecycle, SolutionDesign, Connectors,
+  HandoffCard, TourOverlay).
+- **Landing** (`.om` tokens) and **Guide** (`.gd-`) injected stylesheets now
+  **alias the global tokens** (`--om-ink:var(--ink)` etc.) — keep aliasing,
+  don't fork values again. Copy untouched, incl. keep-verbatim lines.
+- **`public/story.html` / `public/demo.html`** are standalone → they
+  **hardcode** the same palette values; update manually if tokens change.
+- **Gotcha discovered**: SVG *presentation attributes* (`fill=`/`stroke=`)
+  don't resolve `var()` — HalfYearReview chart colors moved into `style`
+  objects; Landing's loop SVG uses literal hexes; KpiBrain canvas got
+  `colorMode="light"` (React Flow's own chrome was staying dark otherwise).
+  A pre-existing silently-broken `stroke="var(--surface-solid)"` attribute
+  was fixed in passing.
+
+### Flow-seam fixes (the "disconnect" diagnosis)
+
+- **Act sub-flow no longer exits the loop visually**: `/build/solutions`,
+  `/build/agent-studio`, `/build/studio`, `/build/create` now light
+  **Findings** in the rail (they're reached from a finding's Act), with
+  crumbs "Findings / Act · …". Foundation's rail match narrowed to
+  picture/kpis/connectors (`src/components/layout/areas.ts`).
+- **Sidebar identity is real**: `AreaSidebar` renders `useCurrentUser()`
+  (name/initials/avatarBg/role) instead of the hardcoded "Kumara Vijayan"
+  card. (Don't append "· Admin" — the seed role string already contains it.)
+- **Header convention unified**: People, Signal Studio, Agent Studio, Create
+  Agent, Unified Agent Studio, Connectors moved from bespoke `.sub`
+  paragraphs to the shared `<Intro>`; `.sub` is now reserved for detail-page
+  metadata subtitles (Outcomes, SignalDetail, SolutionDesign, Findings
+  detail keep theirs). CommandCenter's greeting subtitle intentionally kept.
+- SignalDetail's back-link went to `/insights/signals` (a redirect) —
+  now goes straight to `/operate/findings`.
+
+### Verified (Playwright, chromium headless)
+
+- 12 routes screenshotted at 1440×900 under FMCG/all-lenses; probes: bogus
+  finding id → graceful message; industry swap to healthcare → renders;
+  solution-design DOM: rail active = "Findings", crumb = "Findings / Act ·
+  Solution Design". Recipe: scratchpad `shots.mjs` + `probe.mjs` — needs
+  `localStorage` keys `rewive.industry`, `rewive.personaLens`, and
+  **`rewive.guideSeen='1'`** (first visit to `/command` otherwise redirects
+  to `/guide` — intended onboarding, intercepts demo links).
+- Design rules also saved to Claude project memory (`paper-ledger-rebrand`).
+
+### Known rough edges / candidates for the founder's change list
+
+- Queue rows still use boxed **emoji icons** (🤖 tiles) — read heavy against
+  the hairline aesthetic.
+- Serif display face is a **system stack** (Iowan/Palatino/Georgia) — a
+  webfont (e.g. a real editorial serif) would sharpen it if network fonts
+  are acceptable for the demo.
+- Two agent-building paradigms still coexist (`/build/studio` canvas vs
+  `/build/agent-studio` altitudes) — visual reconciliation was out of scope.
+- Tour scrim was eased from `rgba(5,5,14,.72)` to `.45` (judgment call —
+  near-black over paper read as a theme break); revert is a 2-value change
+  in `TourOverlay.tsx` if the spotlight needs more contrast.
+
+## Previous session (2026-07-16, earlier)
 
 The founder's ask: *"mimic the full lifecycle and all the alerts like I am in
 Jun 2026, give me half-year stats and relevant tasks; the business dealt in
@@ -216,10 +326,17 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-1. ~~Commit + push + PR + merge~~ — **done**: PR #4 merged to `master`
-   (`4eb7320`, 2026-07-16).
-2. **Confirm the "breaks" report is resolved** — the user's last message said
-   "lot of break are there"; diagnosis + fix are in "New this session", but
+1. **Re-verify the org-tree surfaces on the new theme** — `53257e4` landed
+   after the redesign's visual verification: check the grouped lens
+   dropdown, ScopeBanner's amber ⋯ dotted pills, Group-CEO/team scope, and
+   an escalation (finding persona moving up the tree) against the
+   paper-ledger look, then restart the detached :4000 API so it serves the
+   new seeds. Then push + PR `v5` → `master` (all three commits are
+   local-only). If the founder has redesign tweaks, the "Known rough edges"
+   list above holds likely candidates.
+2. **Confirm the "breaks" report is resolved** — earlier on 2026-07-16 the
+   founder said "lot of break are there"; diagnosis + fix are in the earlier
+   session's section (API down + seed-date rot, now clock-relative), but
    they haven't confirmed after the hard-refresh yet. If something is still
    broken, get the screen name / a screenshot first.
 3. **Entity/region breadth** — the dimension exists only on findings,
