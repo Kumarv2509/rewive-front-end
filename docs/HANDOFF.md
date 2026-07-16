@@ -1,58 +1,170 @@
-# Handoff — paper-ledger redesign + the founder's multi-division org tree (2026-07-16, later session)
+# Handoff — the founder's org tree end-to-end + Business base-data section (2026-07-16, latest session)
 
 ## Where things stand
 
-- **`v5` is 3 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
-  1. `e0e365e` — **paper-ledger redesign** (this session, documented below):
-     25 files, 397+/407−.
-  2. `53257e4` — **`feat(org): full multi-division role tree +
-     commercial-finance dotted line to CFO`** — committed by the founder
-     from a parallel/other session, mid-way through this one (documented
-     below from its commit message + diff; this session didn't write it).
-  3. this handoff commit.
-- **Both changes build + lint clean together** (verified at HEAD after
-  `53257e4` landed). The redesign's Playwright verification (12 routes +
-  DOM probes) ran **before** `53257e4` — the new grouped lens dropdown,
-  amber ⋯ dotted-line pills, and new-role seeds have **not** been visually
-  re-checked on the new theme. Cheap to redo: recipe below.
-- **Processes at handoff**: the founder's own Vite dev on :5173 and the
-  detached mock API on :4000 are both still up (this session's temporary
-  `dev:all` was stopped). Mock server still has no watch mode — restart
-  after seed edits, and note :4000 is running **pre-`53257e4` code** until
-  restarted.
-- **Push gotcha (intermittent, from 2026-07-15)** still applies: one of this
-  machine's networks MITMs GitHub HTTPS (FortiGate re-signs github.com).
-  Fix: change network / SSH remote over :443 (see memory
-  `fortinet-git-push`), or repo-local `http.sslCAInfo`. Never disable
-  `http.sslVerify`.
+- **`v5` is 5 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
+  1. `e0e365e` — **paper-ledger redesign** (parallel session, documented below).
+  2. `53257e4` — **org tree + commercial-finance dotted line** (this session, documented below — supersedes the second-hand description the previous handoff had for it).
+  3. `a3da560` — the previous handoff commit.
+  4. `cdba393` — **Business base-data section + roped findings** (this session, documented below).
+  5. this handoff commit.
+- **Push is blocked on exactly one founder action.** This network's FortiGate
+  MITMs GitHub HTTPS and its CA is in no local trust store, so git, curl
+  **and `gh` all fail TLS** (don't fix by disabling verification; memory
+  `fortinet-git-push` has the full diagnosis). The remote was switched to
+  **SSH** (`git@github.com:Kumarv2509/rewive-front-end.git`) which rides
+  `~/.ssh/config`'s `github.com → ssh.github.com:443` mapping — the network
+  path works, but GitHub answers *Permission denied (publickey)* because the
+  local ed25519 key was never registered. **Founder: add
+  `~/.ssh/id_ed25519.pub`** (comment `praveenj@broqr (claude-code)`) at
+  github.com/settings/keys on the account with push access (`gh` config says
+  `rianpraveen`), then `git push origin v5`. `gh` CLI is unusable on this
+  network — hand the founder compare/PR URLs instead of using `gh pr create`.
+- **Processes at handoff**: Vite dev on :5173 (founder's), mock API on :4000
+  restarted by this session and **serving the latest seeds** — but it's a
+  session-owned background process; if it dies, `npm run dev:all`. Mock
+  server still has no watch mode — restart after seed edits.
+- **The previous handoff's open thread #1 is DONE**: all of this session's
+  browser verification (grouped lens dropdown, amber ⋯ dotted pills,
+  escalation walking up the tree, Group-CEO team scope, Business section)
+  ran **on the paper-ledger theme** at HEAD.
+- Build (`tsc -b && vite build`) and `eslint .` clean at HEAD.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
 
-## The founder's org-tree commit (`53257e4`) — context for whoever touches roles next
+## This session, part 1 (`53257e4`): the founder's org, navigable end-to-end
 
-From its commit message and diff (verify against code before relying on it):
+The founder described their real structure — Group CEO; CFO with FP&A;
+multiple COOs (Protein, G&I, Fruits & Vegetables, Ambient Foods) each with
+Supply chain / Production / Commercial finance / Analysts; extended teams
+(Shared services, Procurement, HR services, Audit) — and asked how it
+navigates the Sense→Decide cycle. Two options were offered; they said
+"build option 1" then "build option 2".
 
-- **Option 1 — the org as the role tree**: `group_ceo` root; CFO holds FP&A
-  + group commercial finance; four division COOs (Protein, G&I, F&V,
-  Ambient) each with supply chain / production / commercial finance /
-  analysts; shared services, procurement, HR services, audit horizontal
-  under the CEO. Legacy roles re-parented into Protein; `coo` relabeled
-  "COO — Protein" **in the FMCG context only** (`personas.ts` now reads
-  `getActiveIndustry()`; healthcare/manufacturing keep the flat six-role
-  lens). Lens dropdown grouped by org branch.
-- **Option 2 — the matrix**: `DOTTED_PARENT` maps division commercial
-  finance to the CFO. CFO team scope rolls up dotted roles (amber ⋯ pills in
-  `ScopeBanner`); **escalation/re-alert now move a finding's `persona` up
-  `ROLE_PARENT`** and set `dottedPersona` for the functional parent —
-  `filterByPersona` counts `dottedPersona` as in-scope.
-- Seeds: division counterparts, seven findings across the tree (incl. an
-  escalation hero and a cross-division palm-oil re-price), ledger rows for
-  the new roles. Both role trees (`mock-server/roles.js` ↔
-  `src/screens/CommandCenter/personas.ts`) were updated — the
-  keep-identical convention still applies.
+### Option 1 — the org as the role tree
 
-## New this session (2026-07-16, later): the paper-ledger redesign
+- **Persona union grew 6 → 30** (`src/api/types.ts`): `group_ceo` root; CFO
+  holds `fpa` + group `commercial_finance`; division COOs `coo` (= Protein),
+  `coo_gi`, `coo_fnv`, `coo_ambient`, each with 4 function roles
+  (`<div>_supply_chain` / `_production` / `_commercial_finance` /
+  `_analysts`); horizontals `shared_services`, `procurement`, `hr_services`,
+  `audit` under the CEO.
+- **Legacy roles re-parented into Protein** (operations_head → store_manager,
+  sales_supervisor under `coo`), so all pre-existing seeds stay reachable.
+  `coo` is relabeled **"COO — Protein" in the FMCG context only**:
+  `personas.ts` now exports `personaLabel(p)` (reads
+  `getActiveIndustry()`; `FMCG_LABEL_OVERRIDES`) and **all 12 label call
+  sites use it instead of indexing `PERSONA_LABEL`**. Healthcare/
+  Manufacturing keep the flat six-role lens via `personaGroupsForIndustry()`.
+- **Lens dropdown is grouped by org branch** (optgroups: Group / Protein /
+  G&I / F&V / Ambient / Extended functions — `Topbar.tsx`);
+  `VALID_LENSES` in `personaLens.tsx` is now derived from `PERSONAS`.
+- **Escalation is the stitch between levels**: `POST /findings/:id/escalate`
+  and re-alert now move `finding.persona` up `ROLE_PARENT` (derived from
+  `ROLE_CHILDREN` in `mock-server/roles.js`) — supply chain → division COO →
+  Group CEO. Verified live: the hero finding (`fmcg-f-protein-fill`, frozen
+  chicken fill at 84%, 4h SLA) walked both hops and landed as the only item
+  in the Group CEO's personal Today queue.
+- Both role trees (`mock-server/roles.js` ↔
+  `src/screens/CommandCenter/personas.ts`) updated — **keep-identical
+  convention still applies**, and now also covers `DOTTED_PARENT`.
 
-## New this session (2026-07-16, later): the paper-ledger redesign
+### Option 2 — the dotted line (the matrix)
+
+- `DOTTED_PARENT` maps the four division commercial-finance roles → `cfo`,
+  in both trees. Ownership/escalation stays on the solid line (division COO);
+  the CFO is the *functional* parent.
+- **CFO team scope rolls up the dotted roles** (server `personaScope`; the
+  frontend `useEffectiveLens()` returns a new `dotted` array; `ScopeBanner`
+  renders them as amber `⋯` pills with an explanatory tooltip).
+- **Escalation forks**: escalate/re-alert on a dotted role sets
+  `finding.dottedPersona` (new optional field on `Finding`) *before* moving
+  `persona` up the solid line; `filterByPersona` counts `dottedPersona` as
+  in-scope, so the finding appears in **both** the COO's and the CFO's own
+  queues. UI: amber "⋯ CFO · functional line" pills in UnifiedQueue, the
+  Findings list, and the thread header.
+- Demo seed: `fmcg-f-protein-tradespend` (Protein trade-spend accruals 2.3x
+  the promo calendar, 5h SLA, raised by the new
+  `fmcg-sa-protein-commfin` counterpart) — escalate it once and flip the
+  lens between COO — Protein and CFO to show the same drift held by two
+  chains.
+
+### Seeds (part 1)
+
+Division supply-chain counterparts (Protein/G&I/F&V/Ambient), FP&A and
+Procurement counterparts; 8 findings across the tree — the escalation hero,
+Ramadan build (G&I), a co-pack conflict routed **directly to `coo_gi`**
+(cross-functional = the COO's call), F&V shrink, Ambient promo OSA, FP&A
+bridge gap, cross-division palm-oil re-price (Procurement, the horizontal
+story), and the trade-spend dotted-line demo; ledger rows for Procurement /
+COO F&V / COO Ambient. Chief-of-staff counterpart re-tagged `coo` →
+`group_ceo`; People counterpart `coo` → `hr_services`.
+
+## This session, part 2 (`cdba393`): Business base-data section
+
+The founder's ask: *"rope more findings and show some base data like Sales
+by SKU, Customer, P&L … also have a page to explain the business so it is
+clear for someone to act on."*
+
+- **New rail item "Business"** (chart icon, between Performance and
+  Foundation), four tabs behind `SectionTabs`
+  (`src/screens/Business/BusinessTabs.tsx`):
+  - **The business** (`/business/overview`; `/business` redirects) — the
+    explainer: narrative paragraphs, stat tiles, division cards (leader,
+    revenue share, brands, "Held twice by: …"), operating entities, revenue
+    by channel, and a 4-step **"How to act on what you see here"** guide.
+  - **Sales by SKU family** (`/business/sku`) — 12 families × revenue YTD /
+    growth / margin / fill rate.
+  - **Sales by customer** (`/business/customers`) — 8 accounts × revenue /
+    growth / trade spend / OSA / DSO.
+  - **P&L** (`/business/pl`) — reuses `Decisions/PlStatement` (same FP&A
+    statement, second mount point; the Decisions tab keeps its own).
+- **The rope**: every off-plan row wears an on-plan/watch/**drifting** pill
+  and a `finding →` link to the thread already watching that number. Base
+  data is deliberately **not persona-partitioned** (documented in the types)
+  — context is company-wide; the loop surfaces stay role-scoped.
+- **Contract**: `BusinessContext` types in `src/api/types.ts`,
+  `useBusinessContext()` in `src/api/business.ts`,
+  `GET /api/v1/business-context` served from **`mock-server/businessdata.js`**
+  (new file) — rich FMCG pack (Americana-style), slim Healthcare pack
+  (service lines / payers, ropes to `hc-f-1`/`hc-f-2`), minimal
+  Manufacturing pack.
+- **Seeds (part 2)**: 7 more findings roped to the base data — Protein
+  breaded-chicken **yield masked by rework**, Ambient **promo ROI 0.6x**
+  (second dotted-line role), **Carrefour DSO** 74d, **Lulu OSA**
+  merchandising gap, **audit** split price overrides, **shared-services** AP
+  backlog, **HR attrition explicitly compounding the fill-rate hero** — plus
+  3 counterparts (Protein production, Audit, Shared services).
+  **20 open FMCG findings now span every branch of the tree.**
+
+### Verified (this session, on the paper-ledger theme)
+
+Browser walkthrough at :5173 + curl probes: grouped dropdown contents; COO —
+G&I + team rollup (scope pills + both G&I findings); hero escalation
+`protein_supply_chain → coo → group_ceo` (UI thread header updated per hop;
+Group CEO role-scope queue = exactly the escalated finding); dotted-line
+before/after (CFO team sees the trade-spend finding pre-escalation, CFO
+*role* scope gains it post-fork with both pills); healthcare lens list stays
+the legacy six with generic "COO"; Business overview/SKU/customers/P&L
+render; Carrefour row → its finding thread. Mock state was reset after the
+escalation tests (restart = reset; escalations are in-memory).
+
+### Judgment calls / gotchas
+
+- Division functions beyond supply chain (+ the three seeded horizontals'
+  neighbours) exist in the tree but are **seeded light** — a lens on, say,
+  `gi_analysts` is honest-empty. The `coo_gi` team rollup covers it for
+  demos.
+- Escalating past a role with no data-bearing parent in
+  healthcare (`coo → group_ceo`) leaves the finding visible only under
+  'all'/team lenses there — acceptable; healthcare demos don't escalate that
+  high.
+- `security`-style fix avoided on purpose: no `http.sslVerify false`, no
+  MITM CA imported into PEM bundles. SSH is the sanctioned path.
+- The browser-pane `scroll` action intermittently times out on this app;
+  `read_page` refs + `scrollIntoView` via the JS tool worked around it
+  (verification-only).
+
+## Previous session (2026-07-16, later): the paper-ledger redesign
 
 The founder's ask: *"can we redesign the entire look and feel of the
 product, it seems having a disconnect in a flow"*. Offered three directions
@@ -125,8 +237,8 @@ choices made explicitly via option pickers).
 
 ### Known rough edges / candidates for the founder's change list
 
-- Queue rows still use boxed **emoji icons** (🤖 tiles) — read heavy against
-  the hairline aesthetic.
+- Queue rows still use boxed **emoji icons** (🤖/🕵️ tiles) — read heavy
+  against the hairline aesthetic.
 - Serif display face is a **system stack** (Iowan/Palatino/Georgia) — a
   webfont (e.g. a real editorial serif) would sharpen it if network fonts
   are acceptable for the demo.
@@ -144,7 +256,8 @@ different entities and regions."*
 
 ### Half-year (Jan–Jun 2026) lifecycle backfill — `mock-server/v4data.js`
 
-- **FMCG findings: 6 → 16**, now covering every lifecycle state at once:
+- **FMCG findings: 6 → 16** (now 23+ after this session), covering every
+  lifecycle state at once:
   5 open (two SLA-at-risk ≤8h; `fmcg-f-3` escalated; `fmcg-f-9` is an
   acknowledged-in-May finding whose trip-wire fired and came back escalated),
   1 acting (`fmcg-f-7`, Riyadh DC case fill — has a live solution design),
@@ -158,7 +271,7 @@ different entities and regions."*
   `hc-f-h1` Lakeside OR utilization); manufacturing only got entity tags.
 - Referential integrity holds both ways (`finding.closureKpiId` ↔
   `closure.findingId`; ledger `findingId` → real finding) — there's a check
-  snippet in this session's transcript if you touch the seeds.
+  snippet in that session's transcript if you touch the seeds.
 
 ### Entities & regions — a new dimension
 
@@ -179,15 +292,17 @@ different entities and regions."*
 - `DecisionStats.halfYear` (new types `HalfYearReview/-Month/-BreakdownRow`):
   monthly raised/decided/closed + win-rate, plus by-entity and by-region
   rollups. Seeded for all three industries (`data.js` for FMCG,
-  `v4content.js` for HC/Mfg). `openNow` counts match the actual open seeds.
+  `v4content.js` for HC/Mfg). `openNow` counts match the actual open seeds
+  *as of that session* — this session added 15 open findings without
+  touching `halfYear`, so the hand-seeded block undercounts now (see open
+  threads).
 - `src/screens/Decisions/HalfYearReview.tsx` renders it at the top of the
-  Ledger tab: grouped monthly bars + a separate win-rate line (no dual axis),
-  two breakdown tables. Series colors `#7C7CFF/#0D9488/#16A34A` were run
-  through the dataviz palette validator against the dark surface (all checks
-  pass); win-rate line is amber. Hidden entirely if `halfYear` is absent.
-- FMCG ledger: 7 → 15 rows spanning 09 Jan–18 Jun, each new row linked to its
-  finding with an assessor note; includes decisions that *failed* (`led4`
-  terms extension → regressed; `led8` acknowledge whose trip-wire fired).
+  Ledger tab: grouped monthly bars + a separate win-rate line, two breakdown
+  tables. Hidden entirely if `halfYear` is absent.
+- FMCG ledger: 7 → 15 rows (now 18) spanning 09 Jan–18 Jun, each new row
+  linked to its finding with an assessor note; includes decisions that
+  *failed* (`led4` terms extension → regressed; `led8` acknowledge whose
+  trip-wire fired).
 
 ### Tasks
 
@@ -198,117 +313,69 @@ different entities and regions."*
 ### The demo clock is now self-refreshing (the "breaks" fix)
 
 - The user reported "a lot of breaks". A full-screen sweep found **zero**
-  errors; the real issues were (a) the API having been down overnight (see
-  Processes above) and (b) **seed-date rot**: dates were pinned to
-  2026-06-30, so on 2026-07-16 every counterpart read "last raised 16d ago"
-  next to "14h left on SLA".
-- Fix: **all 87 ISO timestamps in `v4data.js` are now computed from the
-  server clock at boot** — `hoursAgo(n)` / `daysAgo(n)` helpers at the top of
-  the file; live items land hours ago, H1 history lands ~2 weeks–6 months
-  back. Evidence strings that named absolute dates were reworded to relative
-  ("fired this week"). **Convention going forward: never hardcode an ISO
-  date in `v4data.js` seeds — use the helpers.** (Ledger `date` display
-  strings like "12 May" and `data.js`/`v4content.js` relative strings like
-  "2h ago" are still static — acceptable for history, but the same rot risk
-  applies if "now"-adjacent.)
-- Not re-verified by the user yet — they were asked to hard-refresh and
-  report which screen if anything still looks broken.
+  errors; the real issues were (a) the API having been down overnight and
+  (b) **seed-date rot**: dates were pinned to 2026-06-30, so on 2026-07-16
+  every counterpart read "last raised 16d ago" next to "14h left on SLA".
+- Fix: **all ISO timestamps in `v4data.js` are computed from the server
+  clock at boot** — `hoursAgo(n)` / `daysAgo(n)` helpers at the top of the
+  file; live items land hours ago, H1 history lands ~2 weeks–6 months back.
+  **Convention going forward: never hardcode an ISO date in `v4data.js`
+  seeds — use the helpers.** (This session's 15 new findings follow it.)
 
 ## Previous session (2026-07-15, later session)
 
 ### Role-scoped data + hierarchy mode (`57148f8`) — the big one
 
-Every role now owns a **disjoint slice** of the product, and a manager can
-widen the lens to their whole reporting line.
+Every role owns a **disjoint slice** of the product, and a manager can widen
+the lens to their whole reporting line.
 
 - **One role tree, defined twice, kept identical** (`mock-server/roles.js` ↔
-  `src/screens/CommandCenter/personas.ts`):
-  `COO → { Operations head → Store manager, Sales supervisor }` and
-  `CFO → Commercial finance`. Two roots — ops line and finance line.
+  `src/screens/CommandCenter/personas.ts`) — was 6 roles/2 roots then; this
+  session grew it to 30 roles/1 root (see above); the convention holds.
 - **Every collection item carries exactly one `persona`**: findings, pending
   approvals, runs, live runs, tasks, counterparts (ShadowAgent), agent
-  catalog, leaderboard rows, loop-speed rows, decision-ledger rows — seeded
-  across all three industries (~100 items tagged via
-  scratchpad script; ids untouched). **Convention: any new seed item must set
-  `persona`** (now in CLAUDE.md). Types updated accordingly in
-  `src/api/types.ts` (persona on RunListItem, LiveRunSummary, SolutionTask,
-  ShadowAgent, LeaderboardRow, LoopSpeedRow, DecisionLedgerItem; `RoleScope`).
+  catalog, leaderboard rows, loop-speed rows, decision-ledger rows.
+  **Convention: any new seed item must set `persona`** (in CLAUDE.md).
+  (This session's base-data rows are the documented exception — context
+  surfaces are company-wide.)
 - **Server**: `filterByPersona(items, persona, scope)` in `app.js` uses
   `personaScope()` from `roles.js`; `scope=team` expands to the role's
-  subtree. Every list endpoint accepts `persona` + `scope`: findings,
-  decisions/pending, dashboard/summary, runs, runs/live, tasks, shadow-org,
-  agents/catalog, leaderboard, leaderboard/loop-speed, decisions.
+  subtree (now + dotted children). Every list endpoint accepts
+  `persona` + `scope`.
 - **Frontend**: `useEffectiveLens()` (in `personaLens.tsx`) is the single
   resolver — global lens + non-admin lock + hierarchy toggle → `{ persona,
-  scope, rolesInScope, reports }`. All data screens use it (Today, Findings,
-  Runs, Tasks, Counterparts, Workforce, Performance, Decisions). This also
-  fixed a pre-existing bug: Findings ignored the non-admin persona lock.
-- **Chrome**: a persisted **"+ their team"** checkbox next to the lens in the
-  top bar (only rendered when the lens role has reports;
-  `localStorage['rewive.personaLensHierarchy']`). `ScopeBanner`
-  (`components/shared/ScopeBanner.tsx`) sits under each screen header and
-  spells out which roles are in view. Run and task rows wear `→ Role` chips.
+  scope, rolesInScope, reports }` (now also `dotted`). All data screens use
+  it. A persisted **"+ their team"** checkbox next to the lens
+  (`localStorage['rewive.personaLensHierarchy']`); `ScopeBanner` spells out
+  which roles are in view.
 - **The loop stays role-true**: tasks created by a finding's **Act**
-  disposition inherit the finding's persona; quick-solution tasks inherit the
-  signal's; agent specs inherit the task's (the old hardcoded
-  `operations_head` in `POST /agent-specs` is gone).
-- **Verified**: per endpoint, the union of the six role slices equals the full
-  set with zero pairwise overlaps (fmcg); COO+team = COO + Ops head + Store
-  manager + Sales supervisor; CFO+team = CFO + Commercial finance; an
-  Ops-head finding's Act produced Ops-head tasks visible under COO+team,
-  invisible under CFO+team.
-- **Judgment calls to sanity-check with the founder**: assignments follow the
-  routing rules where they existed (trade spend → commercial finance, sales
-  execution → sales supervisor, cross-functional → COO) and best semantic
-  read elsewhere — healthcare revenue cycle sits under CFO, manufacturing
-  quality under Store manager (line-level), People/HR streams under COO.
-  Some slices are thin: Sales supervisor has no healthcare/manufacturing
-  items and no FMCG catalog agent; Store manager is thin in FMCG. Honest
-  empty states, but remap or add seeds if the demo needs them.
+  disposition inherit the finding's persona; quick-solution tasks inherit
+  the signal's; agent specs inherit the task's.
 
 ### Every dead-end section wired end-to-end (`090594b`)
 
-An audit found no unfetched screens — the gaps were dead actions and one
-un-closeable loop. All fixed and exercised via curl:
-
-- **Tracked KPI "needs data" now resolves** (was permanent): the KPI panel's
-  Connect link carries `?forKpi=` to Data Connectors, which shows a banner
-  with the KPI's needed drivers; the created connection stores `forKpiId`;
-  the KPI walks `needs data → connection pending approval → data connected`
-  (reject returns it to needs data). New `TrackedKpiDataStatus`
-  `'pending_approval'`.
-- **Runs pause/resume is real server state** (pause previously returned a fake
-  response and mutated nothing; resume existed but had no UI). `runDetails`
-  moved into per-industry mutable state; the live card shows a **⏸ PAUSED**
-  pill and a working **Resume**; live polling stops/restarts with it. The
-  dead "Watch" button (no onClick) was removed.
-- **Outcomes "Schedule"** posts to a new
-  `POST /outcomes/:runId/actions/:actionId/schedule` and renders ✓ Scheduled
-  (was toast-only).
-- **Agent builder "Refine plan"** (was completely inert) focuses the chat
-  input with a seeded "Refine the plan: " draft — feeding the already-wired
-  message flow.
-- **Tasks channel selector caption was a lie** — it *is* persisted via
-  `PATCH /tasks/:id/channel`; caption reworded to "saved to the task —
-  delivery is simulated in this demo"; `docs/FEATURE_INVENTORY.md` updated.
-- Deliberately left alone: orphaned Signal Studio screen (unroutable since the
-  signals→findings evolution), server-only features with no UI (KPI tickets,
-  signal review committee), FMCG-flavoured global data under other industries
-  (connectors / people directory / audit log — a bigger industry-scoping
-  decision).
+- Tracked KPI "needs data" resolves via Connectors (`?forKpi=`,
+  `'pending_approval'` status); runs pause/resume is real server state
+  (⏸ PAUSED pill + Resume); Outcomes "Schedule" posts and renders
+  ✓ Scheduled; agent-builder "Refine plan" focuses the chat with a seeded
+  draft; Tasks channel caption reworded (it *is* persisted).
+- Deliberately left alone: orphaned Signal Studio screen, server-only
+  features with no UI (KPI tickets, review committee), FMCG-flavoured global
+  data under other industries.
 
 ## Previous sessions (still true)
 
-- **v5.1 comprehension redesign** (`4b7462b`): one flat 7-item loop-ordered
-  rail; Today = one "Waiting on you" queue with the product's only count;
-  findings lifecycle tabs (Closure screen retired → Watching/Closed);
-  the finding thread page; merged Execution and Agents surfaces behind
-  `SectionTabs`; persona lens in global chrome.
+- **v5.1 comprehension redesign** (`4b7462b`): one flat loop-ordered rail
+  (7 items then; 8 now with Business); Today = one "Waiting on you" queue
+  with the product's only count; findings lifecycle tabs; the finding thread
+  page; merged Execution and Agents surfaces behind `SectionTabs`; persona
+  lens in global chrome.
 - **FP&A P&L workspace** (`7964225`): Decisions → "P&L impact · FP&A" tab;
   full P&L Actual/Budget/Forecast drillable by the industry's two dimensions;
-  drift anomalies as a task list; seeds `mock-server/pldata.js` + `v4data.js`.
-- **Landing retold** (`cdd2901`), **spotlight tour** (`51491f0`), **loop speed
-  table** (`f4ac86f`).
+  seeds `mock-server/pldata.js` + `v4data.js`. (Now also mounted at
+  `/business/pl`.)
+- **Landing retold** (`cdd2901`), **spotlight tour** (`51491f0`), **loop
+  speed table** (`f4ac86f`).
 
 ## What v5 is (positioning unchanged)
 
@@ -326,66 +393,48 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-1. **Re-verify the org-tree surfaces on the new theme** — `53257e4` landed
-   after the redesign's visual verification: check the grouped lens
-   dropdown, ScopeBanner's amber ⋯ dotted pills, Group-CEO/team scope, and
-   an escalation (finding persona moving up the tree) against the
-   paper-ledger look, then restart the detached :4000 API so it serves the
-   new seeds. Then push + PR `v5` → `master` (all three commits are
-   local-only). If the founder has redesign tweaks, the "Known rough edges"
-   list above holds likely candidates.
-2. **Confirm the "breaks" report is resolved** — earlier on 2026-07-16 the
-   founder said "lot of break are there"; diagnosis + fix are in the earlier
-   session's section (API down + seed-date rot, now clock-relative), but
-   they haven't confirmed after the hard-refresh yet. If something is still
-   broken, get the screen name / a screenshot first.
-3. **Entity/region breadth** — the dimension exists only on findings,
-   closures and ledger rows. Candidates: runs/tasks/agents tagging, an
-   entity filter on Decisions, a region/entity lens in global chrome
-   (mirroring the persona lens), and P&L dimA/dimB alignment.
-4. **Ledger `date` strings** are static `"DD Mon"` with no year while
-   findings are now clock-relative — fine for H1 history, but consider ISO +
-   client formatting if the ledger should sort or bucket by real dates
-   (the `halfYear` block is hand-seeded, not derived).
-5. **Old-persona leftovers**: the display-dead `dashboardSummary.kpis` block +
-   `personaKpiOverrides` were **dropped** from the contract, seeds and server —
-   `GET /dashboard/summary` now returns only `{ greetingName, summarySentence }`
-   (Today's stats come from findings/approvals/decision-stats, role-scoped).
-   Tour/Guide copy still names only the old three personas
-   (`tour/steps.ts:19`, `Guide/index.tsx:25`).
-6. **Thin role slices** (see judgment calls above) — decide whether Sales
-   supervisor / Store manager need more seeded content per industry.
-7. **`docs/BLUEPRINT.md` is stale** — still describes the pre-v5.1 three-area
-   nav (and `public/story.html`/`demo.html` may reference retired names).
-8. **P&L discoverability** — the FP&A workspace is the second tab on
-   Decisions; candidates: bookmarkable route (`?view=pl`), P&L card on Today
-   under the CFO / Commercial finance lens.
-9. **Manufacturing pack depth** — to re-enable the third industry (also:
-   `closureKpisSeed.manufacturing` is empty → Watching tab empty state).
-10. **"New" anomalies → findings**: P&L anomalies with status `new` are
-    display-only; a "raise as finding" mutation would close that loop.
-11. **Optional internal rename** — shadow → counterpart naming.
+1. **Push + PR** — blocked only on the founder adding the SSH key (see
+   "Where things stand"). Once pushed: PR `v5` → `master`; `gh` won't work
+   on this network, use the compare URL.
+2. **Thin new-role slices** — 16 division-function roles exist; supply
+   chains + a few others have data, but e.g. `*_analysts` and most
+   `*_production` lenses are honest-empty. Add per-role seeds if a demo
+   needs to land on one directly (team scope covers them today).
+3. **`halfYear` stats undercount** — the hand-seeded H1 block predates this
+   session's 15 new findings; `openNow`/monthly numbers no longer reconcile
+   with the live seed counts. Either bump the seeds or derive the block.
+4. **CLAUDE.md's "7 items" rail note is stale** (now 8 with Business), and
+   the persona bullet predates the 30-role tree + dotted line + base-data
+   exception; `docs/BLUEPRINT.md` still describes pre-v5.1 nav.
+5. **Confirm the "breaks" report is resolved** — the clock-rot fix landed
+   but the founder never confirmed after a hard refresh.
+6. **Entity/region breadth** — dimension exists on findings/closures/ledger
+   only; the new Business rows carry entity implicitly in copy, not as the
+   filterable field.
+7. **More dotted lines?** — the mechanism is generic (`DOTTED_PARENT`); the
+   founder may want Analysts → FP&A or division HR → HR services once they
+   see the commercial-finance one.
+8. **Ledger `date` strings** are static `"DD Mon"`; consider ISO + client
+   formatting if the ledger should sort/bucket by real dates.
+9. **Manufacturing pack depth**; **"new" P&L anomalies → findings** mutation;
+   **shadow → counterpart internal rename**; **Tour/Guide copy** still names
+   only the old three personas (`tour/steps.ts:19`, `Guide/index.tsx:25`).
 
 ## Context that isn't in the code
 
 - The founder demos to FMCG stakeholders (Americana context; seed org
   "Americana Foods (demo)", AED). FMCG is the beachhead, Healthcare second.
-- The role hierarchy + "no overlap or skip" partition + hierarchy mode was the
-  founder's direct ask this session (their words: "every role will have their
-  own set of findings, execution, Agents, Performance etc, so the roles
-  doesn't overlap or skip … on the hierarchy mode it should work to see what
-  is impacted based on the role they perform").
-- Good demo path for the 2026-07-16 work: Findings → Open (two red SLAs, two
-  escalations, entities/regions on every row) → Watching (a regressed exit
-  condition next to a tracking one, a solution in motion, a trip-wire) →
-  Closed (five loops at 100%) → open `fmcg-f-h2`'s thread (raised → decided →
-  watched → closed → assessor verdict) → Decisions (H1 2026 panel, win rate
-  61%→78%, by-entity/by-region) → Execution → Tasks (the Riyadh DC Act's four
-  tasks). The two `not_worked` rows in the ledger are the honesty beat.
-- Good demo path for the role work (2026-07-15): lens = COO → Today shows only COO items →
-  tick "+ their team" → the queue, Findings, Execution, Agents, Performance
-  and the Ledger all widen to the ops line, with role chips showing whose
-  each item is; switch lens to CFO to show the finance line never bleeds in.
+  The org they described (Protein / G&I / F&V / Ambient + extended teams) is
+  their real structure — the tree is not hypothetical.
+- **Good demo path for this session's work**: Business → The business (read
+  the narrative + act guide) → Sales by SKU family → Frozen chicken
+  "drifting" → finding → thread shows 4h SLA → "Not mine — escalate ↑" twice
+  → lens Group CEO (role scope) shows it landed at the top → lens CFO + team
+  (amber ⋯ pills in the banner) → open the Protein trade-spend finding →
+  escalate → flip lens COO — Protein ↔ CFO to show one drift held by two
+  chains. The palm-oil finding (Procurement) is the horizontal-function
+  beat; HR attrition ties the people number to the fill-rate hero.
+- Earlier demo paths (H1 lifecycle, role lens) are in the 2026-07-16-earlier
+  and 2026-07-15 sections' original write-ups if needed.
 - Repositioning rationale in merged PR #2; the v5.1 UX advisory diagnosis in
-  the 2026-07-15 morning session (13 nav destinations → 7, one count, one
-  thread per finding).
+  the 2026-07-15 morning session.
