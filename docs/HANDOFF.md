@@ -2,7 +2,7 @@
 
 ## Where things stand
 
-- **Committed and pushed; PR #4 (`v5` → `master`) is OPEN** —
+- **PR #4 (`v5` → `master`) is MERGED** (`4eb7320`, 2026-07-16) —
   https://github.com/Kumarv2509/rewive-front-end/pull/4 — three commits:
   `f645682` (mock+api: H1 history, entity/region, clock-relative seeds),
   `2c9d76a` (decisions+findings: half-year panel + entity/region surfaces),
@@ -216,8 +216,8 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-1. ~~Commit + push + PR~~ — **done**: PR #4 is open (`v5` → `master`);
-   review & merge it.
+1. ~~Commit + push + PR + merge~~ — **done**: PR #4 merged to `master`
+   (`4eb7320`, 2026-07-16).
 2. **Confirm the "breaks" report is resolved** — the user's last message said
    "lot of break are there"; diagnosis + fix are in "New this session", but
    they haven't confirmed after the hard-refresh yet. If something is still
