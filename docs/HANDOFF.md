@@ -2,14 +2,13 @@
 
 ## Where things stand
 
-- **This session's work is UNCOMMITTED on `v5`** (branch was clean at
-  `1cba44e` when it started). Modified: `mock-server/{v4data,data,v4content,app}.js`,
-  `src/api/types.ts`, `src/screens/Decisions/{index,DecisionsTable}.tsx`,
-  `src/screens/Findings/{index,Lifecycle,Detail}.tsx`; new file:
-  `src/screens/Decisions/HalfYearReview.tsx`. Build + eslint clean; verified
-  live against the mock API (curl) **and** driven headlessly in Chromium
-  (Playwright screenshots of every screen — zero console errors / failed
-  requests). Commit + push is the first natural next step.
+- **Committed and pushed; PR #4 (`v5` → `master`) is OPEN** —
+  https://github.com/Kumarv2509/rewive-front-end/pull/4 — three commits:
+  `f645682` (mock+api: H1 history, entity/region, clock-relative seeds),
+  `2c9d76a` (decisions+findings: half-year panel + entity/region surfaces),
+  `da02eb0` (this handoff). Build + eslint clean; verified live against the
+  mock API (curl) **and** driven headlessly in Chromium (Playwright
+  screenshots of every screen — zero console errors / failed requests).
 - **Processes at session end**: Vite dev on :5173 (user's own `dev:all`
   session, untouched) + a **detached** mock API on :4000 (`nohup node
   mock-server/server.js`, log at the session scratchpad's `mock-api.log`).
@@ -217,11 +216,8 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-1. **Commit this session's work** (uncommitted on `v5`, see top) — suggested
-   split: `feat(mock+api): H1 2026 lifecycle history + entity/region
-   dimension`, `feat(decisions): half-year review panel`, `fix(mock):
-   compute seed dates from the server clock`. Then push (mind the FortiGate
-   gotcha) and PR to `master`.
+1. ~~Commit + push + PR~~ — **done**: PR #4 is open (`v5` → `master`);
+   review & merge it.
 2. **Confirm the "breaks" report is resolved** — the user's last message said
    "lot of break are there"; diagnosis + fix are in "New this session", but
    they haven't confirmed after the hard-refresh yet. If something is still
