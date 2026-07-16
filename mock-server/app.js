@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import {
   currentUser,
-  personaKpiOverrides,
   dashboardSummary,
   pendingDecisions,
   pulse,
@@ -86,25 +85,10 @@ function filterByPersona(items, persona, scope) {
   return roles ? items.filter((d) => roles.has(d.persona)) : items;
 }
 
-app.get('/api/v1/dashboard/summary', (req, res) => {
-  const { persona, scope } = req.query;
-  const pack = op(req);
-  const decisionsForPersona = filterByPersona(opS(req).pending, persona, scope);
-  const overrides = persona && persona !== 'all' && pack.personaKpiOverrides ? pack.personaKpiOverrides[persona] : undefined;
-  res.json({
-    ...pack.dashboardSummary,
-    kpis: {
-      ...pack.dashboardSummary.kpis,
-      ...overrides,
-      decisionsPending: {
-        value: decisionsForPersona.length,
-        delta: persona && persona !== 'all'
-          ? { label: 'in your queue', direction: 'flat' }
-          : pack.dashboardSummary.kpis.decisionsPending.delta,
-      },
-    },
-  });
-});
+// Greeting + summary sentence only. The old kpis block (and its per-persona
+// overrides) was display-dead after v5.1 — Today computes its stats from
+// findings / approvals / decision-stats, which are role-scoped already.
+app.get('/api/v1/dashboard/summary', (req, res) => res.json(op(req).dashboardSummary));
 
 app.get('/api/v1/decisions/pending', (req, res) => res.json(filterByPersona(opS(req).pending, req.query.persona, req.query.scope)));
 
@@ -716,6 +700,31 @@ app.post('/api/v1/kpi-tickets/:id/comments', (req, res) => {
 // ---------- Solution design ----------
 const solutionDesigns = new Map();
 const agentSpecs = new Map();
+
+// Pre-seeded loop: fmcg-f-7 was dispositioned Act on 18 Jun, so its solution
+// design (and the tasks it fans out) exist from the seed, not only after a
+// live Act in this session.
+solutionDesigns.set('sol-fmcg-riyadh-otif', {
+  id: 'sol-fmcg-riyadh-otif',
+  signalId: 'fmcg-f-7',
+  signalName: 'Riyadh DC case fill sliding — key-account penalties accruing',
+  signalCategory: 'laggard',
+  status: 'drafting',
+  approach: 'Resize safety stock on the two fast movers, add a weekly velocity-to-cover check, and stand up an OTIF recovery agent scoped to the Riyadh DC.',
+  dataNeeded: 'ERP order lines; DC stock snapshots; key-account penalty notices',
+  owner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' },
+  guardrails: 'No allocation change that deprioritises a strategic account without sign-off.',
+  copiedFromLabel: null,
+  taskList: [
+    { id: 'sol-fmcg-riyadh-otif-t1', type: 'new_agent', title: 'OTIF recovery agent — Riyadh DC', owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona: 'operations_head' },
+    { id: 'sol-fmcg-riyadh-otif-t2', type: 'human_task', title: 'Resize safety stock on the two fast-moving lines', owner: 'Omar Farouk', status: 'confirmed', channel: 'app', comments: [], persona: 'operations_head' },
+    { id: 'sol-fmcg-riyadh-otif-t3', type: 'human_task', title: 'Negotiate penalty waiver with the two key accounts', owner: 'Layla Nasser', status: 'needs_review', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-fmcg-riyadh-otif-t4', type: 'existing_agent', title: 'Notification agent — weekly cover check to planning', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'operations_head' },
+  ],
+  validation: null,
+  createdAt: '2026-06-18T09:00:00Z',
+  updatedAt: '2026-06-18T09:00:00Z',
+});
 
 function makeDefaultTaskList(solutionId, signalName, persona = 'operations_head') {
   return [

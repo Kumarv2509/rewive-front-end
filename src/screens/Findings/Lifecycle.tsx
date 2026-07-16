@@ -17,7 +17,9 @@ export function ExitConditionCard({ c }: { c: ClosureKpi }) {
     <div className="card" style={{ padding: '16px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
         <Pill tone={closureTone[c.status]}>{c.status}</Pill>
-        <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>watched by {c.watchedByAgentName}</span>
+        <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
+          {c.entity ? `${c.entity}${c.region ? ` (${c.region})` : ''} · ` : ''}watched by {c.watchedByAgentName}
+        </span>
       </div>
       <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 4 }}>{c.name}</div>
       <Link to={`/operate/findings/${c.findingId}`} style={{ fontSize: 11.5, color: 'var(--accent-deep)', textDecoration: 'none' }}>

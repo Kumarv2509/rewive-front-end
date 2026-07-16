@@ -10,10 +10,12 @@ export function useCurrentUser() {
   });
 }
 
-export function useDashboardSummary(persona?: Persona | 'all', scope?: RoleScope) {
+// Greeting + summary sentence only — Today's stats are computed client-side
+// from role-scoped findings / approvals / decision-stats.
+export function useDashboardSummary() {
   return useQuery({
-    queryKey: ['dashboard', 'summary', persona, scope],
-    queryFn: async () => (await apiClient.get<DashboardSummary>('/dashboard/summary', { params: { persona, scope } })).data,
+    queryKey: ['dashboard', 'summary'],
+    queryFn: async () => (await apiClient.get<DashboardSummary>('/dashboard/summary')).data,
   });
 }
 

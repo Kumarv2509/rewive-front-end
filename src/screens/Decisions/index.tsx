@@ -3,6 +3,7 @@ import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
 import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { StatsRow } from './StatsRow';
+import { HalfYearReview } from './HalfYearReview';
 import { DecisionsTable } from './DecisionsTable';
 import { PlImpactTable } from './PlImpactTable';
 import { PlStatement } from './PlStatement';
@@ -50,6 +51,7 @@ export function DecisionsScreen() {
       {view === 'ledger' && (
         <>
           <ScopeBanner />
+          <HalfYearReview />
           <div className="filters">
             {functionFilters.map((f) => (
               <button key={f.key} className={`fchip${fn === f.key ? ' on' : ''}`} onClick={() => setFn(f.key)}>{f.label}</button>

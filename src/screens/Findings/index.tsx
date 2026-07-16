@@ -34,7 +34,8 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
         </div>
         <div className="t2">
           {finding.raisedByAgentName}
-          {streamName ? <> · {streamName}</> : null} · {finding.impactEstimate}
+          {streamName ? <> · {streamName}</> : null}
+          {finding.entity ? <> · {finding.entity}{finding.region ? ` (${finding.region})` : ''}</> : null} · {finding.impactEstimate}
         </div>
       </div>
       <div className="acts" style={{ alignItems: 'center' }}>
@@ -56,6 +57,7 @@ export function FindingsScreen() {
   const { persona, scope } = useEffectiveLens();
   const tab = (TABS.some((t) => t.key === searchParams.get('tab')) ? searchParams.get('tab') : 'open') as TabKey;
   const stream = searchParams.get('stream') ?? 'all';
+  const region = searchParams.get('region') ?? 'all';
 
   // The global lens routes here too: a sales supervisor sees sales findings,
   // Commercial finance sees returns / discounts / trade spend, the COO sees
@@ -64,21 +66,27 @@ export function FindingsScreen() {
   const { data: closures } = useClosureKpis();
   const { data: brain } = useKpiBrain();
 
-  const setParam = (key: 'tab' | 'stream', value: string) => {
+  const setParam = (key: 'tab' | 'stream' | 'region', value: string) => {
     const next = new URLSearchParams(searchParams);
-    if ((key === 'tab' && value === 'open') || (key === 'stream' && value === 'all')) next.delete(key);
+    if ((key === 'tab' && value === 'open') || ((key === 'stream' || key === 'region') && value === 'all')) next.delete(key);
     else next.set(key, value);
     setSearchParams(next, { replace: true });
   };
 
   const streamName = (key: string) => brain?.streams.find((s) => s.key === key)?.name;
 
-  const open = findings?.filter((f) => f.status === 'open') ?? [];
-  const acting = findings?.filter((f) => f.status === 'acting') ?? [];
-  const acknowledged = findings?.filter((f) => f.status === 'acknowledged') ?? [];
-  const abandoned = findings?.filter((f) => f.status === 'abandoned') ?? [];
-  const inFlight = closures?.filter((c) => c.status !== 'closed') ?? [];
-  const closedLoops = closures?.filter((c) => c.status === 'closed') ?? [];
+  // Entity/region is a client-side lens over the role-scoped data — options
+  // come from the unfiltered set so the picker never loses entries.
+  const regions = [...new Set((findings ?? []).map((f) => f.region).filter(Boolean))] as string[];
+  const scoped = findings?.filter((f) => region === 'all' || f.region === region);
+  const scopedClosures = closures?.filter((c) => region === 'all' || c.region === region);
+
+  const open = scoped?.filter((f) => f.status === 'open') ?? [];
+  const acting = scoped?.filter((f) => f.status === 'acting') ?? [];
+  const acknowledged = scoped?.filter((f) => f.status === 'acknowledged') ?? [];
+  const abandoned = scoped?.filter((f) => f.status === 'abandoned') ?? [];
+  const inFlight = scopedClosures?.filter((c) => c.status !== 'closed') ?? [];
+  const closedLoops = scopedClosures?.filter((c) => c.status === 'closed') ?? [];
 
   const tabCount: Record<TabKey, number> = {
     open: open.length,
@@ -122,12 +130,22 @@ export function FindingsScreen() {
             <option key={s.key} value={s.key}>{s.name}</option>
           ))}
         </select>
+        <select
+          value={region}
+          onChange={(e) => setParam('region', e.target.value)}
+          style={{ border: '1px solid var(--border-strong)', borderRadius: 8, padding: '6px 10px', fontSize: 12.5, fontFamily: 'inherit' }}
+        >
+          <option value="all">All regions</option>
+          {regions.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
       </div>
 
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
 
-      {tab === 'open' && findings && (
+      {tab === 'open' && scoped && (
         <>
           {open.length > 0 ? (
             <div className="card" style={{ marginBottom: 16 }} data-tour="findings-open">

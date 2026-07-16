@@ -62,6 +62,7 @@ export function FindingDetailScreen() {
         <h1 className="page" style={{ marginBottom: 0 }}>{finding.title}</h1>
       </div>
       <div className="sub" style={{ marginBottom: 20 }}>
+        {finding.entity && <>{finding.entity}{finding.region ? ` (${finding.region})` : ''} · </>}
         {finding.impactEstimate}
         {finding.escalationLevel > 0 && <> {' '}<Pill tone="red">escalated ×{finding.escalationLevel}</Pill></>}
         {isOpen
