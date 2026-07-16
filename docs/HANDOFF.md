@@ -1,33 +1,111 @@
-# Handoff — role-scoped data + hierarchy mode; every dead-end section wired (2026-07-15, later session)
+# Handoff — H1 2026 lifecycle history, entities & regions, self-refreshing demo clock (2026-07-16)
 
 ## Where things stand
 
-- **PR #3 (`v5` → `master`) is MERGED** (`17ea4e4`, 2026-07-15) —
-  https://github.com/Kumarv2509/rewive-front-end/pull/3 — `master` now carries
-  everything, including this session's commits (pushed after a network change;
-  the FortiGate MITM had blocked the first attempts — see below):
-  - `090594b` — **fix(v5.1): wire every dead-end section end-to-end**.
-  - `57148f8` — **feat(v5.1): role-scoped data everywhere + hierarchy mode**
-    (the founder's ask: "every role will have their own set … no overlap or
-    skip … hierarchy mode to see what is impacted").
-- Earlier v5 commits (`f4ac86f` loop speed, `51491f0` tour, `cdd2901` landing,
-  `4b7462b` v5.1 redesign, `7964225` P&L workspace) are already on origin.
-- **Push gotcha (intermittent, ACTIVE again at session end): one of this
-  machine's networks MITMs GitHub HTTPS.** `git push` fails with "SSL
-  certificate problem" — a FortiGate firewall re-signs github.com (issuer
-  `CN=FG201FT922921744, O=Fortinet`); its CA is not on this machine. Fix:
-  change network / drop the VPN, or register an SSH key, or get the FortiGate
-  CA from IT and set repo-local `git config http.sslCAInfo`. Do **not**
-  disable `http.sslVerify`. (`gh` CLI auth itself works — `rianpraveen`.)
-- Build and lint are clean; no test suite exists. Everything below was
-  verified live against the mock API (curl) — not just typechecked.
-- Local dev: `npm run dev:all` (Vite :5173 + mock API :4000). A fresh mock
-  server was left running on :4000 with clean seed state. Watch for stale
-  mock-server processes holding :4000 (`lsof -ti :4000`, kill before
-  restarting). The mock server has **no watch mode**: seed edits in
-  `mock-server/` need a restart.
+- **This session's work is UNCOMMITTED on `v5`** (branch was clean at
+  `1cba44e` when it started). Modified: `mock-server/{v4data,data,v4content,app}.js`,
+  `src/api/types.ts`, `src/screens/Decisions/{index,DecisionsTable}.tsx`,
+  `src/screens/Findings/{index,Lifecycle,Detail}.tsx`; new file:
+  `src/screens/Decisions/HalfYearReview.tsx`. Build + eslint clean; verified
+  live against the mock API (curl) **and** driven headlessly in Chromium
+  (Playwright screenshots of every screen — zero console errors / failed
+  requests). Commit + push is the first natural next step.
+- **Processes at session end**: Vite dev on :5173 (user's own `dev:all`
+  session, untouched) + a **detached** mock API on :4000 (`nohup node
+  mock-server/server.js`, log at the session scratchpad's `mock-api.log`).
+  It was launched detached because harness-managed background tasks kept
+  getting reaped between turns, taking the API down (the user's tab then
+  showed error states everywhere). To take over: `lsof -ti:4000 | xargs
+  kill`, then `npm run mock-server`. The mock server has **no watch mode**:
+  seed edits in `mock-server/` need a restart.
+- **Push gotcha (intermittent, from 2026-07-15): one of this machine's
+  networks MITMs GitHub HTTPS.** `git push` fails with "SSL certificate
+  problem" — a FortiGate firewall re-signs github.com (issuer
+  `CN=FG201FT922921744, O=Fortinet`). Fix: change network / drop the VPN, or
+  use an SSH key, or set repo-local `http.sslCAInfo`. Do **not** disable
+  `http.sslVerify`. (`gh` CLI auth works — `rianpraveen`.)
+- PR #3 (`v5` → `master`) merged 2026-07-15 (`17ea4e4`); `master` carries
+  everything up to `1cba44e`.
 
-## New this session (2026-07-15, later session)
+## New this session (2026-07-16)
+
+The founder's ask: *"mimic the full lifecycle and all the alerts like I am in
+Jun 2026, give me half-year stats and relevant tasks; the business dealt in
+different entities and regions."*
+
+### Half-year (Jan–Jun 2026) lifecycle backfill — `mock-server/v4data.js`
+
+- **FMCG findings: 6 → 16**, now covering every lifecycle state at once:
+  5 open (two SLA-at-risk ≤8h; `fmcg-f-3` escalated; `fmcg-f-9` is an
+  acknowledged-in-May finding whose trip-wire fired and came back escalated),
+  1 acting (`fmcg-f-7`, Riyadh DC case fill — has a live solution design),
+  1 acknowledged, 2 accepted (one with a **regressed** exit condition,
+  `fmcg-f-h3` KSA distributor DSO — assessor verdict `not_worked`),
+  5 closed with `assessorVerdict` populated (first seeds ever to use it),
+  2 abandoned (one historical, with a counterpart-tuning reason).
+- **Closure KPIs: FMCG 2 → 7** (5 closed across Feb–Jun, 1 tracking,
+  1 regressed); healthcare 1 → 3. `manufacturing` still `[]`.
+- Healthcare got 2 historical closed loops (`hc-f-0` Feb denial episode,
+  `hc-f-h1` Lakeside OR utilization); manufacturing only got entity tags.
+- Referential integrity holds both ways (`finding.closureKpiId` ↔
+  `closure.findingId`; ledger `findingId` → real finding) — there's a check
+  snippet in this session's transcript if you touch the seeds.
+
+### Entities & regions — a new dimension
+
+- `Finding`, `ClosureKpi`, `DecisionLedgerItem` gained optional
+  `entity`/`region` (`src/api/types.ts`); every seed item of those types is
+  tagged. FMCG: UAE Trading Co. / KSA Manufacturing Co. / Egypt Foods
+  S.A.E. / Gulf Distribution Co. × UAE / KSA / Egypt / Kuwait & GCC.
+  Healthcare: Metro General Hospital / Northside Clinics / Lakeside Surgical
+  Center × Northeast / Midwest / South. Manufacturing: Plant 1 — Jebel Ali
+  (UAE) / Plant 2 — Dammam (KSA).
+- UI: entity (region) shows on finding rows, the thread header, exit-condition
+  cards and under ledger subtitles; Findings has an **All regions** select
+  (client-side filter, options derived from data; `?region=` URL param).
+  Runs/tasks/agents do **not** carry the dimension (deliberate scope cut).
+
+### H1 stats + HalfYearReview panel
+
+- `DecisionStats.halfYear` (new types `HalfYearReview/-Month/-BreakdownRow`):
+  monthly raised/decided/closed + win-rate, plus by-entity and by-region
+  rollups. Seeded for all three industries (`data.js` for FMCG,
+  `v4content.js` for HC/Mfg). `openNow` counts match the actual open seeds.
+- `src/screens/Decisions/HalfYearReview.tsx` renders it at the top of the
+  Ledger tab: grouped monthly bars + a separate win-rate line (no dual axis),
+  two breakdown tables. Series colors `#7C7CFF/#0D9488/#16A34A` were run
+  through the dataviz palette validator against the dark surface (all checks
+  pass); win-rate line is amber. Hidden entirely if `halfYear` is absent.
+- FMCG ledger: 7 → 15 rows spanning 09 Jan–18 Jun, each new row linked to its
+  finding with an assessor note; includes decisions that *failed* (`led4`
+  terms extension → regressed; `led8` acknowledge whose trip-wire fired).
+
+### Tasks
+
+- `app.js` pre-seeds `solutionDesigns` with `sol-fmcg-riyadh-otif` (the Act
+  behind `fmcg-f-7`), so `/api/v1/tasks` has 4 in-flight tasks from the seed
+  (mixed statuses/personas) instead of only after a live Act.
+
+### The demo clock is now self-refreshing (the "breaks" fix)
+
+- The user reported "a lot of breaks". A full-screen sweep found **zero**
+  errors; the real issues were (a) the API having been down overnight (see
+  Processes above) and (b) **seed-date rot**: dates were pinned to
+  2026-06-30, so on 2026-07-16 every counterpart read "last raised 16d ago"
+  next to "14h left on SLA".
+- Fix: **all 87 ISO timestamps in `v4data.js` are now computed from the
+  server clock at boot** — `hoursAgo(n)` / `daysAgo(n)` helpers at the top of
+  the file; live items land hours ago, H1 history lands ~2 weeks–6 months
+  back. Evidence strings that named absolute dates were reworded to relative
+  ("fired this week"). **Convention going forward: never hardcode an ISO
+  date in `v4data.js` seeds — use the helpers.** (Ledger `date` display
+  strings like "12 May" and `data.js`/`v4content.js` relative strings like
+  "2h ago" are still static — acceptable for history, but the same rot risk
+  applies if "now"-adjacent.)
+- Not re-verified by the user yet — they were asked to hard-refresh and
+  report which screen if anything still looks broken.
+
+## Previous session (2026-07-15, later session)
 
 ### Role-scoped data + hierarchy mode (`57148f8`) — the big one
 
@@ -139,26 +217,41 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-1. ~~Review & merge PR #3~~ — **done** (`17ea4e4`). Future work can branch
-   from `master` or continue on `v5`.
-2. **Old-persona leftovers**: the display-dead `dashboardSummary.kpis` block +
+1. **Commit this session's work** (uncommitted on `v5`, see top) — suggested
+   split: `feat(mock+api): H1 2026 lifecycle history + entity/region
+   dimension`, `feat(decisions): half-year review panel`, `fix(mock):
+   compute seed dates from the server clock`. Then push (mind the FortiGate
+   gotcha) and PR to `master`.
+2. **Confirm the "breaks" report is resolved** — the user's last message said
+   "lot of break are there"; diagnosis + fix are in "New this session", but
+   they haven't confirmed after the hard-refresh yet. If something is still
+   broken, get the screen name / a screenshot first.
+3. **Entity/region breadth** — the dimension exists only on findings,
+   closures and ledger rows. Candidates: runs/tasks/agents tagging, an
+   entity filter on Decisions, a region/entity lens in global chrome
+   (mirroring the persona lens), and P&L dimA/dimB alignment.
+4. **Ledger `date` strings** are static `"DD Mon"` with no year while
+   findings are now clock-relative — fine for H1 history, but consider ISO +
+   client formatting if the ledger should sort or bucket by real dates
+   (the `halfYear` block is hand-seeded, not derived).
+5. **Old-persona leftovers**: the display-dead `dashboardSummary.kpis` block +
    `personaKpiOverrides` were **dropped** from the contract, seeds and server —
    `GET /dashboard/summary` now returns only `{ greetingName, summarySentence }`
    (Today's stats come from findings/approvals/decision-stats, role-scoped).
    Tour/Guide copy still names only the old three personas
    (`tour/steps.ts:19`, `Guide/index.tsx:25`).
-3. **Thin role slices** (see judgment calls above) — decide whether Sales
+6. **Thin role slices** (see judgment calls above) — decide whether Sales
    supervisor / Store manager need more seeded content per industry.
-4. **`docs/BLUEPRINT.md` is stale** — still describes the pre-v5.1 three-area
+7. **`docs/BLUEPRINT.md` is stale** — still describes the pre-v5.1 three-area
    nav (and `public/story.html`/`demo.html` may reference retired names).
-5. **P&L discoverability** — the FP&A workspace is the second tab on
+8. **P&L discoverability** — the FP&A workspace is the second tab on
    Decisions; candidates: bookmarkable route (`?view=pl`), P&L card on Today
    under the CFO / Commercial finance lens.
-6. **Manufacturing pack depth** — to re-enable the third industry (also:
+9. **Manufacturing pack depth** — to re-enable the third industry (also:
    `closureKpisSeed.manufacturing` is empty → Watching tab empty state).
-7. **"New" anomalies → findings**: P&L anomalies with status `new` are
-   display-only; a "raise as finding" mutation would close that loop.
-8. **Optional internal rename** — shadow → counterpart naming.
+10. **"New" anomalies → findings**: P&L anomalies with status `new` are
+    display-only; a "raise as finding" mutation would close that loop.
+11. **Optional internal rename** — shadow → counterpart naming.
 
 ## Context that isn't in the code
 
@@ -169,7 +262,14 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
   own set of findings, execution, Agents, Performance etc, so the roles
   doesn't overlap or skip … on the hierarchy mode it should work to see what
   is impacted based on the role they perform").
-- Good demo path for the new work: lens = COO → Today shows only COO items →
+- Good demo path for the 2026-07-16 work: Findings → Open (two red SLAs, two
+  escalations, entities/regions on every row) → Watching (a regressed exit
+  condition next to a tracking one, a solution in motion, a trip-wire) →
+  Closed (five loops at 100%) → open `fmcg-f-h2`'s thread (raised → decided →
+  watched → closed → assessor verdict) → Decisions (H1 2026 panel, win rate
+  61%→78%, by-entity/by-region) → Execution → Tasks (the Riyadh DC Act's four
+  tasks). The two `not_worked` rows in the ledger are the honesty beat.
+- Good demo path for the role work (2026-07-15): lens = COO → Today shows only COO items →
   tick "+ their team" → the queue, Findings, Execution, Agents, Performance
   and the Ledger all widen to the ops line, with role chips showing whose
   each item is; switch lens to CFO to show the finance line never bleeds in.
