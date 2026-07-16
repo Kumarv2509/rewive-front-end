@@ -88,6 +88,7 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
     <div className="brain-canvas card" style={{ height: 640, position: 'relative', overflow: 'hidden' }}>
       <div className="brain-legend">
         <span><i className="lg-dot" style={{ background: 'var(--teal)' }} /> Intent</span>
+        <span><i className="lg-dot" style={{ background: 'var(--amber)' }} /> P&amp;L line</span>
         <span><i className="lg-dot" style={{ background: 'var(--accent)' }} /> Mandate</span>
         <span><i className="lg-dot" style={{ background: 'var(--ink-3)' }} /> Sense</span>
         <span style={{ color: 'var(--ink-3)' }}>click any node to trace its impact path</span>

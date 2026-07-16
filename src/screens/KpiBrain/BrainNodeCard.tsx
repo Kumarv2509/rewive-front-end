@@ -2,8 +2,8 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { BrainHealth, BrainNodeKind } from '../../api/types';
 import type { BrainNodeData } from './layout';
 
-const kindLabel: Record<BrainNodeKind, string> = { target: 'Intent', stream_kpi: 'Mandate', driver: 'Sense' };
-const kindAccent: Record<BrainNodeKind, string> = { target: 'var(--teal)', stream_kpi: 'var(--accent)', driver: 'var(--ink-3)' };
+const kindLabel: Record<BrainNodeKind, string> = { target: 'Intent', pl_line: 'P&L line', stream_kpi: 'Mandate', driver: 'Sense' };
+const kindAccent: Record<BrainNodeKind, string> = { target: 'var(--teal)', pl_line: 'var(--amber)', stream_kpi: 'var(--accent)', driver: 'var(--ink-3)' };
 const healthColor: Record<BrainHealth, string> = { on_track: 'var(--green)', at_risk: 'var(--amber)', off_track: 'var(--red)' };
 const healthLabel: Record<BrainHealth, string> = { on_track: 'on track', at_risk: 'at risk', off_track: 'off track' };
 

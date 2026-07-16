@@ -39,6 +39,19 @@ const fmcgNodes = [
   { id: 'fmcg-t-share', kind: 'target', name: 'Market share', streamKey: null, definition: 'Value share in measured retail channels.', currentValue: '21.4%', targetValue: '22.5%', trend: 'up', health: 'on_track', status: 'connected', dataSources: ['Nielsen retail panel'] },
   { id: 'fmcg-t-cash', kind: 'target', name: 'Cash conversion cycle', streamKey: null, definition: 'Days from cash out (materials) to cash in (collections).', currentValue: '46 days', targetValue: '38 days', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['ERP working capital'] },
 
+  // The DuPont tier: the P&L, line by line (values mirror pldata.js, Q3 QTD,
+  // AED M). Every mandate rolls into one of these; every line rolls into an
+  // intent — so drift is traceable number → line → intent in one glance.
+  { id: 'fmcg-pl-grossrev', kind: 'pl_line', name: 'Gross revenue', streamKey: null, definition: 'Invoiced sales before trade spend and returns. Fed by availability, distribution and NPD mandates.', currentValue: 'AED 128.4M', targetValue: 'AED 132.0M budget', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['ERP P&L'] },
+  { id: 'fmcg-pl-trade', kind: 'pl_line', name: 'Trade spend & discounts', streamKey: null, definition: 'All trade investment and price support. The most-watched commercial line — ROI mandates live here.', currentValue: 'AED 18.9M', targetValue: 'AED 17.2M budget', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Trade-spend ledger'] },
+  { id: 'fmcg-pl-returns', kind: 'pl_line', name: 'Returns & refusals', streamKey: null, definition: 'Stock returned or refused at delivery. A sell-in vs sell-out gap shows up here a quarter later.', currentValue: 'AED 2.6M', targetValue: 'AED 1.9M budget', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['ERP P&L'] },
+  { id: 'fmcg-pl-netrev', kind: 'pl_line', name: 'Net revenue', streamKey: null, definition: 'Gross revenue minus trade spend and returns — the top of the margin cascade.', currentValue: 'AED 106.9M', targetValue: 'AED 112.9M budget', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['ERP P&L'] },
+  { id: 'fmcg-pl-cogs', kind: 'pl_line', name: 'COGS — materials & conversion', streamKey: null, definition: 'Materials, conversion, waste and obsolescence. Where the plant mandates hit the money.', currentValue: 'AED 68.3M', targetValue: 'AED 67.2M budget', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['ERP P&L'] },
+  { id: 'fmcg-pl-gm', kind: 'pl_line', name: 'Gross margin (AED)', streamKey: null, definition: 'Net revenue minus COGS — the line the CFO and every division COO hold together.', currentValue: 'AED 38.6M', targetValue: 'AED 45.7M budget', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['ERP P&L'] },
+  { id: 'fmcg-pl-logistics', kind: 'pl_line', name: 'Logistics & distribution', streamKey: null, definition: 'Warehousing and transport. Cost-per-case and utilization mandates roll up here.', currentValue: 'AED 9.8M', targetValue: 'AED 9.2M budget', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['TMS freight invoices'] },
+  { id: 'fmcg-pl-overheads', kind: 'pl_line', name: 'Marketing & overheads', streamKey: null, definition: 'Media, NPD and fixed overheads. Campaign ROI mandates keep this line honest.', currentValue: 'AED 12.4M', targetValue: 'AED 12.6M budget', trend: 'flat', health: 'on_track', status: 'connected', dataSources: ['ERP P&L', 'Media agency reports'] },
+  { id: 'fmcg-pl-ebitda', kind: 'pl_line', name: 'EBITDA (AED)', streamKey: null, definition: 'Gross margin minus logistics and overheads — the bottom of the cascade, feeding the margin intent.', currentValue: 'AED 16.4M', targetValue: 'AED 23.9M budget', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['ERP P&L'] },
+
   // Commercial & sales
   { id: 'fmcg-k-osa', kind: 'stream_kpi', name: 'On-shelf availability', streamKey: 'commercial', definition: 'Share of audited store-SKU combinations in stock and on shelf.', currentValue: '93.1%', targetValue: '96%', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['Modern trade POS API', 'Store audit app'] },
   { id: 'fmcg-k-dist', kind: 'stream_kpi', name: 'Weighted distribution', streamKey: 'commercial', definition: 'Distribution weighted by outlet turnover.', currentValue: '78%', targetValue: '82%', trend: 'up', health: 'on_track', status: 'connected', dataSources: ['Distributor sell-through feed'] },
@@ -111,25 +124,41 @@ const fmcgEdges = [
   { id: 'fmcg-e-13', source: 'fmcg-k-cho', target: 'fmcg-k-oee', weight: 'moderate', status: 'connected' },
   { id: 'fmcg-e-14', source: 'fmcg-k-waste', target: 'fmcg-k-cogsvar', weight: 'strong', status: 'connected' },
   { id: 'fmcg-e-15', source: 'fmcg-k-oee', target: 'fmcg-k-cogsvar', weight: 'moderate', status: 'connected' },
-  { id: 'fmcg-e-16', source: 'fmcg-k-cpc', target: 'fmcg-k-cogsvar', weight: 'moderate', status: 'connected' },
-  { id: 'fmcg-e-17', source: 'fmcg-k-obs', target: 'fmcg-k-cogsvar', weight: 'moderate', status: 'connected' },
-  { id: 'fmcg-e-18', source: 'fmcg-k-cogsvar', target: 'fmcg-k-gm', weight: 'strong', status: 'connected' },
-  { id: 'fmcg-e-19', source: 'fmcg-k-tradepct', target: 'fmcg-k-gm', weight: 'moderate', status: 'connected' },
+  { id: 'fmcg-e-16', source: 'fmcg-k-cpc', target: 'fmcg-pl-logistics', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-17', source: 'fmcg-k-obs', target: 'fmcg-pl-cogs', weight: 'moderate', status: 'connected' },
+  { id: 'fmcg-e-18', source: 'fmcg-k-cogsvar', target: 'fmcg-pl-cogs', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-19', source: 'fmcg-k-tradepct', target: 'fmcg-pl-trade', weight: 'strong', status: 'connected' },
   { id: 'fmcg-e-20', source: 'fmcg-k-cold', target: 'fmcg-k-ppm', weight: 'strong', status: 'connected', rationale: 'Excursions surface as quality complaints 2-4 weeks later.' },
   { id: 'fmcg-e-21', source: 'fmcg-k-attr', target: 'fmcg-k-oee', weight: 'weak', status: 'connected' },
   { id: 'fmcg-e-22', source: 'fmcg-k-invdays', target: 'fmcg-k-wcd', weight: 'strong', status: 'connected' },
 
-  // stream KPIs → targets
-  { id: 'fmcg-e-23', source: 'fmcg-k-osa', target: 'fmcg-t-rev', weight: 'strong', status: 'connected' },
+  // mandates → P&L lines (the DuPont wiring: every mandate hits a line)
+  { id: 'fmcg-e-23', source: 'fmcg-k-osa', target: 'fmcg-pl-grossrev', weight: 'strong', status: 'connected', rationale: 'Empty shelves are unsold cases — availability converts directly to invoiced sales.' },
   { id: 'fmcg-e-24', source: 'fmcg-k-osa', target: 'fmcg-t-share', weight: 'moderate', status: 'connected' },
   { id: 'fmcg-e-25', source: 'fmcg-k-dist', target: 'fmcg-t-share', weight: 'strong', status: 'connected' },
-  { id: 'fmcg-e-26', source: 'fmcg-k-sellgap', target: 'fmcg-t-cash', weight: 'moderate', status: 'connected' },
-  { id: 'fmcg-e-27', source: 'fmcg-k-troi', target: 'fmcg-t-rev', weight: 'moderate', status: 'connected' },
-  { id: 'fmcg-e-28', source: 'fmcg-k-gm', target: 'fmcg-t-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-26', source: 'fmcg-k-sellgap', target: 'fmcg-pl-returns', weight: 'moderate', status: 'connected', rationale: 'Channel stuffing comes back as returns and refusals a quarter later.' },
+  { id: 'fmcg-e-26b', source: 'fmcg-k-sellgap', target: 'fmcg-t-cash', weight: 'moderate', status: 'connected' },
+  { id: 'fmcg-e-27', source: 'fmcg-k-troi', target: 'fmcg-pl-trade', weight: 'strong', status: 'connected', rationale: 'Low-ROI promotions inflate the trade line without moving volume.' },
+  { id: 'fmcg-e-28', source: 'fmcg-k-gm', target: 'fmcg-pl-gm', weight: 'strong', status: 'connected' },
   { id: 'fmcg-e-29', source: 'fmcg-k-wcd', target: 'fmcg-t-cash', weight: 'strong', status: 'connected' },
   { id: 'fmcg-e-30', source: 'fmcg-k-ppm', target: 'fmcg-t-share', weight: 'weak', status: 'connected' },
-  { id: 'fmcg-e-31', source: 'fmcg-k-npd', target: 'fmcg-t-rev', weight: 'moderate', status: 'connected' },
-  { id: 'fmcg-e-32', source: 'fmcg-k-croi', target: 'fmcg-t-rev', weight: 'weak', status: 'connected' },
+  { id: 'fmcg-e-31', source: 'fmcg-k-npd', target: 'fmcg-pl-grossrev', weight: 'moderate', status: 'connected' },
+  { id: 'fmcg-e-32', source: 'fmcg-k-croi', target: 'fmcg-pl-overheads', weight: 'moderate', status: 'connected' },
+  { id: 'fmcg-e-33', source: 'fmcg-k-fill', target: 'fmcg-pl-grossrev', weight: 'moderate', status: 'connected', rationale: 'Unfilled orders are revenue that never invoices.' },
+
+  // the P&L cascade itself (statement math, as edges)
+  { id: 'fmcg-e-pl1', source: 'fmcg-pl-grossrev', target: 'fmcg-pl-netrev', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-pl2', source: 'fmcg-pl-trade', target: 'fmcg-pl-netrev', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-pl3', source: 'fmcg-pl-returns', target: 'fmcg-pl-netrev', weight: 'moderate', status: 'connected' },
+  { id: 'fmcg-e-pl4', source: 'fmcg-pl-netrev', target: 'fmcg-pl-gm', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-pl5', source: 'fmcg-pl-cogs', target: 'fmcg-pl-gm', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-pl6', source: 'fmcg-pl-gm', target: 'fmcg-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-pl7', source: 'fmcg-pl-logistics', target: 'fmcg-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-pl8', source: 'fmcg-pl-overheads', target: 'fmcg-pl-ebitda', weight: 'moderate', status: 'connected' },
+
+  // P&L lines → intents (the cascade tops out at the org's targets)
+  { id: 'fmcg-e-pl9', source: 'fmcg-pl-grossrev', target: 'fmcg-t-rev', weight: 'strong', status: 'connected' },
+  { id: 'fmcg-e-pl10', source: 'fmcg-pl-ebitda', target: 'fmcg-t-ebitda', weight: 'strong', status: 'connected' },
 
   // agent-proposed edges awaiting accept / decline
   { id: 'fmcg-e-p1', source: 'fmcg-k-cho', target: 'fmcg-k-yield', weight: 'moderate', status: 'proposed', proposedBy: 'Manufacturing counterpart', rationale: 'Yield dips in the first hour after changeovers correlate 0.71 with changeover duration over the last 12 weeks.' },
@@ -325,7 +354,7 @@ export const shadowOrgs = {
       // Division commercial finance: solid line to the division COO, dotted to the CFO.
       { id: 'fmcg-sa-protein-commfin', persona: 'protein_commercial_finance', name: 'Commercial finance counterpart · Protein', streamKey: 'finance', humanOwner: { name: 'Farah Al Rashid', initials: 'FR', avatarBg: '#BE185D', role: 'Commercial finance lead — Protein' }, watchesNodeIds: ['fmcg-k-tradepct', 'fmcg-k-troi'], openFindings: 1, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(5), reportsToAgentId: 'fmcg-sa-chief' },
       // Group functions: FP&A consolidates the divisions; Procurement is horizontal.
-      { id: 'fmcg-sa-fpa', persona: 'fpa', name: 'FP&A counterpart', streamKey: 'finance', humanOwner: { name: 'Meera Krishnan', initials: 'MK', avatarBg: '#6D28D9', role: 'Group FP&A manager' }, watchesNodeIds: ['fmcg-k-gm', 'fmcg-k-cogsvar'], openFindings: 1, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: hoursAgo(26), reportsToAgentId: 'fmcg-sa-chief' },
+      { id: 'fmcg-sa-fpa', persona: 'fpa', name: 'FP&A counterpart', streamKey: 'finance', humanOwner: { name: 'Meera Krishnan', initials: 'MK', avatarBg: '#6D28D9', role: 'Group FP&A manager' }, watchesNodeIds: ['fmcg-pl-netrev', 'fmcg-pl-gm', 'fmcg-pl-ebitda', 'fmcg-k-gm', 'fmcg-k-cogsvar'], openFindings: 1, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: hoursAgo(26), reportsToAgentId: 'fmcg-sa-chief' },
       { id: 'fmcg-sa-procurement', persona: 'procurement', name: 'Procurement counterpart', streamKey: 'finance', humanOwner: { name: 'Yusuf Al Hammadi', initials: 'YA', avatarBg: '#0F766E', role: 'Group procurement director' }, watchesNodeIds: ['fmcg-k-cogsvar'], openFindings: 1, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(15), reportsToAgentId: 'fmcg-sa-chief' },
       // Extended functions: horizontal counterparts under the Group CEO.
       { id: 'fmcg-sa-audit', persona: 'audit', name: 'Audit counterpart', streamKey: 'finance', humanOwner: { name: 'Leena Thomas', initials: 'LT', avatarBg: '#334155', role: 'Head of internal audit' }, watchesNodeIds: ['fmcg-k-audit', 'fmcg-k-gm'], openFindings: 1, slaBreaches: 0, temperament: 20, health: 'healthy', lastFindingAt: hoursAgo(31), reportsToAgentId: 'fmcg-sa-chief' },

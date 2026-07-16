@@ -3,7 +3,7 @@ import { useUpdateBrainNode } from '../../api/shadowOrg';
 import { useToast } from '../../components/shared/Toast';
 import type { BrainNode, StreamDef } from '../../api/types';
 
-const kindNoun = { target: 'intent', stream_kpi: 'mandate', driver: 'sense' } as const;
+const kindNoun = { target: 'intent', pl_line: 'P&L line', stream_kpi: 'mandate', driver: 'sense' } as const;
 
 export function NodeEditor({ node, streams, onClose }: { node: BrainNode; streams: StreamDef[]; onClose: () => void }) {
   const update = useUpdateBrainNode();

@@ -955,7 +955,11 @@ export interface IndustryOption {
 }
 
 // ---------- KPI brain (graph: targets ← stream KPIs ← drivers) ----------
-export type BrainNodeKind = 'target' | 'stream_kpi' | 'driver';
+// The DuPont cascade, top to bottom: intent (target) ← P&L line ← mandate
+// (stream KPI) ← sense (driver). P&L lines are the financial tier that makes
+// the decomposition legible — every mandate rolls into a line, every line
+// into an intent.
+export type BrainNodeKind = 'target' | 'pl_line' | 'stream_kpi' | 'driver';
 export type BrainNodeStatus = 'connected' | 'proposed' | 'needs_data' | 'declined';
 export type BrainHealth = 'on_track' | 'at_risk' | 'off_track';
 export type BrainEdgeWeight = 'strong' | 'moderate' | 'weak';
