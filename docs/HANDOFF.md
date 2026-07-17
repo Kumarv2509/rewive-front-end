@@ -1,13 +1,17 @@
-# Handoff — the founder's org tree end-to-end + Business base-data section (2026-07-16, latest session)
+# Handoff — org tree, Business base data, holistic seeds, DuPont Foundation (2026-07-16/17, latest session)
 
 ## Where things stand
 
-- **`v5` is 5 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
+- **`v5` is 9 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
   1. `e0e365e` — **paper-ledger redesign** (parallel session, documented below).
-  2. `53257e4` — **org tree + commercial-finance dotted line** (this session, documented below — supersedes the second-hand description the previous handoff had for it).
+  2. `53257e4` — **org tree + commercial-finance dotted line** (this session, part 1 — supersedes the second-hand description the previous handoff had for it).
   3. `a3da560` — the previous handoff commit.
-  4. `cdba393` — **Business base-data section + roped findings** (this session, documented below).
-  5. this handoff commit.
+  4. `cdba393` — **Business base-data section + roped findings** (part 2).
+  5. `ec5d3ac` — mid-session handoff commit.
+  6. `6d3181f` — **holistic seeds: lifecycle-diverse findings across every role + business fact sections** (part 3).
+  7. `ce02dec` — **DuPont cascade: full P&L tier in the FMCG Operating Picture** (part 4).
+  8. `7885692` — **healthcare P&L tier** (part 4, seeds only).
+  9. this handoff commit.
 - **Push is blocked on exactly one founder action.** This network's FortiGate
   MITMs GitHub HTTPS and its CA is in no local trust store, so git, curl
   **and `gh` all fail TLS** (don't fix by disabling verification; memory
@@ -163,6 +167,67 @@ escalation tests (restart = reset; escalations are in-memory).
 - The browser-pane `scroll` action intermittently times out on this app;
   `read_page` refs + `scrollIntoView` via the JS tool worked around it
   (verification-only).
+
+## This session, part 3 (`6d3181f`): the holistic view
+
+The founder's ask: *"i want to have more findings and other facts so it is
+holistic view."* Two moves:
+
+- **Lifecycle depth, not just volume.** 11 more findings chosen so every
+  branch has lived the whole loop: open ones for the empty roles
+  (`gi_commercial_finance` rice-margin erosion, `protein_analysts` /
+  `ambient_analysts` model-insight findings, an Egypt sourcing call routed
+  to `coo_fnv`, a **`group_ceo` portfolio-mix finding only the consolidation
+  can see**), two accepted-and-watching with tracking exit conditions
+  (F&V price overrides 55%, sauce-line changeover 40%), one acknowledged on
+  a trip-wire (pre-pack summer capacity re-alerts at 92% utilization), and
+  three closed with assessor verdicts (Ramadan baseline double-count,
+  noodle-die scrap, packaging-board consolidation — the horizontal-win
+  story). **FMCG now: 42 findings — 25 open / 4 watching / 2 acknowledged /
+  8 closed / 2 abandoned / 1 acting; 12 exit conditions (3 tracking,
+  8 closed, 1 regressed).** Matching ledger rows; finding ↔ closure ↔
+  ledger integrity verified by script (snippet in this session's
+  transcript).
+- **"The facts behind the mandates"** on the Business overview: four fact
+  cards — market position (21.4% share, #1 frozen poultry, named
+  competitors, private label), seasonality calendar (Ramadan build, summer
+  shrink, quarter-close load-in, Q4 tender lock-in), footprint & people
+  (6 plants / 9 DCs / 4,800 heads), cost structure (COGS 62%, trade 14.8%,
+  WC 52 days) — each fact pointing at the live finding watching it.
+  `factSections` is optional on `BusinessOverview`; healthcare has a light
+  version; the rice SKU row now ropes the margin finding.
+
+## This session, part 4 (`ce02dec` + `7885692`): the DuPont Foundation
+
+The founder's ask: *"elaborate the foundation with full P&L list and all the
+relevant mandate and Senses … make it more like a du pont so it clear."*
+
+- **New `pl_line` node kind** (amber) in `BrainNodeKind` — the Operating
+  Picture now reads top-down as a DuPont tree: **intent ← P&L line ←
+  mandate ← sense**. `layout.ts` inserts the P&L tier as a row between the
+  intent row and the stream columns, in statement order; industries without
+  pl_line nodes keep the old spacing (manufacturing untouched).
+- **FMCG**: 9 P&L nodes seeded from `pldata.js` (gross revenue → trade →
+  returns → net revenue → COGS → gross margin → logistics → overheads →
+  EBITDA, actual vs budget + health). Mandate→target edges rewired through
+  their lines (OSA/fill/NPD → gross revenue; trade ROI/trade% → trade;
+  sell-gap → returns; COGS variance/obsolescence → COGS; cost-per-case →
+  logistics; campaign ROI → overheads), and **the statement math is itself
+  edges** (gross − trade − returns → net rev → GM → EBITDA → margin
+  intent). Non-P&L intents (share, cash) keep direct mandate edges.
+- **Healthcare** (`7885692`, seeds only): 5 lines — net patient revenue,
+  denials & write-offs, supply & pharmacy, labor & premium pay, EBITDA —
+  with beds/OR→revenue, denial/clean-claim→denials, drug-spend/generic→
+  supply, agency/labor/ALOS→labor, all → EBITDA → net-margin intent.
+  Edge rationales carry the causal copy ("ALOS drift holds beds and
+  converts to premium pay").
+- Kind-map consumers updated: `BrainNodeCard`, `NodeEditor`, canvas legend,
+  **`Findings/ImpactPath.tsx`** (P&L steps render amber), Add-a-mandate can
+  feed a P&L line. FP&A counterpart watches net revenue/GM/EBITDA (FMCG);
+  revenue-cycle and finance counterparts watch their lines (healthcare).
+  Both verified in the browser; graph + watch-list integrity by script.
+- **Keep-in-sync note**: P&L node values mirror `pldata.js` by hand — if
+  the statement seeds change, update the pl_line nodes (or derive them).
 
 ## Previous session (2026-07-16, later): the paper-ledger redesign
 
@@ -396,13 +461,20 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 1. **Push + PR** — blocked only on the founder adding the SSH key (see
    "Where things stand"). Once pushed: PR `v5` → `master`; `gh` won't work
    on this network, use the compare URL.
-2. **Thin new-role slices** — 16 division-function roles exist; supply
-   chains + a few others have data, but e.g. `*_analysts` and most
-   `*_production` lenses are honest-empty. Add per-role seeds if a demo
-   needs to land on one directly (team scope covers them today).
-3. **`halfYear` stats undercount** — the hand-seeded H1 block predates this
-   session's 15 new findings; `openNow`/monthly numbers no longer reconcile
-   with the live seed counts. Either bump the seeds or derive the block.
+2. **Thin new-role slices — mostly resolved in part 3**: every division
+   function *kind* has now lived the loop; still honest-empty leaves:
+   `protein_commercial_finance` history, `fnv_analysts`,
+   `ambient_production`'s siblings in other divisions, and the horizontals
+   beyond procurement/audit/shared/HR. Team scope covers them.
+3. **`halfYear` stats undercount — worse now**: the hand-seeded H1 block
+   predates ~26 findings added this session (FMCG is at 42);
+   `openNow`/monthly numbers no longer reconcile. Either bump the seeds or
+   derive the block from the findings.
+3b. **Finding `impactPath` seeds don't name P&L lines** — the DuPont tier
+   exists in the graph, but seeded `impactPath` arrays still hop
+   mandate → intent. Re-pointing key ones (e.g. hero fill → gross revenue
+   → revenue intent) would make thread views name the line; `ImpactPath`
+   already renders `pl_line` steps (amber).
 4. **CLAUDE.md's "7 items" rail note is stale** (now 8 with Business), and
    the persona bullet predates the 30-role tree + dotted line + base-data
    exception; `docs/BLUEPRINT.md` still describes pre-v5.1 nav.
@@ -434,6 +506,12 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
   escalate → flip lens COO — Protein ↔ CFO to show one drift held by two
   chains. The palm-oil finding (Procurement) is the horizontal-function
   beat; HR attrition ties the people number to the fill-rate hero.
+- **DuPont beat (part 4)**: Foundation → the P&L tier reads left-to-right
+  like the statement; click Trade spend & discounts (off track) to light
+  trade-ledger sense → trade ROI/trade % mandates → the line → net revenue
+  → EBITDA → margin intent. The group_ceo portfolio-mix finding and the
+  Business "facts" cards (each fact naming its live finding) are the
+  "holistic" beats from part 3.
 - Earlier demo paths (H1 lifecycle, role lens) are in the 2026-07-16-earlier
   and 2026-07-15 sections' original write-ups if needed.
 - Repositioning rationale in merged PR #2; the v5.1 UX advisory diagnosis in
