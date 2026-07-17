@@ -196,6 +196,15 @@ const hcNodes = [
   // Additional mandates
   { id: 'hc-t-safety', kind: 'target', name: 'Patient safety index', streamKey: null, definition: 'Composite of harm events — infections, medication errors, risk-adjusted mortality.', currentValue: '82', targetValue: '90', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['EMR feed', 'Lab & microbiology'] },
 
+  // The DuPont tier: the health-system P&L, line by line (values mirror
+  // pldata.js, Q3 QTD, $ M). Every financial mandate rolls into a line;
+  // the lines roll into the margin intent.
+  { id: 'hc-pl-rev', kind: 'pl_line', name: 'Net patient revenue', streamKey: null, definition: 'Payer-contracted revenue net of adjustments. Throughput mandates — beds, OR blocks — fill this line.', currentValue: '$84.2M', targetValue: '$87.5M budget', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['GL', 'Claims clearinghouse'] },
+  { id: 'hc-pl-denials', kind: 'pl_line', name: 'Denials & write-offs', streamKey: null, definition: 'Revenue lost to denied or written-off claims. Denial-rate and clean-claim mandates keep this line down.', currentValue: '$6.1M', targetValue: '$4.8M budget', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Claims clearinghouse'] },
+  { id: 'hc-pl-supply', kind: 'pl_line', name: 'Supply & pharmacy cost', streamKey: null, definition: 'Drugs, supplies and implants. The biosimilar switch is currently running favorable to budget.', currentValue: '$21.3M', targetValue: '$21.9M budget', trend: 'down', health: 'on_track', status: 'connected', dataSources: ['Pharmacy system', 'GL'] },
+  { id: 'hc-pl-labor', kind: 'pl_line', name: 'Labor & premium pay', streamKey: null, definition: 'Base staffing plus agency and overtime premium. ALOS drift holds beds and converts to premium pay here.', currentValue: '$38.6M', targetValue: '$37.4M budget', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['HR & staffing system', 'GL'] },
+  { id: 'hc-pl-ebitda', kind: 'pl_line', name: 'EBITDA', streamKey: null, definition: 'Net patient revenue minus denials, supply and labor — the line the margin intent stands on.', currentValue: '$18.2M', targetValue: '$23.4M budget', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['GL'] },
+
   { id: 'hc-k-edwait', kind: 'stream_kpi', name: 'ED door-to-provider time', streamKey: 'clinical', definition: 'Median minutes from ED arrival to first provider contact.', currentValue: '42 min', targetValue: '30 min', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['EMR feed'] },
   { id: 'hc-k-hai', kind: 'stream_kpi', name: 'Hospital-acquired infection rate', streamKey: 'clinical', definition: 'Healthcare-associated infections per 1,000 patient-days.', currentValue: '2.1', targetValue: '< 1.0', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Lab & microbiology'] },
   { id: 'hc-k-mortality', kind: 'stream_kpi', name: 'Risk-adjusted mortality index', streamKey: 'clinical', definition: 'Observed vs expected inpatient mortality (1.0 = expected).', currentValue: '1.05', targetValue: '< 0.95', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['EMR feed'] },
@@ -230,10 +239,10 @@ const hcEdges = [
   { id: 'hc-e-8', source: 'hc-k-alos', target: 'hc-k-bed', weight: 'moderate', status: 'connected' },
   { id: 'hc-e-9', source: 'hc-k-noshow', target: 'hc-k-orutil', weight: 'moderate', status: 'connected' },
   { id: 'hc-e-10', source: 'hc-k-noshow', target: 'hc-t-access', weight: 'strong', status: 'connected' },
-  { id: 'hc-e-11', source: 'hc-k-orutil', target: 'hc-t-margin', weight: 'moderate', status: 'connected' },
+  { id: 'hc-e-11', source: 'hc-k-orutil', target: 'hc-pl-rev', weight: 'moderate', status: 'connected', rationale: 'Unused OR block time is contracted revenue that never books.' },
   { id: 'hc-e-12', source: 'hc-k-ar', target: 'hc-t-margin', weight: 'moderate', status: 'connected' },
-  { id: 'hc-e-13', source: 'hc-k-labor', target: 'hc-t-margin', weight: 'strong', status: 'connected' },
-  { id: 'hc-e-14', source: 'hc-k-generic', target: 'hc-t-margin', weight: 'weak', status: 'connected' },
+  { id: 'hc-e-13', source: 'hc-k-labor', target: 'hc-pl-labor', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-14', source: 'hc-k-generic', target: 'hc-pl-supply', weight: 'moderate', status: 'connected' },
   { id: 'hc-e-15', source: 'hc-k-nurseattr', target: 'hc-k-alos', weight: 'weak', status: 'connected' },
   { id: 'hc-e-16', source: 'hc-k-nps', target: 'hc-t-access', weight: 'weak', status: 'connected' },
 
@@ -255,6 +264,24 @@ const hcEdges = [
   // new mandates → mandates / intents (the cross-stream wiring)
   { id: 'hc-e-30', source: 'hc-k-hai', target: 'hc-t-safety', weight: 'strong', status: 'connected', rationale: 'Infections are a leading driver of the harm composite.' },
   { id: 'hc-e-31', source: 'hc-k-mortality', target: 'hc-t-safety', weight: 'strong', status: 'connected' },
+
+  // mandates → P&L lines (the DuPont wiring)
+  { id: 'hc-e-pl-m1', source: 'hc-k-bed', target: 'hc-pl-rev', weight: 'strong', status: 'connected', rationale: 'Occupied beds are the volume behind net patient revenue.' },
+  { id: 'hc-e-pl-m2', source: 'hc-k-denial', target: 'hc-pl-denials', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-pl-m3', source: 'hc-k-cleanclaim', target: 'hc-pl-denials', weight: 'moderate', status: 'connected', rationale: 'Claims that go out clean don’t come back denied.' },
+  { id: 'hc-e-pl-m4', source: 'hc-k-drugspend', target: 'hc-pl-supply', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-pl-m5', source: 'hc-k-agency', target: 'hc-pl-labor', weight: 'strong', status: 'connected', rationale: 'Agency backfill is the premium-pay line’s biggest swing.' },
+  { id: 'hc-e-pl-m6', source: 'hc-k-alos', target: 'hc-pl-labor', weight: 'moderate', status: 'connected', rationale: 'ALOS drift holds beds and converts to premium pay.' },
+  { id: 'hc-e-pl-m7', source: 'hc-k-costdischarge', target: 'hc-pl-ebitda', weight: 'moderate', status: 'connected' },
+
+  // the P&L rollup itself (statement math, as edges)
+  { id: 'hc-e-pl1', source: 'hc-pl-rev', target: 'hc-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-pl2', source: 'hc-pl-denials', target: 'hc-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-pl3', source: 'hc-pl-supply', target: 'hc-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'hc-e-pl4', source: 'hc-pl-labor', target: 'hc-pl-ebitda', weight: 'strong', status: 'connected' },
+
+  // P&L → intent
+  { id: 'hc-e-pl5', source: 'hc-pl-ebitda', target: 'hc-t-margin', weight: 'strong', status: 'connected' },
   { id: 'hc-e-32', source: 'hc-k-mederror', target: 'hc-t-safety', weight: 'strong', status: 'connected' },
   { id: 'hc-e-33', source: 'hc-k-hai', target: 'hc-k-alos', weight: 'moderate', status: 'connected', rationale: 'Infections extend length of stay.' },
   { id: 'hc-e-34', source: 'hc-k-edwait', target: 'hc-t-access', weight: 'moderate', status: 'connected' },
@@ -366,10 +393,10 @@ export const shadowOrgs = {
     agents: [
       { id: 'hc-sa-chief', persona: 'coo', name: 'Chief of staff counterpart', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['hc-t-margin', 'hc-t-quality', 'hc-t-access', 'hc-t-safety'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: hoursAgo(48), reportsToAgentId: null },
       { id: 'hc-sa-clinical', persona: 'operations_head', name: 'Clinical ops counterpart', streamKey: 'clinical', humanOwner: { name: 'Dr. Maya Suresh', initials: 'MS', avatarBg: '#0E7490', role: 'Chief medical officer' }, watchesNodeIds: ['hc-k-alos', 'hc-k-bed', 'hc-k-orutil', 'hc-k-edwait', 'hc-k-hai', 'hc-k-mortality', 'hc-d-emr', 'hc-d-lab'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: hoursAgo(123), reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-revcycle', persona: 'cfo', name: 'Revenue cycle counterpart', streamKey: 'revcycle', humanOwner: { name: 'James Okafor', initials: 'JO', avatarBg: '#B45309', role: 'Revenue cycle director' }, watchesNodeIds: ['hc-k-ar', 'hc-k-denial', 'hc-k-cleanclaim', 'hc-k-poscash', 'hc-d-claims'], openFindings: 0, slaBreaches: 1, temperament: 55, health: 'critical', lastFindingAt: hoursAgo(7), reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-revcycle', persona: 'cfo', name: 'Revenue cycle counterpart', streamKey: 'revcycle', humanOwner: { name: 'James Okafor', initials: 'JO', avatarBg: '#B45309', role: 'Revenue cycle director' }, watchesNodeIds: ['hc-pl-rev', 'hc-pl-denials', 'hc-k-ar', 'hc-k-denial', 'hc-k-cleanclaim', 'hc-k-poscash', 'hc-d-claims'], openFindings: 0, slaBreaches: 1, temperament: 55, health: 'critical', lastFindingAt: hoursAgo(7), reportsToAgentId: 'hc-sa-chief' },
       { id: 'hc-sa-patientexp', persona: 'operations_head', name: 'Patient experience counterpart', streamKey: 'patientexp', humanOwner: { name: 'Fatima Al Marri', initials: 'FA', avatarBg: '#BE185D', role: 'Patient experience lead' }, watchesNodeIds: ['hc-k-noshow', 'hc-k-nps', 'hc-k-clinicwait', 'hc-k-complaint', 'hc-d-sched', 'hc-d-survey'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: hoursAgo(21), reportsToAgentId: 'hc-sa-chief' },
       { id: 'hc-sa-pharmacy', persona: 'operations_head', name: 'Pharmacy counterpart', streamKey: 'pharmacy', humanOwner: { name: 'Ravi Menon', initials: 'RM', avatarBg: '#0F766E', role: 'Pharmacy operations head' }, watchesNodeIds: ['hc-k-generic', 'hc-k-mederror', 'hc-k-drugspend', 'hc-d-pharmacy'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: hoursAgo(74), reportsToAgentId: 'hc-sa-chief' },
-      { id: 'hc-sa-finance', persona: 'cfo', name: 'Finance counterpart', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['hc-k-labor', 'hc-k-costdischarge', 'hc-k-cashdays', 'hc-d-gl'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: hoursAgo(94), reportsToAgentId: 'hc-sa-chief' },
+      { id: 'hc-sa-finance', persona: 'cfo', name: 'Finance counterpart', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['hc-pl-ebitda', 'hc-pl-labor', 'hc-k-labor', 'hc-k-costdischarge', 'hc-k-cashdays', 'hc-d-gl'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'healthy', lastFindingAt: hoursAgo(94), reportsToAgentId: 'hc-sa-chief' },
       { id: 'hc-sa-people', persona: 'coo', name: 'People counterpart', streamKey: 'people', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'People partner' }, watchesNodeIds: ['hc-k-nurseattr', 'hc-k-agency', 'hc-d-hr'], openFindings: 0, slaBreaches: 0, temperament: 25, health: 'healthy', lastFindingAt: hoursAgo(27), reportsToAgentId: 'hc-sa-chief' },
     ],
   },
