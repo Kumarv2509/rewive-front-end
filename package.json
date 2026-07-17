@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "mock-server": "node mock-server/server.js",
+    "mock-server:stage": "REWIVE_SLA_HOURS_PER_TICK=1 node mock-server/server.js",
+    "mock-server:frozen": "REWIVE_SLA_HOURS_PER_TICK=0 node mock-server/server.js",
     "dev:all": "concurrently -n web,api -c blue,green \"npm:dev\" \"npm:mock-server\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
