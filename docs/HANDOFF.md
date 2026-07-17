@@ -45,7 +45,17 @@
       `REWIVE_SLA_HOURS_PER_TICK=5` instance on :4100: hero walked
       `protein_supply_chain → coo`, trade-spend forked to the CFO,
       connectors loaded, all 19 counterparts swept.
-  18. this handoff commit.
+  18. `02076f3` — the previous handoff commit.
+  19. `6c7bcf1` — **npm scripts for the heartbeat speeds**:
+      `mock-server:stage` (1h/tick — hero escalates ~2 min after boot)
+      and `mock-server:frozen` (clocks stopped); plain `mock-server`
+      stays the 12x default.
+  20. this handoff commit.
+- **Escalation demoed live to the founder (2026-07-17)**: at stage speed
+  the hero finding walked `protein_supply_chain → coo` on its own ~2 min
+  after boot, watched in the browser (queue pill flipped, 12h reset,
+  audit entry by 'Rewive (system)'). Server was then reset to the
+  default 12x speed — that's what is running at handoff.
 - **Push is blocked on exactly one founder action.** This network's FortiGate
   MITMs GitHub HTTPS and its CA is in no local trust store, so git, curl
   **and `gh` all fail TLS** (don't fix by disabling verification; memory
@@ -59,10 +69,13 @@
   `rianpraveen`), then `git push origin v5`. `gh` CLI is unusable on this
   network — hand the founder compare/PR URLs instead of using `gh pr create`.
 - **Processes at handoff**: Vite dev on :5173 (founder's), mock API on :4000
-  restarted 2026-07-17 and **serving the latest seeds + derived stats** —
-  but it's a session-owned background process; if it dies, `npm run dev:all`.
-  Mock server still has no watch mode — restart after seed edits (and note
-  a restart resets the in-memory industry to `fmcg`; see the gotcha above).
+  restarted 2026-07-17 and **serving the latest seeds + derived stats, with
+  the demo heartbeat running at the default 12x speed** (SLA clocks are
+  ticking — left alone for hours the queue escalates to the top; restart to
+  reset, or use `npm run mock-server:frozen`). It's a session-owned
+  background process; if it dies, `npm run dev:all`. Mock server still has
+  no watch mode — restart after seed edits (and note a restart resets the
+  in-memory industry to `fmcg`; see the gotcha above).
 - **The previous handoff's open thread #1 is DONE**: all of this session's
   browser verification (grouped lens dropdown, amber ⋯ dotted pills,
   escalation walking up the tree, Group-CEO team scope, Business section)
