@@ -16,7 +16,15 @@
   11. `13d63b9` — **half-year review derived from live state** (2026-07-17 session, documented below; resolved old open thread 3).
   12. `d667457` — the previous handoff commit.
   13. `b7db762` — **stat tiles derived too** (same session; no hand-seeded decision stats remain anywhere).
-  14. this handoff commit.
+  14. `0de608e` — the previous handoff commit.
+  15. `49bf366` — **Today queue sectioned by mandate**: `UnifiedQueue.tsx`
+      groups findings under mono eyebrow headers per mandate (first
+      `stream_kpi` step of the finding's `impactPath`), with the DuPont
+      P&L line as a right-aligned `→` hint and a `× N` count; sections
+      ordered by most-urgent SLA; approvals under a trailing "Approvals"
+      section. One count unchanged. Verified headless (all-lens: 17
+      mandate sections + approvals; COO — Protein lens: 2).
+  16. this handoff commit.
 - **Push is blocked on exactly one founder action.** This network's FortiGate
   MITMs GitHub HTTPS and its CA is in no local trust store, so git, curl
   **and `gh` all fail TLS** (don't fix by disabling verification; memory
