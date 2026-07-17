@@ -430,6 +430,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-fill', nodeName: 'Case fill rate (OTIF)', kind: 'stream_kpi', effect: 'frozen chicken fill at 84% vs 97% target' },
         { nodeId: 'fmcg-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: 'poultry OSA down 5pts in top-40 stores' },
+        { nodeId: 'fmcg-pl-grossrev', nodeName: 'Gross revenue', kind: 'pl_line', effect: 'dragged below budget — AED 128.4M vs AED 132.0M' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: '≈ AED 1.8M revenue + penalties at risk this quarter' },
       ],
       impactEstimate: '≈ AED 1.8M revenue and key-account penalties at risk this quarter',
@@ -456,6 +457,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-tradepct', nodeName: 'Trade spend % of revenue', kind: 'stream_kpi', effect: 'Protein accruals 2.3x the promo-calendar run rate' },
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: '≈ AED 1.1M unrecognized margin liability building' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'hits the group P&L when the accruals true up' },
       ],
       impactEstimate: '≈ AED 1.1M margin liability building ahead of the true-up',
@@ -478,6 +480,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-yield', nodeName: 'First-pass yield', kind: 'stream_kpi', effect: '91% vs 98% target on the breaded range' },
         { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: 'rework labor and coating waste feeding variance' },
+        { nodeId: 'fmcg-pl-cogs', nodeName: 'COGS — materials & conversion', kind: 'pl_line', effect: 'pushed above budget — AED 68.3M vs AED 67.2M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ AED 140k/month margin drag at current rate' },
       ],
       impactEstimate: '≈ AED 140k/month margin drag while yield stays at 91%',
@@ -500,6 +503,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-troi', nodeName: 'Trade-spend ROI', kind: 'stream_kpi', effect: '0.6x on the canned promo vs 2.0x hurdle' },
         { nodeId: 'fmcg-k-tradepct', nodeName: 'Trade spend % of revenue', kind: 'stream_kpi', effect: 'Ambient division trade % running +1.3pp' },
+        { nodeId: 'fmcg-pl-trade', nodeName: 'Trade spend & discounts', kind: 'pl_line', effect: 'pushed above budget — AED 18.9M vs AED 17.2M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ AED 420k committed spend at risk through August' },
       ],
       impactEstimate: '≈ AED 420k committed promo spend at risk through August',
@@ -564,6 +568,7 @@ export const findingsSeed = {
       raisedByAgentId: 'fmcg-sa-audit', raisedByAgentName: 'Audit counterpart', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-gm', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: '≈ AED 180k Q2 leakage via split overrides' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'control gap scales if unaddressed' },
       ],
       impactEstimate: '≈ AED 180k Q2 margin leakage — and an open control gap',
@@ -607,6 +612,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-attr', nodeName: 'Frontline attrition', kind: 'stream_kpi', effect: '31% among DC pickers vs 18% target' },
         { nodeId: 'fmcg-k-fill', nodeName: 'Case fill rate (OTIF)', kind: 'stream_kpi', effect: 'pick throughput capping the fill recovery' },
+        { nodeId: 'fmcg-pl-grossrev', nodeName: 'Gross revenue', kind: 'pl_line', effect: 'dragged below budget — AED 128.4M vs AED 132.0M' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'compounds the frozen chicken fill exposure' },
       ],
       impactEstimate: 'Pick capacity is the binding constraint on the fill-rate recovery',
@@ -629,6 +635,7 @@ export const findingsSeed = {
       raisedByAgentId: 'fmcg-sa-fpa', raisedByAgentName: 'FP&A counterpart', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-gm', severity: 'high',
       impactPath: [
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'rice range margin eroding 60 bps/month' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ AED 260k/quarter if pricing holds flat' },
       ],
       impactEstimate: '≈ AED 260k/quarter margin erosion until repriced',
@@ -714,6 +721,7 @@ export const findingsSeed = {
       raisedByAgentId: 'fmcg-sa-chief', raisedByAgentName: 'Chief of staff counterpart', streamKey: null, linkedKpiNodeId: 'fmcg-t-ebitda', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'mix effect −45 bps vs plan trajectory' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'FY margin target at risk on mix alone' },
       ],
       impactEstimate: '−45 bps blended margin from mix, every division on plan',
@@ -735,6 +743,7 @@ export const findingsSeed = {
       raisedByAgentId: 'fmcg-sa-fnv-supply', raisedByAgentName: 'Supply chain counterpart · F&V', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-gm', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'realized price 6% under promo floor' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ AED 85k/month while overrides continue' },
       ],
       impactEstimate: '≈ AED 85k/month realized-price leakage',
@@ -837,6 +846,7 @@ export const findingsSeed = {
       raisedByAgentId: 'fmcg-sa-procurement', raisedByAgentName: 'Procurement counterpart', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-cogsvar', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: '11% price spread on identical grades' },
+        { nodeId: 'fmcg-pl-cogs', nodeName: 'COGS — materials & conversion', kind: 'pl_line', effect: 'pushed above budget — AED 68.3M vs AED 67.2M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'AED 340k/year consolidation saving' },
       ],
       impactEstimate: 'AED 340k/year saved via group contract',
@@ -859,6 +869,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-invdays', nodeName: 'Inventory days', kind: 'stream_kpi', effect: 'hero-SKU cover 9 days short of the build plan' },
         { nodeId: 'fmcg-k-fill', nodeName: 'Case fill rate (OTIF)', kind: 'stream_kpi', effect: 'promo-window fill risk if build not recovered' },
+        { nodeId: 'fmcg-pl-grossrev', nodeName: 'Gross revenue', kind: 'pl_line', effect: 'dragged below budget — AED 128.4M vs AED 132.0M' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'Ramadan promo commitments ≈ AED 3.4M sell-in' },
       ],
       impactEstimate: '≈ AED 3.4M Ramadan sell-in exposed if the build is not recovered',
@@ -881,6 +892,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-oee', nodeName: 'OEE', kind: 'stream_kpi', effect: 'line 2 double-booked at 130% of capacity' },
         { nodeId: 'fmcg-k-npd', nodeName: 'NPD contribution', kind: 'stream_kpi', effect: 'one launch slips a quarter unless resequenced' },
+        { nodeId: 'fmcg-pl-grossrev', nodeName: 'Gross revenue', kind: 'pl_line', effect: 'dragged below budget — AED 128.4M vs AED 132.0M' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'launch-quarter revenue for the slipped SKU' },
       ],
       impactEstimate: 'One launch slips a quarter unless the calendar is resequenced',
@@ -903,6 +915,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-cold', nodeName: 'Cold-chain excursions', kind: 'stream_kpi', effect: 'excursions up 40% on inbound produce lanes' },
         { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: 'shrink adds +0.4pp to division COGS variance' },
+        { nodeId: 'fmcg-pl-cogs', nodeName: 'COGS — materials & conversion', kind: 'pl_line', effect: 'pushed above budget — AED 68.3M vs AED 67.2M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ AED 190k/month margin drag at current rate' },
       ],
       impactEstimate: '≈ AED 190k/month margin drag at the current shrink rate',
@@ -946,6 +959,7 @@ export const findingsSeed = {
       raisedByAgentId: 'fmcg-sa-fpa', raisedByAgentName: 'FP&A counterpart', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-gm', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'AED 4.2M of bridge unexplained at consolidation' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'forecast confidence degraded for the Q3 review' },
       ],
       impactEstimate: 'AED 4.2M of margin bridge unexplained going into the Q3 review',
@@ -968,6 +982,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: '+0.5pp group COGS variance from one input' },
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'margin drag spread across all four divisions' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ AED 3.1M annualized if unmitigated' },
       ],
       impactEstimate: '≈ AED 3.1M annualized across all four divisions',
@@ -991,6 +1006,7 @@ export const findingsSeed = {
         { nodeId: 'fmcg-k-mape', nodeName: 'Forecast accuracy', kind: 'stream_kpi', effect: '-11% persistent under-forecast on frozen' },
         { nodeId: 'fmcg-k-fill', nodeName: 'Case fill rate (OTIF)', kind: 'stream_kpi', effect: 'frozen fill down to 88% vs 97% target' },
         { nodeId: 'fmcg-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: '63 stockout events in top-40 stores, 30 days' },
+        { nodeId: 'fmcg-pl-grossrev', nodeName: 'Gross revenue', kind: 'pl_line', effect: 'dragged below budget — AED 128.4M vs AED 132.0M' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: '≈ AED 1.2M revenue at risk this quarter' },
       ],
       impactEstimate: '≈ AED 1.2M revenue at risk this quarter',
@@ -1014,6 +1030,7 @@ export const findingsSeed = {
         { nodeId: 'fmcg-k-waste', nodeName: 'Waste & scrap', kind: 'stream_kpi', effect: '4.8% vs 3.5% standard since week 24' },
         { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: '+0.6pp of the +2.4% variance traced here' },
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'margin drag concentrated in frozen and sauces' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ 35 bps this quarter if unaddressed' },
       ],
       impactEstimate: '≈ 35 bps gross margin this quarter',
@@ -1058,6 +1075,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-tradepct', nodeName: 'Trade spend % of revenue', kind: 'stream_kpi', effect: '14.8% vs 13% plan, concentrated in juices' },
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'juice margin down 1.1pp QTD' },
+        { nodeId: 'fmcg-pl-gm', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: 'dragged below budget — AED 38.6M vs AED 45.7M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ 15 bps drag if the pattern holds' },
       ],
       impactEstimate: '≈ 15 bps EBITDA drag if the pattern holds',
@@ -1079,6 +1097,7 @@ export const findingsSeed = {
       raisedByAgentId: 'fmcg-sa-commercial', raisedByAgentName: 'Commercial counterpart', streamKey: 'commercial', linkedKpiNodeId: 'fmcg-k-osa', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: '93.1% vs 96% target in top-40 stores' },
+        { nodeId: 'fmcg-pl-grossrev', nodeName: 'Gross revenue', kind: 'pl_line', effect: 'dragged below budget — AED 128.4M vs AED 132.0M' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'each OSA point ≈ AED 220k monthly revenue' },
       ],
       impactEstimate: 'Each OSA point in top-40 stores ≈ AED 220k monthly revenue',
@@ -1123,6 +1142,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-fill', nodeName: 'Case fill rate (OTIF)', kind: 'stream_kpi', effect: 'Riyadh DC fill 91% vs 97% target' },
         { nodeId: 'fmcg-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: 'KSA key-account shelves follow in 3-5 days' },
+        { nodeId: 'fmcg-pl-grossrev', nodeName: 'Gross revenue', kind: 'pl_line', effect: 'dragged below budget — AED 128.4M vs AED 132.0M' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'SAR 120k penalties logged, more accruing' },
       ],
       impactEstimate: '≈ SAR 120k penalties logged; ≈ AED 800k quarterly revenue exposure',
@@ -1188,6 +1208,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-obs', nodeName: 'Obsolescence', kind: 'stream_kpi', effect: 'AED 310k/mo write-offs vs 120k plan' },
         { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: '+0.4pp of Q1 variance' },
+        { nodeId: 'fmcg-pl-cogs', nodeName: 'COGS — materials & conversion', kind: 'pl_line', effect: 'pushed above budget — AED 68.3M vs AED 67.2M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: '≈ 20 bps drag at the Q1 run rate' },
       ],
       impactEstimate: 'AED 310k/month write-offs at the Q1 peak',
@@ -1231,6 +1252,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-oee', nodeName: 'OEE', kind: 'stream_kpi', effect: '74% → 61% at the Egypt plant' },
         { nodeId: 'fmcg-k-cogsvar', nodeName: 'COGS variance vs plan', kind: 'stream_kpi', effect: 'overtime and expediting to cover lost output' },
+        { nodeId: 'fmcg-pl-cogs', nodeName: 'COGS — materials & conversion', kind: 'pl_line', effect: 'pushed above budget — AED 68.3M vs AED 67.2M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'Egypt unit cost +6% for the quarter' },
       ],
       impactEstimate: '≈ 500 tonnes of lost February output',
@@ -1273,6 +1295,7 @@ export const findingsSeed = {
       raisedByAgentId: 'fmcg-sa-commercial', raisedByAgentName: 'Commercial counterpart', streamKey: 'commercial', linkedKpiNodeId: 'fmcg-k-osa', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: 'Sunday OSA 4pts below weekday average' },
+        { nodeId: 'fmcg-pl-grossrev', nodeName: 'Gross revenue', kind: 'pl_line', effect: 'dragged below budget — AED 128.4M vs AED 132.0M' },
         { nodeId: 'fmcg-t-rev', nodeName: 'Revenue growth', kind: 'target', effect: 'highest-traffic window sold off an empty shelf' },
       ],
       impactEstimate: '≈ AED 140k/month of Sunday sales at risk',
@@ -1295,6 +1318,7 @@ export const findingsSeed = {
       impactPath: [
         { nodeId: 'fmcg-k-truck', nodeName: 'Truck utilization', kind: 'stream_kpi', effect: '68% on KSA long-haul vs 85% target' },
         { nodeId: 'fmcg-k-cpc', nodeName: 'Cost per case', kind: 'stream_kpi', effect: 'KSA cost per case +12% vs plan' },
+        { nodeId: 'fmcg-pl-logistics', nodeName: 'Logistics & distribution', kind: 'pl_line', effect: 'pushed above budget — AED 9.8M vs AED 9.2M' },
         { nodeId: 'fmcg-t-ebitda', nodeName: 'EBITDA margin', kind: 'target', effect: 'freight the single largest cost-to-serve leak' },
       ],
       impactEstimate: '≈ AED 90k/quarter of freight paid for empty space',
@@ -1426,6 +1450,7 @@ export const findingsSeed = {
       raisedByAgentId: 'hc-sa-clinical', raisedByAgentName: 'Clinical ops counterpart', streamKey: 'clinical', linkedKpiNodeId: 'hc-k-orutil', severity: 'high',
       impactPath: [
         { nodeId: 'hc-k-orutil', nodeName: 'OR utilization', kind: 'stream_kpi', effect: '63% at Lakeside vs 78% target' },
+        { nodeId: 'hc-pl-rev', nodeName: 'Net patient revenue', kind: 'pl_line', effect: 'dragged below budget — $84.2M vs $87.5M' },
         { nodeId: 'hc-t-margin', nodeName: 'Net margin', kind: 'target', effect: 'OR time is the highest-margin capacity in the network' },
       ],
       impactEstimate: '≈ $1.1M/quarter of unbilled OR capacity',
