@@ -30,9 +30,9 @@ export function TodayStats({ persona, scope }: { persona: Persona | 'all'; scope
         </div>
       </div>
       <div className="card kpi">
-        <div className="k-label">Measured impact · QTD</div>
-        <div className="k-val">{stats?.measuredImpactQtd.value ?? '—'}</div>
-        <div className={`k-delta ${stats?.measuredImpactQtd.delta.direction ?? 'flat'}`}>{stats?.measuredImpactQtd.delta.label ?? ''}</div>
+        <div className="k-label">Measured impact · to date</div>
+        <div className="k-val">{stats?.measuredImpact.value ?? '—'}</div>
+        <div className={`k-delta ${stats?.measuredImpact.delta.direction ?? 'flat'}`}>{stats?.measuredImpact.delta.label ?? ''}</div>
       </div>
     </div>
   );

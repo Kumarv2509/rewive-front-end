@@ -10,9 +10,9 @@ export function StatsRow() {
   return (
     <div className="grid dstats">
       <div className="card kpi">
-        <div className="k-label">Decisions tracked · QTD</div>
-        <div className="k-val">{data.trackedQtd.value}</div>
-        <div className={`k-delta ${data.trackedQtd.delta.direction}`}>{data.trackedQtd.delta.label}</div>
+        <div className="k-label">Decisions on the ledger</div>
+        <div className="k-val">{data.tracked.value}</div>
+        <div className={`k-delta ${data.tracked.delta.direction}`}>{data.tracked.delta.label}</div>
       </div>
       <div className="card kpi">
         <div className="k-label">Decision win rate</div>
@@ -25,9 +25,9 @@ export function StatsRow() {
         <div className={`k-delta ${data.medianTimeToDecision.delta.direction}`}>{data.medianTimeToDecision.delta.label}</div>
       </div>
       <div className="card kpi">
-        <div className="k-label">Measured impact · QTD</div>
-        <div className="k-val">{data.measuredImpactQtd.value}</div>
-        <div className={`k-delta ${data.measuredImpactQtd.delta.direction}`}>{data.measuredImpactQtd.delta.label}</div>
+        <div className="k-label">Measured impact · to date</div>
+        <div className="k-val">{data.measuredImpact.value}</div>
+        <div className={`k-delta ${data.measuredImpact.delta.direction}`}>{data.measuredImpact.delta.label}</div>
       </div>
     </div>
   );

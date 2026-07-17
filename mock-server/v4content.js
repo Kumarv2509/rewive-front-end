@@ -12,7 +12,6 @@ import {
   runDetails as fmcgRunDetails,
   runExceptions as fmcgExceptions,
   runChases as fmcgChases,
-  decisionStats as fmcgDecisionStats,
   decisionLedger as fmcgLedger,
   leaderboardHighlights as fmcgHighlights,
   leaderboard as fmcgLeaderboard,
@@ -51,7 +50,6 @@ const fmcg = {
   runDetails: fmcgRunDetails,
   runExceptions: fmcgExceptions,
   runChases: fmcgChases,
-  decisionStats: fmcgDecisionStats,
   decisionLedger: fmcgLedger,
   leaderboardHighlights: fmcgHighlights,
   leaderboard: fmcgLeaderboard,
@@ -123,13 +121,7 @@ const healthcare = {
   runChases: [
     { id: 'hc-chase1', runId: 'hc-run-denials', runName: 'Denial appeal batch · 2 payers', trigger: 'sla', note: 'Appeal batch has waited 2h with no sign-off — filing deadline is in 36h.', escalatedTo: 'Revenue cycle director', createdAt: '40m ago' },
   ],
-  decisionStats: {
-    trackedQtd: { value: 96, delta: { label: '▲ 22 vs last qtr', direction: 'up' } },
-    winRate: { value: '74%', delta: { label: '▲ from 58%', direction: 'up' } },
-    medianTimeToDecision: { value: '6.5h', delta: { label: 'was 3.4 days', direction: 'up' } },
-    measuredImpactQtd: { value: '$2.4M', delta: { label: '19 decisions measured', direction: 'flat' } },
-    // halfYear derived server-side — see mock-server/halfyear.js.
-  },
+  // decisionStats derived server-side — see mock-server/halfyear.js.
   decisionLedger: [
     { id: 'hc-led1', persona: 'cfo', title: 'Batch-appeal denied claims (2 payers)', subtitle: 'Prior-auth denial surge, May', madeBy: { type: 'human', name: 'James', initials: 'JO', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Revenue Cycle Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+$620k recovered', direction: 'up' }, function: 'finance', findingId: 'hc-f-1', assessorNote: 'Assessor agent: first-pass denial rate for the two payers fell from 11.8% to 7.4% over six weeks — confirmed against the same clearinghouse feed that raised the finding.', entity: 'Metro General Hospital', region: 'Northeast' },
     { id: 'hc-led2', persona: 'operations_head', title: 'Open a discharge lounge on medical wards', subtitle: 'ALOS driver — placement delays', madeBy: { type: 'human', name: 'Maya', initials: 'MS', avatarBg: '#0E7490' }, informedBy: { type: 'agent', name: 'Clinical Ops Agent' }, date: '30 Apr', verdict: 'worked', measuredImpact: { text: '−0.4 days ALOS', direction: 'up' }, function: 'operations', entity: 'Metro General Hospital', region: 'Northeast' },
@@ -246,13 +238,7 @@ const manufacturing = {
   runChases: [
     { id: 'mfg-chase1', runId: 'mfg-run-supplier', runName: 'Supplier OTIF scorecard', trigger: 'sla', note: 'Dual-sourcing decision has waited 2h — the castings shortage hits final assembly Thursday.', escalatedTo: 'Supply chain manager', createdAt: '55m ago' },
   ],
-  decisionStats: {
-    trackedQtd: { value: 88, delta: { label: '▲ 19 vs last qtr', direction: 'up' } },
-    winRate: { value: '72%', delta: { label: '▲ from 55%', direction: 'up' } },
-    medianTimeToDecision: { value: '5.2h', delta: { label: 'was 2.6 days', direction: 'up' } },
-    measuredImpactQtd: { value: '$1.8M', delta: { label: '17 decisions measured', direction: 'flat' } },
-    // halfYear derived server-side — see mock-server/halfyear.js.
-  },
+  // decisionStats derived server-side — see mock-server/halfyear.js.
   decisionLedger: [
     { id: 'mfg-led1', persona: 'operations_head', title: 'Pull PMs forward on the press line', subtitle: 'Unplanned downtime driver, Q2', madeBy: { type: 'human', name: 'Hassan', initials: 'HJ', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Maintenance Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '−14 h/wk downtime', direction: 'up' }, function: 'maintenance', findingId: 'mfg-f-1', assessorNote: 'Assessor agent: unplanned downtime on the constraint line fell from 22 h/wk to 9 h/wk within four weeks of restoring PM compliance — confirmed against the same CMMS work-order feed.', entity: 'Plant 1 — Jebel Ali', region: 'UAE' },
     { id: 'mfg-led2', persona: 'cfo', title: 'Dual-source two castings suppliers', subtitle: 'OTIF slide root cause', madeBy: { type: 'human', name: 'Omar', initials: 'OF', avatarBg: '#0E7490' }, informedBy: { type: 'agent', name: 'Supplier Agent' }, date: '29 Apr', verdict: 'worked', measuredImpact: { text: '+9 pts OTIF', direction: 'up' }, function: 'procurement', entity: 'Plant 1 — Jebel Ali', region: 'UAE' },

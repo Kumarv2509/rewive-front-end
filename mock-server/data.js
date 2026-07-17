@@ -155,14 +155,9 @@ export const runChases = [
   { id: 'chase1', runId: 'run-close-may', runName: 'Month-end close · May', trigger: 'sla', note: 'Review gate has waited 3h 12m with no response — past the 2h service window.', escalatedTo: 'Praveen Jagadeesan’s manager', createdAt: '1h ago' },
 ];
 
-export const decisionStats = {
-  trackedQtd: { value: 142, delta: { label: '▲ 38 vs last qtr', direction: 'up' } },
-  winRate: { value: '78%', delta: { label: '▲ from 61%', direction: 'up' } },
-  medianTimeToDecision: { value: '4.0h', delta: { label: 'was 2.1 days', direction: 'up' } },
-  measuredImpactQtd: { value: 'AED 1.2M', delta: { label: '31 decisions measured', direction: 'flat' } },
-  // halfYear is not seeded — the server derives it from findings/closures/ledger
-  // at request time (mock-server/halfyear.js) so it can't drift from the seeds.
-};
+// Decision stats (the tiles and the half-year review) are not seeded — the
+// server derives them from findings/closures/ledger at request time
+// (mock-server/halfyear.js) so they can't drift from the seeds.
 
 export const decisionLedger = [
   { id: 'led-fnvcf1', persona: 'fnv_commercial_finance', title: 'Accept — realized price back to promo floor, watched weekly', subtitle: 'Field overrides were clearing short-dated stock 6% under floor', madeBy: { type: 'human', name: 'Rania Kassem', initials: 'RK', avatarBg: '#15803D' }, informedBy: { type: 'agent', name: 'Supply chain counterpart · F&V' }, date: '10 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', findingId: 'fmcg-f-fnv-commfin-overrides', entity: 'UAE Trading Co.', region: 'UAE' },

@@ -9,7 +9,6 @@ import {
   topPerformer,
   runDetails,
   runs,
-  decisionStats,
   decisionLedger,
   leaderboardHighlights,
   leaderboard,
@@ -45,7 +44,7 @@ import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
 import { businessContextSeed } from './businessdata.js';
 import { personaScope, ROLE_PARENT, DOTTED_PARENT } from './roles.js';
-import { deriveHalfYear } from './halfyear.js';
+import { deriveHalfYear, deriveStatTiles } from './halfyear.js';
 
 const app = express();
 app.use(cors());
@@ -180,17 +179,16 @@ app.post('/api/v1/runs/:id/resume', (req, res) => {
 });
 
 // ---------- Decision Ledger ----------
-// halfYear is derived from the live findings/closure/ledger state, not seeded,
-// so the review panel always reconciles with the rest of the product.
+// The stat tiles and half-year review are both derived from the live findings/
+// closure/ledger state, not seeded, so they always reconcile with the rest of
+// the product (and with each other).
 app.get('/api/v1/decisions/stats', (req, res) => {
   const industry = v4Industry(req);
-  const halfYear = deriveHalfYear({
-    findings: findingsState[industry] ?? [],
-    closures: closureKpisState[industry] ?? [],
-    ledger: op(req).decisionLedger ?? [],
-    currency: industry === 'fmcg' ? 'AED' : '$',
-  });
-  res.json({ ...op(req).decisionStats, ...(halfYear ? { halfYear } : {}) });
+  const findings = findingsState[industry] ?? [];
+  const ledger = op(req).decisionLedger ?? [];
+  const currency = industry === 'fmcg' ? 'AED' : '$';
+  const halfYear = deriveHalfYear({ findings, closures: closureKpisState[industry] ?? [], ledger, currency });
+  res.json({ ...deriveStatTiles({ findings, ledger, currency }), ...(halfYear ? { halfYear } : {}) });
 });
 
 app.get('/api/v1/decisions', (req, res) => {

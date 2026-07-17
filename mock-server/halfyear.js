@@ -34,13 +34,70 @@ function parseImpactAmount(text) {
   return value * (unit === 'm' ? 1e6 : unit === 'k' ? 1e3 : 1);
 }
 
-function formatImpact(sum, currency) {
-  if (sum <= 0) return '—';
+function formatMoney(sum, currency) {
   const n = sum >= 1e6 ? `${(sum / 1e6).toFixed(1).replace(/\.0$/, '')}M` : `${Math.round(sum / 1e3)}k`;
-  return currency === '$' ? `+$${n}` : `+${currency} ${n}`;
+  return currency === '$' ? `$${n}` : `${currency} ${n}`;
+}
+
+function formatImpact(sum, currency) {
+  return sum <= 0 ? '—' : `+${formatMoney(sum, currency)}`;
 }
 
 const monthKey = (date) => date.getFullYear() * 12 + date.getMonth();
+
+// The four stat tiles on Decisions (and the impact tile on Today) — derived
+// from the same state as the review panel below them, over the same window
+// (the whole ledger / findings set), so the two never disagree.
+export function deriveStatTiles({ findings = [], ledger = [], currency = 'AED', now = new Date() }) {
+  // Decisions tracked — the ledger is the record; the delta counts this quarter's rows.
+  const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+  const qtd = ledger.filter((row) => {
+    const date = parseLedgerDate(row.date, now);
+    return date && date >= quarterStart;
+  }).length;
+  const tracked = {
+    value: ledger.length,
+    delta: qtd
+      ? { label: `▲ ${qtd} this quarter`, direction: 'up' }
+      : { label: 'none new this quarter', direction: 'flat' },
+  };
+
+  // Win rate over assessed verdicts — too_early is still measuring.
+  const assessed = ledger.filter((r) => r.verdict === 'worked' || r.verdict === 'not_worked');
+  const worked = assessed.filter((r) => r.verdict === 'worked').length;
+  const winRate = assessed.length
+    ? {
+        value: `${Math.round((100 * worked) / assessed.length)}%`,
+        delta: { label: `${worked} of ${assessed.length} assessed worked`, direction: worked * 2 >= assessed.length ? 'up' : 'down' },
+      }
+    : { value: '—', delta: { label: 'nothing assessed yet', direction: 'flat' } };
+
+  // Median detectedAt → dispositionAt over decided findings.
+  const hours = findings
+    .filter((f) => f.detectedAt && f.dispositionAt)
+    .map((f) => (new Date(f.dispositionAt) - new Date(f.detectedAt)) / 36e5)
+    .filter((h) => h > 0)
+    .sort((a, b) => a - b);
+  const median = hours.length ? hours[Math.floor(hours.length / 2)] : null;
+  const medianTimeToDecision =
+    median === null
+      ? { value: '—', delta: { label: 'no decided findings yet', direction: 'flat' } }
+      : {
+          value: median < 48 ? `${median.toFixed(1)}h` : `${(median / 24).toFixed(1)} days`,
+          delta: { label: `across ${hours.length} decided findings`, direction: 'flat' },
+        };
+
+  // Measured impact — the summable currency amounts on the ledger.
+  const measuredRows = ledger.filter(
+    (r) => r.measuredImpact?.direction === 'up' && parseImpactAmount(r.measuredImpact.text) > 0,
+  );
+  const impactSum = measuredRows.reduce((s, r) => s + parseImpactAmount(r.measuredImpact.text), 0);
+  const measuredImpact = impactSum
+    ? { value: formatMoney(impactSum, currency), delta: { label: `${measuredRows.length} decisions measured`, direction: 'flat' } }
+    : { value: '—', delta: { label: 'nothing measured yet', direction: 'flat' } };
+
+  return { tracked, winRate, medianTimeToDecision, measuredImpact };
+}
 
 export function deriveHalfYear({ findings = [], closures = [], ledger = [], currency = 'AED', now = new Date() }) {
   if (!findings.length && !ledger.length) return null;
@@ -72,12 +129,20 @@ export function deriveHalfYear({ findings = [], closures = [], ledger = [], curr
     const b = bucketFor(date);
     if (b) b.decided += 1;
   }
+  // Undated rows ('ongoing' standing policies) carry verdicts too — they count
+  // in every month's cumulative pool so the panel agrees with the stat tiles.
+  const undatedAssessed = ledger.filter(
+    (row) => !parseLedgerDate(row.date, now) && (row.verdict === 'worked' || row.verdict === 'not_worked'),
+  );
   for (const b of buckets) {
-    const assessed = datedRows.filter(
+    const dated = datedRows.filter(
       (x) => monthKey(x.date) <= b.key && (x.row.verdict === 'worked' || x.row.verdict === 'not_worked'),
     );
-    const worked = assessed.filter((x) => x.row.verdict === 'worked').length;
-    b.winRatePct = assessed.length ? Math.round((100 * worked) / assessed.length) : null;
+    const assessed = dated.length + undatedAssessed.length;
+    const worked =
+      dated.filter((x) => x.row.verdict === 'worked').length +
+      undatedAssessed.filter((row) => row.verdict === 'worked').length;
+    b.winRatePct = assessed ? Math.round((100 * worked) / assessed) : null;
   }
   // Months before the first assessed decision have no rate — backfill from the
   // first real value so the line doesn't start at a misleading 0%.

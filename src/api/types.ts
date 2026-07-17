@@ -161,11 +161,15 @@ export interface ChaseEscalation {
   createdAt: string;
 }
 
+// Not seeded: the mock derives every field from the live findings/closures/
+// ledger state at request time (mock-server/halfyear.js), so the tiles, the
+// review panel and the data screens always agree. Tiles cover the whole
+// ledger/findings window, not QTD.
 export interface DecisionStats {
-  trackedQtd: { value: number; delta: Delta };
+  tracked: { value: number; delta: Delta };
   winRate: { value: string; delta: Delta };
   medianTimeToDecision: { value: string; delta: Delta };
-  measuredImpactQtd: { value: string; delta: Delta };
+  measuredImpact: { value: string; delta: Delta };
   /** Half-year review — the loop's history bucketed by month, entity and region. */
   halfYear?: HalfYearReview;
 }
