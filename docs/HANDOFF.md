@@ -66,17 +66,33 @@
       Company-wide like business context (no persona). Verified:
       endpoints + headless screenshot.
   22. this handoff commit.
-- **Push STILL blocked (SSH)**: two keys failed. Diagnosis so far: client
-  side is proven good (real GitHub host key, correct key offered —
-  `~/.ssh/id_ed25519_rewive`, fingerprint
-  `SHA256:qi700T0YxECL3859MQIEId9q2+/3E09fi/vgYPdR2P8`, wired in
-  `~/.ssh/config`), but `github.com/rianpraveen.keys` and
-  `github.com/Kumarv2509.keys` are both EMPTY — no authentication key is
-  actually saved on either account (likely saved as a *Signing key*, an
-  abandoned sudo/2FA confirmation, or a third account). Founder check:
-  `github.com/settings/ssh/new` → type **Authentication Key** → confirm
-  2FA → then `github.com/<user>.keys` must show the key. Then
-  `git push origin v5`.
+- **Push STILL blocked (SSH) — three failed attempts as of 2026-07-17.**
+  The client side is PROVEN good: we reach real GitHub (server host key
+  matches GitHub's published
+  `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`), and ssh offers
+  the right key — `~/.ssh/id_ed25519_rewive` (generated fresh this
+  session after the founder reported a fingerprint mismatch on the first
+  key), fingerprint `SHA256:qi700T0YxECL3859MQIEId9q2+/3E09fi/vgYPdR2P8`,
+  wired as the `github.com` IdentityFile in `~/.ssh/config`
+  (`IdentitiesOnly yes`; old `~/.ssh/id_ed25519` no longer used).
+  **The GitHub side is where it dies**: after each "added it" from the
+  founder, `github.com/rianpraveen.keys` AND `github.com/Kumarv2509.keys`
+  are still EMPTY (checked cache-busted via WebFetch — these public pages
+  list an account's authentication keys), and `ssh -T` still says
+  *Permission denied (publickey)*, which means NO github.com account
+  holds the key. Open questions put to the founder, unanswered at
+  handoff: (a) which username is in the top-right when adding the key —
+  possibly a third account; (b) what the **Authentication keys** section
+  of `github.com/settings/keys` actually lists (vs Signing keys — those
+  don't authenticate and don't appear at `.keys`); (c) whether the page
+  is really github.com and not a company GitHub Enterprise host. The
+  add may also be dying at the sudo/2FA confirmation step.
+  **Success test that needs no session**: a line starting
+  `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMGi…` visible at
+  `github.com/<username>.keys` → then `git push origin v5` will work.
+  Copy helper for the founder: `pbcopy < ~/.ssh/id_ed25519_rewive.pub`.
+  Don't fall back to HTTPS/`gh` — the FortiGate MITM breaks TLS
+  (memory `fortinet-git-push`).
 - **Escalation demoed live to the founder (2026-07-17)**: at stage speed
   the hero finding walked `protein_supply_chain → coo` on its own ~2 min
   after boot, watched in the browser (queue pill flipped, 12h reset,
