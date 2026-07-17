@@ -17,7 +17,7 @@ function MonthlyLoopBars({ months }: { months: HalfYearMonth[] }) {
   const H = 150;
   const padB = 22;
   const padT = 10;
-  const max = Math.max(...months.map((m) => Math.max(m.raised, m.decided, m.closed)));
+  const max = Math.max(1, ...months.map((m) => Math.max(m.raised, m.decided, m.closed)));
   const group = W / months.length;
   const barW = 10;
   const gap = 2;
@@ -63,8 +63,9 @@ function WinRateLine({ months }: { months: HalfYearMonth[] }) {
   const H = 150;
   const padB = 22;
   const padT = 14;
-  const lo = 40;
-  const hi = 90;
+  // Scale to the data so derived rates near 0% or 100% don't clip the plot.
+  const lo = Math.min(40, ...months.map((m) => m.winRatePct - 5));
+  const hi = Math.max(90, ...months.map((m) => m.winRatePct + 5));
   const x = (i: number) => (W / months.length) * i + W / months.length / 2;
   const y = (v: number) => padT + (H - padT - padB) * (1 - (v - lo) / (hi - lo));
   const coords = months.map((m, i) => `${x(i)},${y(m.winRatePct)}`).join(' ');

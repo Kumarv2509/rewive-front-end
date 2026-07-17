@@ -128,28 +128,7 @@ const healthcare = {
     winRate: { value: '74%', delta: { label: '▲ from 58%', direction: 'up' } },
     medianTimeToDecision: { value: '6.5h', delta: { label: 'was 3.4 days', direction: 'up' } },
     measuredImpactQtd: { value: '$2.4M', delta: { label: '19 decisions measured', direction: 'flat' } },
-    halfYear: {
-      label: 'H1 2026 · Jan–Jun',
-      summary: '72 findings raised across three facilities in three regions; 63 answered, 24 loops closed. Win rate climbed from 58% in January to 74% in June.',
-      months: [
-        { month: 'Jan', raised: 8, decided: 7, closed: 2, winRatePct: 58 },
-        { month: 'Feb', raised: 10, decided: 9, closed: 3, winRatePct: 62 },
-        { month: 'Mar', raised: 12, decided: 11, closed: 4, winRatePct: 66 },
-        { month: 'Apr', raised: 13, decided: 12, closed: 5, winRatePct: 70 },
-        { month: 'May', raised: 15, decided: 13, closed: 5, winRatePct: 72 },
-        { month: 'Jun', raised: 14, decided: 11, closed: 5, winRatePct: 74 },
-      ],
-      byEntity: [
-        { name: 'Metro General Hospital', decisions: 31, workedPct: 76, openNow: 1, impact: '+$3.1M' },
-        { name: 'Northside Clinics', decisions: 17, workedPct: 68, openNow: 1, impact: '+$540k' },
-        { name: 'Lakeside Surgical Center', decisions: 15, workedPct: 74, openNow: 0, impact: '+$1.1M' },
-      ],
-      byRegion: [
-        { name: 'Northeast', decisions: 31, workedPct: 76, openNow: 1, impact: '+$3.1M' },
-        { name: 'Midwest', decisions: 17, workedPct: 68, openNow: 1, impact: '+$540k' },
-        { name: 'South', decisions: 15, workedPct: 74, openNow: 0, impact: '+$1.1M' },
-      ],
-    },
+    // halfYear derived server-side — see mock-server/halfyear.js.
   },
   decisionLedger: [
     { id: 'hc-led1', persona: 'cfo', title: 'Batch-appeal denied claims (2 payers)', subtitle: 'Prior-auth denial surge, May', madeBy: { type: 'human', name: 'James', initials: 'JO', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Revenue Cycle Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+$620k recovered', direction: 'up' }, function: 'finance', findingId: 'hc-f-1', assessorNote: 'Assessor agent: first-pass denial rate for the two payers fell from 11.8% to 7.4% over six weeks — confirmed against the same clearinghouse feed that raised the finding.', entity: 'Metro General Hospital', region: 'Northeast' },
@@ -272,26 +251,7 @@ const manufacturing = {
     winRate: { value: '72%', delta: { label: '▲ from 55%', direction: 'up' } },
     medianTimeToDecision: { value: '5.2h', delta: { label: 'was 2.6 days', direction: 'up' } },
     measuredImpactQtd: { value: '$1.8M', delta: { label: '17 decisions measured', direction: 'flat' } },
-    halfYear: {
-      label: 'H1 2026 · Jan–Jun',
-      summary: '56 findings raised across two plants; 49 answered, 18 loops closed. Win rate climbed from 55% in January to 72% in June.',
-      months: [
-        { month: 'Jan', raised: 6, decided: 5, closed: 1, winRatePct: 55 },
-        { month: 'Feb', raised: 7, decided: 6, closed: 2, winRatePct: 58 },
-        { month: 'Mar', raised: 9, decided: 8, closed: 3, winRatePct: 63 },
-        { month: 'Apr', raised: 11, decided: 10, closed: 4, winRatePct: 68 },
-        { month: 'May', raised: 12, decided: 11, closed: 4, winRatePct: 70 },
-        { month: 'Jun', raised: 11, decided: 9, closed: 4, winRatePct: 72 },
-      ],
-      byEntity: [
-        { name: 'Plant 1 — Jebel Ali', decisions: 34, workedPct: 73, openNow: 2, impact: '−$1.2M cost avoided' },
-        { name: 'Plant 2 — Dammam', decisions: 15, workedPct: 68, openNow: 0, impact: '−0.8 pt scrap' },
-      ],
-      byRegion: [
-        { name: 'UAE', decisions: 34, workedPct: 73, openNow: 2, impact: '−$1.2M cost avoided' },
-        { name: 'KSA', decisions: 15, workedPct: 68, openNow: 0, impact: '−0.8 pt scrap' },
-      ],
-    },
+    // halfYear derived server-side — see mock-server/halfyear.js.
   },
   decisionLedger: [
     { id: 'mfg-led1', persona: 'operations_head', title: 'Pull PMs forward on the press line', subtitle: 'Unplanned downtime driver, Q2', madeBy: { type: 'human', name: 'Hassan', initials: 'HJ', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Maintenance Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '−14 h/wk downtime', direction: 'up' }, function: 'maintenance', findingId: 'mfg-f-1', assessorNote: 'Assessor agent: unplanned downtime on the constraint line fell from 22 h/wk to 9 h/wk within four weeks of restoring PM compliance — confirmed against the same CMMS work-order feed.', entity: 'Plant 1 — Jebel Ali', region: 'UAE' },

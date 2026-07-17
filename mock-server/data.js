@@ -160,31 +160,8 @@ export const decisionStats = {
   winRate: { value: '78%', delta: { label: '▲ from 61%', direction: 'up' } },
   medianTimeToDecision: { value: '4.0h', delta: { label: 'was 2.1 days', direction: 'up' } },
   measuredImpactQtd: { value: 'AED 1.2M', delta: { label: '31 decisions measured', direction: 'flat' } },
-  // Half-year review: the loop bucketed by month, entity and region (Jan–Jun 2026).
-  halfYear: {
-    label: 'H1 2026 · Jan–Jun',
-    summary: '118 findings raised across four entities and four regions; 104 answered, 41 loops closed. Win rate climbed from 61% in January to 78% in June.',
-    months: [
-      { month: 'Jan', raised: 14, decided: 12, closed: 3, winRatePct: 61 },
-      { month: 'Feb', raised: 16, decided: 15, closed: 6, winRatePct: 64 },
-      { month: 'Mar', raised: 19, decided: 17, closed: 7, winRatePct: 68 },
-      { month: 'Apr', raised: 22, decided: 20, closed: 8, winRatePct: 71 },
-      { month: 'May', raised: 24, decided: 21, closed: 9, winRatePct: 74 },
-      { month: 'Jun', raised: 23, decided: 19, closed: 8, winRatePct: 78 },
-    ],
-    byEntity: [
-      { name: 'UAE Trading Co.', decisions: 38, workedPct: 81, openNow: 1, impact: '+AED 1.9M' },
-      { name: 'Gulf Distribution Co.', decisions: 26, workedPct: 72, openNow: 1, impact: '+AED 610k' },
-      { name: 'KSA Manufacturing Co.', decisions: 22, workedPct: 74, openNow: 2, impact: '+AED 540k' },
-      { name: 'Egypt Foods S.A.E.', decisions: 18, workedPct: 69, openNow: 1, impact: '+AED 380k' },
-    ],
-    byRegion: [
-      { name: 'UAE', decisions: 44, workedPct: 80, openNow: 2, impact: '+AED 2.1M' },
-      { name: 'KSA', decisions: 31, workedPct: 71, openNow: 2, impact: '+AED 690k' },
-      { name: 'Egypt', decisions: 18, workedPct: 69, openNow: 1, impact: '+AED 380k' },
-      { name: 'Kuwait & GCC', decisions: 11, workedPct: 76, openNow: 0, impact: '+AED 260k' },
-    ],
-  },
+  // halfYear is not seeded — the server derives it from findings/closures/ledger
+  // at request time (mock-server/halfyear.js) so it can't drift from the seeds.
 };
 
 export const decisionLedger = [

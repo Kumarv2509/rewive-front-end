@@ -171,8 +171,9 @@ export interface DecisionStats {
 }
 
 // ---------- Half-year review (Decisions screen) ----------
-// Monthly loop counts plus rollups by business entity and region. Seeded per
-// industry in the mock; a real backend would bucket the ledger by date.
+// Monthly loop counts plus rollups by business entity and region. Not seeded:
+// the mock derives it from the live findings/closures/ledger state at request
+// time (mock-server/halfyear.js), so it always reconciles with those screens.
 export interface HalfYearMonth {
   month: string; // 'Jan' … 'Jun'
   raised: number; // findings raised

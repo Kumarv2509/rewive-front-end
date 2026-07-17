@@ -45,6 +45,7 @@ import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
 import { businessContextSeed } from './businessdata.js';
 import { personaScope, ROLE_PARENT, DOTTED_PARENT } from './roles.js';
+import { deriveHalfYear } from './halfyear.js';
 
 const app = express();
 app.use(cors());
@@ -179,7 +180,18 @@ app.post('/api/v1/runs/:id/resume', (req, res) => {
 });
 
 // ---------- Decision Ledger ----------
-app.get('/api/v1/decisions/stats', (req, res) => res.json(op(req).decisionStats));
+// halfYear is derived from the live findings/closure/ledger state, not seeded,
+// so the review panel always reconciles with the rest of the product.
+app.get('/api/v1/decisions/stats', (req, res) => {
+  const industry = v4Industry(req);
+  const halfYear = deriveHalfYear({
+    findings: findingsState[industry] ?? [],
+    closures: closureKpisState[industry] ?? [],
+    ledger: op(req).decisionLedger ?? [],
+    currency: industry === 'fmcg' ? 'AED' : '$',
+  });
+  res.json({ ...op(req).decisionStats, ...(halfYear ? { halfYear } : {}) });
+});
 
 app.get('/api/v1/decisions', (req, res) => {
   const { function: fn, verdict, persona, scope } = req.query;
