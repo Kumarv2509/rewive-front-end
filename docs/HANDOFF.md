@@ -24,7 +24,28 @@
       ordered by most-urgent SLA; approvals under a trailing "Approvals"
       section. One count unchanged. Verified headless (all-lens: 17
       mandate sections + approvals; COO — Protein lens: 2).
-  16. this handoff commit.
+  16. `697fe66` — the previous handoff commit.
+  17. `4ea8961` — **demo heartbeat**: a 30s interval in `app.js`
+      (`startHeartbeat()`, called ONLY by `server.js` — never the Vercel
+      handler) that (a) decays open findings' SLA clocks at **12x demo
+      time** and auto-escalates expired ones up the role tree with the
+      shared `escalateFindingUp()` (dotted forks included; top-of-tree
+      findings clamp at 0h "breached and waiting" instead of looping),
+      (b) stamps staggered `lastSenseSweepAt` on counterparts (new
+      optional ShadowAgent field; card footers show "senses swept 2m
+      ago"), and (c) refreshes active connectors' `lastSyncedAt` +
+      audit-logs loads as 'Rewive (system)'. Tune with
+      `REWIVE_SLA_HOURS_PER_TICK` (0 freezes clocks; 1 = stage speed,
+      hero escalates in ~2 min; default 0.1 ≈ hero in ~20 min).
+      **Demo consequence**: left running for hours, the whole queue
+      migrates to the Group CEO breached — restart the mock server to
+      reset, or freeze the clock between demos. Findings/counterpart
+      queries already poll every 30s, so escalations appear live with
+      no frontend work. Verified with a throwaway
+      `REWIVE_SLA_HOURS_PER_TICK=5` instance on :4100: hero walked
+      `protein_supply_chain → coo`, trade-spend forked to the CFO,
+      connectors loaded, all 19 counterparts swept.
+  18. this handoff commit.
 - **Push is blocked on exactly one founder action.** This network's FortiGate
   MITMs GitHub HTTPS and its CA is in no local trust store, so git, curl
   **and `gh` all fail TLS** (don't fix by disabling verification; memory
