@@ -1167,7 +1167,34 @@ app.put('/api/v1/org-profile', (req, res) => {
 });
 
 // ---------- KPI brain ----------
-app.get('/api/v1/kpi-brain', (req, res) => res.json(brainsState[v4Industry(req)]));
+// Node statuses are reconciled with the Datasets registry at read time — a
+// mandate is 'connected' only when a live dataset names it in `feeds`, and a
+// sense only when its stream has a live dataset. Declared-but-not-landed data
+// (expected/receiving) reads 'needs_data': a mandate without data is blind,
+// and the picture says so. 'proposed' nodes and the statement tiers (targets,
+// P&L lines) keep their seeded status.
+function reconcileBrainStatuses(brain, datasets) {
+  const liveFeeds = new Set();
+  for (const ds of datasets) {
+    if (ds.status !== 'live') continue;
+    for (const f of ds.feeds ?? []) liveFeeds.add(f);
+  }
+  const liveStreams = new Set(
+    brain.nodes.filter((n) => n.kind === 'stream_kpi' && liveFeeds.has(n.name)).map((n) => n.streamKey),
+  );
+  const nodes = brain.nodes.map((n) => {
+    if (n.status === 'proposed') return n;
+    if (n.kind === 'stream_kpi') return { ...n, status: liveFeeds.has(n.name) ? 'connected' : 'needs_data' };
+    if (n.kind === 'driver') return { ...n, status: liveStreams.has(n.streamKey) ? 'connected' : 'needs_data' };
+    return n;
+  });
+  return { ...brain, nodes };
+}
+
+app.get('/api/v1/kpi-brain', (req, res) => {
+  const industry = v4Industry(req);
+  res.json(reconcileBrainStatuses(brainsState[industry], datasetsState[industry] ?? []));
+});
 
 app.post('/api/v1/kpi-brain/nodes', (req, res) => {
   const brain = brainsState[v4Industry(req)];

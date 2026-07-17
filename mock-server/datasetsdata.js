@@ -98,7 +98,7 @@ export const datasetsSeed = {
       rows: 96_120,
       columns: ['claim_id', 'payer', 'facility', 'billed', 'allowed', 'denied_code'],
       lastLoadAt: hoursAgo(1),
-      feeds: ['Denial rate', 'Clean-claim rate'],
+      feeds: ['Claim denial rate', 'Clean claim rate'],
       analysisIdeas: ['Denial surge by payer and code', 'Registration-error recurrence after the checklist fix'],
     },
     {
@@ -111,7 +111,7 @@ export const datasetsSeed = {
       rows: null,
       columns: [],
       lastLoadAt: null,
-      feeds: ['ALOS', 'Bed occupancy'],
+      feeds: ['Average length of stay', 'Bed occupancy'],
       analysisIdeas: ['Discharge-delay drivers by ward', 'ALOS → premium-pay conversion'],
     },
     {
