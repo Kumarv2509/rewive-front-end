@@ -50,7 +50,33 @@
       `mock-server:stage` (1h/tick — hero escalates ~2 min after boot)
       and `mock-server:frozen` (clocks stopped); plain `mock-server`
       stays the 12x default.
-  20. this handoff commit.
+  20. `e686ac3` — the previous handoff commit.
+  21. `e71bf9b` — **Datasets placeholder** (`/build/datasets`, Foundation):
+      per-industry registry of the data to come — `expected` slots naming
+      source/cadence/the Operating Picture nodes they'll feed +
+      analysis ideas tied to existing findings; `live` ones ride the
+      heartbeat (fresh loads, row growth). CSV staging (client-side
+      profiling → `POST /datasets` as 'receiving') and an analysis
+      workbench (`POST /analysis-requests`, queued until data lands).
+      Contract: `Dataset`/`AnalysisRequest` in types.ts,
+      `src/api/datasets.ts`, seeds in `mock-server/datasetsdata.js`,
+      state in the serverless snapshot. **Foundation now has a
+      `FOUNDATION_TABS` SectionTabs header on all four screens** —
+      its sub-screens were previously unreachable by browsing.
+      Company-wide like business context (no persona). Verified:
+      endpoints + headless screenshot.
+  22. this handoff commit.
+- **Push STILL blocked (SSH)**: two keys failed. Diagnosis so far: client
+  side is proven good (real GitHub host key, correct key offered —
+  `~/.ssh/id_ed25519_rewive`, fingerprint
+  `SHA256:qi700T0YxECL3859MQIEId9q2+/3E09fi/vgYPdR2P8`, wired in
+  `~/.ssh/config`), but `github.com/rianpraveen.keys` and
+  `github.com/Kumarv2509.keys` are both EMPTY — no authentication key is
+  actually saved on either account (likely saved as a *Signing key*, an
+  abandoned sudo/2FA confirmation, or a third account). Founder check:
+  `github.com/settings/ssh/new` → type **Authentication Key** → confirm
+  2FA → then `github.com/<user>.keys` must show the key. Then
+  `git push origin v5`.
 - **Escalation demoed live to the founder (2026-07-17)**: at stage speed
   the hero finding walked `protein_supply_chain → coo` on its own ~2 min
   after boot, watched in the browser (queue pill flipped, 12h reset,
