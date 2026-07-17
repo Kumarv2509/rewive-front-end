@@ -309,7 +309,7 @@ let connectionsState = [...connections];
 let auditLogState = [...auditLog];
 
 function logAudit(entityType, entityId, action, actorName = 'Kumara Vijayan') {
-  auditLogState.push({ id: `al-${Date.now()}`, entityType, entityId, action, actorName, timestamp: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) });
+  auditLogState.push({ id: `al-${Date.now()}-${auditLogState.length}`, entityType, entityId, action, actorName, timestamp: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) });
 }
 
 app.get('/api/v1/connector-types', (req, res) => res.json(connectorTypesState));
@@ -1398,22 +1398,28 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
   res.json(stripServerFields(finding));
 });
 
+// Escalation is the stitch between levels of the org: an unanswered finding
+// becomes the parent role's call. Supply chain → division COO → Group CEO.
+// Roles with a dotted line fork: ownership moves up the solid line, and the
+// functional parent (e.g. the CFO) gets the finding flagged in their queue.
+// Shared by the escalate route and the SLA heartbeat.
+function escalateFindingUp(finding, industry) {
+  finding.escalationLevel += 1;
+  finding.escalatedToAgentId = `${industry}-sa-chief`;
+  finding.slaHoursRemaining = 12;
+  const dottedRole = DOTTED_PARENT[finding.persona];
+  if (dottedRole) finding.dottedPersona = dottedRole;
+  const parentRole = ROLE_PARENT[finding.persona];
+  if (parentRole) finding.persona = parentRole;
+  return { parentRole, dottedRole };
+}
+
 app.post('/api/v1/findings/:id/escalate', (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
   const { finding, industry } = hit;
   if (finding.status !== 'open') return res.status(400).json({ message: 'Only open findings can be escalated' });
-  finding.escalationLevel += 1;
-  finding.escalatedToAgentId = `${industry}-sa-chief`;
-  finding.slaHoursRemaining = 12;
-  // Escalation is the stitch between levels of the org: an unanswered finding
-  // becomes the parent role's call. Supply chain → division COO → Group CEO.
-  // Roles with a dotted line fork: ownership moves up the solid line, and the
-  // functional parent (e.g. the CFO) gets the finding flagged in their queue.
-  const dottedRole = DOTTED_PARENT[finding.persona];
-  if (dottedRole) finding.dottedPersona = dottedRole;
-  const parentRole = ROLE_PARENT[finding.persona];
-  if (parentRole) finding.persona = parentRole;
+  const { parentRole, dottedRole } = escalateFindingUp(finding, industry);
   logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} — now ${parentRole ? `${parentRole}'s` : 'the top role’s'} call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`);
   res.json(stripServerFields(finding));
 });
@@ -1469,6 +1475,83 @@ app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
 // ---------- Full-state snapshot, for persistence on serverless (see mock-server/kv.js) ----------
 // Reaches into every mutable collection above rather than threading a store
 // through each route — keeps this additive instead of rewriting ~40 handlers.
+// ============ Demo heartbeat (dev server only) ============
+// Makes the loop run by itself: SLA clocks tick down and expired findings walk
+// up the org unprompted ("silence escalates" — live), counterparts sweep the
+// senses they watch on a cadence, and active connectors pull fresh loads.
+// Only server.js starts this — never the serverless handler (api/handler.js),
+// where an interval can't survive the invocation.
+const TICK_MS = 30_000;
+// 0.1h per 30s tick = demo time runs 12x real time — the 4h hero finding
+// auto-escalates ~20 real minutes after boot. Tune per demo:
+//   REWIVE_SLA_HOURS_PER_TICK=0    freeze the clocks
+//   REWIVE_SLA_HOURS_PER_TICK=1    stage speed — the hero escalates in ~2 min
+const SLA_HOURS_PER_TICK = Number(process.env.REWIVE_SLA_HOURS_PER_TICK ?? 0.1);
+const SENSE_SWEEP_EVERY_TICKS = 4; // each counterpart re-checks its senses every ~2 min
+const CONNECTOR_LOAD_EVERY_MS = 5 * 60_000; // active connectors pull a load every ~5 min
+
+let heartbeatTickCount = 0;
+const connectorLastLoadMs = new Map();
+
+function heartbeatTick() {
+  heartbeatTickCount += 1;
+  const nowIso = new Date().toISOString();
+  const nowMs = Date.now();
+
+  // 1) SLA clocks — silence escalates, without anyone clicking.
+  if (SLA_HOURS_PER_TICK > 0) {
+    for (const [industry, findings] of Object.entries(findingsState)) {
+      for (const finding of findings) {
+        if (finding.status !== 'open' || finding.slaHoursRemaining <= 0) continue;
+        finding.slaHoursRemaining = Math.round((finding.slaHoursRemaining - SLA_HOURS_PER_TICK) * 10) / 10;
+        if (finding.slaHoursRemaining > 0) continue;
+        if (ROLE_PARENT[finding.persona]) {
+          const { parentRole, dottedRole } = escalateFindingUp(finding, industry);
+          logAudit(
+            'finding',
+            finding.id,
+            `SLA expired unanswered — auto-escalated to level ${finding.escalationLevel}, now ${parentRole}'s call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`,
+            'Rewive (system)',
+          );
+        } else {
+          // Top of the tree: nowhere left to go — breached and waiting.
+          finding.slaHoursRemaining = 0;
+          logAudit('finding', finding.id, 'SLA breached at the top of the org — waiting unanswered', 'Rewive (system)');
+        }
+      }
+    }
+  }
+
+  // 2) Sense sweeps — counterparts re-check the numbers they watch, staggered
+  // so the timestamps read organically. First tick sweeps everyone.
+  for (const org of Object.values(shadowOrgsSeed)) {
+    org.agents.forEach((agent, i) => {
+      if (heartbeatTickCount === 1 || (heartbeatTickCount + i) % SENSE_SWEEP_EVERY_TICKS === 0) {
+        agent.lastSenseSweepAt = nowIso;
+      }
+    });
+  }
+
+  // 3) Connector loads — active connections pull fresh data on a cadence.
+  for (const conn of connectionsState) {
+    if (conn.status !== 'active') continue;
+    const last = connectorLastLoadMs.get(conn.id) ?? 0;
+    if (nowMs - last >= CONNECTOR_LOAD_EVERY_MS) {
+      connectorLastLoadMs.set(conn.id, nowMs);
+      logAudit('connection', conn.id, `pulled a fresh load — ${conn.name}`, 'Rewive (system)');
+    }
+    const mins = Math.round((nowMs - connectorLastLoadMs.get(conn.id)) / 60_000);
+    conn.lastSyncedAt = mins < 1 ? 'just now' : `${mins} min ago`;
+  }
+}
+
+export function startHeartbeat() {
+  heartbeatTick(); // first sweep immediately so screens show life right away
+  const timer = setInterval(heartbeatTick, TICK_MS);
+  timer.unref?.();
+  return timer;
+}
+
 export function exportState() {
   return {
     agentSessions: Object.fromEntries(agentSessions),

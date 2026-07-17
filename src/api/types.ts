@@ -1039,6 +1039,8 @@ export interface ShadowAgent {
   temperament: number; // 0 quiet … 100 hair-trigger
   health: ShadowAgentHealth;
   lastFindingAt: string | null;
+  /** Set by the mock server's heartbeat — when this counterpart last re-checked its senses. */
+  lastSenseSweepAt?: string | null;
   reportsToAgentId: string | null;
 }
 

@@ -21,11 +21,13 @@ const healthLabel: Record<ShadowAgentHealth, string> = {
   critical: 'needs you',
 };
 
-function relTime(iso: string | null): string {
+function relTime(iso: string | null | undefined): string {
   if (!iso) return 'never';
   const diff = Date.now() - new Date(iso).getTime();
-  const h = Math.round(diff / 3.6e6);
-  if (h < 1) return 'just now';
+  const m = Math.round(diff / 60_000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.round(h / 24)}d ago`;
 }
@@ -87,7 +89,10 @@ function AgentCard({ agent, mandateCount, findings }: { agent: ShadowAgent; mand
       </div>
 
       <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', padding: '10px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>last raised {relTime(agent.lastFindingAt)}</span>
+        <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
+          {agent.lastSenseSweepAt && <>senses swept {relTime(agent.lastSenseSweepAt)} · </>}
+          last raised {relTime(agent.lastFindingAt)}
+        </span>
         {openFindings.length > 0 ? (
           <button className="btn ghost sm" onClick={() => setOpen((v) => !v)}>
             {open ? 'Hide' : `What it's flagging (${openFindings.length})`}
