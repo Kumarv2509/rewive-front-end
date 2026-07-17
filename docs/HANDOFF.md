@@ -14,7 +14,9 @@
   9. `1c6a3aa` — the previous handoff commit.
   10. `a2fb841` — **finding impactPath seeds routed through the P&L tier** (resolved old open thread 3b: 24 FMCG findings now carry `pl_line` steps; the hero fill finding reads sense → mandate → gross revenue → intent).
   11. `13d63b9` — **half-year review derived from live state** (2026-07-17 session, documented below; resolved old open thread 3).
-  12. this handoff commit.
+  12. `d667457` — the previous handoff commit.
+  13. `b7db762` — **stat tiles derived too** (same session; no hand-seeded decision stats remain anywhere).
+  14. this handoff commit.
 - **Push is blocked on exactly one founder action.** This network's FortiGate
   MITMs GitHub HTTPS and its CA is in no local trust store, so git, curl
   **and `gh` all fail TLS** (don't fix by disabling verification; memory
@@ -67,12 +69,27 @@ actual). Chose **derive** over re-bump so it can never rot again:
   over the last 7 months; 24 decisions on the ledger, 8 loops closed. Win
   rate 86% to date" — every number clickable-true against Findings/Ledger.
   Label is rolling, e.g. "Jan–Jul 2026 · derived from the ledger".
+- **The four stat tiles are derived too** (`b7db762`, follow-up ask):
+  `deriveStatTiles()` in the same module — decisions tracked = ledger rows
+  (delta counts this quarter's dated rows), win rate over assessed verdicts
+  (FMCG: "87% · 13 of 15 assessed worked"), median detectedAt →
+  dispositionAt across decided findings (FMCG 24.0h over 17), measured
+  impact from the ledger's summable currency amounts (FMCG AED 1.8M over
+  9). Tiles cover the whole ledger/findings window, **not QTD** — so
+  `trackedQtd`/`measuredImpactQtd` were renamed `tracked`/`measuredImpact`
+  in `types.ts` and the captions changed in `StatsRow.tsx` ("Decisions on
+  the ledger", "Measured impact · to date") and `TodayStats.tsx` (the Today
+  screen's third tile shows the same measuredImpact). The panel's
+  cumulative win rate now also counts undated `'ongoing'` verdicts so tile
+  and panel read the same 87%. **No hand-seeded decisionStats blocks exist
+  anymore** — `data.js` no longer exports `decisionStats`, and the HC/Mfg
+  packs in `v4content.js` dropped theirs.
 - **Trade-offs to know**: numbers are smaller than the old fabricated block
-  (42 vs 118) but reconcile, on-message for "the system of record"; June
-  shows 0 raised (no seed lands there — one mid-June finding would fill the
-  bar); the hand-seeded **top stat tile still says win rate 78%** next to
-  the derived 86% (QTD framing makes it defensible — aligning/deriving the
-  tiles is a natural follow-up).
+  (42 findings vs 118, 24 decisions vs "142 QTD") but reconcile,
+  on-message for "the system of record"; June shows 0 raised (no seed
+  lands there — one mid-June finding would fill the bar); manufacturing's
+  measured-impact tile is honestly "—" (its ledger has no currency
+  amounts).
 - **Gotcha (re)confirmed while at it**: restarting the mock server resets
   the in-memory org profile to the seed (`fmcg`), but the *browser's*
   persisted `rewive.industry` localStorage choice rides every request and
@@ -510,10 +527,9 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
    `protein_commercial_finance` history, `fnv_analysts`,
    `ambient_production`'s siblings in other divisions, and the horizontals
    beyond procurement/audit/shared/HR. Team scope covers them.
-3. ~~`halfYear` stats undercount~~ — **RESOLVED** (`13d63b9`): derived from
-   live state at request time; see the 2026-07-17 session section. Residue:
-   the **top stat tiles** (`trackedQtd`/`winRate`/`measuredImpactQtd`) are
-   still hand-seeded and read 78% next to the derived 86%; and June has no
+3. ~~`halfYear` stats undercount~~ — **RESOLVED** (`13d63b9` + `b7db762`):
+   the review panel AND the four stat tiles are derived from live state at
+   request time; see the 2026-07-17 session section. Residue: June has no
    seeded finding, so its "raised" bar is 0.
 3b. ~~Finding `impactPath` seeds don't name P&L lines~~ — **RESOLVED**
    (`a2fb841`): 24 FMCG findings route through `pl_line` steps (rendered
