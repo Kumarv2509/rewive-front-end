@@ -65,7 +65,20 @@
       its sub-screens were previously unreachable by browsing.
       Company-wide like business context (no persona). Verified:
       endpoints + headless screenshot.
-  22. this handoff commit.
+  22. `74aa7cf` + `b885a11` — handoff commits (Datasets, SSH saga).
+  23. `5636aff` — **Picture statuses reconciled with Datasets**: the
+      kpi-brain endpoint derives node statuses at read time
+      (`reconcileBrainStatuses` in app.js) — mandate 'connected' only if
+      a **live** dataset names it in `feeds` (exact node-name match —
+      keep dataset `feeds` in sync with node names!), sense 'connected'
+      only if its stream has a live dataset, everything else
+      'needs_data'; 'proposed'/targets/P&L lines keep seeded status.
+      FMCG now honestly shows 4/26 mandates + 2/6 senses connected
+      (POS + trade-spend feeds), healthcare 2/22 + 1/8, manufacturing
+      0. Fixed hc dataset feed names to exact node names. The founder
+      chose this over the fully-lit picture ("reconcile it") — flipping
+      a dataset seed to 'live' is how you light up more of the tree.
+  24. this handoff commit.
 - **Push STILL blocked (SSH) — three failed attempts as of 2026-07-17.**
   The client side is PROVEN good: we reach real GitHub (server host key
   matches GitHub's published
