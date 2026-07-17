@@ -25,7 +25,7 @@ export const NAV_ITEMS: AreaNavItem[] = [
   { to: '/operate/counterparts', label: 'Agents', icon: 'shadow', match: ['/operate/counterparts', '/insights/agents'] },
   { to: '/insights/people', label: 'Performance', icon: 'people' },
   { to: '/business/overview', label: 'Business', icon: 'chart', match: ['/business'] },
-  { to: '/build/picture', label: 'Foundation', icon: 'brain', match: ['/build/picture', '/build/kpis', '/build/connectors'] },
+  { to: '/build/picture', label: 'Foundation', icon: 'brain', match: ['/build/picture', '/build/kpis', '/build/connectors', '/build/datasets'] },
 ];
 
 export function isNavItemActive(item: AreaNavItem, pathname: string): boolean {
@@ -50,6 +50,7 @@ const SPECIAL_TITLES: [prefix: string, title: string][] = [
   ['/build/picture', 'Foundation / Operating Picture'],
   ['/build/kpis', 'Foundation / Mandate Library'],
   ['/build/connectors', 'Foundation / Data Connectors'],
+  ['/build/datasets', 'Foundation / Datasets'],
   ['/build/agent-studio', 'Findings / Act · Agent Studio'],
   ['/build/solutions', 'Findings / Act · Solution Design'],
   ['/build/studio', 'Findings / Act · Agent Studio'],

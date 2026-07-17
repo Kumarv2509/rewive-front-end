@@ -25,6 +25,7 @@ import { LandingScreen } from './screens/Landing';
 import { GuideScreen } from './screens/Guide';
 import { ShadowOrgScreen } from './screens/ShadowOrg';
 import { BusinessOverviewScreen } from './screens/Business';
+import { DatasetsScreen } from './screens/Datasets';
 import { SkuSalesScreen } from './screens/Business/SkuSales';
 import { CustomerSalesScreen } from './screens/Business/CustomerSales';
 import { BusinessPlScreen } from './screens/Business/BusinessPl';
@@ -78,6 +79,7 @@ function App() {
               <Route path="build/kpis" element={<KpiLibraryScreen />} />
               <Route path="build/create" element={<CreateAgentScreen />} />
               <Route path="build/connectors" element={<ConnectorsScreen />} />
+              <Route path="build/datasets" element={<DatasetsScreen />} />
               <Route path="build/studio" element={<AgentStudioScreen />} />
               <Route path="build/studio/:workflowId" element={<AgentStudioScreen />} />
               <Route path="build/solutions/:solutionId" element={<SolutionDesignScreen />} />

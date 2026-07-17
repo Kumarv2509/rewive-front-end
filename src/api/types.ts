@@ -174,6 +174,42 @@ export interface DecisionStats {
   halfYear?: HalfYearReview;
 }
 
+// ---------- Datasets (Foundation · placeholder registry for data to come) ----------
+// The registry of the data the loop will run on: most entries are 'expected'
+// slots declared ahead of the actual feeds; 'live' ones ride the connector
+// heartbeat. Company-wide like the business context — the lens does not
+// partition it. Analysis requests queue against a dataset and run when it lands.
+export type DatasetStatus = 'expected' | 'receiving' | 'live';
+
+export interface Dataset {
+  id: string;
+  name: string;
+  description: string;
+  source: string; // the system or team the data comes from
+  cadence: string; // 'daily', 'weekly', 'monthly', 'on close', …
+  status: DatasetStatus;
+  rows: number | null;
+  columns: string[]; // header names once known (staged uploads fill these)
+  lastLoadAt: string | null; // ISO; 'live' datasets get refreshed by the heartbeat
+  feeds: string[]; // Operating Picture nodes (senses/mandates) this will feed
+  analysisIdeas: string[]; // what we intend to analyze once it lands
+}
+
+export interface RegisterDatasetInput {
+  name: string;
+  rows: number;
+  columns: string[];
+}
+
+export interface AnalysisRequest {
+  id: string;
+  datasetId: string | null;
+  datasetName: string | null;
+  question: string;
+  status: 'queued';
+  createdAt: string; // ISO
+}
+
 // ---------- Half-year review (Decisions screen) ----------
 // Monthly loop counts plus rollups by business entity and region. Not seeded:
 // the mock derives it from the live findings/closures/ledger state at request

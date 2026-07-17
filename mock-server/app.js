@@ -43,6 +43,7 @@ import {
 import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
 import { businessContextSeed } from './businessdata.js';
+import { datasetsSeed } from './datasetsdata.js';
 import { personaScope, ROLE_PARENT, DOTTED_PARENT } from './roles.js';
 import { deriveHalfYear, deriveStatTiles } from './halfyear.js';
 
@@ -1321,6 +1322,59 @@ app.get('/api/v1/business-context', (req, res) => {
   res.json(businessContextSeed[v4Industry(req)] ?? businessContextSeed.fmcg);
 });
 
+// ---------- Datasets (placeholder registry for the data to come) ----------
+let datasetsState = JSON.parse(JSON.stringify(datasetsSeed));
+let analysisRequestsState = [];
+
+app.get('/api/v1/datasets', (req, res) => {
+  res.json(datasetsState[v4Industry(req)] ?? []);
+});
+
+// Stage a dataset now (e.g. a CSV dropped on the Datasets screen): it registers
+// as 'receiving' with the client-profiled shape, ahead of a real pipeline.
+app.post('/api/v1/datasets', (req, res) => {
+  const { name, rows, columns } = req.body;
+  if (!name) return res.status(400).json({ message: 'name is required' });
+  const industry = v4Industry(req);
+  const dataset = {
+    id: `${industry}-ds-${Date.now()}`,
+    name,
+    description: 'Staged upload — profiled on receipt, awaiting the analysis pipeline.',
+    source: 'Manual upload',
+    cadence: 'one-off',
+    status: 'receiving',
+    rows: Number.isFinite(rows) ? rows : null,
+    columns: Array.isArray(columns) ? columns.slice(0, 40) : [],
+    lastLoadAt: new Date().toISOString(),
+    feeds: [],
+    analysisIdeas: [],
+  };
+  datasetsState[industry] = [dataset, ...(datasetsState[industry] ?? [])];
+  logAudit('connection', dataset.id, `staged dataset "${name}" (${dataset.rows ?? '?'} rows)`);
+  res.status(201).json(dataset);
+});
+
+app.get('/api/v1/analysis-requests', (req, res) => res.json(analysisRequestsState));
+
+app.post('/api/v1/analysis-requests', (req, res) => {
+  const { datasetId, question } = req.body;
+  if (!question) return res.status(400).json({ message: 'question is required' });
+  const dataset = datasetId
+    ? Object.values(datasetsState).flat().find((d) => d.id === datasetId)
+    : null;
+  const request = {
+    id: `ar-${Date.now()}-${analysisRequestsState.length}`,
+    datasetId: dataset?.id ?? null,
+    datasetName: dataset?.name ?? null,
+    question,
+    status: 'queued',
+    createdAt: new Date().toISOString(),
+  };
+  analysisRequestsState.push(request);
+  logAudit('connection', request.id, `queued analysis: "${question.slice(0, 80)}"`);
+  res.status(201).json(request);
+});
+
 app.post('/api/v1/findings/:id/disposition', (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
@@ -1543,6 +1597,19 @@ function heartbeatTick() {
     const mins = Math.round((nowMs - connectorLastLoadMs.get(conn.id)) / 60_000);
     conn.lastSyncedAt = mins < 1 ? 'just now' : `${mins} min ago`;
   }
+
+  // 4) Live datasets ride the same cadence — fresh loads with a little row growth.
+  for (const list of Object.values(datasetsState)) {
+    for (const ds of list) {
+      if (ds.status !== 'live') continue;
+      const last = connectorLastLoadMs.get(ds.id) ?? 0;
+      if (nowMs - last >= CONNECTOR_LOAD_EVERY_MS) {
+        connectorLastLoadMs.set(ds.id, nowMs);
+        ds.lastLoadAt = nowIso;
+        if (typeof ds.rows === 'number') ds.rows += Math.max(1, Math.round(ds.rows * 0.0004));
+      }
+    }
+  }
 }
 
 export function startHeartbeat() {
@@ -1572,6 +1639,8 @@ export function exportState() {
     brainsState,
     findingsState,
     closureKpisState,
+    datasetsState,
+    analysisRequestsState,
   };
 }
 
@@ -1595,6 +1664,8 @@ export function importState(snapshot) {
   if (snapshot.brainsState) brainsState = snapshot.brainsState;
   if (snapshot.findingsState) findingsState = snapshot.findingsState;
   if (snapshot.closureKpisState) closureKpisState = snapshot.closureKpisState;
+  if (snapshot.datasetsState) datasetsState = snapshot.datasetsState;
+  if (snapshot.analysisRequestsState) analysisRequestsState = snapshot.analysisRequestsState;
 }
 
 export default app;

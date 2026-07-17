@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Intro } from '../../components/shared/Intro';
+import { SectionTabs, FOUNDATION_TABS } from '../../components/shared/SectionTabs';
 import { ConnectorTypeGrid } from './ConnectorTypeGrid';
 import { NewConnectionForm } from './NewConnectionForm';
 import { NewConnectorTypeForm } from './NewConnectorTypeForm';
@@ -34,6 +35,7 @@ export function ConnectorsScreen() {
 
   return (
     <section className="screen">
+      <SectionTabs tabs={FOUNDATION_TABS} />
       <h1 className="page">Data Connectors</h1>
       <Intro line="Connect new data sources yourself — every connection goes through a quick approval before it's usable in Agent Studio or Signal Studio." />
 

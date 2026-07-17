@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAddBrainNode, useIndustries, useKpiBrain, useOrgProfile, useSetIndustry } from '../../api/shadowOrg';
 import { Intro } from '../../components/shared/Intro';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
+import { SectionTabs, FOUNDATION_TABS } from '../../components/shared/SectionTabs';
 import { useToast } from '../../components/shared/Toast';
 import { KpiBrainCanvas } from './KpiBrainCanvas';
 import type { IndustryKey, KpiBrain } from '../../api/types';
@@ -97,6 +98,7 @@ export function KpiBrainScreen() {
 
   return (
     <section className="screen" style={{ maxWidth: 1280 }}>
+      <SectionTabs tabs={FOUNDATION_TABS} />
       <h1 className="page">Operating Picture</h1>
       <Intro
         line="The DuPont cascade: intents at the top, the P&L line by line beneath them, the mandates that move each line, and the senses that verify each mandate."

@@ -40,3 +40,11 @@ export const AGENTS_TABS: SectionTab[] = [
   { to: '/operate/counterparts', label: 'Counterparts', match: '/operate/counterparts' },
   { to: '/insights/agents', label: 'Workforce', match: '/insights/agents' },
 ];
+
+// eslint-disable-next-line react-refresh/only-export-components -- tab presets co-located with the component intentionally
+export const FOUNDATION_TABS: SectionTab[] = [
+  { to: '/build/picture', label: 'Operating Picture', match: '/build/picture' },
+  { to: '/build/kpis', label: 'Mandate Library', match: '/build/kpis' },
+  { to: '/build/connectors', label: 'Connectors', match: '/build/connectors' },
+  { to: '/build/datasets', label: 'Datasets', match: '/build/datasets' },
+];
