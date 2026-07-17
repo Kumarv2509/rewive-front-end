@@ -1,17 +1,20 @@
-# Handoff — org tree, Business base data, holistic seeds, DuPont Foundation (2026-07-16/17, latest session)
+# Handoff — org tree, Business base data, holistic seeds, DuPont Foundation, derived half-year (2026-07-16/17, latest session)
 
 ## Where things stand
 
-- **`v5` is 9 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
+- **`v5` is 12 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
   1. `e0e365e` — **paper-ledger redesign** (parallel session, documented below).
-  2. `53257e4` — **org tree + commercial-finance dotted line** (this session, part 1 — supersedes the second-hand description the previous handoff had for it).
+  2. `53257e4` — **org tree + commercial-finance dotted line** (part 1 — supersedes the second-hand description the previous handoff had for it).
   3. `a3da560` — the previous handoff commit.
   4. `cdba393` — **Business base-data section + roped findings** (part 2).
   5. `ec5d3ac` — mid-session handoff commit.
   6. `6d3181f` — **holistic seeds: lifecycle-diverse findings across every role + business fact sections** (part 3).
   7. `ce02dec` — **DuPont cascade: full P&L tier in the FMCG Operating Picture** (part 4).
   8. `7885692` — **healthcare P&L tier** (part 4, seeds only).
-  9. this handoff commit.
+  9. `1c6a3aa` — the previous handoff commit.
+  10. `a2fb841` — **finding impactPath seeds routed through the P&L tier** (resolved old open thread 3b: 24 FMCG findings now carry `pl_line` steps; the hero fill finding reads sense → mandate → gross revenue → intent).
+  11. `13d63b9` — **half-year review derived from live state** (2026-07-17 session, documented below; resolved old open thread 3).
+  12. this handoff commit.
 - **Push is blocked on exactly one founder action.** This network's FortiGate
   MITMs GitHub HTTPS and its CA is in no local trust store, so git, curl
   **and `gh` all fail TLS** (don't fix by disabling verification; memory
@@ -25,15 +28,56 @@
   `rianpraveen`), then `git push origin v5`. `gh` CLI is unusable on this
   network — hand the founder compare/PR URLs instead of using `gh pr create`.
 - **Processes at handoff**: Vite dev on :5173 (founder's), mock API on :4000
-  restarted by this session and **serving the latest seeds** — but it's a
-  session-owned background process; if it dies, `npm run dev:all`. Mock
-  server still has no watch mode — restart after seed edits.
+  restarted 2026-07-17 and **serving the latest seeds + derived stats** —
+  but it's a session-owned background process; if it dies, `npm run dev:all`.
+  Mock server still has no watch mode — restart after seed edits (and note
+  a restart resets the in-memory industry to `fmcg`; see the gotcha above).
 - **The previous handoff's open thread #1 is DONE**: all of this session's
   browser verification (grouped lens dropdown, amber ⋯ dotted pills,
   escalation walking up the tree, Group-CEO team scope, Business section)
   ran **on the paper-ledger theme** at HEAD.
-- Build (`tsc -b && vite build`) and `eslint .` clean at HEAD.
+- Build (`tsc -b && vite build`) and `eslint .` clean at HEAD (re-verified 2026-07-17).
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
+
+## This session (2026-07-17): the half-year review is derived, not seeded
+
+The founder asked to "fix the halfYear stats undercount" (old open thread 3 —
+the hand-seeded block predated ~26 findings; `openNow` summed to 5 against 26
+actual). Chose **derive** over re-bump so it can never rot again:
+
+- **New `mock-server/halfyear.js`** — `deriveHalfYear({findings, closures,
+  ledger, currency})` computes the block over the last **7 calendar months
+  (6 prior + current)**: `raised` from findings' `detectedAt`, `decided` +
+  cumulative win rate from ledger rows (parsing their `'DD Mon'` display
+  dates; `'ongoing'` rows count in totals/breakdowns but not monthly),
+  `closed` from closure KPIs' `closedAt`, `openNow` from live finding status
+  (`open` + `acting`), impact by summing parseable AED/$ amounts from
+  `measuredImpact.text` (direction `up` only). Months before the first
+  assessed verdict backfill the first real win rate instead of showing 0%.
+- **`/decisions/stats` computes it per request** from the mutable in-memory
+  state (`app.js`), so the panel updates live mid-demo — verified: accepting
+  a finding dropped UAE Trading Co.'s "open now" 14 → 13 on the next fetch.
+  The serverless `api/handler.js` reuses the same Express app, so Vercel is
+  covered. The three hand-seeded `halfYear` blocks (`data.js` FMCG,
+  `v4content.js` HC + Mfg) are **deleted**.
+- **Frontend**: `HalfYearReview.tsx` win-rate axis was hardcoded 40–90% and
+  would clip the real derived rates (86–100%) — it now scales to the data;
+  the bar chart got a divide-by-zero guard. Types comment updated.
+- **FMCG now reads**: "42 findings raised across 4 entities and 4 regions
+  over the last 7 months; 24 decisions on the ledger, 8 loops closed. Win
+  rate 86% to date" — every number clickable-true against Findings/Ledger.
+  Label is rolling, e.g. "Jan–Jul 2026 · derived from the ledger".
+- **Trade-offs to know**: numbers are smaller than the old fabricated block
+  (42 vs 118) but reconcile, on-message for "the system of record"; June
+  shows 0 raised (no seed lands there — one mid-June finding would fill the
+  bar); the hand-seeded **top stat tile still says win rate 78%** next to
+  the derived 86% (QTD framing makes it defensible — aligning/deriving the
+  tiles is a natural follow-up).
+- **Gotcha (re)confirmed while at it**: restarting the mock server resets
+  the in-memory org profile to the seed (`fmcg`), but the *browser's*
+  persisted `rewive.industry` localStorage choice rides every request and
+  can flip the context back — if the founder reports "wrong industry",
+  it's the landing-page picker / localStorage, not the code.
 
 ## This session, part 1 (`53257e4`): the founder's org, navigable end-to-end
 
@@ -466,15 +510,14 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
    `protein_commercial_finance` history, `fnv_analysts`,
    `ambient_production`'s siblings in other divisions, and the horizontals
    beyond procurement/audit/shared/HR. Team scope covers them.
-3. **`halfYear` stats undercount — worse now**: the hand-seeded H1 block
-   predates ~26 findings added this session (FMCG is at 42);
-   `openNow`/monthly numbers no longer reconcile. Either bump the seeds or
-   derive the block from the findings.
-3b. **Finding `impactPath` seeds don't name P&L lines** — the DuPont tier
-   exists in the graph, but seeded `impactPath` arrays still hop
-   mandate → intent. Re-pointing key ones (e.g. hero fill → gross revenue
-   → revenue intent) would make thread views name the line; `ImpactPath`
-   already renders `pl_line` steps (amber).
+3. ~~`halfYear` stats undercount~~ — **RESOLVED** (`13d63b9`): derived from
+   live state at request time; see the 2026-07-17 session section. Residue:
+   the **top stat tiles** (`trackedQtd`/`winRate`/`measuredImpactQtd`) are
+   still hand-seeded and read 78% next to the derived 86%; and June has no
+   seeded finding, so its "raised" bar is 0.
+3b. ~~Finding `impactPath` seeds don't name P&L lines~~ — **RESOLVED**
+   (`a2fb841`): 24 FMCG findings route through `pl_line` steps (rendered
+   amber by `ImpactPath`).
 4. **CLAUDE.md's "7 items" rail note is stale** (now 8 with Business), and
    the persona bullet predates the 30-role tree + dotted line + base-data
    exception; `docs/BLUEPRINT.md` still describes pre-v5.1 nav.
@@ -487,7 +530,9 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
    founder may want Analysts → FP&A or division HR → HR services once they
    see the commercial-finance one.
 8. **Ledger `date` strings** are static `"DD Mon"`; consider ISO + client
-   formatting if the ledger should sort/bucket by real dates.
+   formatting if the ledger should sort/bucket by real dates. **Heads-up:**
+   `mock-server/halfyear.js` now parses these strings for its monthly
+   buckets (`parseLedgerDate`) — if the format changes, update it too.
 9. **Manufacturing pack depth**; **"new" P&L anomalies → findings** mutation;
    **shadow → counterpart internal rename**; **Tour/Guide copy** still names
    only the old three personas (`tour/steps.ts:19`, `Guide/index.tsx:25`).
