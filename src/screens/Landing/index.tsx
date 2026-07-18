@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { useSetIndustry } from '../../api/shadowOrg';
 import type { IndustryKey } from '../../api/types';
+import { tenantForIndustry } from '../../tenants';
 
 // Manufacturing pack exists but is hidden until it's as deep as the other two —
 // a shallow third industry weakens the "this understands my business" effect.
@@ -11,11 +11,13 @@ const INDUSTRIES: { id: IndustryKey; name: string; blurb: string; mandates: numb
 
 function useEnter() {
   const navigate = useNavigate();
-  const setIndustry = useSetIndustry();
-  // Land on the Command Center — the "4 decisions are waiting on you" moment.
-  const enter = (id: IndustryKey) =>
-    setIndustry.mutate(id, { onSettled: () => navigate('/command') });
-  return { enter, pending: setIndustry.isPending };
+  // Picking a context hands you to the organization sign-in with that tenant
+  // preselected — the SaaS front door owns setting the industry.
+  const enter = (id: IndustryKey) => {
+    const tenant = tenantForIndustry(id);
+    navigate(tenant ? `/login?org=${tenant.id}` : '/login');
+  };
+  return { enter, pending: false };
 }
 
 const css = `

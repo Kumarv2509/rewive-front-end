@@ -61,13 +61,12 @@ const LEGACY_PERSONAS: Persona[] = [
   'commercial_finance',
 ];
 
-function isLegacyIndustry(): boolean {
-  const industry = getActiveIndustry();
+function isLegacyIndustry(industry: string | null = getActiveIndustry()): boolean {
   return industry === 'healthcare' || industry === 'manufacturing';
 }
 
-export function personaLabel(p: Persona): string {
-  if (!isLegacyIndustry()) return FMCG_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
+export function personaLabel(p: Persona, industry?: string): string {
+  if (!isLegacyIndustry(industry ?? getActiveIndustry())) return FMCG_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
   return PERSONA_LABEL[p];
 }
 
@@ -83,9 +82,9 @@ export const PERSONA_GROUPS: { label: string; roles: Persona[] }[] = [
 
 export const PERSONAS: Persona[] = PERSONA_GROUPS.flatMap((g) => g.roles);
 
-/** The lens roles offered for the active industry (grouped for FMCG, flat legacy list otherwise). */
-export function personaGroupsForIndustry(): { label: string; roles: Persona[] }[] {
-  if (isLegacyIndustry()) return [{ label: 'Roles', roles: LEGACY_PERSONAS }];
+/** The lens roles offered for an industry (grouped for FMCG, flat legacy list otherwise). Defaults to the active industry. */
+export function personaGroupsForIndustry(industry?: string): { label: string; roles: Persona[] }[] {
+  if (isLegacyIndustry(industry ?? getActiveIndustry())) return [{ label: 'Roles', roles: LEGACY_PERSONAS }];
   return PERSONA_GROUPS;
 }
 
