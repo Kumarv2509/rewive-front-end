@@ -1,4 +1,4 @@
-# Handoff — org tree, Business base data, holistic seeds, DuPont Foundation, derived half-year (2026-07-16/17, latest session)
+# Handoff — tenant sign-in, agents ↔ mandates, org tree, Business base data, DuPont Foundation (2026-07-16/17/18, latest session)
 
 ## Where things stand
 
@@ -78,7 +78,13 @@
       0. Fixed hc dataset feed names to exact node names. The founder
       chose this over the fully-lit picture ("reconcile it") — flipping
       a dataset seed to 'live' is how you light up more of the tree.
-  24. this handoff commit.
+  24. `25226e5` + `6c08996` — handoff commits (Datasets reconciliation;
+      prioritized next steps).
+  25. `337b46c` — **organization sign-in (tenancy)** — the SaaS front
+      door; 2026-07-18 session, documented below.
+  26. `98d1324` — **agents ↔ mandates, both directions** — same session,
+      documented below.
+  27. this handoff commit.
 - **Push STILL blocked (SSH) — three failed attempts as of 2026-07-17.**
   The client side is PROVEN good: we reach real GitHub (server host key
   matches GitHub's published
@@ -123,14 +129,16 @@
   github.com/settings/keys on the account with push access (`gh` config says
   `rianpraveen`), then `git push origin v5`. `gh` CLI is unusable on this
   network — hand the founder compare/PR URLs instead of using `gh pr create`.
-- **Processes at handoff**: Vite dev on :5173 (founder's), mock API on :4000
-  restarted 2026-07-17 and **serving the latest seeds + derived stats, with
-  the demo heartbeat running at the default 12x speed** (SLA clocks are
-  ticking — left alone for hours the queue escalates to the top; restart to
-  reset, or use `npm run mock-server:frozen`). It's a session-owned
-  background process; if it dies, `npm run dev:all`. Mock server still has
+- **Processes at handoff (2026-07-18): BOTH DEV SERVERS ARE DOWN** — the
+  session-owned `npm run dev:all` was stopped at the end of the tenancy/
+  mandates session. Start with `npm run dev:all`. Mock server still has
   no watch mode — restart after seed edits (and note a restart resets the
-  in-memory industry to `fmcg`; see the gotcha above).
+  in-memory industry to `fmcg`; see the gotcha above). **Process gotcha
+  learned the hard way**: stopping the background `dev:all` task does NOT
+  kill concurrently's children — vite and the API linger holding :5173/
+  :4000 (a relaunch then "listens" and silently exits, and vite drifts to
+  :5174, so you test STALE code). Kill by port before relaunching:
+  `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
 - **The previous handoff's open thread #1 is DONE**: all of this session's
   browser verification (grouped lens dropdown, amber ⋯ dotted pills,
   escalation walking up the tree, Group-CEO team scope, Business section)
@@ -138,7 +146,100 @@
 - Build (`tsc -b && vite build`) and `eslint .` clean at HEAD (re-verified 2026-07-17).
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
 
-## This session (2026-07-17): the half-year review is derived, not seeded
+## This session (2026-07-18): organization sign-in — the SaaS front door (`337b46c`)
+
+The founder's ask: *"as this is the saas product multiple team will login
+so i want to set the background with organization login so want to split
+the tenant kind of view."* Built demo-grade tenancy: each organization is
+a workspace mapped onto an industry pack, with a split-view branded login.
+
+- **`src/tenants.ts`** — the tenant registry + session. Two orgs:
+  `americana` → **Americana Foods** (fmcg, flat terracotta `#8A3B12`,
+  `americanafoods.com`) and `metro-health` → **Metro Health Network**
+  (healthcare, flat teal `#0D6E66`, `metrohealth.org` — named after the
+  hospital entities already in the healthcare seeds). Manufacturing has
+  **no tenant on purpose** (hidden-pack convention). Session =
+  `localStorage['rewive.tenant']`.
+- **`/login`** (`src/screens/Login/index.tsx`, chrome-less route) — split
+  view: left panel is the org's brand (flat accent bg that transitions on
+  org switch, org mark, operating-context eyebrow, tagline, proof lines,
+  "Every mandate, held twice." foot); right is the sign-in card: org
+  picker tiles, work email (prefilled `you@<domain>`, tracks org switch
+  until hand-edited), password (**any value works — no real auth**, the
+  card says so), and **"Sign in as"** role select (Admin · all lenses +
+  the industry's role groups). Submit = `setActiveTenantId` + `setLens` +
+  `setHierarchy(false)` + the existing `useSetIndustry` mutation →
+  `/command`. `?org=<id>` preselects.
+- **Route guard**: all app routes sit behind `RequireTenant` in `App.tsx`
+  (landing, `/guide`, `/login` stay public). **The industry choice stays
+  authoritative**: `getActiveTenant()` re-derives the tenant whenever the
+  active industry disagrees (covers pre-tenancy localStorage sessions AND
+  in-app industry switching on the Operating Picture — the chrome never
+  claims one org while showing another's data).
+- **TopNav** shows the signed-in org chip (accent mark · name · industry,
+  subscribed to `useOrgProfile` so it flips live) + a **"Switch
+  organization"** button → clears the tenant → `/login?org=<current>`.
+  **Landing CTAs now route through the login** (`useEnter` navigates to
+  `/login?org=…` instead of mutating industry directly).
+- **Fix caught by driving it**: the login's role list showed "COO —
+  Protein" for the healthcare org — `personaLabel` read the *active*
+  industry. It now takes an optional industry param
+  (`personaLabel(p, industry?)`, same for `personaGroupsForIndustry`);
+  Login passes the tenant's. All old one-arg call sites unchanged.
+- **CSS**: `.login-*` + `.topnav-tenant-*` blocks appended to
+  `globals.css`, tokens-only, flat colors (the org-picker radio dot uses
+  an inset box-shadow ring, NOT a radial-gradient — paper-ledger rule).
+- CLAUDE.md gained a **"Tenancy (demo-grade)"** paragraph under
+  Architecture.
+- **Verified headless** (playwright-core + system Chrome, scratchpad
+  `drive-login.mjs`): fresh-browser deep link to `/command` bounces to
+  `/login`; org switch swaps panel/email/roles; sign-in as Metro Health
+  store manager lands on `/command` with the MH chip + healthcare data +
+  `lens=store_manager`; Switch organization returns preselected; Americana
+  re-entry shows FMCG grouped roles. Zero console errors. **Remember
+  `rewive.guideSeen='1'`** in drivers — first visit still detours to
+  `/guide` after sign-in (pre-existing onboarding, kept deliberately).
+
+## This session (2026-07-18): agents ↔ mandates, both directions (`98d1324`)
+
+The founder's ask: *"can we connect Agents to Mandates."* The data half
+existed (`ShadowAgent.watchesNodeIds`) but surfaced only as a count;
+workforce agents had no link at all. Now navigable both ways:
+
+- **Counterpart cards** (Agents → Counterparts): new **"holds"** section —
+  each watched mandate as a chip with a health dot (green/amber/red from
+  the node) deep-linking to `/build/picture?focus=<nodeId>` (the focus
+  param already existed). `mandatesOf()` resolves `watchesNodeIds` against
+  the brain; the mandates stat now counts the resolved list.
+- **Workforce agents**: new optional **`mandateIds?: string[]`** on
+  `AgentCatalogEntry` (types.ts), **seeded for all 18 catalog agents**
+  across the three packs in `v4content.js` (e.g. Trade-Spend ROI Agent →
+  `fmcg-k-troi` + `fmcg-k-tradepct`; Readmission Risk Agent → the
+  `hc-t-quality` intent). Grid cards show plain ⌖ pills (card is itself a
+  link — no nested anchors); the detail page gets a **Mandates** row with
+  accent links into the focused picture.
+  **Keep-in-sync convention (same spirit as dataset `feeds`)**:
+  `mandateIds` must exactly match Operating Picture node ids — unmatched
+  ids silently render nothing.
+- **Operating Picture**: selecting a mandate/target now shows a
+  **"Held twice" strip** (bottom of the canvas, reuses `.brain-legend`
+  styling): human owner (name · role) + counterpart (→ Counterparts),
+  "worked by <workforce agents>" (→ their detail), and "Its findings →"
+  (`?stream=`). Counterpart resolved by `watchesNodeIds` first, then
+  `streamKey` fallback; workforce lookup filters the catalog by
+  `mandateIds`. Uses `useShadowOrg()` + `useAgentCatalog()` inside
+  `KpiBrainCanvas` — both cached queries.
+- **Verified headless** (`drive-mandates.mjs`): full round trip —
+  counterpart chip "On-shelf availability" → focused node with strip
+  "Layla Nasser · Commercial director + Commercial counterpart · worked
+  by Shelf Availability Agent" → workforce ⌖ pills → Trade-Spend ROI
+  detail links → back to the picture showing "worked by" that agent.
+  Zero console errors. **Driver gotcha**: `text=` locators collide with
+  the Intro copy (it also says "held twice") — target
+  `.brain-legend:has-text("Held twice")`.
+- Build + lint clean at `98d1324`.
+
+## Previous session (2026-07-17): the half-year review is derived, not seeded
 
 The founder asked to "fix the halfYear stats undercount" (old open thread 3 —
 the hand-seeded block predated ~26 findings; `openNow` summed to 5 against 26
@@ -663,7 +764,8 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
    Datasets), the persona bullet predates the 30-role tree + dotted line
    + base-data exception, the mock-server file list is missing
    `halfyear.js`/`businessdata.js`/`datasetsdata.js` and the heartbeat;
-   `docs/BLUEPRINT.md` still describes pre-v5.1 nav.
+   `docs/BLUEPRINT.md` still describes pre-v5.1 nav. (The tenancy
+   paragraph added 2026-07-18 is current — the staleness is elsewhere.)
 8. **Entity/region breadth** — dimension exists on findings/closures/ledger
    only; the new Business rows carry entity implicitly in copy, not as the
    filterable field.
@@ -679,6 +781,18 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 12. **Manufacturing pack depth**; **"new" P&L anomalies → findings** mutation;
     **shadow → counterpart internal rename**; **Tour/Guide copy** still names
     only the old three personas (`tour/steps.ts:19`, `Guide/index.tsx:25`).
+13. **Tenancy follow-ups (if the SaaS story deepens)**: a real user model
+    (named users per org, sign-out separate from org-switch, non-admin
+    lock actually driven by the login role — today the mock
+    `currentUser.isAdmin` is always true so the lens stays changeable);
+    per-tenant data partitions in the mock server (both orgs currently
+    share state, isolation comes from the industry packs); more than one
+    org per industry would force real tenant-scoping and make the demo
+    stronger.
+14. **Mandate-link breadth**: `mandateIds` lives only on the catalog
+    seeds — studio-built agents (`createdAgents`) never get one; the Act
+    flow could stamp the originating finding's mandate onto the agent
+    spec so built agents join the "worked by" strip automatically.
 
 Resolved this cycle: ~~halfYear undercount~~ (`13d63b9`+`b7db762`, fully
 derived), ~~impactPath P&L steps~~ (`a2fb841`), ~~"breaks" report~~ (the
@@ -690,7 +804,18 @@ clock-rot fix held; founder has been demoing live without issues).
   "Americana Foods (demo)", AED). FMCG is the beachhead, Healthcare second.
   The org they described (Protein / G&I / F&V / Ambient + extended teams) is
   their real structure — the tree is not hypothetical.
-- **Good demo path for this session's work**: Business → The business (read
+- **Good demo path for the 2026-07-18 work**: start logged out at `/` →
+  pick a context → land on `/login` with the org preselected → toggle the
+  two orgs to show the brand panel swap → sign in to Americana as a store
+  manager (any password) → the org chip + role-scoped Today make the
+  "multiple teams log in" point → Switch organization → Metro Health as
+  admin for the healthcare pack. Then the mandate loop: Agents →
+  Counterparts → a "holds" chip (e.g. On-shelf availability) → the
+  focused Operating Picture node shows the "Held twice" strip (owner +
+  counterpart + Shelf Availability Agent) → through "worked by" into the
+  agent detail → its Mandates row leads back to the picture. One circle,
+  no dead ends.
+- **Good demo path for the 2026-07-16/17 work**: Business → The business (read
   the narrative + act guide) → Sales by SKU family → Frozen chicken
   "drifting" → finding → thread shows 4h SLA → "Not mine — escalate ↑" twice
   → lens Group CEO (role scope) shows it landed at the top → lens CFO + team
