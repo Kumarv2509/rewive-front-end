@@ -560,6 +560,8 @@ export interface AgentCatalogEntry extends AgentPreview {
   runsCount: number;
   lastRunAt: string | null;
   costBudget?: AgentCostBudget;
+  /** Operating Picture node ids (mandates/intents) this agent works — the Workforce↔Picture link. */
+  mandateIds?: string[];
 }
 
 export interface AgentCatalogFilters {

@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useAgentCatalogEntry } from '../../../api/agentSpace';
+import { useKpiBrain } from '../../../api/shadowOrg';
 import { Avatar } from '../../../components/shared/Avatar';
 import { Pill } from '../../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../../components/shared/StateMessage';
@@ -9,9 +10,15 @@ import { personaLabel } from '../../CommandCenter/personas';
 export function AgentDetailScreen() {
   const { agentId } = useParams();
   const { data, isLoading, isError } = useAgentCatalogEntry(agentId);
+  const { data: brain } = useKpiBrain();
 
   if (isLoading) return <section className="screen"><Loading /></section>;
   if (isError || !data) return <section className="screen"><ErrorMessage message="Couldn't load this agent." /></section>;
+
+  // The mandates this agent works, resolved against the Operating Picture.
+  const mandates = (data.mandateIds ?? [])
+    .map((id) => brain?.nodes.find((n) => n.id === id))
+    .filter((n): n is NonNullable<typeof n> => !!n);
 
   return (
     <section className="screen">
@@ -23,6 +30,21 @@ export function AgentDetailScreen() {
         <div className="pv-row"><span className="l">Function</span><span className="v">{data.function}</span></div>
         <div className="pv-row"><span className="l">Persona</span><span className="v">{personaLabel(data.persona)}</span></div>
         <div className="pv-row"><span className="l">Industry</span><span className="v">{industryLabel[data.industry]}</span></div>
+        {mandates.length > 0 && (
+          <div className="pv-row">
+            <span className="l">Mandates</span>
+            <span className="v">
+              {mandates.map((m, i) => (
+                <span key={m.id}>
+                  {i > 0 && ' · '}
+                  <Link to={`/build/picture?focus=${m.id}`} title={m.definition} style={{ color: 'var(--accent-deep)', textDecoration: 'none', fontWeight: 600 }}>
+                    {m.name}
+                  </Link>
+                </span>
+              ))}
+            </span>
+          </div>
+        )}
         <div className="pv-row"><span className="l">Inputs</span><span className="v">{data.inputsSummary.join(', ')}</span></div>
         <div className="pv-row"><span className="l">Outputs</span><span className="v">{data.outputsSummary.join(', ')}</span></div>
         <div className="pv-row"><span className="l">Review gate</span><span className="v">{data.reviewGate}</span></div>

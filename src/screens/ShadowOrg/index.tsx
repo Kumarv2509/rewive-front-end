@@ -8,7 +8,7 @@ import { Pill } from '../../components/shared/Pill';
 import { SectionTabs, AGENTS_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { severityTone, slaTone } from '../Findings/meta';
-import type { Finding, ShadowAgent, ShadowAgentHealth } from '../../api/types';
+import type { BrainHealth, BrainNode, Finding, ShadowAgent, ShadowAgentHealth } from '../../api/types';
 
 const healthTone: Record<ShadowAgentHealth, 'green' | 'amber' | 'red'> = {
   healthy: 'green',
@@ -56,7 +56,37 @@ function TemperamentDial({ value }: { value: number }) {
   );
 }
 
-function AgentCard({ agent, mandateCount, findings }: { agent: ShadowAgent; mandateCount: number; findings: Finding[] }) {
+const brainHealthColor: Record<BrainHealth, string> = {
+  on_track: 'var(--green)',
+  at_risk: 'var(--amber)',
+  off_track: 'var(--red)',
+};
+
+// The mandates a counterpart holds, each deep-linking to its node on the
+// Operating Picture — the visible half of "every mandate, held twice".
+function MandateChips({ mandates }: { mandates: BrainNode[] }) {
+  if (mandates.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--ink-3)', marginBottom: 6 }}>holds</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {mandates.map((m) => (
+          <Link
+            key={m.id}
+            to={`/build/picture?focus=${m.id}`}
+            title={`${m.definition} — view on the Operating Picture`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: 'var(--ink-2)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 99, padding: '4px 10px', background: 'var(--surface)' }}
+          >
+            <i style={{ width: 6, height: 6, borderRadius: '50%', background: m.health ? brainHealthColor[m.health] : 'var(--ink-3)', flexShrink: 0 }} />
+            {m.name}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AgentCard({ agent, mandates, findings }: { agent: ShadowAgent; mandates: BrainNode[]; findings: Finding[] }) {
   const [open, setOpen] = useState(false);
   const openFindings = findings.filter((f) => f.streamKey === agent.streamKey && f.status === 'open');
   const o = agent.humanOwner;
@@ -80,10 +110,12 @@ function AgentCard({ agent, mandateCount, findings }: { agent: ShadowAgent; mand
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 14 }}>
-          <Stat label="mandates" value={mandateCount} />
+          <Stat label="mandates" value={mandates.length} />
           <Stat label="open findings" value={agent.openFindings} tone={agent.openFindings ? 'amber' : undefined} />
           <Stat label="SLA breaches" value={agent.slaBreaches} tone={agent.slaBreaches ? 'red' : undefined} />
         </div>
+
+        <MandateChips mandates={mandates} />
 
         <TemperamentDial value={agent.temperament} />
       </div>
@@ -149,8 +181,10 @@ export function ShadowOrgScreen() {
   const allFindings = findings ?? [];
   const chief = org.agents.find((a) => a.reportsToAgentId === null);
   const streamAgents = org.agents.filter((a) => a.reportsToAgentId !== null);
-  const mandateCount = (a: ShadowAgent) =>
-    a.watchesNodeIds.filter((id) => brain?.nodes.find((n) => n.id === id && (n.kind === 'stream_kpi' || n.kind === 'target'))).length;
+  const mandatesOf = (a: ShadowAgent): BrainNode[] =>
+    a.watchesNodeIds
+      .map((id) => brain?.nodes.find((n) => n.id === id && (n.kind === 'stream_kpi' || n.kind === 'target')))
+      .filter((n): n is BrainNode => !!n);
 
   const totalOpen = streamAgents.reduce((s, a) => s + a.openFindings, 0);
   const totalBreaches = streamAgents.reduce((s, a) => s + a.slaBreaches, 0);
@@ -190,7 +224,7 @@ export function ShadowOrgScreen() {
 
       <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }} data-tour="counterpart-grid">
         {streamAgents.map((a) => (
-          <AgentCard key={a.id} agent={a} mandateCount={mandateCount(a)} findings={allFindings} />
+          <AgentCard key={a.id} agent={a} mandates={mandatesOf(a)} findings={allFindings} />
         ))}
       </div>
     </section>

@@ -9,7 +9,9 @@ import {
   type Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useResolveBrainProposal } from '../../api/shadowOrg';
+import { Link } from 'react-router-dom';
+import { useResolveBrainProposal, useShadowOrg } from '../../api/shadowOrg';
+import { useAgentCatalog } from '../../api/agentSpace';
 import { useToast } from '../../components/shared/Toast';
 import { BrainNodeCard } from './BrainNodeCard';
 import { NodeEditor } from './NodeEditor';
@@ -39,6 +41,21 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
   );
 
   const lit = useMemo(() => (selectedId ? tracePath(brain, selectedId) : null), [brain, selectedId]);
+
+  // Who holds the selected mandate: its human owner + counterpart (held twice),
+  // plus any workforce agents whose mandateIds name this node.
+  const { data: shadowOrg } = useShadowOrg();
+  const { data: catalog } = useAgentCatalog();
+  const held = useMemo(() => {
+    const node = selectedId ? brain.nodes.find((n) => n.id === selectedId) : null;
+    if (!node || (node.kind !== 'stream_kpi' && node.kind !== 'target')) return null;
+    const counterpart =
+      shadowOrg?.agents.find((a) => a.watchesNodeIds.includes(node.id)) ??
+      shadowOrg?.agents.find((a) => a.streamKey !== null && a.streamKey === node.streamKey);
+    const workedBy = (catalog ?? []).filter((a) => a.mandateIds?.includes(node.id));
+    if (!counterpart && workedBy.length === 0) return null;
+    return { node, counterpart, workedBy };
+  }, [selectedId, brain.nodes, shadowOrg, catalog]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges] = useEdgesState<Edge>([]);
@@ -112,6 +129,39 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
       )}
 
       {editing && <NodeEditor node={editing} streams={brain.streams} onClose={() => setEditing(null)} />}
+
+      {held && (
+        <div className="brain-legend" style={{ top: 'auto', bottom: 12, maxWidth: 'min(720px, calc(100% - 24px))' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>Held twice</span>
+          {held.counterpart && (
+            <span>
+              <b>{held.counterpart.humanOwner.name}</b> · {held.counterpart.humanOwner.role}
+              {' + '}
+              <Link to="/operate/counterparts" style={{ color: 'var(--accent-deep)', textDecoration: 'none', fontWeight: 600 }}>
+                {held.counterpart.name} →
+              </Link>
+            </span>
+          )}
+          {held.workedBy.length > 0 && (
+            <span>
+              worked by{' '}
+              {held.workedBy.map((a, i) => (
+                <span key={a.agentId}>
+                  {i > 0 && ' · '}
+                  <Link to={`/insights/agents/${a.agentId}`} style={{ color: 'var(--accent-deep)', textDecoration: 'none', fontWeight: 600 }}>
+                    {a.name} →
+                  </Link>
+                </span>
+              ))}
+            </span>
+          )}
+          {held.node.streamKey && (
+            <Link to={`/operate/findings?stream=${held.node.streamKey}`} style={{ color: 'var(--ink-2)', textDecoration: 'none' }}>
+              Its findings →
+            </Link>
+          )}
+        </div>
+      )}
 
       <ReactFlow
         nodes={nodes}
