@@ -616,39 +616,73 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-1. **Push + PR** — blocked only on the founder adding the SSH key (see
-   "Where things stand"). Once pushed: PR `v5` → `master`; `gh` won't work
-   on this network, use the compare URL.
-2. **Thin new-role slices — mostly resolved in part 3**: every division
+### Next steps — in priority order (as of 2026-07-18)
+
+1. **Unblock the push** (founder action, sessions can't do it): get the
+   key visible at `github.com/<username>.keys` — full diagnosis and the
+   three unanswered questions are in "Where things stand". Then
+   `git push origin v5` and open the PR via the compare URL
+   `github.com/Kumarv2509/rewive-front-end/compare/master...v5`
+   (**not** `gh` — TLS MITM).
+2. **Decide the sense-coverage story** — the founder was asked
+   (2026-07-18) whether to (a) keep the honest 4/26-mandates-connected
+   view, (b) flip all dataset seeds `expected → live` in
+   `mock-server/datasetsdata.js` for a fully-lit picture, or (c) light
+   one division end-to-end as a middle path. **No answer yet** — don't
+   pre-empt; each is a minutes-level seed edit because Picture statuses
+   derive from the registry. A strong demo beat either way: flip one
+   dataset live on stage and watch its branch of the tree turn on.
+3. **The real sensing pipeline** (the actual product build, when it
+   starts): the placeholders are deliberately its spec — each Dataset
+   slot names source/cadence/mandates fed; queued AnalysisRequests say
+   what to compute; the REST contract (raise finding → disposition →
+   closure) already exists. Build = real feeds landing in the slots +
+   a scheduled agent runtime (model call per mandate over its data
+   slice) that raises findings through the same endpoints. The
+   frontend should need near-zero changes.
+4. **Wire staged CSVs into the loop**: an uploaded dataset registers as
+   'receiving' but feeds nothing — let the founder map its columns to a
+   mandate (set `feeds`) so a staged file lights that node, and run the
+   queued analysis requests against staged data (even canned) so
+   "Queue an analysis" pays off inside the demo.
+5. **Heartbeat truthfulness**: counterpart sense-sweeps currently stamp
+   every agent; consider sweeping only agents whose stream has a live
+   dataset (others read "senses waiting on data") — one condition in
+   `heartbeatTick` step 2, using the same liveStreams logic as
+   `reconcileBrainStatuses`.
+
+### Older threads (still open, lower priority)
+
+6. **Thin new-role slices — mostly resolved in part 3**: every division
    function *kind* has now lived the loop; still honest-empty leaves:
    `protein_commercial_finance` history, `fnv_analysts`,
    `ambient_production`'s siblings in other divisions, and the horizontals
    beyond procurement/audit/shared/HR. Team scope covers them.
-3. ~~`halfYear` stats undercount~~ — **RESOLVED** (`13d63b9` + `b7db762`):
-   the review panel AND the four stat tiles are derived from live state at
-   request time; see the 2026-07-17 session section. Residue: June has no
-   seeded finding, so its "raised" bar is 0.
-3b. ~~Finding `impactPath` seeds don't name P&L lines~~ — **RESOLVED**
-   (`a2fb841`): 24 FMCG findings route through `pl_line` steps (rendered
-   amber by `ImpactPath`).
-4. **CLAUDE.md's "7 items" rail note is stale** (now 8 with Business), and
-   the persona bullet predates the 30-role tree + dotted line + base-data
-   exception; `docs/BLUEPRINT.md` still describes pre-v5.1 nav.
-5. **Confirm the "breaks" report is resolved** — the clock-rot fix landed
-   but the founder never confirmed after a hard refresh.
-6. **Entity/region breadth** — dimension exists on findings/closures/ledger
+7. **CLAUDE.md is stale in several spots**: "7 items" rail note (now 8
+   with Business, plus Foundation gained a 4-tab SectionTabs header incl.
+   Datasets), the persona bullet predates the 30-role tree + dotted line
+   + base-data exception, the mock-server file list is missing
+   `halfyear.js`/`businessdata.js`/`datasetsdata.js` and the heartbeat;
+   `docs/BLUEPRINT.md` still describes pre-v5.1 nav.
+8. **Entity/region breadth** — dimension exists on findings/closures/ledger
    only; the new Business rows carry entity implicitly in copy, not as the
    filterable field.
-7. **More dotted lines?** — the mechanism is generic (`DOTTED_PARENT`); the
+9. **More dotted lines?** — the mechanism is generic (`DOTTED_PARENT`); the
    founder may want Analysts → FP&A or division HR → HR services once they
    see the commercial-finance one.
-8. **Ledger `date` strings** are static `"DD Mon"`; consider ISO + client
-   formatting if the ledger should sort/bucket by real dates. **Heads-up:**
-   `mock-server/halfyear.js` now parses these strings for its monthly
-   buckets (`parseLedgerDate`) — if the format changes, update it too.
-9. **Manufacturing pack depth**; **"new" P&L anomalies → findings** mutation;
-   **shadow → counterpart internal rename**; **Tour/Guide copy** still names
-   only the old three personas (`tour/steps.ts:19`, `Guide/index.tsx:25`).
+10. **Ledger `date` strings** are static `"DD Mon"`; consider ISO + client
+    formatting if the ledger should sort/bucket by real dates. **Heads-up:**
+    `mock-server/halfyear.js` now parses these strings for its monthly
+    buckets (`parseLedgerDate`) — if the format changes, update it too.
+11. **June "raised" bar is 0** in the derived review (no seed lands in
+    June) — one mid-June finding seed fills it if it bothers the founder.
+12. **Manufacturing pack depth**; **"new" P&L anomalies → findings** mutation;
+    **shadow → counterpart internal rename**; **Tour/Guide copy** still names
+    only the old three personas (`tour/steps.ts:19`, `Guide/index.tsx:25`).
+
+Resolved this cycle: ~~halfYear undercount~~ (`13d63b9`+`b7db762`, fully
+derived), ~~impactPath P&L steps~~ (`a2fb841`), ~~"breaks" report~~ (the
+clock-rot fix held; founder has been demoing live without issues).
 
 ## Context that isn't in the code
 
