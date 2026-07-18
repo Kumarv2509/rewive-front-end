@@ -1020,6 +1020,14 @@ export interface BrainNode {
   status: BrainNodeStatus;
   proposedBy?: string; // shadow agent name, when status === 'proposed'
   dataSources: string[];
+  /** Live tracking overlay — present only when the mandate has a tracking
+      config and real metric points. Display strings stay derived from these. */
+  liveTracked?: boolean;
+  currentNumeric?: number;
+  targetNumeric?: number;
+  unit?: string;
+  lastIngestAt?: string | null;
+  spark?: number[]; // last ~12 values, oldest → newest
 }
 
 export interface BrainEdge {
@@ -1137,6 +1145,11 @@ export interface Finding {
   /** Business entity and region the drift sits in (multi-entity orgs). */
   entity?: string;
   region?: string;
+  /** Provenance: seeded demo content vs raised by the live drift sweep. */
+  origin?: 'seed' | 'sweep';
+  sweepRunId?: string;
+  /** Which drift rule fired, when origin === 'sweep'. */
+  rule?: DriftRule;
 }
 
 export interface DispositionInput {
@@ -1163,6 +1176,72 @@ export interface ClosureKpi {
   closedAt: string | null;
   entity?: string;
   region?: string;
+  /** Provenance: seeded demo content vs created from a sweep-raised finding. */
+  origin?: 'seed' | 'sweep';
+}
+
+// ---------- Live mandate tracking (real metrics → drift → findings) ----------
+// A mandate is "live-tracked" when it has a MandateTrackingConfig. Real metric
+// points arrive via the ingest API (POST /metrics, API-key auth) or CSV upload;
+// the agent sweep evaluates drift rules and raises findings into the same
+// findings pipeline the seeded content uses.
+export type DriftRule = 'threshold_breach' | 'sustained_deviation' | 'trend_to_breach';
+export type TrackingDirection = 'up_good' | 'down_good';
+
+export interface MetricPoint {
+  nodeId: string;
+  ts: string;
+  value: number;
+  source: string; // 'api' | 'csv:<filename>'
+}
+
+export interface MandateTrackingConfig {
+  nodeId: string;
+  industry: IndustryKey;
+  unit: string; // 'pct' | 'currency_m' | 'days' | 'ratio' | 'count'
+  format?: string | null; // display template, e.g. '{v}%' or 'AED {v}M'
+  direction: TrackingDirection;
+  targetNumeric: number;
+  warnPct: number; // % deviation from target that counts as drift
+  breachPct: number; // % deviation that counts as a breach
+  sustainedPoints: number; // consecutive drifting points before a finding
+  minPoints: number; // minimum points before the rules run at all
+  enabled: boolean;
+  updatedAt: string;
+  // Read-side extras (joined by the server)
+  latestValue?: number | null;
+  latestTs?: string | null;
+  pointCount?: number;
+}
+
+export interface IngestKey {
+  id: string;
+  label: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
+
+/** Returned once, on creation — the plaintext key is never shown again. */
+export interface CreatedIngestKey extends IngestKey {
+  key: string;
+}
+
+export interface SweepRun {
+  id: string;
+  trigger: 'cron' | 'manual' | 'dev-interval';
+  startedAt: string;
+  finishedAt: string | null;
+  nodesEvaluated: number;
+  findingsRaised: number;
+  reAlertsFired: number;
+  closuresProgressed: number;
+  authoredByClaude: number;
+}
+
+export interface MetricImportResult {
+  accepted: number;
+  rejected: { index: number; reason: string }[];
 }
 
 // ---------- Business context (the base data the mandates stand on) ----------

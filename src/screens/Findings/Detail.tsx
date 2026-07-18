@@ -75,6 +75,11 @@ export function FindingDetailScreen() {
         <div className="thread">
           {/* 1 — SENSED & RAISED */}
           <ThreadStep n={1} state="done" title={`Sensed & raised · ${finding.raisedByAgentName}`} when={new Date(finding.detectedAt).toLocaleString()}>
+            {finding.origin === 'sweep' && (
+              <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 8 }}>
+                Raised by the live sweep · {finding.rule?.replace(/_/g, ' ') ?? 'drift rule'} on real data
+              </div>
+            )}
             <div style={{ fontSize: 13, marginBottom: 12 }}>{finding.summary}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 10, flexWrap: 'wrap' }}>
               <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--ink-2)' }}>

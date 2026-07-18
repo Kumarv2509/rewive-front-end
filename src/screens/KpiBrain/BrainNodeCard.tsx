@@ -1,6 +1,15 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { BrainHealth, BrainNodeKind } from '../../api/types';
 import type { BrainNodeData } from './layout';
+import { Sparkline } from '../../components/shared/Sparkline';
+
+function timeAgo(iso: string): string {
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 48) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
 
 const kindLabel: Record<BrainNodeKind, string> = { target: 'Intent', pl_line: 'P&L line', stream_kpi: 'Mandate', driver: 'Sense' };
 const kindAccent: Record<BrainNodeKind, string> = { target: 'var(--teal)', pl_line: 'var(--amber)', stream_kpi: 'var(--accent)', driver: 'var(--ink-3)' };
@@ -36,7 +45,8 @@ export function BrainNodeCard({ data }: NodeProps & { data: BrainNodeData }) {
           </span>
         )}
         {proposed && <span className="bn-health" style={{ color: 'var(--accent-deep)' }}>petition</span>}
-        {needsData && <span className="bn-health" style={{ color: 'var(--amber)' }}>needs a sense</span>}
+        {needsData && !node.liveTracked && <span className="bn-health" style={{ color: 'var(--amber)' }}>needs a sense</span>}
+        {node.liveTracked && <span className="bn-health" style={{ color: 'var(--green)' }}>● live</span>}
       </div>
 
       <div className="bn-name">{node.name}</div>
@@ -46,7 +56,16 @@ export function BrainNodeCard({ data }: NodeProps & { data: BrainNodeData }) {
         <div className="bn-vals">
           {node.currentValue && <span className="bn-now">{node.currentValue}</span>}
           {node.targetValue && <span className="bn-tgt">→ {node.targetValue}</span>}
+          {node.liveTracked && node.spark && node.spark.length > 1 && (
+            <Sparkline
+              points={node.spark}
+              color={node.health ? healthColor[node.health] : 'var(--accent)'}
+            />
+          )}
         </div>
+      )}
+      {node.liveTracked && node.lastIngestAt && (
+        <div className="bn-stream">data as of {timeAgo(node.lastIngestAt)}</div>
       )}
 
       {proposed && (

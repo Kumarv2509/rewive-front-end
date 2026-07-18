@@ -6,6 +6,10 @@ import { ConnectorTypeGrid } from './ConnectorTypeGrid';
 import { NewConnectionForm } from './NewConnectionForm';
 import { NewConnectorTypeForm } from './NewConnectorTypeForm';
 import { ConnectionsTable } from './ConnectionsTable';
+import { IngestKeysPanel } from './IngestKeysPanel';
+import { MetricUploadPanel } from './MetricUploadPanel';
+import { TrackingConfigPanel } from './TrackingConfigPanel';
+import { SweepPanel } from './SweepPanel';
 import { useTrackedKpis } from '../../api/kpiLibrary';
 import type { ConnectionStatus, ConnectorType } from '../../api/types';
 
@@ -37,7 +41,13 @@ export function ConnectorsScreen() {
     <section className="screen">
       <SectionTabs tabs={FOUNDATION_TABS} />
       <h1 className="page">Data Connectors</h1>
-      <Intro line="Connect new data sources yourself — every connection goes through a quick approval before it's usable in Agent Studio or Signal Studio." />
+      <Intro line="Connect real data to the mandates — push metrics with an ingest key or upload history, set targets, and the counterparts watch the numbers from there." />
+
+      {/* Live mandate tracking: the real pipeline (metrics → drift → findings). */}
+      <TrackingConfigPanel />
+      <IngestKeysPanel />
+      <MetricUploadPanel />
+      <SweepPanel />
 
       {forKpi && (
         <div className="card" style={{ padding: '14px 20px', marginBottom: 20, borderLeft: '3px solid var(--accent)' }}>

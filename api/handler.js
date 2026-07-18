@@ -1,4 +1,4 @@
-import app, { exportState, importState } from '../mock-server/app.js';
+import app, { exportState, importState, persistLiveState } from '../mock-server/app.js';
 import { loadState, saveState } from '../mock-server/kv.js';
 
 // Vercel's bracket catch-all (`[...path].js`) only reliably matched a single
@@ -24,5 +24,9 @@ export default async function handler(req, res) {
     app(req, res);
   });
 
+  // Live-tracking rows go to Postgres (awaited here — the in-app fire-and-forget
+  // can't be trusted to complete before a serverless invocation freezes);
+  // everything else snapshots to KV with live-* entities stripped.
+  await persistLiveState().catch(() => {});
   await saveState(exportState());
 }

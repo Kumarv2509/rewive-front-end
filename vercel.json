@@ -2,5 +2,7 @@
   "rewrites": [
     { "source": "/api/v1/:path*", "destination": "/api/handler?path=:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+  ],
+  "crons": [{ "path": "/api/v1/agent-sweep", "schedule": "0 * * * *" }],
+  "functions": { "api/handler.js": { "maxDuration": 60 } }
 }

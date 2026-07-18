@@ -31,6 +31,7 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
           <Pill tone={severityTone[finding.severity]}>{finding.severity}</Pill>
           {finding.escalationLevel > 0 && <> <Pill tone="red">escalated</Pill></>}
           {' '}<Pill tone="gray">→ {personaLabel(finding.persona)}</Pill>
+          {finding.origin === 'sweep' && <> <Pill tone="green">live data</Pill></>}
           {finding.dottedPersona && <> <Pill tone="amber">⋯ {personaLabel(finding.dottedPersona)} · functional line</Pill></>}
         </div>
         <div className="t2">

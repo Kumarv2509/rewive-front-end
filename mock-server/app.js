@@ -46,10 +46,32 @@ import { businessContextSeed } from './businessdata.js';
 import { datasetsSeed } from './datasetsdata.js';
 import { personaScope, ROLE_PARENT, DOTTED_PARENT } from './roles.js';
 import { deriveHalfYear, deriveStatTiles } from './halfyear.js';
+import * as tracking from './tracking.js';
+import { registerTrackingRoutes } from './tracking-routes.js';
+import { runSweep } from './sweep.js';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
+
+// Live-tracking overlay: Postgres (or the memory fallback) is the source of
+// truth for sweep-raised findings/closures. Hydrate them into the in-memory
+// state before each request so every existing route (dispositions, escalation,
+// closure, persona filters) works on them unmodified; write dirty rows back
+// once the response is out. Serverless invocations additionally await
+// persistLiveState() explicitly in api/handler.js — this fire-and-forget is
+// the long-lived dev-server path.
+app.use(async (req, res, next) => {
+  try {
+    await hydrateLiveState();
+  } catch (err) {
+    console.warn('[live] hydrate failed:', err?.message ?? err);
+  }
+  res.on('finish', () => {
+    persistLiveState().catch((err) => console.warn('[live] persist failed:', err?.message ?? err));
+  });
+  next();
+});
 
 // In-memory mutable state for this server process. Note: on serverless platforms
 // (e.g. Vercel) each invocation may hit a different cold instance, so this state
@@ -1134,9 +1156,11 @@ function v4Industry(req) {
   return q && brainsState[q] ? q : orgProfileState.industry;
 }
 
-// closureTemplate is a server-side hint consumed on accept — not part of the client contract
+// closureTemplate is a server-side hint consumed on accept — not part of the
+// client contract. closureTemplateNumeric is its numeric twin on sweep-raised
+// findings (used to compute recovery progress).
 function stripServerFields(finding) {
-  const { closureTemplate, ...rest } = finding;
+  const { closureTemplate, closureTemplateNumeric, ...rest } = finding;
   return rest;
 }
 
@@ -1191,9 +1215,16 @@ function reconcileBrainStatuses(brain, datasets) {
   return { ...brain, nodes };
 }
 
-app.get('/api/v1/kpi-brain', (req, res) => {
+app.get('/api/v1/kpi-brain', async (req, res) => {
   const industry = v4Industry(req);
-  res.json(reconcileBrainStatuses(brainsState[industry], datasetsState[industry] ?? []));
+  let brain = reconcileBrainStatuses(brainsState[industry], datasetsState[industry] ?? []);
+  try {
+    // Live-tracked mandates get real numbers overlaid at read time.
+    brain = await tracking.overlayLiveTracking(brain);
+  } catch (err) {
+    console.warn('[live] overlay failed:', err?.message ?? err);
+  }
+  res.json(brain);
 });
 
 app.post('/api/v1/kpi-brain/nodes', (req, res) => {
@@ -1412,9 +1443,12 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
 
   if (disposition === 'accept') {
     // Accept: the finding is real — generate its measurable exit condition and keep watching.
+    const isLive = finding.id.startsWith('live-');
     const template = finding.closureTemplate ?? { name: `Close: ${finding.title}`, baseline: '—', target: '—' };
     const closure = {
-      id: `${industry}-c-${Date.now()}`,
+      // live-* ids route the closure to Postgres instead of the KV snapshot
+      id: isLive ? `live-c-${Date.now()}` : `${industry}-c-${Date.now()}`,
+      ...(isLive ? { origin: 'sweep' } : {}),
       findingId: finding.id,
       findingTitle: finding.title,
       name: template.name,
@@ -1583,6 +1617,9 @@ function heartbeatTick() {
   if (SLA_HOURS_PER_TICK > 0) {
     for (const [industry, findings] of Object.entries(findingsState)) {
       for (const finding of findings) {
+        // Live findings run wall-clock SLAs (sla_deadline_at, recomputed at
+        // hydrate) — the demo tick doesn't apply to them.
+        if (finding.id.startsWith('live-')) continue;
         if (finding.status !== 'open' || finding.slaHoursRemaining <= 0) continue;
         finding.slaHoursRemaining = Math.round((finding.slaHoursRemaining - SLA_HOURS_PER_TICK) * 10) / 10;
         if (finding.slaHoursRemaining > 0) continue;
@@ -1646,6 +1683,126 @@ export function startHeartbeat() {
   return timer;
 }
 
+// ============ Live tracking: hydrate/persist overlay ============
+// Sweep-raised findings/closures (live-* ids) live in the tracking store
+// (Postgres, or memory in dev). They are hydrated into findingsState /
+// closureKpisState so every existing route works on them unmodified, then
+// written back after the request. They are stripped from the KV snapshot
+// below so the store stays the single writer for them (no split-brain).
+let liveFindingRows = new Map(); // id -> store row ({...row, finding: <object in findingsState>})
+let liveFindingSnapshots = new Map(); // id -> serialized row at hydrate time
+let liveClosureRows = new Map(); // id -> store row
+let liveClosureSnapshots = new Map();
+
+// slaHoursRemaining is recomputed from the wall clock on every hydrate — keep
+// it out of the dirty-diff so it alone never triggers a write-back.
+function serializeLiveRow(row) {
+  const clone = JSON.parse(JSON.stringify(row));
+  delete clone.finding?.slaHoursRemaining;
+  return JSON.stringify(clone);
+}
+
+export async function hydrateLiveState() {
+  const [rows, closures] = await Promise.all([tracking.loadLiveFindings(), tracking.loadLiveClosures()]);
+  liveFindingRows = new Map();
+  liveFindingSnapshots = new Map();
+  liveClosureRows = new Map();
+  liveClosureSnapshots = new Map();
+
+  for (const row of rows) {
+    // Snapshot as loaded — any mutation after this point (SLA escalation here,
+    // dispositions in the routes) shows up as a dirty diff and persists.
+    liveFindingSnapshots.set(row.id, serializeLiveRow(row));
+    const finding = row.finding;
+
+    // Wall-clock SLA: no heartbeat runs on serverless, so silence escalates on
+    // the first request after the deadline passes.
+    if (row.status === 'open' && row.slaDeadlineAt) {
+      const remainingH = (new Date(row.slaDeadlineAt).getTime() - Date.now()) / 3_600_000;
+      if (remainingH > 0) {
+        finding.slaHoursRemaining = Math.round(remainingH * 10) / 10;
+      } else if (ROLE_PARENT[finding.persona]) {
+        const { parentRole, dottedRole } = escalateFindingUp(finding, row.industry);
+        row.slaDeadlineAt = new Date(Date.now() + finding.slaHoursRemaining * 3_600_000).toISOString();
+        logAudit('finding', finding.id, `SLA expired unanswered — auto-escalated to level ${finding.escalationLevel}, now ${parentRole}'s call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`, 'Rewive (system)');
+      } else {
+        finding.slaHoursRemaining = 0;
+      }
+    }
+
+    const list = findingsState[row.industry] ?? (findingsState[row.industry] = []);
+    const idx = list.findIndex((f) => f.id === row.id);
+    if (idx === -1) list.push(finding);
+    else list[idx] = finding;
+    liveFindingRows.set(row.id, row);
+  }
+
+  for (const row of closures) {
+    liveClosureSnapshots.set(row.id, JSON.stringify(row));
+    const list = closureKpisState[row.industry] ?? (closureKpisState[row.industry] = []);
+    const idx = list.findIndex((c) => c.id === row.id);
+    if (idx === -1) list.push(row.closure);
+    else list[idx] = row.closure;
+    liveClosureRows.set(row.id, row);
+  }
+}
+
+export async function persistLiveState() {
+  for (const [id, row] of liveFindingRows) {
+    row.status = row.finding.status;
+    // A live finding acknowledged through the normal route gets its structured
+    // trip-wire meta here; the sweep fills in ackDeviationPct on its next pass.
+    if (row.finding.status === 'acknowledged' && !row.reAlert) {
+      row.reAlert = { pct: 5, days: 14, ackAt: row.finding.dispositionAt ?? new Date().toISOString(), ackDeviationPct: null };
+    }
+    const serialized = serializeLiveRow(row);
+    if (serialized !== liveFindingSnapshots.get(id)) {
+      await tracking.saveLiveFinding(row);
+      liveFindingSnapshots.set(id, serialized);
+    }
+  }
+
+  // Existing hydrated closures (sweep progress, close route) plus closures
+  // newly created by accepting a live finding during this request.
+  for (const [industry, list] of Object.entries(closureKpisState)) {
+    for (const closure of list) {
+      if (!closure.id.startsWith('live-')) continue;
+      const row = liveClosureRows.get(closure.id)
+        ?? { id: closure.id, industry, findingId: closure.findingId, closure };
+      row.closure = closure;
+      const serialized = JSON.stringify(row);
+      if (serialized !== liveClosureSnapshots.get(closure.id)) {
+        await tracking.saveLiveClosure(row);
+        liveClosureRows.set(closure.id, row);
+        liveClosureSnapshots.set(closure.id, serialized);
+      }
+    }
+  }
+}
+
+const sweepCtx = {
+  getBrains: () => brainsState,
+  shadowOrgs: shadowOrgsSeed,
+  ROLE_PARENT,
+  DOTTED_PARENT,
+  logAudit,
+  getOrgName: () => orgProfileState.orgName ?? 'the org',
+  // First seeded finding of the industry doubles as the authoring tone example.
+  exampleFindingFor: (industry) => {
+    const seed = findingsSeed[industry]?.[0];
+    return seed ? { title: seed.title, summary: seed.summary, evidence: seed.evidence, impactEstimate: seed.impactEstimate } : null;
+  },
+};
+
+export const runLiveSweep = (trigger) => runSweep(trigger, sweepCtx);
+
+registerTrackingRoutes(app, {
+  v4Industry,
+  getBrains: () => brainsState,
+  logAudit,
+  runSweep: runLiveSweep,
+});
+
 export function exportState() {
   return {
     agentSessions: Object.fromEntries(agentSessions),
@@ -1664,8 +1821,14 @@ export function exportState() {
     signalDetails,
     orgProfileState,
     brainsState,
-    findingsState,
-    closureKpisState,
+    // live-* entities are stripped: the tracking store (Postgres) is their
+    // single durable home — a KV copy would go stale and overwrite dispositions.
+    findingsState: Object.fromEntries(
+      Object.entries(findingsState).map(([k, list]) => [k, list.filter((f) => !f.id.startsWith('live-'))]),
+    ),
+    closureKpisState: Object.fromEntries(
+      Object.entries(closureKpisState).map(([k, list]) => [k, list.filter((c) => !c.id.startsWith('live-'))]),
+    ),
     datasetsState,
     analysisRequestsState,
   };

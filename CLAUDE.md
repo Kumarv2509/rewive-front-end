@@ -17,9 +17,16 @@ npm run dev:all       # Both together (concurrently) — use this for local deve
 npm run build         # tsc -b && vite build (type-checks, then builds to dist/)
 npm run lint          # eslint .
 npm run preview       # Preview the production build
+npm run migrate       # Apply mock-server/schema.sql to DATABASE_URL (live tracking)
 ```
 
 There is no test suite configured.
+
+## Live mandate tracking (the one real pipeline)
+
+Everything is seeded demo content **except** live mandate tracking: real numeric metrics → deterministic drift rules → counterpart-raised findings, flowing into the same findings/disposition/closure pipeline the seeds use. The moving parts, all in `mock-server/`: `db.js` (Postgres via `DATABASE_URL`, in-memory fallback when unset — `dev:all` needs zero setup), `tracking.js` (store + `overlayLiveTracking` for `GET /kpi-brain`), `tracking-routes.js` (`POST /metrics` with hashed ingest keys, CSV import, tracking configs, `agent-sweep`), `drift.js` (pure rules: threshold breach / sustained deviation / trend-to-breach), `sweep.js` (raise + re-alert trip-wires + closure recovery progress), `authoring.js` (Claude authors the narrative via `ANTHROPIC_API_KEY`; deterministic template fallback — a sweep never fails because authoring failed).
+
+Sweep-raised entities carry `live-` id prefixes: they persist in Postgres (source of truth), are hydrated into `findingsState`/`closureKpisState` per request (`hydrateLiveState`/`persistLiveState` in `app.js`), and are **stripped from the KV snapshot** — never let KV hold a `live-*` copy. Live findings run wall-clock SLAs (`sla_deadline_at`), not the demo heartbeat tick. Sweeps run via Vercel Cron (`vercel.json` crons → `GET /api/v1/agent-sweep`, `CRON_SECRET` bearer), the Connectors screen's "Run sweep now", or a dev-server interval (`REWIVE_SWEEP_MS`). The Connectors screen hosts the real surfaces: tracking configs, ingest keys, CSV/XLSX upload (parsed client-side via lazy-loaded `xlsx`), sweep history. Env: `DATABASE_URL`, `ANTHROPIC_API_KEY`, `CRON_SECRET` (all optional — see `.env.example`).
 
 ## Architecture
 
