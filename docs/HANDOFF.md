@@ -108,7 +108,22 @@
   carries the copy rules, the gradient exception, and the placeholder
   list. Preview: open `index.html` directly (fully self-contained) —
   `:5173/site.html` no longer serves it (vite's SPA fallback answers
-  200 with the app shell; don't be fooled). History of how it was
+  200 with the app shell; don't be fooled).
+  **GitHub (2026-07-19, founder ask "create a repo in github also as
+  a seperate under the sames git")**: `origin` is wired to
+  `git@github.com:Kumarv2509/rewive-front-end_website.git` (same
+  account + ssh.github.com:443 path as the product). Repo does NOT
+  exist on GitHub yet and CANNOT be created from this machine (repo
+  creation needs web UI/API; FortiGate breaks GitHub HTTPS; `ssh -T`
+  re-tested this day: still *Permission denied (publickey)*). Two
+  founder actions unblock it: (1) register
+  `~/.ssh/id_ed25519_rewive.pub` under **Authentication keys** at
+  github.com/settings/keys (`pbcopy < ~/.ssh/id_ed25519_rewive.pub`;
+  success = key visible at `github.com/<username>.keys`) — this also
+  unblocks the product's `git push origin v5`; (2) create an EMPTY
+  repo (no README/license) named `rewive-front-end_website` under
+  `Kumarv2509` at github.com/new. Then `git push -u origin master`
+  from the website folder. History of how it was
   built (both sessions' passes below) remains valid — the file is the
   same, just relocated. **The site sections below say
   "`public/site.html`, UNTRACKED" — read that as the new repo now.**
@@ -168,13 +183,13 @@
   github.com/settings/keys on the account with push access (`gh` config says
   `rianpraveen`), then `git push origin v5`. `gh` CLI is unusable on this
   network — hand the founder compare/PR URLs instead of using `gh pr create`.
-- **Processes at handoff (2026-07-19): BOTH servers are UP** — vite on
-  :5173 (session B's background `npm run dev:all`, started 2026-07-18
-  after killing lingering ports) and a mock API on :4000 (session A's
-  instance with `REWIVE_SWEEP_MS=0`, memory-mode live-tracking store,
-  which replaced the stale founder-owned one). `/site.html` serves 200.
-  If anything wedges, `npm run dev:all` after killing by port is the
-  safe reset. Mock server still has
+- **Processes at handoff (2026-07-19, later): ALL DEV SERVERS DOWN** —
+  session B's background `dev:all` task was stopped and this time the
+  kill DID release :5173, :4000 and :5174 (verified by port probe;
+  the old lingering-children gotcha didn't bite, but keep the
+  kill-by-port reset handy: `for p in 4000 5173 5174; do kill $(lsof
+  -ti tcp:$p); done`). Session A's :4000 API went down with it. Start
+  fresh with `npm run dev:all`. Mock server still has
   no watch mode — restart after seed edits (and note a restart resets the
   in-memory industry to `fmcg`; see the gotcha above). **Process gotcha
   learned the hard way**: stopping the background `dev:all` task does NOT
