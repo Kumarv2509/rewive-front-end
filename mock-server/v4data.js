@@ -16,6 +16,7 @@ export const orgProfileSeed = { orgName: 'Americana Foods (demo)', industry: 'fm
 export const industryOptions = [
   { id: 'fmcg', name: 'FMCG / food & beverage', description: 'Consumer packaged food: manufacturing, distribution and trade across modern and traditional channels.', streamCount: 8, kpiCount: 26 },
   { id: 'healthcare', name: 'Healthcare', description: 'Hospital and clinic network: clinical operations, revenue cycle, patient experience, pharmacy, finance and people.', streamCount: 6, kpiCount: 22 },
+  { id: 'manufacturing', name: 'Manufacturing', description: 'Discrete manufacturing: production, maintenance, supplier network, quality, safety and plant finance across multi-plant operations.', streamCount: 6, kpiCount: 17 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -314,6 +315,13 @@ const mfgNodes = [
   { id: 'mfg-t-unitcost', kind: 'target', name: 'Unit cost index', streamKey: null, definition: 'Fully loaded cost per unit, indexed to plan (100).', currentValue: '104', targetValue: '98', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['ERP costing'] },
   { id: 'mfg-t-safety', kind: 'target', name: 'TRIR', streamKey: null, definition: 'Total recordable incident rate per 200k hours.', currentValue: '1.8', targetValue: '< 1.0', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['EHS incident log'] },
 
+  // P&L tier — the financial cascade the plant mandates roll into (USD).
+  { id: 'mfg-pl-rev', kind: 'pl_line', name: 'Net revenue', streamKey: null, definition: 'Shipped revenue net of OTIF penalty clauses. Throughput and supplier mandates fill this line.', currentValue: '$41.8M', targetValue: '$44.0M budget', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['ERP shipments', 'ERP costing'] },
+  { id: 'mfg-pl-material', kind: 'pl_line', name: 'Material & scrap cost', streamKey: null, definition: 'Raw material consumed plus scrap and rework. Scrap and inbound-defect mandates keep this line down.', currentValue: '$18.9M', targetValue: '$17.8M budget', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['ERP costing', 'QC inspections'] },
+  { id: 'mfg-pl-conversion', kind: 'pl_line', name: 'Conversion cost', streamKey: null, definition: 'Labor, energy and consumables per unit converted. Changeover and energy mandates carry this line.', currentValue: '$9.6M', targetValue: '$9.1M budget', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['ERP costing', 'Energy meters'] },
+  { id: 'mfg-pl-maintenance', kind: 'pl_line', name: 'Maintenance & downtime cost', streamKey: null, definition: 'Planned maintenance spend plus the cost of unplanned stoppage on constrained assets.', currentValue: '$3.4M', targetValue: '$2.6M budget', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['CMMS work orders', 'ERP costing'] },
+  { id: 'mfg-pl-ebitda', kind: 'pl_line', name: 'EBITDA', streamKey: null, definition: 'Net revenue minus material, conversion and maintenance — the line the unit-cost intent stands on.', currentValue: '$6.1M', targetValue: '$8.3M budget', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['ERP costing'] },
+
   { id: 'mfg-k-oee', kind: 'stream_kpi', name: 'OEE', streamKey: 'production', definition: 'Availability × performance × quality across constrained lines.', currentValue: '64%', targetValue: '75%', trend: 'flat', health: 'off_track', status: 'connected', dataSources: ['MES telemetry'] },
   { id: 'mfg-k-throughput', kind: 'stream_kpi', name: 'Throughput attainment', streamKey: 'production', definition: 'Units produced vs the weekly master schedule.', currentValue: '91%', targetValue: '98%', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['MES telemetry'] },
   { id: 'mfg-k-scrap', kind: 'stream_kpi', name: 'Scrap rate', streamKey: 'production', definition: 'Scrapped units as a share of units started.', currentValue: '3.1%', targetValue: '2.0%', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['MES telemetry'] },
@@ -325,10 +333,20 @@ const mfgNodes = [
   { id: 'mfg-k-custppm', kind: 'stream_kpi', name: 'Customer PPM', streamKey: 'quality', definition: 'Defective parts per million reaching customers.', currentValue: '410', targetValue: '150', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['Customer returns'] },
   { id: 'mfg-k-nearmiss', kind: 'stream_kpi', name: 'Near-miss reporting', streamKey: 'safety', definition: 'Near misses reported per 100 employees per month (leading indicator — higher is better).', currentValue: '2.1', targetValue: '4.0', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['EHS incident log'] },
   { id: 'mfg-k-costvar', kind: 'stream_kpi', name: 'Cost variance vs standard', streamKey: 'finance', definition: 'Actual production cost vs the standard cost model.', currentValue: '+4.1%', targetValue: '0%', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['ERP costing'] },
+  { id: 'mfg-k-changeover', kind: 'stream_kpi', name: 'Changeover time', streamKey: 'production', definition: 'Average die/format changeover on constrained lines, first good part to first good part.', currentValue: '48 min', targetValue: '35 min', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['MES telemetry'] },
+  { id: 'mfg-k-energy', kind: 'stream_kpi', name: 'Energy per unit', streamKey: 'production', definition: 'kWh consumed per good unit produced, all utilities.', currentValue: '3.9 kWh', targetValue: '3.4 kWh', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['Energy meters'] },
+  { id: 'mfg-k-mttr', kind: 'stream_kpi', name: 'MTTR', streamKey: 'maintenance', definition: 'Mean time to repair on constrained assets, failure to first good part.', currentValue: '5.2 h', targetValue: '3.0 h', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['CMMS work orders'] },
+  { id: 'mfg-k-suppm', kind: 'stream_kpi', name: 'Inbound defect PPM', streamKey: 'supplychain', definition: 'Defective supplier parts per million found at receiving and line-side.', currentValue: '980', targetValue: '400', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['QC inspections'] },
+  { id: 'mfg-k-wip', kind: 'stream_kpi', name: 'WIP days', streamKey: 'finance', definition: 'Work-in-progress inventory measured in days of output.', currentValue: '9.4', targetValue: '7.0', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['ERP inventory'] },
+  { id: 'mfg-k-lti', kind: 'stream_kpi', name: 'Lost-time incidents', streamKey: 'safety', definition: 'Incidents causing lost work days, rolling 12 months.', currentValue: '3', targetValue: '0', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['EHS incident log'] },
 
   { id: 'mfg-d-mes', kind: 'driver', name: 'MES telemetry', streamKey: 'production', definition: 'Line counts, rates and stop reasons.', status: 'connected', dataSources: ['MES historian'] },
   { id: 'mfg-d-cmms', kind: 'driver', name: 'CMMS work orders', streamKey: 'maintenance', definition: 'Planned and reactive maintenance orders.', status: 'connected', dataSources: ['CMMS API'] },
   { id: 'mfg-d-erp', kind: 'driver', name: 'ERP purchase orders', streamKey: 'supplychain', definition: 'PO lines, receipts and supplier promise dates.', status: 'connected', dataSources: ['ERP extract'] },
+  { id: 'mfg-d-energy', kind: 'driver', name: 'Energy meters', streamKey: 'production', definition: 'Utility submeters by line and area, 15-minute interval.', status: 'connected', dataSources: ['SCADA historian'] },
+  { id: 'mfg-d-qms', kind: 'driver', name: 'QC inspections', streamKey: 'quality', definition: 'Incoming, in-process and final inspection results.', status: 'connected', dataSources: ['QMS API'] },
+  { id: 'mfg-d-ehs', kind: 'driver', name: 'EHS incident log', streamKey: 'safety', definition: 'Incidents, near misses and observation cards.', status: 'connected', dataSources: ['EHS system'] },
+  { id: 'mfg-d-costing', kind: 'driver', name: 'ERP costing', streamKey: 'finance', definition: 'Standard vs actual cost postings by order and line.', status: 'connected', dataSources: ['ERP extract'] },
 ];
 
 const mfgEdges = [
@@ -348,6 +366,33 @@ const mfgEdges = [
   { id: 'mfg-e-14', source: 'mfg-k-rawdays', target: 'mfg-t-unitcost', weight: 'weak', status: 'connected' },
   { id: 'mfg-e-15', source: 'mfg-k-nearmiss', target: 'mfg-t-safety', weight: 'moderate', status: 'connected' },
   { id: 'mfg-e-16', source: 'mfg-k-fpy', target: 'mfg-k-custppm', weight: 'moderate', status: 'connected' },
+  // The P&L cascade: mandates → lines → the unit-cost intent.
+  { id: 'mfg-e-17', source: 'mfg-k-throughput', target: 'mfg-pl-rev', weight: 'strong', status: 'connected', rationale: 'Missed schedule is shipped revenue that never books.' },
+  { id: 'mfg-e-18', source: 'mfg-k-supotd', target: 'mfg-pl-rev', weight: 'moderate', status: 'connected', rationale: 'Late supplier lines convert to OTIF penalty clauses.' },
+  { id: 'mfg-e-19', source: 'mfg-k-scrap', target: 'mfg-pl-material', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-20', source: 'mfg-k-suppm', target: 'mfg-pl-material', weight: 'moderate', status: 'connected', rationale: 'Inbound defects surface as line-side scrap and sorting cost.' },
+  { id: 'mfg-e-21', source: 'mfg-k-changeover', target: 'mfg-pl-conversion', weight: 'moderate', status: 'connected' },
+  { id: 'mfg-e-22', source: 'mfg-k-energy', target: 'mfg-pl-conversion', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-23', source: 'mfg-k-unplanned', target: 'mfg-pl-maintenance', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-24', source: 'mfg-k-mttr', target: 'mfg-pl-maintenance', weight: 'moderate', status: 'connected' },
+  { id: 'mfg-e-25', source: 'mfg-pl-rev', target: 'mfg-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-26', source: 'mfg-pl-material', target: 'mfg-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-27', source: 'mfg-pl-conversion', target: 'mfg-pl-ebitda', weight: 'moderate', status: 'connected' },
+  { id: 'mfg-e-28', source: 'mfg-pl-maintenance', target: 'mfg-pl-ebitda', weight: 'moderate', status: 'connected' },
+  { id: 'mfg-e-29', source: 'mfg-pl-ebitda', target: 'mfg-t-unitcost', weight: 'strong', status: 'connected' },
+  // New sense and mandate wiring.
+  { id: 'mfg-e-30', source: 'mfg-d-mes', target: 'mfg-k-changeover', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-31', source: 'mfg-d-energy', target: 'mfg-k-energy', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-32', source: 'mfg-d-cmms', target: 'mfg-k-mttr', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-33', source: 'mfg-d-qms', target: 'mfg-k-fpy', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-34', source: 'mfg-d-qms', target: 'mfg-k-suppm', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-35', source: 'mfg-d-ehs', target: 'mfg-k-nearmiss', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-36', source: 'mfg-d-ehs', target: 'mfg-k-lti', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-37', source: 'mfg-d-costing', target: 'mfg-k-costvar', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-38', source: 'mfg-d-costing', target: 'mfg-k-wip', weight: 'moderate', status: 'connected' },
+  { id: 'mfg-e-39', source: 'mfg-k-lti', target: 'mfg-t-safety', weight: 'strong', status: 'connected' },
+  { id: 'mfg-e-40', source: 'mfg-k-wip', target: 'mfg-t-unitcost', weight: 'weak', status: 'connected' },
+  { id: 'mfg-e-41', source: 'mfg-k-custppm', target: 'mfg-pl-rev', weight: 'weak', status: 'connected', rationale: 'Customer PPM above contract thresholds triggers chargebacks.' },
 ];
 
 export const brains = {
@@ -403,13 +448,13 @@ export const shadowOrgs = {
   manufacturing: {
     industry: 'manufacturing',
     agents: [
-      { id: 'mfg-sa-chief', persona: 'coo', name: 'Chief of staff counterpart', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['mfg-t-otd', 'mfg-t-unitcost', 'mfg-t-safety'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: hoursAgo(18), reportsToAgentId: null },
-      { id: 'mfg-sa-production', persona: 'operations_head', name: 'Production counterpart', streamKey: 'production', humanOwner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED', role: 'Plant director' }, watchesNodeIds: ['mfg-k-oee', 'mfg-k-throughput', 'mfg-k-scrap', 'mfg-d-mes'], openFindings: 0, slaBreaches: 0, temperament: 50, health: 'attention', lastFindingAt: hoursAgo(16), reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-maintenance', persona: 'operations_head', name: 'Maintenance counterpart', streamKey: 'maintenance', humanOwner: { name: 'Hassan Jaber', initials: 'HJ', avatarBg: '#B45309', role: 'Maintenance manager' }, watchesNodeIds: ['mfg-k-unplanned', 'mfg-k-pmcomp', 'mfg-d-cmms'], openFindings: 0, slaBreaches: 1, temperament: 60, health: 'critical', lastFindingAt: hoursAgo(9), reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-supplychain', persona: 'cfo', name: 'Supplier network counterpart', streamKey: 'supplychain', humanOwner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#0E7490', role: 'Supply chain manager' }, watchesNodeIds: ['mfg-k-supotd', 'mfg-k-rawdays', 'mfg-d-erp'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(43), reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-quality', persona: 'store_manager', name: 'Quality counterpart', streamKey: 'quality', humanOwner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', role: 'Quality manager' }, watchesNodeIds: ['mfg-k-fpy', 'mfg-k-custppm'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: hoursAgo(121), reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-safety', persona: 'coo', name: 'Safety counterpart', streamKey: 'safety', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'EHS lead' }, watchesNodeIds: ['mfg-k-nearmiss'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: hoursAgo(1), reportsToAgentId: 'mfg-sa-chief' },
-      { id: 'mfg-sa-finance', persona: 'cfo', name: 'Finance counterpart', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'Plant controller' }, watchesNodeIds: ['mfg-k-costvar'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: hoursAgo(74), reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-chief', persona: 'coo', name: 'Chief of staff counterpart', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['mfg-t-otd', 'mfg-t-unitcost', 'mfg-t-safety', 'mfg-pl-ebitda'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: hoursAgo(18), reportsToAgentId: null },
+      { id: 'mfg-sa-production', persona: 'operations_head', name: 'Production counterpart', streamKey: 'production', humanOwner: { name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED', role: 'Plant director' }, watchesNodeIds: ['mfg-k-oee', 'mfg-k-throughput', 'mfg-k-scrap', 'mfg-k-changeover', 'mfg-k-energy', 'mfg-d-mes', 'mfg-d-energy'], openFindings: 0, slaBreaches: 0, temperament: 50, health: 'attention', lastFindingAt: hoursAgo(16), reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-maintenance', persona: 'operations_head', name: 'Maintenance counterpart', streamKey: 'maintenance', humanOwner: { name: 'Hassan Jaber', initials: 'HJ', avatarBg: '#B45309', role: 'Maintenance manager' }, watchesNodeIds: ['mfg-k-unplanned', 'mfg-k-pmcomp', 'mfg-k-mttr', 'mfg-d-cmms'], openFindings: 0, slaBreaches: 1, temperament: 60, health: 'critical', lastFindingAt: hoursAgo(9), reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-supplychain', persona: 'cfo', name: 'Supplier network counterpart', streamKey: 'supplychain', humanOwner: { name: 'Omar Farouk', initials: 'OF', avatarBg: '#0E7490', role: 'Supply chain manager' }, watchesNodeIds: ['mfg-k-supotd', 'mfg-k-rawdays', 'mfg-k-suppm', 'mfg-d-erp'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(43), reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-quality', persona: 'store_manager', name: 'Quality counterpart', streamKey: 'quality', humanOwner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', role: 'Quality manager' }, watchesNodeIds: ['mfg-k-fpy', 'mfg-k-custppm', 'mfg-d-qms'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: hoursAgo(121), reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-safety', persona: 'coo', name: 'Safety counterpart', streamKey: 'safety', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'EHS lead' }, watchesNodeIds: ['mfg-k-nearmiss', 'mfg-k-lti', 'mfg-d-ehs'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: hoursAgo(1), reportsToAgentId: 'mfg-sa-chief' },
+      { id: 'mfg-sa-finance', persona: 'cfo', name: 'Finance counterpart', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'Plant controller' }, watchesNodeIds: ['mfg-k-costvar', 'mfg-k-wip', 'mfg-pl-rev', 'mfg-pl-material', 'mfg-pl-ebitda', 'mfg-d-costing'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: hoursAgo(74), reportsToAgentId: 'mfg-sa-chief' },
     ],
   },
 };
@@ -1532,6 +1577,73 @@ export const findingsSeed = {
       detectedAt: hoursAgo(16), persona: 'operations_head', entity: 'Plant 2 — Dammam', region: 'KSA',
       closureTemplate: { name: 'B-housing scrap back to pre-refresh baseline for 4 weeks', baseline: '2x baseline', target: 'baseline' },
     },
+    {
+      id: 'mfg-f-4',
+      title: 'Inbound casting defects at 980 PPM are turning into line-side scrap',
+      summary: 'Inbound defect PPM from the two castings suppliers more than doubled to 980 against a 400 PPM ceiling. Receiving inspection is catching half; the rest surfaces as line-side scrap and sorting labor. Accepted — the exit condition tracks supplier PPM back under the ceiling.',
+      raisedByAgentId: 'mfg-sa-supplychain', raisedByAgentName: 'Supplier network counterpart', streamKey: 'supplychain', linkedKpiNodeId: 'mfg-k-suppm', severity: 'high',
+      impactPath: [
+        { nodeId: 'mfg-k-suppm', nodeName: 'Inbound defect PPM', kind: 'stream_kpi', effect: '980 PPM vs 400 ceiling, castings family' },
+        { nodeId: 'mfg-pl-material', nodeName: 'Material & scrap cost', kind: 'pl_line', effect: 'sorting labor + line-side scrap ≈ $38k/month' },
+        { nodeId: 'mfg-pl-ebitda', nodeName: 'EBITDA', kind: 'pl_line', effect: 'dragging the line further off budget' },
+        { nodeId: 'mfg-t-unitcost', nodeName: 'Unit cost index', kind: 'target', effect: '≈ 0.6 points of the index gap' },
+      ],
+      impactEstimate: '≈ $38k/month of sorting and scrap from two suppliers',
+      evidence: [
+        { label: 'Inbound defect PPM, castings', value: '980 vs 400 ceiling' },
+        { label: 'Escape rate past receiving', value: '≈ 50% surfaces line-side' },
+        { label: 'Sorting labor booked', value: '212 h last month' },
+      ],
+      status: 'accepted', disposition: 'accept', dispositionBy: 'Omar Farouk', dispositionAt: hoursAgo(31), dispositionReason: null,
+      slaHoursRemaining: 0, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: 'mfg-c-1', solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(36), persona: 'cfo', entity: 'Plant 1 — Jebel Ali', region: 'UAE',
+      closureTemplate: { name: 'Inbound casting PPM under 400 for 8 consecutive weeks', baseline: '980 PPM', target: '< 400 PPM' },
+    },
+    {
+      id: 'mfg-f-5',
+      title: 'Energy per unit up 15% since the compressor swap on Line 2',
+      summary: 'kWh per good unit climbed from 3.4 to 3.9 after the rental compressor came online during the overhaul. The overhaul finished two weeks ago but the rental is still running in parallel — nobody switched it off the loop.',
+      raisedByAgentId: 'mfg-sa-finance', raisedByAgentName: 'Finance counterpart', streamKey: 'finance', linkedKpiNodeId: 'mfg-k-energy', severity: 'medium',
+      impactPath: [
+        { nodeId: 'mfg-k-energy', nodeName: 'Energy per unit', kind: 'stream_kpi', effect: '3.9 kWh vs 3.4 baseline since the swap' },
+        { nodeId: 'mfg-pl-conversion', nodeName: 'Conversion cost', kind: 'pl_line', effect: '≈ $22k/month of avoidable utility spend' },
+        { nodeId: 'mfg-t-unitcost', nodeName: 'Unit cost index', kind: 'target', effect: '0.4 points of the index gap' },
+      ],
+      impactEstimate: '≈ $22k/month of avoidable energy spend',
+      evidence: [
+        { label: 'Energy per unit', value: '3.9 kWh vs 3.4 baseline' },
+        { label: 'Submeter trace', value: 'rental compressor still drawing in parallel' },
+        { label: 'Overhaul status', value: 'complete 2 weeks ago' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 30, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(12), persona: 'cfo', entity: 'Plant 1 — Jebel Ali', region: 'UAE',
+      closureTemplate: { name: 'Energy per unit back to 3.4 kWh for 4 weeks', baseline: '3.9 kWh', target: '3.4 kWh' },
+    },
+    {
+      id: 'mfg-f-6',
+      title: 'Near-miss reporting at Dammam fell by half after the shift restructure',
+      summary: 'Near-miss reports per 100 employees dropped from 4.2 to 2.1 in the eight weeks since the shift restructure — while minor first-aid cases held steady. Fewer reports with steady incidents means the leading indicator went quiet, not the risk.',
+      raisedByAgentId: 'mfg-sa-safety', raisedByAgentName: 'Safety counterpart', streamKey: 'safety', linkedKpiNodeId: 'mfg-k-nearmiss', severity: 'high',
+      impactPath: [
+        { nodeId: 'mfg-k-nearmiss', nodeName: 'Near-miss reporting', kind: 'stream_kpi', effect: '4.2 → 2.1 per 100 employees in 8 weeks' },
+        { nodeId: 'mfg-k-lti', nodeName: 'Lost-time incidents', kind: 'stream_kpi', effect: 'leading indicator dark while exposure unchanged' },
+        { nodeId: 'mfg-t-safety', nodeName: 'TRIR', kind: 'target', effect: 'the 1.0 goal depends on the reporting culture' },
+      ],
+      impactEstimate: 'Leading safety indicator dark at the highest-risk plant',
+      evidence: [
+        { label: 'Near-miss rate, Dammam', value: '4.2 → 2.1 per 100 employees' },
+        { label: 'First-aid cases, same period', value: 'unchanged' },
+        { label: 'Restructure timing', value: 'drop starts the week supervision spans doubled' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 6, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(4), persona: 'coo', entity: 'Plant 2 — Dammam', region: 'KSA',
+      closureTemplate: { name: 'Near-miss reporting back above 4.0 per 100 employees for 6 weeks', baseline: '2.1', target: '≥ 4.0' },
+    },
   ],
 };
 
@@ -1563,7 +1675,11 @@ export const closureKpisSeed = {
     { id: 'hc-c-0', findingId: 'hc-f-0', findingTitle: 'February denial episode — eligibility edits missed at registration', name: 'First-pass denial rate under 8.5% for 6 weeks', baseline: '10.6%', target: '< 8.5%', current: '8.2%', progressPct: 100, status: 'closed', watchedByAgentName: 'Revenue cycle counterpart', createdAt: daysAgo(141), closedAt: daysAgo(81), entity: 'Metro General Hospital', region: 'Northeast' },
     { id: 'hc-c-h1', findingId: 'hc-f-h1', findingTitle: 'Lakeside OR block utilization stuck below 65%', name: 'Lakeside OR utilization above 75% for 4 weeks', baseline: '63%', target: '75%', current: '76%', progressPct: 100, status: 'closed', watchedByAgentName: 'Clinical ops counterpart', createdAt: daysAgo(116), closedAt: daysAgo(46), entity: 'Lakeside Surgical Center', region: 'South' },
   ],
-  manufacturing: [],
+  manufacturing: [
+    { id: 'mfg-c-1', findingId: 'mfg-f-4', findingTitle: 'Inbound casting defects at 980 PPM are turning into line-side scrap', name: 'Inbound casting PPM under 400 for 8 consecutive weeks', baseline: '980 PPM', target: '< 400 PPM', current: '710 PPM', progressPct: 45, status: 'tracking', watchedByAgentName: 'Supplier network counterpart', createdAt: hoursAgo(31), closedAt: null, entity: 'Plant 1 — Jebel Ali', region: 'UAE' },
+    { id: 'mfg-c-h1', findingId: 'mfg-f-h1', findingTitle: 'Changeover time crept from 35 to 61 minutes after the SKU count doubled', name: 'Changeover back under 40 minutes on constrained lines for a month', baseline: '61 min', target: '40 min', current: '38 min', progressPct: 100, status: 'closed', watchedByAgentName: 'Production counterpart', createdAt: daysAgo(112), closedAt: daysAgo(41), entity: 'Plant 1 — Jebel Ali', region: 'UAE' },
+    { id: 'mfg-c-h2', findingId: 'mfg-f-h2', findingTitle: 'Raw material days ballooned to 26 on safety-stock overrides', name: 'Raw material days back to 14 with no line stoppages for 6 weeks', baseline: '26 days', target: '14 days', current: '14 days', progressPct: 100, status: 'closed', watchedByAgentName: 'Supplier network counterpart', createdAt: daysAgo(98), closedAt: daysAgo(33), entity: 'Plant 2 — Dammam', region: 'KSA' },
+  ],
 };
 
 // ---------- FP&A P&L impact rollup (findings translated onto the P&L) ----------
@@ -1589,5 +1705,7 @@ export const plImpactSeed = {
     { key: 'revenue', plLine: 'Revenue — OTIF penalties', topDrivers: 'Two suppliers driving the OTIF slide', identified: 4, accepted: 2, acting: 1, cleared: 1, openNow: 1, translatedImpact: { text: '+9 pts OTIF', direction: 'up' } },
     { key: 'cogs-scrap', plLine: 'COGS — scrap & rework', topDrivers: 'Scrap concentrated in one part family', identified: 3, accepted: 1, acting: 1, cleared: 1, openNow: 0, translatedImpact: { text: '−0.8 pt scrap', direction: 'up' } },
     { key: 'maintenance', plLine: 'Maintenance & downtime', topDrivers: 'PM compliance slide on the press line', identified: 3, accepted: 2, acting: 0, cleared: 1, openNow: 1, translatedImpact: { text: '−14 h/wk downtime', direction: 'up' } },
+    { key: 'conversion', plLine: 'Conversion cost', topDrivers: 'Rental compressor left running · changeover creep', identified: 3, accepted: 1, acting: 1, cleared: 1, openNow: 1, translatedImpact: { text: '+$22k/mo identified', direction: 'up' } },
+    { key: 'working-capital', plLine: 'Working capital', topDrivers: 'Safety-stock overrides · WIP between constrained cells', identified: 2, accepted: 1, acting: 0, cleared: 1, openNow: 0, translatedImpact: { text: '−12 raw material days', direction: 'up' } },
   ],
 };

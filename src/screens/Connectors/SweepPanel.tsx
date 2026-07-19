@@ -31,7 +31,7 @@ export function SweepPanel() {
         The counterparts re-check every live-tracked mandate on a schedule; drift becomes a finding that must be answered.
       </div>
       {(runs ?? []).length > 0 ? (
-        <table className="table" style={{ fontSize: 12.5 }}>
+        <table className="t" style={{ fontSize: 12.5 }}>
           <thead>
             <tr><th>When</th><th>Trigger</th><th>Evaluated</th><th>Raised</th><th>Re-alerts</th><th>Closures</th></tr>
           </thead>

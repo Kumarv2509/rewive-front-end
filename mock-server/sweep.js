@@ -89,7 +89,7 @@ function assembleFinding({ config, node, brain, counterpart, result, narrative, 
 }
 
 /**
- * ctx: { getBrains, shadowOrgs, ROLE_PARENT, DOTTED_PARENT, logAudit,
+ * ctx: { getBrains, shadowOrgs, escalateFinding, chiefIdFor, logAudit,
  *        getOrgName, exampleFindingFor }
  */
 export async function runSweep(trigger, ctx) {
@@ -157,12 +157,7 @@ export async function runSweep(trigger, ctx) {
               f.disposition = null;
               f.dispositionBy = null;
               f.dispositionAt = null;
-              f.slaHoursRemaining = 12;
-              f.escalationLevel += 1;
-              const dotted = ctx.DOTTED_PARENT[f.persona];
-              if (dotted) f.dottedPersona = dotted;
-              const parent = ctx.ROLE_PARENT[f.persona];
-              if (parent) f.persona = parent;
+              ctx.escalateFinding(f, { industry: config.industry, chiefId: ctx.chiefIdFor(config.industry) });
               active.status = 'open';
               active.slaDeadlineAt = new Date(Date.now() + 12 * 3_600_000).toISOString();
               await tracking.saveLiveFinding(active);

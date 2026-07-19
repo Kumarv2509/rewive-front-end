@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rewive front end — a React/TypeScript demo of **the Decision Accountability Layer**: every business mandate is held twice (once by a person, once by an agent "counterpart" watching the same number), drift becomes a **finding** that must be dispositioned (Accept / Act / Acknowledge / Abandon — silence escalates on an SLA), accepted findings become **exit conditions** watched until the number is back (Closure), and every decision lands in a **Decision Ledger** with a later assessor verdict (worked / didn't / too early). The signature line is "Every mandate, held twice."
 
-Everything is industry-parameterized: the public landing page (`/`) picks an operating context (FMCG or Healthcare; a Manufacturing pack is seeded but hidden from pickers until it's as deep as the other two) and every screen swaps its content accordingly. No production backend exists — a mock Express server in `mock-server/` implements the exact REST contract the frontend expects, with in-memory stateful mutations.
+Everything is industry-parameterized: the public landing page (`/`) picks an operating context (FMCG, Healthcare, or Manufacturing) and every screen swaps its content accordingly. No production backend exists — a mock Express server in `mock-server/` implements the exact REST contract the frontend expects, with in-memory stateful mutations.
 
 ## Commands
 
@@ -39,7 +39,7 @@ Sweep-raised entities carry `live-` id prefixes: they persist in Postgres (sourc
 - **Agents** — Counterparts (`/operate/counterparts`) + Workforce (`/insights/agents`) share a `SectionTabs` header.
 - **Performance** (`/insights/people`), **Foundation** (`/build/picture`, `/build/kpis`, `/build/connectors`).
 
-**Tenancy (demo-grade):** the SaaS front door is `/login` — a split-view organization sign-in (org-branded panel left, sign-in card right). `src/tenants.ts` registers the tenants (Americana Foods → fmcg, Metro Health Network → healthcare; manufacturing stays hidden) with flat brand accents, demo email domains, and session helpers (`rewive.tenant` in localStorage). Signing in sets tenant + industry + persona lens ("Sign in as" role → each team lands in its own view); all app routes sit behind `RequireTenant` in `App.tsx`. The industry choice stays authoritative: `getActiveTenant()` re-derives the tenant if the industry is switched in-app (Operating Picture) or the session predates tenancy. The top nav shows the signed-in org chip + "Switch organization"; landing CTAs deep-link `/login?org=<tenantId>`. There is no real auth — any password works.
+**Tenancy (demo-grade):** the SaaS front door is `/login` — a split-view organization sign-in (org-branded panel left, sign-in card right). `src/tenants.ts` registers the tenants (Americana Foods → fmcg, Metro Health Network → healthcare, Gulf Precision Industries → manufacturing) with flat brand accents, demo email domains, and session helpers (`rewive.tenant` in localStorage). Signing in sets tenant + industry + persona lens ("Sign in as" role → each team lands in its own view); all app routes sit behind `RequireTenant` in `App.tsx`. The industry choice stays authoritative: `getActiveTenant()` re-derives the tenant if the industry is switched in-app (Operating Picture) or the session predates tenancy. The top nav shows the signed-in org chip + "Switch organization"; landing CTAs deep-link `/login?org=<tenantId>`. There is no real auth — any password works.
 
 The persona lens is global chrome (top bar, `personaLens.tsx`, persisted). Screen intros use the shared `Intro` component (one line + "How this works" disclosure) instead of paragraph subtitles. There is no global "+ New Agent" CTA — agent creation lives in Agents → Workforce and a finding's Act flow.
 
@@ -62,6 +62,6 @@ Category: the decision accountability layer — "the system of record for operat
 ## Conventions
 
 - Path imports are relative (no `@/` alias configured).
-- Currency: AED for FMCG, USD for Healthcare. Seed org is "Americana Foods (demo)".
+- Currency: AED for FMCG, USD for Healthcare and Manufacturing. Seed org is "Americana Foods (demo)".
 - New API resources: type in `src/api/types.ts`, hook in `src/api/<domain>.ts`, mock route + per-industry seed in `mock-server/`.
 - Vite proxies `/api` to `http://localhost:4000` (see `vite.config.ts`) — don't hardcode the mock server port elsewhere.

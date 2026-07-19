@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAddBrainNode, useIndustries, useKpiBrain, useOrgProfile, useSetIndustry } from '../../api/shadowOrg';
+import { usePersonaLens } from '../../components/layout/personaLens';
+import { lensOfferedForIndustry } from '../CommandCenter/personas';
 import { Intro } from '../../components/shared/Intro';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { SectionTabs, FOUNDATION_TABS } from '../../components/shared/SectionTabs';
@@ -12,7 +14,20 @@ function IndustrySwitcher() {
   const { data: industries } = useIndustries();
   const { data: profile } = useOrgProfile();
   const setIndustry = useSetIndustry();
+  const { lens, setLens } = usePersonaLens();
   const { showToast } = useToast();
+
+  const switchTo = (ind: { id: string; name: string }) => {
+    setIndustry.mutate(ind.id as IndustryKey, {
+      onSuccess: () => {
+        // A lens carried over from another industry (e.g. an FMCG division role)
+        // isn't offered here — it would filter every screen to empty while the
+        // picker misrenders as "All lenses". Drop it back to All.
+        if (!lensOfferedForIndustry(lens, ind.id)) setLens('all');
+        showToast(`Switched to the ${ind.name} picture`);
+      },
+    });
+  };
 
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
@@ -21,7 +36,7 @@ function IndustrySwitcher() {
           key={ind.id}
           className={`fchip${profile?.industry === ind.id ? ' on' : ''}`}
           disabled={setIndustry.isPending}
-          onClick={() => setIndustry.mutate(ind.id as IndustryKey, { onSuccess: () => showToast(`Switched to the ${ind.name} picture`) })}
+          onClick={() => switchTo(ind)}
           title={ind.description}
         >
           {ind.name}

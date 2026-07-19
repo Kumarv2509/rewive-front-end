@@ -58,6 +58,47 @@ export function roleSubtree(role) {
   return [role, ...kids.flatMap(roleSubtree)];
 }
 
+// Healthcare and Manufacturing seed only the original six roles; the full org
+// tree (the group tier, divisions) is an FMCG-context feature. Mirrored in
+// src/screens/CommandCenter/personas.ts (LEGACY_PERSONAS) — keep the two in sync.
+export const LEGACY_PERSONAS = ['coo', 'operations_head', 'store_manager', 'sales_supervisor', 'cfo', 'commercial_finance'];
+const LEGACY_INDUSTRIES = new Set(['healthcare', 'manufacturing']);
+
+// The roles an industry actually offers in its lens picker. null = "all roles"
+// (FMCG); a Set of the legacy six otherwise.
+export function personasForIndustry(industry) {
+  return LEGACY_INDUSTRIES.has(industry) ? new Set(LEGACY_PERSONAS) : null;
+}
+
+// The escalation parent within an industry: one step up the solid line, but
+// never above the roles that industry offers. Legacy industries have no group
+// tier, so 'coo'/'cfo' are already the top and this returns null there — an
+// escalated finding must never land on a persona no lens in that org can select.
+export function escalationParent(persona, industry) {
+  const parent = ROLE_PARENT[persona];
+  if (!parent) return null;
+  const offered = personasForIndustry(industry);
+  return !offered || offered.has(parent) ? parent : null;
+}
+
+// The one place the "walk a finding up the org" rule lives — shared by the
+// escalate route, the SLA heartbeat, the wall-clock hydrate, the re-alert route
+// and the sweep trip-wire (previously three diverging copies). Moves ownership
+// up the solid line (stopping at the industry's top role), flags the dotted-line
+// parent, bumps the level, resets the escalation SLA and routes to the chief
+// counterpart. Callers own any status/deadline side-effects. Returns the roles
+// touched so callers can log "escalated to X" vs "held at the top".
+export function escalateFinding(finding, { industry, chiefId }) {
+  const dottedRole = DOTTED_PARENT[finding.persona];
+  if (dottedRole) finding.dottedPersona = dottedRole;
+  const parentRole = escalationParent(finding.persona, industry);
+  finding.escalationLevel += 1;
+  finding.slaHoursRemaining = 12;
+  if (chiefId) finding.escalatedToAgentId = chiefId;
+  if (parentRole) finding.persona = parentRole;
+  return { parentRole, dottedRole };
+}
+
 // Resolves a lens + scope to the set of personas in view.
 // Returns null for "no filter" (no persona, or 'all').
 // Team scope includes the dotted (functional) line: the CFO's team rollup

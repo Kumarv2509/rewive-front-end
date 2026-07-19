@@ -1,10 +1,9 @@
 import type { IndustryKey } from './api/types';
-import { getActiveIndustry } from './api/client';
+import { getActiveIndustry, clearActiveIndustry } from './api/client';
 
 // SaaS tenancy, demo-grade: each organization (tenant) is a workspace that maps
 // onto one industry pack. Signing in as an org sets the industry context and
 // brands the chrome; teams inside the org are the existing persona roles.
-// Manufacturing stays hidden until its pack is as deep as the other two.
 export interface Tenant {
   id: string;
   name: string;
@@ -52,6 +51,21 @@ export const TENANTS: Tenant[] = [
       'Currency USD · COO to sales supervisor',
     ],
   },
+  {
+    id: 'gulf-precision',
+    name: 'Gulf Precision Industries',
+    mark: 'GP',
+    industry: 'manufacturing',
+    industryLabel: 'Manufacturing',
+    accent: '#1B4B72',
+    domain: 'gulfprecision.com',
+    tagline: 'Discrete manufacturing: production, maintenance, supplier network, quality and safety across two plants.',
+    proofPoints: [
+      '17 mandates held twice across 6 streams',
+      'Plant 1 — Jebel Ali · Plant 2 — Dammam',
+      'Currency USD · COO to quality manager',
+    ],
+  },
 ];
 
 const TENANT_KEY = 'rewive.tenant';
@@ -70,6 +84,10 @@ export function setActiveTenantId(id: string) {
 
 export function clearActiveTenant() {
   try { localStorage.removeItem(TENANT_KEY); } catch { /* ignore */ }
+  // Also drop the industry, or getActiveTenant() re-derives the tenant from the
+  // surviving industry key and silently re-signs the user in — making "Switch
+  // organization" (and the RequireTenant gate) a no-op after the first session.
+  clearActiveIndustry();
 }
 
 /**

@@ -51,8 +51,9 @@ const FMCG_LABEL_OVERRIDES: Partial<Record<Persona, string>> = {
 };
 
 // Healthcare and Manufacturing packs only seed the original six roles; the
-// full org tree is an FMCG-context feature.
-const LEGACY_PERSONAS: Persona[] = [
+// full org tree is an FMCG-context feature. Mirrored in mock-server/roles.js
+// (LEGACY_PERSONAS) — keep the two in sync.
+export const LEGACY_PERSONAS: Persona[] = [
   'coo',
   'operations_head',
   'store_manager',
@@ -86,6 +87,13 @@ export const PERSONAS: Persona[] = PERSONA_GROUPS.flatMap((g) => g.roles);
 export function personaGroupsForIndustry(industry?: string): { label: string; roles: Persona[] }[] {
   if (isLegacyIndustry(industry ?? getActiveIndustry())) return [{ label: 'Roles', roles: LEGACY_PERSONAS }];
   return PERSONA_GROUPS;
+}
+
+/** Whether a lens value is selectable in the given industry's picker — a lens
+ *  carried over from another industry (e.g. an FMCG division role) is not. */
+export function lensOfferedForIndustry(lens: Persona | 'all', industry?: string): boolean {
+  if (lens === 'all') return true;
+  return personaGroupsForIndustry(industry).some((g) => g.roles.includes(lens));
 }
 
 // The role hierarchy: every role owns a disjoint slice of the product's data;

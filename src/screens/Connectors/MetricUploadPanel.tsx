@@ -64,7 +64,7 @@ export function MetricUploadPanel() {
           <div style={{ fontSize: 12.5, margin: '12px 0 6px' }}>
             {validRows.length} of {rows.length} rows valid{rows.length > validRows.length ? ` — first issue: ${rows.find((r) => !r.valid)?.reason}` : ''}
           </div>
-          <table className="table" style={{ fontSize: 12.5 }}>
+          <table className="t" style={{ fontSize: 12.5 }}>
             <thead><tr><th>Mandate</th><th>Date</th><th>Value</th><th /></tr></thead>
             <tbody>
               {rows.slice(0, 5).map((r, i) => (

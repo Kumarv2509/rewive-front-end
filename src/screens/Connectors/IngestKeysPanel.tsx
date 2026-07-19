@@ -74,7 +74,7 @@ export function IngestKeysPanel() {
       )}
 
       {(keys ?? []).length > 0 && (
-        <table className="table" style={{ fontSize: 13 }}>
+        <table className="t" style={{ fontSize: 13 }}>
           <thead>
             <tr><th>Label</th><th>Created</th><th>Last used</th><th /></tr>
           </thead>

@@ -71,7 +71,7 @@ export function TrackingConfigPanel() {
       <div style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 12 }}>
         Give a mandate a numeric target and thresholds, push real data, and its counterpart raises findings when the number drifts.
       </div>
-      <table className="table" style={{ fontSize: 13 }}>
+      <table className="t" style={{ fontSize: 13 }}>
         <thead>
           <tr><th>Mandate</th><th>Latest</th><th>Target</th><th>Points</th><th>Status</th><th /></tr>
         </thead>

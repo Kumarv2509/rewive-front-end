@@ -12,6 +12,9 @@ export function setActiveIndustry(industry: string) {
 export function getActiveIndustry(): string | null {
   try { return localStorage.getItem(INDUSTRY_KEY); } catch { return null; }
 }
+export function clearActiveIndustry() {
+  try { localStorage.removeItem(INDUSTRY_KEY); } catch { /* ignore */ }
+}
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api/v1',

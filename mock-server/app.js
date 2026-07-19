@@ -44,7 +44,7 @@ import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
 import { businessContextSeed } from './businessdata.js';
 import { datasetsSeed } from './datasetsdata.js';
-import { personaScope, ROLE_PARENT, DOTTED_PARENT } from './roles.js';
+import { personaScope, escalationParent, escalateFinding } from './roles.js';
 import { deriveHalfYear, deriveStatTiles } from './halfyear.js';
 import * as tracking from './tracking.js';
 import { registerTrackingRoutes } from './tracking-routes.js';
@@ -61,16 +61,39 @@ app.use(express.json({ limit: '5mb' }));
 // once the response is out. Serverless invocations additionally await
 // persistLiveState() explicitly in api/handler.js — this fire-and-forget is
 // the long-lived dev-server path.
-app.use(async (req, res, next) => {
-  try {
-    await hydrateLiveState();
-  } catch (err) {
-    console.warn('[live] hydrate failed:', err?.message ?? err);
-  }
-  res.on('finish', () => {
-    persistLiveState().catch((err) => console.warn('[live] persist failed:', err?.message ?? err));
+// hydrateLiveState wholesale-replaces the shared live-row maps and overwrites
+// findingsState entries; persistLiveState diffs those same maps. If a polling
+// GET's hydrate runs between a mutating request's response and its fire-and-
+// forget persist, it swaps in stale rows, the mutation vanishes from
+// findingsState, and the persist then finds nothing dirty — the disposition is
+// silently lost. Serialize the whole hydrate → handler → persist span per
+// request so the next request's hydrate can't start until the prior persist has
+// written back. Traffic on this mock is a single demo user, so the throughput
+// cost is irrelevant next to not losing dispositions.
+let liveLock = Promise.resolve();
+
+app.use((req, res, next) => {
+  const prev = liveLock;
+  let release;
+  liveLock = new Promise((resolve) => { release = resolve; });
+  prev.then(async () => {
+    try {
+      await hydrateLiveState();
+    } catch (err) {
+      console.warn('[live] hydrate failed:', err?.message ?? err);
+    }
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      persistLiveState()
+        .catch((err) => console.warn('[live] persist failed:', err?.message ?? err))
+        .finally(release);
+    };
+    res.on('finish', finish);
+    res.on('close', finish); // release even if the connection drops before finish
+    next();
   });
-  next();
 });
 
 // In-memory mutable state for this server process. Note: on serverless platforms
@@ -1207,7 +1230,10 @@ function reconcileBrainStatuses(brain, datasets) {
     brain.nodes.filter((n) => n.kind === 'stream_kpi' && liveFeeds.has(n.name)).map((n) => n.streamKey),
   );
   const nodes = brain.nodes.map((n) => {
-    if (n.status === 'proposed') return n;
+    // 'proposed' and 'declined' are petition-lifecycle states set explicitly by
+    // the accept/decline routes — reconciliation from the dataset registry must
+    // not recompute them, or a declined petition reappears on the canvas.
+    if (n.status === 'proposed' || n.status === 'declined') return n;
     if (n.kind === 'stream_kpi') return { ...n, status: liveFeeds.has(n.name) ? 'connected' : 'needs_data' };
     if (n.kind === 'driver') return { ...n, status: liveStreams.has(n.streamKey) ? 'connected' : 'needs_data' };
     return n;
@@ -1382,7 +1408,7 @@ app.get('/api/v1/business-context', (req, res) => {
 
 // ---------- Datasets (placeholder registry for the data to come) ----------
 let datasetsState = JSON.parse(JSON.stringify(datasetsSeed));
-let analysisRequestsState = [];
+let analysisRequestsState = {}; // industry -> requests[] (one workspace per tenant)
 
 app.get('/api/v1/datasets', (req, res) => {
   res.json(datasetsState[v4Industry(req)] ?? []);
@@ -1412,23 +1438,25 @@ app.post('/api/v1/datasets', (req, res) => {
   res.status(201).json(dataset);
 });
 
-app.get('/api/v1/analysis-requests', (req, res) => res.json(analysisRequestsState));
+app.get('/api/v1/analysis-requests', (req, res) => res.json(analysisRequestsState[v4Industry(req)] ?? []));
 
 app.post('/api/v1/analysis-requests', (req, res) => {
   const { datasetId, question } = req.body;
   if (!question) return res.status(400).json({ message: 'question is required' });
+  const industry = v4Industry(req);
   const dataset = datasetId
-    ? Object.values(datasetsState).flat().find((d) => d.id === datasetId)
+    ? (datasetsState[industry] ?? []).find((d) => d.id === datasetId)
     : null;
+  const list = analysisRequestsState[industry] ?? (analysisRequestsState[industry] = []);
   const request = {
-    id: `ar-${Date.now()}-${analysisRequestsState.length}`,
+    id: `ar-${Date.now()}-${list.length}`,
     datasetId: dataset?.id ?? null,
     datasetName: dataset?.name ?? null,
     question,
     status: 'queued',
     createdAt: new Date().toISOString(),
   };
-  analysisRequestsState.push(request);
+  list.push(request);
   logAudit('connection', request.id, `queued analysis: "${question.slice(0, 80)}"`);
   res.status(201).json(request);
 });
@@ -1513,20 +1541,32 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
   res.json(stripServerFields(finding));
 });
 
+// The chief counterpart of an industry is the stream-less agent at the top of
+// its shadow org (persona group_ceo for FMCG, coo for the legacy industries).
+// Escalation routes to its real id — never a templated `${industry}-sa-chief`,
+// which only matched FMCG and left healthcare/manufacturing escalations
+// unattached (the seeded chiefs are hc-sa-chief / mfg-sa-chief).
+function chiefIdFor(industry) {
+  return shadowOrgsSeed[industry]?.agents.find((a) => a.streamKey === null)?.id ?? null;
+}
+
 // Escalation is the stitch between levels of the org: an unanswered finding
-// becomes the parent role's call. Supply chain → division COO → Group CEO.
-// Roles with a dotted line fork: ownership moves up the solid line, and the
-// functional parent (e.g. the CFO) gets the finding flagged in their queue.
-// Shared by the escalate route and the SLA heartbeat.
+// becomes the parent role's call. The walk itself (persona up the solid line,
+// dotted-line flag, level, SLA, chief routing) lives once in roles.js
+// escalateFinding; this binds it to the industry's chief. Shared by the escalate
+// route and the SLA heartbeat.
 function escalateFindingUp(finding, industry) {
-  finding.escalationLevel += 1;
-  finding.escalatedToAgentId = `${industry}-sa-chief`;
-  finding.slaHoursRemaining = 12;
-  const dottedRole = DOTTED_PARENT[finding.persona];
-  if (dottedRole) finding.dottedPersona = dottedRole;
-  const parentRole = ROLE_PARENT[finding.persona];
-  if (parentRole) finding.persona = parentRole;
-  return { parentRole, dottedRole };
+  return escalateFinding(finding, { industry, chiefId: chiefIdFor(industry) });
+}
+
+// A manual escalate/re-alert resets slaHoursRemaining, but for live findings the
+// wall-clock slaDeadlineAt is the source of truth (hydrate recomputes the hours
+// from it). Push the deadline out to match, or the reset is reverted on the next
+// request and the stale deadline auto-escalates the finding a second time.
+function syncLiveDeadline(finding) {
+  if (!finding.id.startsWith('live-')) return;
+  const row = liveFindingRows.get(finding.id);
+  if (row) row.slaDeadlineAt = new Date(Date.now() + (finding.slaHoursRemaining || 0) * 3_600_000).toISOString();
 }
 
 app.post('/api/v1/findings/:id/escalate', (req, res) => {
@@ -1535,6 +1575,7 @@ app.post('/api/v1/findings/:id/escalate', (req, res) => {
   const { finding, industry } = hit;
   if (finding.status !== 'open') return res.status(400).json({ message: 'Only open findings can be escalated' });
   const { parentRole, dottedRole } = escalateFindingUp(finding, industry);
+  syncLiveDeadline(finding);
   logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} — now ${parentRole ? `${parentRole}'s` : 'the top role’s'} call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`);
   res.json(stripServerFields(finding));
 });
@@ -1543,19 +1584,15 @@ app.post('/api/v1/findings/:id/escalate', (req, res) => {
 app.post('/api/v1/findings/:id/re-alert', (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
-  const { finding } = hit;
+  const { finding, industry } = hit;
   if (finding.status !== 'acknowledged') return res.status(400).json({ message: 'Only acknowledged findings can re-alert' });
   finding.status = 'open';
   finding.disposition = null;
   finding.dispositionBy = null;
   finding.dispositionAt = null;
-  finding.slaHoursRemaining = 12;
-  finding.escalationLevel += 1;
-  const reAlertDotted = DOTTED_PARENT[finding.persona];
-  if (reAlertDotted) finding.dottedPersona = reAlertDotted;
-  const reAlertParent = ROLE_PARENT[finding.persona];
-  if (reAlertParent) finding.persona = reAlertParent;
-  logAudit('finding', finding.id, 're-alerted — trip-wire fired, back to open one level up');
+  const { parentRole } = escalateFindingUp(finding, industry);
+  syncLiveDeadline(finding);
+  logAudit('finding', finding.id, `re-alerted — trip-wire fired, back to open${parentRole ? ` one level up (now ${parentRole}'s call)` : ''}`);
   res.json(stripServerFields(finding));
 });
 
@@ -1623,7 +1660,7 @@ function heartbeatTick() {
         if (finding.status !== 'open' || finding.slaHoursRemaining <= 0) continue;
         finding.slaHoursRemaining = Math.round((finding.slaHoursRemaining - SLA_HOURS_PER_TICK) * 10) / 10;
         if (finding.slaHoursRemaining > 0) continue;
-        if (ROLE_PARENT[finding.persona]) {
+        if (escalationParent(finding.persona, industry)) {
           const { parentRole, dottedRole } = escalateFindingUp(finding, industry);
           logAudit(
             'finding',
@@ -1721,7 +1758,7 @@ export async function hydrateLiveState() {
       const remainingH = (new Date(row.slaDeadlineAt).getTime() - Date.now()) / 3_600_000;
       if (remainingH > 0) {
         finding.slaHoursRemaining = Math.round(remainingH * 10) / 10;
-      } else if (ROLE_PARENT[finding.persona]) {
+      } else if (escalationParent(finding.persona, row.industry)) {
         const { parentRole, dottedRole } = escalateFindingUp(finding, row.industry);
         row.slaDeadlineAt = new Date(Date.now() + finding.slaHoursRemaining * 3_600_000).toISOString();
         logAudit('finding', finding.id, `SLA expired unanswered — auto-escalated to level ${finding.escalationLevel}, now ${parentRole}'s call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`, 'Rewive (system)');
@@ -1747,13 +1784,26 @@ export async function hydrateLiveState() {
   }
 }
 
+// The acknowledge trip-wire is entered as free text ("re-alert if it worsens a
+// further 10% or after 30 days"). Pull the numbers out so the sweep enforces
+// what the user actually typed, not a fixed 5%/14d — the condition shown on the
+// finding's thread and the condition enforced must be the same. Falls back to
+// the 5%/14d default the acknowledge placeholder advertises when no numbers are
+// given (so the displayed default still matches).
+function parseReAlertCondition(text) {
+  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(text ?? '');
+  const days = /(\d+)\s*days?/i.exec(text ?? '');
+  return { pct: pct ? Number(pct[1]) : 5, days: days ? Number(days[1]) : 14 };
+}
+
 export async function persistLiveState() {
   for (const [id, row] of liveFindingRows) {
     row.status = row.finding.status;
     // A live finding acknowledged through the normal route gets its structured
     // trip-wire meta here; the sweep fills in ackDeviationPct on its next pass.
     if (row.finding.status === 'acknowledged' && !row.reAlert) {
-      row.reAlert = { pct: 5, days: 14, ackAt: row.finding.dispositionAt ?? new Date().toISOString(), ackDeviationPct: null };
+      const { pct, days } = parseReAlertCondition(row.finding.reAlertCondition);
+      row.reAlert = { pct, days, ackAt: row.finding.dispositionAt ?? new Date().toISOString(), ackDeviationPct: null };
     }
     const serialized = serializeLiveRow(row);
     if (serialized !== liveFindingSnapshots.get(id)) {
@@ -1783,8 +1833,8 @@ export async function persistLiveState() {
 const sweepCtx = {
   getBrains: () => brainsState,
   shadowOrgs: shadowOrgsSeed,
-  ROLE_PARENT,
-  DOTTED_PARENT,
+  escalateFinding,
+  chiefIdFor,
   logAudit,
   getOrgName: () => orgProfileState.orgName ?? 'the org',
   // First seeded finding of the industry doubles as the authoring tone example.
