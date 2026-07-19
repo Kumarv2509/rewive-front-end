@@ -96,8 +96,24 @@
   `datasetsdata.js`, `tenants.ts`, `CLAUDE.md`, one card in `site.html`;
   verified end-to-end, build+lint clean; documented below. Safe to commit
   as `feat(industry): manufacturing at parity`.
-  (b) **`public/site.html`** (untracked, ~70KB) — the standalone marketing
-  site, built and iterated by TWO sessions concurrently on 2026-07-18/19
+  (b) **MOVED OUT (2026-07-19): the marketing site now lives in its own
+  sibling repo `~/Developer/rewive-front-end_website`** (founder's ask:
+  "split the website build from the core product"). `public/site.html`
+  → `index.html` there (root commit `9c195e7`, branch `master`, no
+  remote yet); `story.html`/`demo.html`/`favicon.svg` were COPIED (the
+  product keeps its originals — nothing in the app referenced site.html,
+  verified by grep). Links rewritten for standalone serving (favicon +
+  story relative; the 5 "Enter the live demo" CTAs →
+  `http://localhost:5173/`, same convention as story.html). Its README
+  carries the copy rules, the gradient exception, and the placeholder
+  list. Preview: open `index.html` directly (fully self-contained) —
+  `:5173/site.html` no longer serves it (vite's SPA fallback answers
+  200 with the app shell; don't be fooled). History of how it was
+  built (both sessions' passes below) remains valid — the file is the
+  same, just relocated. **The site sections below say
+  "`public/site.html`, UNTRACKED" — read that as the new repo now.**
+  Original pre-split description, for context — the site was built and
+  iterated by TWO sessions concurrently on 2026-07-18/19
   (both are documented first-hand below; neither description is
   second-hand). Session A (the "four looks" section): 3D depth pass →
   night-ledger dark → dark + gradients → **light + gradients** (current
