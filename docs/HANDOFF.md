@@ -1,4 +1,4 @@
-# Handoff — tenant sign-in, agents ↔ mandates, org tree, Business base data, DuPont Foundation (2026-07-16/17/18, latest session)
+# Handoff — live mandate tracking, Manufacturing at parity, marketing-site design passes (2026-07-18/19, latest session)
 
 ## Where things stand
 
@@ -84,7 +84,24 @@
       door; 2026-07-18 session, documented below.
   26. `98d1324` — **agents ↔ mandates, both directions** — same session,
       documented below.
-  27. this handoff commit.
+  27. `7c325b3` — the previous handoff commit.
+  28. `b8e4143` — **live mandate tracking — the one real pipeline**
+      (2026-07-18 session, documented below): real metric ingestion →
+      drift rules → counterpart-raised findings, Postgres-backed,
+      Claude-authored narratives with template fallback.
+  29. this handoff commit.
+- **UNCOMMITTED at handoff (deliberate — founder hasn't picked what to
+  keep):**
+  (a) **Manufacturing at parity + Gulf Precision tenant** — `v4data.js`,
+  `datasetsdata.js`, `tenants.ts`, `CLAUDE.md`, one card in `site.html`;
+  verified end-to-end, build+lint clean; documented below. Safe to commit
+  as `feat(industry): manufacturing at parity`.
+  (b) **`public/site.html`** (untracked, ~67KB) — the standalone marketing
+  site, which went through FOUR looks this session (3D depth pass →
+  night-ledger dark → dark + gradients → **light + gradients**, the
+  current state). ALSO contains a "color pass" (washes/colorbar/hue-coded
+  stages) the founder added from another session — do not clobber; the
+  file changes out from under sessions, re-read before editing.
 - **Push STILL blocked (SSH) — three failed attempts as of 2026-07-17.**
   The client side is PROVEN good: we reach real GitHub (server host key
   matches GitHub's published
@@ -129,9 +146,11 @@
   github.com/settings/keys on the account with push access (`gh` config says
   `rianpraveen`), then `git push origin v5`. `gh` CLI is unusable on this
   network — hand the founder compare/PR URLs instead of using `gh pr create`.
-- **Processes at handoff (2026-07-18): BOTH DEV SERVERS ARE DOWN** — the
-  session-owned `npm run dev:all` was stopped at the end of the tenancy/
-  mandates session. Start with `npm run dev:all`. Mock server still has
+- **Processes at handoff (2026-07-19): a session-owned mock API is
+  running on :4000** (started with `REWIVE_SWEEP_MS=0`, memory-mode
+  live-tracking store) — it replaced a stale founder-owned instance that
+  was serving pre-manufacturing seeds. Vite's state is unknown; `npm run
+  dev:all` after killing by port is the safe reset. Mock server still has
   no watch mode — restart after seed edits (and note a restart resets the
   in-memory industry to `fmcg`; see the gotcha above). **Process gotcha
   learned the hard way**: stopping the background `dev:all` task does NOT
@@ -143,8 +162,165 @@
   browser verification (grouped lens dropdown, amber ⋯ dotted pills,
   escalation walking up the tree, Group-CEO team scope, Business section)
   ran **on the paper-ledger theme** at HEAD.
-- Build (`tsc -b && vite build`) and `eslint .` clean at HEAD (re-verified 2026-07-17).
+- Build (`tsc -b && vite build`) and `eslint .` clean including the
+  uncommitted manufacturing work (re-verified 2026-07-19). Bundle note:
+  SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
+
+## This session (2026-07-18/19): live mandate tracking — the one real pipeline (`b8e4143`)
+
+The founder asked to "connect the data to the agent to get the mandates
+tracked, production grade." Three decisions were made via question
+(all recommended options accepted): **push-model ingestion** (API key +
+CSV upload) over warehouse-pull or pure simulation; **hybrid agent
+brain** (deterministic rules decide WHEN a finding is raised, Claude
+authors the narrative) over LLM-end-to-end or rules-only; **Postgres**
+(Neon/Supabase, `DATABASE_URL`) over KV-only or a separate worker
+service. CLAUDE.md has a permanent section ("Live mandate tracking");
+the plan survives at `~/.claude/plans/sprightly-herding-pebble.md`.
+
+**Architecture — additive coexistence via hydrate/persist overlay.**
+Seeded demo content is untouched. New real entities (metric points,
+tracking configs, hashed ingest keys, sweep runs) live only in the
+tracking store. Sweep-raised findings/closures carry **`live-` id
+prefixes**: Postgres is their source of truth, `hydrateLiveState()`
+(app.js) upserts them into `findingsState`/`closureKpisState` on every
+request so the ENTIRE existing 4-A/escalation/closure machinery works on
+them unmodified, `persistLiveState()` diffs and writes back after the
+response, and `exportState()` **strips `live-*` from the KV snapshot**
+(split-brain defense — never let KV hold a copy). No `DATABASE_URL` →
+in-memory store with the same interface; `npm run dev:all` needs zero
+setup.
+
+- **Files**: `mock-server/db.js` (lazy pg Pool max=1, memory fallback),
+  `schema.sql` + `migrate.js` (`npm run migrate`, idempotent),
+  `tracking.js` (store + `overlayLiveTracking` + `formatValue`),
+  `tracking-routes.js` (all endpoints), `drift.js` (pure rules),
+  `sweep.js` (orchestration), `authoring.js` (Claude), plus wiring in
+  `app.js`/`api/handler.js`/`server.js`/`vercel.json`. Frontend:
+  `src/api/tracking.ts` hooks, four new Connectors panels, Live
+  pill/sparkline on `BrainNodeCard`, sweep provenance on finding
+  detail/rows.
+- **Drift rules** (`drift.js`): normalized adverse deviation
+  (direction-aware, `up_good`/`down_good`); `threshold_breach`
+  (dev ≥ breachPct), `sustained_deviation` (N consecutive ≥ warnPct),
+  `trend_to_breach` (OLS slope projects breach within 14d). Severity →
+  wall-clock SLA budget (critical 4h / high 8h / medium 24h / low 48h,
+  stored as `sla_deadline_at`; live findings SKIP the demo heartbeat —
+  hydrate recomputes remaining hours and escalates on the first request
+  past the deadline, serverless-safe).
+- **Sweep** (`runSweep`): pg advisory lock (no double-run), per enabled
+  config: (1) acknowledged findings get their re-alert trip-wire
+  enforced NUMERICALLY (reopens one level up via the shared persona
+  walk when dev worsens past `ackDeviationPct + pct` or the window
+  expires), (2) accepted findings' closures advance
+  (`recoveryProgressPct`, direction-aware), (3) rules-triggered nodes
+  with no active finding raise one — counterpart resolved by
+  `watchesNodeIds` → streamKey → chief; impactPath computed by walking
+  brain edges upward on strongest weight; **three dedupe layers**
+  (in-sweep check, partial unique index `live_findings_one_active` +
+  ON CONFLICT, the lock).
+- **Authoring** (`authoring.js`): `claude-opus-4-8`, structured output
+  (strict JSON schema: title/summary/evidence/impactEffects — one per
+  path step/closureTemplate/reAlertCondition), system prompt written in
+  the counterpart's voice with house style rules; 30s timeout, ≤5
+  Claude authorings per sweep; ANY failure (no key, 429, refusal, bad
+  JSON) falls back to a deterministic `templateNarrative` — **a sweep
+  never fails to raise because authoring failed**. `authored_by` column
+  records which path ran. Claude path is UNTESTED live (no
+  `ANTHROPIC_API_KEY` on this machine); template path fully verified.
+- **Endpoints**: `POST /metrics` (X-API-Key vs sha256 `key_hash`, ≤1000
+  pts, per-row rejects), `POST /metrics/import` (browser parses
+  CSV/XLSX via lazy-loaded SheetJS — keeps the main bundle at baseline —
+  posts JSON in 1000-row chunks under Vercel's body limit),
+  `GET/PUT /tracking-configs`, `GET/POST/DELETE /ingest-keys` (plaintext
+  `rwv_…` shown once), `GET /agent-sweep` (Vercel Cron, `Bearer
+  CRON_SECRET`), `POST /agent-sweep` (UI button), `GET /sweep-runs`.
+  Cron: hourly in `vercel.json` + `maxDuration: 60` (**hourly needs
+  Vercel Pro**; Hobby ≈ daily — the button and the dev interval
+  `REWIVE_SWEEP_MS`, default 60s, cover demos).
+- **Verified end-to-end in memory mode** (fmcg `up_good` + healthcare
+  `down_good`): config → key → push declining series → Picture shows
+  Live pill/real values/off_track/spark → sweep raises exactly one
+  finding under the right counterpart persona with a correct impact
+  path → re-sweep no duplicate → accept creates live closure → recovery
+  points advance it (88%) → close writes verdict; acknowledge → worsen →
+  sweep reopens one level up (cfo → group_ceo); 401 bad key; per-row
+  unknown-node rejects. Build + lint clean.
+- **To go production**: set `DATABASE_URL` (POOLED string) +
+  `ANTHROPIC_API_KEY` + `CRON_SECRET` in Vercel, run `npm run migrate`
+  once against the DB, deploy, confirm cron rows in `sweep_runs`.
+  `.env.example` documents all three.
+
+## This session (2026-07-19): Manufacturing at parity + Gulf Precision tenant (UNCOMMITTED)
+
+Manufacturing was seeded-but-hidden ("lighter — proves the template").
+It is now a full third industry and EXPOSED in the picker + login:
+
+- **Brain 17 → 32 nodes / 16 → 41 edges** (`v4data.js`): new 5-line P&L
+  tier in USD (`mfg-pl-rev/material/conversion/maintenance/ebitda`) wired
+  mandates → lines → EBITDA → unit-cost intent; 6 new mandates
+  (Changeover time, Energy per unit, MTTR, Inbound defect PPM, WIP days,
+  Lost-time incidents); 4 new senses (Energy meters, QC inspections,
+  EHS incident log, ERP costing). All counterpart `watchesNodeIds`
+  widened to the new nodes.
+- **Findings 3 → 6**: kept the downtime/OTIF/scrap trio; added
+  `mfg-f-4` inbound casting PPM (ACCEPTED, persona cfo, linked to
+  tracking closure `mfg-c-1` at 45%), `mfg-f-5` energy-per-unit spike
+  (rental compressor left running — open, cfo), `mfg-f-6` near-miss
+  reporting collapse at Dammam (open, coo, 6h SLA — the
+  leading-indicator-went-dark story). Closures 0 → 3 (one tracking, two
+  closed historical). plImpact 3 → 5 rows.
+- **Datasets 1 → 6** (`datasetsdata.js`): five live (MES, CMMS, ERP,
+  QMS, energy submeters) whose `feeds` name node names EXACTLY (the
+  reconcile rule), so 15/17 mandates read connected; EHS stays
+  'expected' → the two safety mandates honestly show needs_data.
+- **Exposure**: `industryOptions` third entry (17 kpis);
+  `tenants.ts` third tenant **Gulf Precision Industries** (GP, steel
+  blue `#1B4B72`, gulfprecision.com, Plant 1 Jebel Ali / Plant 2
+  Dammam); third industry card on `site.html`; CLAUDE.md updated
+  (picker line, tenants line, currency line — mfg is USD).
+- **Verified**: all industry-scoped endpoints on a restarted :4000
+  (picker, brain node/edge counts + zero dangling edges + all finding/
+  watch refs valid, findings sorted open-first, closures, plImpact,
+  shadow-org health rollups, datasets). Build + lint clean. NOTE: a
+  stale user-owned `dev:all` API was holding :4000 with old seeds and
+  was killed/restarted — the port-holding gotcha below remains true.
+
+## This session (2026-07-18): marketing site — 3D pass + four looks (`public/site.html`, UNTRACKED)
+
+The standalone marketing page went through four design iterations, all
+verified with headless Playwright screenshots (chromium via the npx
+cache at `~/.npm/_npx/e41f203b7505f1fb/node_modules/playwright`):
+
+1. **3D depth pass** (kept in all later looks): layered `--shadow-3d`
+   token; hero finding-card is a pointer-tracking 3D object (lerped
+   rotate, floating depth chips riding `--px/--py` custom props at
+   different translateZ); held-twice holders angle INWARD toward the
+   bobbing mandate chip; loop SVG is a tilted disc that rights itself
+   on scroll-in and flattens on hover; ledger/org-tree "lay flat" as
+   they enter; pointer tilt on card grids; nav depth on scroll; dot
+   grain + parallax. All gated on `prefers-reduced-motion` + fine
+   pointer.
+2. **Night-ledger dark** (`#0F1014` ground, brightened accents).
+3. **Dark + gradients** (violet→indigo→teal signature).
+4. **Light + gradients — CURRENT**: paper ground restored, gradient
+   deepened for contrast (`#8B5CF6 → #3B3BC4 → #0D7E74`) on the
+   headline word, CTAs (position-shift hover), vig-frame top edge,
+   avatar, progress bar, loop ring (SVG linearGradient), continuous
+   spectrum colorbar; pastel radial ambient fields behind hero/close.
+   Semantic colors stay flat for legibility.
+
+Theme-swap mechanics (for future re-skins): everything is tokenized
+EXCEPT SVG presentation attrs and a handful of literal rgba borders —
+the working method is a node batch script over exact strings (see this
+session's transcript); the light↔dark maps are symmetric. Two
+comparison artifacts remain in the session scratchpad (`themes.html`
+light duos, `themes-dark.html` dark duos) — regenerate rather than
+reference. **The founder edits this file from other sessions**
+(the color pass appeared mid-session) — always re-read before editing.
+Deliberately breaks the paper-ledger no-gradient rule ON THIS PAGE ONLY;
+the app keeps the flat theme.
 
 ## This session (2026-07-18): organization sign-in — the SaaS front door (`337b46c`)
 
@@ -717,7 +893,32 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-### Next steps — in priority order (as of 2026-07-18)
+### Next steps — in priority order (as of 2026-07-19)
+
+1. **Commit the uncommitted work** (founder call on granularity):
+   manufacturing parity (`v4data.js`/`datasetsdata.js`/`tenants.ts`/
+   `CLAUDE.md`) and the marketing site (`public/site.html`, untracked —
+   also decide whether the light-gradient look is the keeper before
+   committing it).
+2. **Unblock the push — status changed 2026-07-18**: BOTH local keys are
+   now rejected by GitHub (`id_ed25519_rewive`
+   `SHA256:qi700T0YxECL3859MQIEId9q2+/3E09fi/vgYPdR2P8` AND the old
+   `id_ed25519`) — the previously-working key appears to have been
+   removed from the account or lost repo access. Same fix as ever: get
+   the `id_ed25519_rewive.pub` line visible at
+   `github.com/<username>.keys`, then `git push origin v5`. `v5` is now
+   ~30 commits ahead including the live-tracking feature.
+3. **Production-ize live tracking**: set `DATABASE_URL` (pooled) +
+   `ANTHROPIC_API_KEY` + `CRON_SECRET` in Vercel, `npm run migrate`,
+   deploy, verify a cron `sweep_runs` row and that the Claude authoring
+   path produces house-style narratives (only the template path has
+   been exercised so far). Hourly cron needs Vercel Pro.
+4. **Point live tracking at Manufacturing for the demo**: the new
+   industry + the real pipeline compose — e.g. enable tracking on
+   `mfg-k-energy`, push a rising kWh series, sweep raises the finding
+   the seeds only narrate. Nothing needs building; it's configuration.
+
+### Next steps — previous priorities (as of 2026-07-18)
 
 1. **Unblock the push** (founder action, sessions can't do it): get the
    key visible at `github.com/<username>.keys` — full diagnosis and the
