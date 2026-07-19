@@ -96,12 +96,18 @@
   `datasetsdata.js`, `tenants.ts`, `CLAUDE.md`, one card in `site.html`;
   verified end-to-end, build+lint clean; documented below. Safe to commit
   as `feat(industry): manufacturing at parity`.
-  (b) **`public/site.html`** (untracked, ~67KB) — the standalone marketing
-  site, which went through FOUR looks this session (3D depth pass →
-  night-ledger dark → dark + gradients → **light + gradients**, the
-  current state). ALSO contains a "color pass" (washes/colorbar/hue-coded
-  stages) the founder added from another session — do not clobber; the
-  file changes out from under sessions, re-read before editing.
+  (b) **`public/site.html`** (untracked, ~70KB) — the standalone marketing
+  site, built and iterated by TWO sessions concurrently on 2026-07-18/19
+  (both are documented first-hand below; neither description is
+  second-hand). Session A (the "four looks" section): 3D depth pass →
+  night-ledger dark → dark + gradients → **light + gradients** (current
+  ground). Session B (the "pitch site" section): created the file in the
+  first place (11 ledger-numbered entries + FAQ, animated SLA/escalation
+  hero), then the color pass (washes/colorbar/hue-coded loop), the
+  light-gradient conversion of those washes, the parallax orb backdrop,
+  Entry 10 "How it lands" + Entry 11 FAQ, OG/Twitter meta, scroll-spy
+  nav. The two passes compose — do not clobber either; the file changes
+  out from under sessions, re-read before every edit.
 - **Push STILL blocked (SSH) — three failed attempts as of 2026-07-17.**
   The client side is PROVEN good: we reach real GitHub (server host key
   matches GitHub's published
@@ -146,11 +152,13 @@
   github.com/settings/keys on the account with push access (`gh` config says
   `rianpraveen`), then `git push origin v5`. `gh` CLI is unusable on this
   network — hand the founder compare/PR URLs instead of using `gh pr create`.
-- **Processes at handoff (2026-07-19): a session-owned mock API is
-  running on :4000** (started with `REWIVE_SWEEP_MS=0`, memory-mode
-  live-tracking store) — it replaced a stale founder-owned instance that
-  was serving pre-manufacturing seeds. Vite's state is unknown; `npm run
-  dev:all` after killing by port is the safe reset. Mock server still has
+- **Processes at handoff (2026-07-19): BOTH servers are UP** — vite on
+  :5173 (session B's background `npm run dev:all`, started 2026-07-18
+  after killing lingering ports) and a mock API on :4000 (session A's
+  instance with `REWIVE_SWEEP_MS=0`, memory-mode live-tracking store,
+  which replaced the stale founder-owned one). `/site.html` serves 200.
+  If anything wedges, `npm run dev:all` after killing by port is the
+  safe reset. Mock server still has
   no watch mode — restart after seed edits (and note a restart resets the
   in-memory industry to `fmcg`; see the gotcha above). **Process gotcha
   learned the hard way**: stopping the background `dev:all` task does NOT
@@ -321,6 +329,89 @@ reference. **The founder edits this file from other sessions**
 (the color pass appeared mid-session) — always re-read before editing.
 Deliberately breaks the paper-ledger no-gradient rule ON THIS PAGE ONLY;
 the app keeps the flat theme.
+
+## This session (2026-07-18/19, session B): the pitch site — creation, color, gradients, parallax, rollout + FAQ (`public/site.html`, UNTRACKED)
+
+The founder's ask, in sequence: *"give me a state of the art website which
+can pitch this product effectively to the customers"* → *"make it more
+colorfull"* → *"make it light gradient"* → *"can we add a parallex effect
+and some background behind"* → *"continue to build"*. This session created
+`public/site.html` and ran those passes while session A ran its theme
+looks on the SAME file — coordination worked by re-reading before every
+edit and appending override blocks instead of rewriting shared CSS.
+
+- **The site itself**: fully self-contained (no external fonts/scripts/
+  images — system serif/mono stacks), served at `/site.html` in dev and
+  on every Vercel deploy (it's in `public/`). Reads as a ledger: numbered
+  entries (`Entry 01`…) with mono eyebrows + hairline rules, sticky nav
+  with scroll-progress bar. Structure: hero → verbatim strip (the three
+  keep-verbatim lines, each with a colored tick) → 01 problem (reporting
+  era vs accountability layer) → 02 held twice (Layla Nasser + Commercial
+  counterpart flanking a drifting OSA mandate chip) → 03 loop (animated
+  ring) → 04 dispositions → 05 "findings walk YOUR org chart" (SVG org
+  tree incl. the CFO dotted line) → 06 ledger (count-up stat tiles +
+  4 sample rows with worked/didn't/too-early verdicts) → 07 foundation
+  (DuPont P&L / org-as-escalation-path / data honesty / per-org sign-in)
+  → 08 industries (tenant brand accents: Americana terracotta `#8A3B12`,
+  Metro Health teal `#0D6E66`) → 09 scrollytelling worked example →
+  10 rollout → 11 FAQ → close band → footer. Copy obeys the positioning
+  rules (keep-verbatim lines intact; no banned phrasings).
+- **The hero demonstrates the product's sharpest claim**: a finding card
+  whose SLA clock ticks down at demo speed (~35 min of SLA per real
+  second); at zero it visibly escalates up a three-rung ladder
+  (Supply chain → COO — Protein → Group CEO) with an "escalated ↑"
+  flash, then resets and loops. Plain JS state machine at the bottom of
+  the file (`HOLDERS`/`escalate()`), reduced-motion gated.
+- **Color pass** (the block session A saw appear mid-session): one
+  appended CSS block `/* the color pass */` + small HTML edits — per-entry
+  tinted section washes, hue-coded loop (Sense indigo, Find plum, Decide
+  teal, Act amber, Close green — consistent across ring/stage chips/
+  timeline dots), disposition card tints + 3px top rules, colored stat
+  tiles, tenant-brand industry cards, 5-hue colorbar top+bottom,
+  mac-traffic dots on the vignette chrome, tier-colored impact-path chips.
+- **Light-gradient conversion** (after session A restored the light
+  ground): section washes became fade-in/out linear gradients
+  (`ground → wash → ground`), card faces fade white→wash, the held-twice
+  banner is an indigo→teal duotone, the close band deepens paper→indigo,
+  body gets a violet veil fading out by 640px, the headline word is
+  gradient-clipped text. **Gradients are allowed on this page only** —
+  the app keeps the flat paper-ledger rule.
+- **Parallax backdrop** (`.bg-scene`): five soft radial-gradient orbs
+  (violet/teal/amber/terra/indigo) in a fixed layer at `z-index:-1`,
+  each riding the existing `--scrolly` custom prop at its own rate via
+  the **`translate` property** — which composes with the `transform`
+  animation (`orbdrift` idle float), so drift + parallax coexist without
+  a wrapper element. Orbs show on paper sections and duck behind opaque
+  washes (accepted layering). Reduced-motion: both killed.
+- **Entry 10 "How it lands"**: 3 gradient-numbered week cards (load the
+  picture → connect the senses → first finding lands), each ending in a
+  teal "what you have now" line — answers the how-big-is-this-project
+  objection. **Entry 11 FAQ**: five native `<details>` accordions with
+  the honest answers (doesn't replace BI; agents never decide; ignoring
+  = recorded + escalates; read-only feeds, nothing faked; first closed
+  loop within a month). Plus **OG/Twitter meta** for link unfurls and a
+  **scroll-spy** (IntersectionObserver, `rootMargin -30%/-60%`) lighting
+  the active nav link.
+- **Verification recipes + gotchas (worth keeping)**:
+  - Headless Chrome (`--headless=new`) **clamps window width to 500px**
+    — a `--window-size=390,…` screenshot is a 390px CROP of a 500px
+    layout and shows phantom right-edge clipping. True-390 testing:
+    wrap the page in a 390px iframe (`--allow-file-access-from-files`)
+    and read overflow from injected JS via `--dump-dom` — scratchpad
+    `frame390.html`/`debug.html` pattern. Real result: zero horizontal
+    overflow at 390.
+  - `sips --cropOffset` silently center-crops; don't trust it for
+    screenshot crops — capture at the target viewport instead.
+  - Fragment-URL screenshots (`…/site.html#rollout`) come out blank
+    under `--virtual-time-budget` (smooth-scroll never settles); the
+    tall-window full-page shot is the reliable check.
+  - `playwright-core` is NOT installed anywhere anymore (the old npx
+    cache path in session A's notes may also rot) — plain headless
+    Chrome + injected-JS dumps covered everything this session needed.
+- **Placeholders to swap before customers see it**: the CTA mailto
+  `hello@rewive.app` (invented domain) and the demo links pointing at
+  `/` (correct once deployed beside the app). Mobile nav links hide
+  below 880px with no hamburger — open thread.
 
 ## This session (2026-07-18): organization sign-in — the SaaS front door (`337b46c`)
 
