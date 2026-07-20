@@ -6,7 +6,7 @@ import { slaTone, statusLabel, statusTone } from './meta';
 import type { Finding, ShadowAgent } from '../../api/types';
 
 // The same findings, asked a different question: not "what must I answer" but
-// "who raised this, and have they been right before". Counterparts owns
+// "who raised this, and have they been right before". Agents owns
 // "meet the agents"; this view stays about the findings — an agent appears
 // only because it raised something in your scope.
 
@@ -75,7 +75,7 @@ function groupByAgent(findings: Finding[], agents: ShadowAgent[]): AgentGroup[] 
       g.open += 1;
       if (f.slaHoursRemaining <= 0) g.breached += 1;
     }
-    // "Landed" = someone acted on it as real. Abandon is the counterpart
+    // "Landed" = someone acted on it as real. Abandon is the agent
     // being wrong — that is the honest denominator for trust.
     if (f.status === 'abandoned') g.dismissed += 1;
     else if (f.status !== 'open') g.landed += 1;
@@ -130,7 +130,7 @@ function AgentCard({ group }: { group: AgentGroup }) {
           <div className="ag-name">{group.name}</div>
           <div className="ag-sub">
             {agent
-              ? <>counterpart to {agent.humanOwner.name} · {personaLabel(agent.persona)}</>
+              ? <>agent to {agent.humanOwner.name} · {personaLabel(agent.persona)}</>
               : <>raised findings in your scope</>}
           </div>
         </div>
@@ -181,13 +181,13 @@ function AgentCard({ group }: { group: AgentGroup }) {
 export function AgentView({ findings, agents }: { findings: Finding[]; agents: ShadowAgent[] }) {
   const groups = groupByAgent(findings, agents);
   if (groups.length === 0) {
-    return <div className="card"><div className="state-msg">No findings in view — nothing for your counterparts to show here.</div></div>;
+    return <div className="card"><div className="state-msg">No findings in view — nothing for your agents to show here.</div></div>;
   }
   const loudest = groups[0];
   return (
     <>
       <div className="ag-lede">
-        {groups.length} counterpart{groups.length === 1 ? '' : 's'} raised the {findings.length} findings in your view.
+        {groups.length} agent{groups.length === 1 ? '' : 's'} raised the {findings.length} findings in your view.
         {loudest.breached > 0
           ? <> <b>{loudest.name}</b> needs you most — {loudest.breached} of its findings are past SLA.</>
           : <> Most active: <b>{loudest.name}</b>, {loudest.findings.length} raised.</>}

@@ -65,7 +65,7 @@ function App() {
               <Route path="operate/runs" element={<RunsScreen />} />
               <Route path="operate/decisions" element={<DecisionsScreen />} />
               <Route path="operate/tasks" element={<TasksScreen />} />
-              {/* v4 URLs — findings/closure moved into Operate, shadow org became counterparts */}
+              {/* v4 URLs — findings/closure moved into Operate, shadow org became agents */}
               <Route path="operate/shadow" element={<Navigate to="/operate/counterparts" replace />} />
               <Route path="insights/findings" element={<Navigate to="/operate/findings" replace />} />
               <Route path="insights/findings/:findingId" element={<LegacyFindingRedirect />} />

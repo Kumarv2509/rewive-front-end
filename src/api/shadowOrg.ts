@@ -173,10 +173,14 @@ export function useReAlertFinding(findingId: string) {
 }
 
 // ---------- Exit conditions (closure) ----------
-export function useClosureKpis() {
+// Exit conditions inherit the scope of the finding they came from, so the lens
+// has to travel with the request — otherwise Watching/Closed showed every
+// division's exit conditions under every role.
+export function useClosureKpis(persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['closure-kpis'],
-    queryFn: async () => (await apiClient.get<ClosureKpi[]>('/closure-kpis')).data,
+    queryKey: ['closure-kpis', persona ?? 'all', scope ?? 'self'],
+    queryFn: async () =>
+      (await apiClient.get<ClosureKpi[]>('/closure-kpis', { params: { persona, scope } })).data,
     refetchInterval: 30_000,
   });
 }

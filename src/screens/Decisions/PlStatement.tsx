@@ -27,7 +27,7 @@ const statusMeta: Record<PlAnomalyStatus, { tone: 'red' | 'amber' | 'green' | 'g
   raised: { tone: 'red', label: 'raised · awaiting disposition' },
   watching: { tone: 'amber', label: 'watching · exit condition / trip-wire' },
   cleared: { tone: 'green', label: 'cleared · number is back' },
-  new: { tone: 'gray', label: 'new · queued for counterpart review' },
+  new: { tone: 'gray', label: 'new · queued for agent review' },
 };
 
 // The full P&L with Budget and Forecast as the base of drift, drillable by
@@ -165,9 +165,9 @@ export function PlStatement() {
         ))}
       </div>
       <div style={{ marginBottom: 24, fontSize: 12, color: 'var(--ink-3)' }}>
-        Budget is the promise, forecast is the latest expectation — drift is measured against both. Anomalies a counterpart
+        Budget is the promise, forecast is the latest expectation — drift is measured against both. Anomalies an agent
         has raised link to their finding thread; <b style={{ color: 'var(--ink-2)' }}>new</b> ones are queued for the
-        counterpart watching that mandate.
+        agent watching that mandate.
       </div>
     </>
   );

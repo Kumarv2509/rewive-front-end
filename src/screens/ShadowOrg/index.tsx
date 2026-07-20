@@ -61,7 +61,7 @@ const brainHealthColor: Record<BrainHealth, string> = {
   off_track: 'var(--red)',
 };
 
-// The mandates a counterpart holds, each deep-linking to its node on the
+// The mandates an agent holds, each deep-linking to its node on the
 // Operating Picture — the visible half of "every mandate, held twice".
 function MandateChips({ mandates }: { mandates: BrainNode[] }) {
   if (mandates.length === 0) return null;
@@ -98,11 +98,11 @@ function AgentCard({ agent, mandates, findings }: { agent: ShadowAgent; mandates
           <Pill tone={healthTone[agent.health]}>{healthLabel[agent.health]}</Pill>
         </div>
 
-        {/* held twice — the counterpart and its human */}
+        {/* held twice — the agent and its human */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 11, background: 'var(--glass)', border: '1px solid var(--border)', marginBottom: 14 }}>
           <div className="avatar" style={{ background: o.avatarBg }}>{o.initials}</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--ink-3)' }}>counterpart to</div>
+            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--ink-3)' }}>agent to</div>
             <div style={{ fontWeight: 600, fontSize: 12.5 }}>{o.name}</div>
             <div style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>{o.role}</div>
           </div>
@@ -174,8 +174,8 @@ export function ShadowOrgScreen() {
   const { data: findings } = useFindings({ persona, scope });
   const { data: brain } = useKpiBrain();
 
-  if (isLoading) return <section className="screen"><Loading label="Assembling the counterparts…" /></section>;
-  if (isError || !org) return <section className="screen"><ErrorMessage message="Couldn't load the counterparts." /></section>;
+  if (isLoading) return <section className="screen"><Loading label="Assembling the agents…" /></section>;
+  if (isError || !org) return <section className="screen"><ErrorMessage message="Couldn't load the agents." /></section>;
 
   const allFindings = findings ?? [];
   const chief = org.agents.find((a) => a.reportsToAgentId === null);
@@ -193,12 +193,12 @@ export function ShadowOrgScreen() {
     <section className="screen" style={{ maxWidth: 1280 }}>
       <h1 className="page">Agents</h1>
       <Intro
-        line="A tireless counterpart for every function — every mandate is held twice."
+        line="A tireless agent for every function — every mandate is held twice."
         more={
           <>
-            Each counterpart watches its function's mandates through their data feeds, raises findings when reality
-            drifts, and escalates up the chain of counterparts when no one responds. The org-level chief watches the
-            intents themselves. The temperament dial sets how eagerly a counterpart raises — quiet to hair-trigger —
+            Each agent watches its function's mandates through their data feeds, raises findings when reality
+            drifts, and escalates up the chain of agents when no one responds. The org-level chief watches the
+            intents themselves. The temperament dial sets how eagerly an agent raises — quiet to hair-trigger —
             and every dismissal you make tunes it further.
           </>
         }
@@ -210,7 +210,7 @@ export function ShadowOrgScreen() {
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.6px', color: 'var(--accent-deep)', marginBottom: 4 }}>Org level · reports to no one</div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{chief.name}</div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>counterpart to {chief.humanOwner.name} · {chief.humanOwner.role} · watches the intents</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>agent to {chief.humanOwner.name} · {chief.humanOwner.role} · watches the intents</div>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <Stat label="open across org" value={totalOpen} tone={totalOpen ? 'amber' : undefined} />
@@ -220,7 +220,7 @@ export function ShadowOrgScreen() {
         </div>
       )}
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }} data-tour="counterpart-grid">
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }} data-tour="agent-grid">
         {streamAgents.map((a) => (
           <AgentCard key={a.id} agent={a} mandates={mandatesOf(a)} findings={allFindings} />
         ))}

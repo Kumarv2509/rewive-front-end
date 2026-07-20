@@ -61,7 +61,7 @@ export function roleSubtree(role) {
 // Healthcare and Manufacturing seed only the original six roles; the full org
 // tree (the group tier, divisions) is an FMCG-context feature. Mirrored in
 // src/screens/CommandCenter/personas.ts (LEGACY_PERSONAS) — keep the two in sync.
-export const LEGACY_PERSONAS = ['coo', 'operations_head', 'store_manager', 'sales_supervisor', 'cfo', 'commercial_finance'];
+export const LEGACY_PERSONAS = ['coo', 'operations_head', 'store_manager', 'sales_supervisor', 'cfo', 'fpa', 'commercial_finance'];
 const LEGACY_INDUSTRIES = new Set(['healthcare', 'manufacturing']);
 
 // The roles an industry actually offers in its lens picker. null = "all roles"
@@ -86,7 +86,7 @@ export function escalationParent(persona, industry) {
 // and the sweep trip-wire (previously three diverging copies). Moves ownership
 // up the solid line (stopping at the industry's top role), flags the dotted-line
 // parent, bumps the level, resets the escalation SLA and routes to the chief
-// counterpart. Callers own any status/deadline side-effects. Returns the roles
+// agent. Callers own any status/deadline side-effects. Returns the roles
 // touched so callers can log "escalated to X" vs "held at the top".
 export function escalateFinding(finding, { industry, chiefId }) {
   const dottedRole = DOTTED_PARENT[finding.persona];

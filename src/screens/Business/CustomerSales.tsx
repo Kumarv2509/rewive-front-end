@@ -22,7 +22,7 @@ export function CustomerSalesScreen() {
       <h1 className="page">Sales by {data.customerDimension.toLowerCase() === 'customer' ? 'customer' : data.customerDimension}</h1>
       <Intro
         line={`Revenue, terms and service level per ${data.customerDimension} — where the commercial drift shows up first.`}
-        more={<>Trade spend, on-shelf availability and receivable days are the three numbers that quietly decide account profitability. Rows where a counterpart has raised drift link to the finding's thread.</>}
+        more={<>Trade spend, on-shelf availability and receivable days are the three numbers that quietly decide account profitability. Rows where an agent has raised drift link to the finding's thread.</>}
       />
       <BusinessTabs />
 

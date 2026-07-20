@@ -8,7 +8,7 @@ export function PeopleScreen() {
     <section className="screen">
       <h1 className="page">Performance</h1>
       <Intro
-        line="Where the loop closes fastest — every mandate, its owner, its counterpart, and how quickly drift comes back to target."
+        line="Where the loop closes fastest — every mandate, its owner, its agent, and how quickly drift comes back to target."
         more="Scores measure execution, not surveillance: actions closed, timeliness, and whether the decisions a person sponsored actually worked. Agents and people are held to the same standard."
       />
 
@@ -23,7 +23,7 @@ export function PeopleScreen() {
       </div>
 
       <div className="sec-head" style={{ padding: '20px 0 12px' }}>
-        <h3>People &amp; counterparts</h3>
+        <h3>People &amp; agents</h3>
       </div>
       <LeaderboardTable />
 

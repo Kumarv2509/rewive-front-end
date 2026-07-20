@@ -13,7 +13,7 @@ export interface AreaNavItem {
 
 // One flat rail, ordered by the loop: what needs you → find → decide → act →
 // who does the work → how fast the loop closes → setup. Merged surfaces
-// (Execution = runs+tasks+outcomes, Agents = counterparts+workforce) stay on
+// (Execution = runs+tasks+outcomes, Agents = agents+workforce) stay on
 // their original routes; `match` keeps the rail item lit across the set.
 // The Act sub-flow (solution design → agent build) is reached from a finding,
 // so it keeps Findings lit — mid-loop, not "Foundation".
@@ -44,17 +44,17 @@ const SPECIAL_TITLES: [prefix: string, title: string][] = [
   ['/operate/tasks', 'Execution / Tasks'],
   ['/operate/runs', 'Execution / Runs'],
   ['/insights/outcomes', 'Execution / Outcomes'],
-  ['/operate/counterparts', 'Agents / Counterparts'],
+  ['/operate/counterparts', 'Agents'],
   ['/insights/agents', 'Agents / Workforce'],
   ['/insights/signals', 'Findings / Signal'],
   ['/build/picture', 'Foundation / Operating Picture'],
   ['/build/kpis', 'Foundation / Mandate Library'],
   ['/build/connectors', 'Foundation / Data Connectors'],
   ['/build/datasets', 'Foundation / Datasets'],
-  ['/build/agent-studio', 'Findings / Act · Agent Studio'],
+  ['/build/agent-studio', 'Findings / Act · Worker Studio'],
   ['/build/solutions', 'Findings / Act · Solution Design'],
-  ['/build/studio', 'Findings / Act · Agent Studio'],
-  ['/build/create', 'Findings / Act · Create an Agent'],
+  ['/build/studio', 'Findings / Act · Worker Studio'],
+  ['/build/create', 'Findings / Act · Create a Worker'],
 ];
 
 export function crumbTitle(pathname: string): string {

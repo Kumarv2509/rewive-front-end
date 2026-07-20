@@ -1,5 +1,5 @@
 // Deterministic drift rules — pure functions, no I/O. These decide WHEN a
-// counterpart raises a finding; the authoring module decides how it reads.
+// agent raises a finding; the authoring module decides how it reads.
 //
 // Deviation is normalized so positive = bad regardless of direction:
 //   up_good  (e.g. fill rate): below target is bad

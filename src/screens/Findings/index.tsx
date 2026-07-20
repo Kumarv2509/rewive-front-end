@@ -8,6 +8,7 @@ import { PERSONAS, personaLabel, roleSubtree } from '../CommandCenter/personas';
 import { ExitConditionCard, TripWireRow } from './Lifecycle';
 import { severityTone, slaTone, statusLabel, statusTone } from './meta';
 import { AgentView } from './AgentView';
+import { LiveAnalysisStrip } from './LiveAnalysisStrip';
 import { OrgRollup } from './OrgRollup';
 import { detectThemes, rollupByReport, splitByOwnership } from './rollup';
 import type { Finding, Persona } from '../../api/types';
@@ -68,7 +69,7 @@ export function FindingsScreen() {
   // Validated — a hand-edited URL must not reach roleSubtree with a junk role.
   const ownerParam = searchParams.get('owner');
   const owner = ownerParam && PERSONAS.includes(ownerParam as Persona) ? (ownerParam as Persona) : null;
-  // Grouping by the counterpart that raised each finding is the default view —
+  // Grouping by the agent that raised each finding is the default view —
   // "who found this, and have they been right before". Lifecycle (Open /
   // Watching / Closed) is the opt-in, so it takes the explicit param.
   // An explicit ?tab= (guide deep links, "All findings →") means the caller
@@ -80,7 +81,7 @@ export function FindingsScreen() {
   // Commercial finance sees returns / discounts / trade spend, the COO sees
   // the cross-functional ones — plus their whole team in hierarchy mode.
   const { data: findings, isLoading, isError } = useFindings({ stream, persona, scope });
-  const { data: closures } = useClosureKpis();
+  const { data: closures } = useClosureKpis(persona, scope);
   const { data: brain } = useKpiBrain();
   const { data: org } = useShadowOrg(persona, scope);
 
@@ -141,12 +142,12 @@ export function FindingsScreen() {
     <section className="screen" style={{ maxWidth: 1280 }}>
       <h1 className="page">Findings</h1>
       <Intro
-        line="Raised by your counterparts when a number drifts — every finding demands an answer, then stays watched until the number is back."
+        line="Raised by your agents when a number drifts — every finding demands an answer, then stays watched until the number is back."
         more={
           <>
             A finding moves through one lifecycle. <b>Open</b>: waiting on one of four dispositions — Accept (set a
             measurable exit condition), Act (open a solution with tasks), Acknowledge (park it on a trip-wire), or
-            Abandon (dismiss with a reason that tunes the counterpart). Unanswered findings escalate on their SLA.
+            Abandon (dismiss with a reason that tunes the agent). Unanswered findings escalate on their SLA.
             <b> Watching</b>: accepted findings live here as exit conditions with progress toward target; acknowledged
             ones sit on a trip-wire. <b>Closed</b>: the number came back — or the finding was dismissed — and the
             decision is in the ledger.
@@ -163,7 +164,7 @@ export function FindingsScreen() {
                 <>The roll-up is visibility, not a queue. Open a report's row to push on a finding — Ask, Reassign, Raise priority, or Take it — without taking the decision off them.</>,
               ]
             : [
-                <>You land on <b>By counterpart</b> — who raised what, and whether their past calls landed or were dismissed as noise. Switch to <b>Lifecycle</b> for the Open / Watching / Closed queue.</>,
+                <>You land on <b>By agent</b> — who raised what, and whether their past calls landed or were dismissed as noise. Switch to <b>Lifecycle</b> for the Open / Watching / Closed queue.</>,
                 <>Work <b>Open</b> from the top — the tightest SLA sorts first, and an unanswered finding escalates to your manager.</>,
                 <>Open a finding, read the evidence and impact path, then give it one of four answers: Accept, Act, Acknowledge, or Abandon.</>,
                 <>Check <b>Watching</b> — an accepted finding is not done until its exit condition is met and the number is back.</>,
@@ -171,10 +172,14 @@ export function FindingsScreen() {
         }
       />
 
+      {/* The agents, mid-walk: what they are reading right now, and what
+          they raised. Renders nothing until a sweep has ever run. */}
+      <LiveAnalysisStrip />
+
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
         {byAgent ? (
           <div style={{ flex: 1, fontSize: 13, color: 'var(--ink-2)' }}>
-            Every finding in your scope, grouped by the counterpart that raised it.
+            Every finding in your scope, grouped by the agent that raised it.
           </div>
         ) : (
           <div className="tabs" style={{ marginBottom: 0, borderBottom: 'none', flex: 1 }}>
@@ -186,7 +191,7 @@ export function FindingsScreen() {
           </div>
         )}
         <div className="seg">
-          <button className={byAgent ? 'on' : ''} onClick={() => setParam('view', 'all')}>By counterpart</button>
+          <button className={byAgent ? 'on' : ''} onClick={() => setParam('view', 'all')}>By agent</button>
           <button className={byAgent ? '' : 'on'} onClick={() => setParam('view', 'lifecycle')}>Lifecycle</button>
         </div>
         <select
@@ -228,7 +233,7 @@ export function FindingsScreen() {
             </div>
           ) : (
             <div className="card" data-tour="findings-open">
-              <div className="state-msg">Nothing open — the counterparts are quiet here. Accepted and acknowledged findings live under Watching.</div>
+              <div className="state-msg">Nothing open — the agents are quiet here. Accepted and acknowledged findings live under Watching.</div>
             </div>
           )}
         </>
@@ -361,7 +366,7 @@ export function FindingsScreen() {
           {abandoned.length > 0 && (
             <>
               <div className="sec-head" style={{ padding: '0 0 12px' }}>
-                <h3>Dismissed — the reason tuned the counterpart</h3>
+                <h3>Dismissed — the reason tuned the agent</h3>
                 <Pill tone="gray">{abandoned.length}</Pill>
               </div>
               <div className="card">

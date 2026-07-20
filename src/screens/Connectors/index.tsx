@@ -41,7 +41,7 @@ export function ConnectorsScreen() {
     <section className="screen">
       <SectionTabs tabs={FOUNDATION_TABS} />
       <h1 className="page">Data Connectors</h1>
-      <Intro line="Connect real data to the mandates — push metrics with an ingest key or upload history, set targets, and the counterparts watch the numbers from there." />
+      <Intro line="Connect real data to the mandates — push metrics with an ingest key or upload history, set targets, and the agents watch the numbers from there." />
 
       {/* Live mandate tracking: the real pipeline (metrics → drift → findings). */}
       <TrackingConfigPanel />

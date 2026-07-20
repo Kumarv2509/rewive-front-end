@@ -2,10 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { DecisionLedgerItem, DecisionStats, PendingDecision, Persona, PlImpactLine, PlStatement, RoleScope } from './types';
 
-export function useDecisionStats() {
+// Lens-scoped, like the ledger table these tiles sit above — the By-entity and
+// By-region rollups in the half-year review are built from the same response,
+// and a company-wide rollup over a role-scoped table reads as a bug.
+export function useDecisionStats(persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['decisions', 'stats'],
-    queryFn: async () => (await apiClient.get<DecisionStats>('/decisions/stats')).data,
+    queryKey: ['decisions', 'stats', persona ?? 'all', scope ?? 'self'],
+    queryFn: async () =>
+      (await apiClient.get<DecisionStats>('/decisions/stats', { params: { persona, scope } })).data,
   });
 }
 

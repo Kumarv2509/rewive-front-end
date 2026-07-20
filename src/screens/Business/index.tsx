@@ -41,7 +41,7 @@ export function BusinessOverviewScreen() {
       </div>
 
       {/* Divisions */}
-      <div className="sec-head" style={{ padding: '4px 0 10px' }}><h3>Divisions — each with its own COO, P&amp;L and counterparts</h3></div>
+      <div className="sec-head" style={{ padding: '4px 0 10px' }}><h3>Divisions — each with its own COO, P&amp;L and agents</h3></div>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginBottom: 16 }}>
         {overview.divisions.map((d) => (
           <div key={d.key} className="card" style={{ padding: '16px 20px' }}>

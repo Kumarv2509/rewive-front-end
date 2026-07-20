@@ -7,8 +7,8 @@ import { FilterBar } from './FilterBar';
 import { AgentGrid } from './AgentGrid';
 import type { AgentCatalogFilters } from '../../api/types';
 
-// The workforce: agents that execute, next to the counterparts that watch.
-// Agent creation lives here (and in a finding's Act flow) — not as a global CTA.
+// The workforce: workers that execute, next to the agents that watch.
+// Worker creation lives here (and in a finding's Act flow) — not as a global CTA.
 export function AgentSpaceScreen() {
   const navigate = useNavigate();
   const { persona, scope } = useEffectiveLens();
@@ -18,11 +18,11 @@ export function AgentSpaceScreen() {
     <section className="screen">
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <h1 className="page">Agents</h1>
-          <Intro line="Every agent running for your operating context — with ROI and token cost tracked alongside execution." />
+          <h1 className="page">Workforce</h1>
+          <Intro line="Every worker running for your operating context — with ROI and token cost tracked alongside execution." />
         </div>
         <button className="btn primary sm" style={{ flexShrink: 0 }} onClick={() => navigate('/build/create')}>
-          + New agent
+          + New worker
         </button>
       </div>
       <SectionTabs tabs={AGENTS_TABS} />

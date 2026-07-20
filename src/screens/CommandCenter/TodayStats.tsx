@@ -19,7 +19,7 @@ export function TodayStats({ persona, scope }: { persona: Persona | 'all'; scope
   // With hierarchy off this resolves to the same query key as above, so it
   // costs no extra request; the value only renders when the lens is widened.
   const { data: teamFindings } = useFindings({ persona, scope: teamScope ? 'team' : 'role', status: 'open' });
-  const { data: stats } = useDecisionStats();
+  const { data: stats } = useDecisionStats(persona, scope);
 
   const waiting = (findings?.length ?? 0) + (decisions?.length ?? 0);
   const atRisk = findings?.filter((f) => f.slaHoursRemaining <= SLA_AT_RISK_HOURS).length ?? 0;

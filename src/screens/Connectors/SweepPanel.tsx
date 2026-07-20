@@ -28,7 +28,7 @@ export function SweepPanel() {
         </button>
       </div>
       <div style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 12 }}>
-        The counterparts re-check every live-tracked mandate on a schedule; drift becomes a finding that must be answered.
+        The agents re-check every live-tracked mandate on a schedule; drift becomes a finding that must be answered.
       </div>
       {(runs ?? []).length > 0 ? (
         <table className="t" style={{ fontSize: 12.5 }}>

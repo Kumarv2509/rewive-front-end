@@ -45,7 +45,7 @@ export function DecisionsScreen() {
         ]}
       />
 
-      <StatsRow />
+      <StatsRow persona={persona} scope={scope} />
 
       <div className="tabs">
         <button className={`tab${view === 'ledger' ? ' active' : ''}`} onClick={() => setView('ledger')}>Ledger</button>
@@ -54,7 +54,7 @@ export function DecisionsScreen() {
 
       {view === 'ledger' && (
         <>
-          <HalfYearReview />
+          <HalfYearReview persona={persona} scope={scope} />
           <div className="filters">
             {functionFilters.map((f) => (
               <button key={f.key} className={`fchip${fn === f.key ? ' on' : ''}`} onClick={() => setFn(f.key)}>{f.label}</button>

@@ -82,6 +82,7 @@ export async function overlayLiveTracking(brain) {
 function configFromRow(r) {
   return {
     nodeId: r.node_id, industry: r.industry, unit: r.unit, format: r.format,
+    entity: r.entity ?? null, region: r.region ?? null,
     direction: r.direction, targetNumeric: Number(r.target_numeric),
     warnPct: Number(r.warn_pct), breachPct: Number(r.breach_pct),
     sustainedPoints: r.sustained_points, minPoints: r.min_points,
@@ -120,6 +121,10 @@ export async function listConfigs(industry) {
 export async function upsertConfig(cfg) {
   const row = {
     nodeId: cfg.nodeId, industry: cfg.industry, unit: cfg.unit ?? 'count', format: cfg.format ?? null,
+    // Which legal entity / region this mandate's numbers belong to. Findings
+    // the sweep raises inherit these, so live activity shows up in the
+    // By-entity and By-region rollups instead of being skipped as blank.
+    entity: cfg.entity ?? null, region: cfg.region ?? null,
     direction: cfg.direction === 'down_good' ? 'down_good' : 'up_good',
     targetNumeric: Number(cfg.targetNumeric),
     warnPct: Number(cfg.warnPct ?? 3), breachPct: Number(cfg.breachPct ?? 5),
@@ -129,13 +134,16 @@ export async function upsertConfig(cfg) {
   if (hasDb()) {
     await query(
       `INSERT INTO tracking_configs (node_id, industry, unit, format, direction, target_numeric,
-                                     warn_pct, breach_pct, sustained_points, min_points, enabled, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, now())
+                                     warn_pct, breach_pct, sustained_points, min_points, enabled,
+                                     entity, region, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, now())
        ON CONFLICT (node_id) DO UPDATE SET
          industry=$2, unit=$3, format=$4, direction=$5, target_numeric=$6,
-         warn_pct=$7, breach_pct=$8, sustained_points=$9, min_points=$10, enabled=$11, updated_at=now()`,
+         warn_pct=$7, breach_pct=$8, sustained_points=$9, min_points=$10, enabled=$11,
+         entity=$12, region=$13, updated_at=now()`,
       [row.nodeId, row.industry, row.unit, row.format, row.direction, row.targetNumeric,
-       row.warnPct, row.breachPct, row.sustainedPoints, row.minPoints, row.enabled],
+       row.warnPct, row.breachPct, row.sustainedPoints, row.minPoints, row.enabled,
+       row.entity, row.region],
     );
   } else {
     mem.configs.set(row.nodeId, row);
@@ -361,6 +369,7 @@ const sweepRowOut = (r) => ({
   nodesEvaluated: r.nodes_evaluated, findingsRaised: r.findings_raised,
   reAlertsFired: r.re_alerts_fired, closuresProgressed: r.closures_progressed,
   authoredByClaude: r.authored_by_claude,
+  progress: r.progress ?? null,
 });
 
 export async function insertSweepRun(run) {
@@ -387,10 +396,36 @@ export async function finishSweepRun(run) {
   if (idx !== -1) mem.sweeps[idx] = { ...mem.sweeps[idx], ...run };
 }
 
+/**
+ * Write the analysis trail mid-run. Called after every node transition, so the
+ * Findings screen can poll a sweep that is still in flight — this is the only
+ * thing the sweep emits before it finishes.
+ */
+export async function updateSweepProgress(runId, progress) {
+  if (hasDb()) {
+    await query(`UPDATE sweep_runs SET progress=$2 WHERE id=$1`, [runId, JSON.stringify(progress)]).catch(() => {});
+    return;
+  }
+  const row = mem.sweeps.find((s) => s.id === runId);
+  if (row) row.progress = progress;
+}
+
+/** The newest run, finished or not — the strip shows the live one or the last one. */
+export async function latestSweepRun() {
+  if (hasDb()) {
+    const { rows } = await query(`SELECT * FROM sweep_runs ORDER BY started_at DESC LIMIT 1`);
+    return rows[0] ? sweepRowOut(rows[0]) : null;
+  }
+  const row = mem.sweeps[0];
+  return row ? { ...row, progress: row.progress ?? null } : null;
+}
+
+// The history table only wants the counters — the analysis trail is fetched
+// per-run by the live strip, so it never rides along here.
 export async function listSweepRuns(limit = 20) {
   if (hasDb()) {
     const { rows } = await query(`SELECT * FROM sweep_runs ORDER BY started_at DESC LIMIT $1`, [limit]);
-    return rows.map(sweepRowOut);
+    return rows.map((r) => { const { progress, ...rest } = sweepRowOut(r); return rest; });
   }
-  return mem.sweeps.slice(0, limit);
+  return mem.sweeps.slice(0, limit).map(({ progress, ...rest }) => rest);
 }

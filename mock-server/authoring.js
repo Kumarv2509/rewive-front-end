@@ -1,4 +1,4 @@
-// Counterpart narrative authoring. Deterministic drift rules decide WHEN a
+// Agent narrative authoring. Deterministic drift rules decide WHEN a
 // finding is raised (drift.js); this module decides how it reads. Claude
 // authors the narrative via structured outputs; if the API key is missing or
 // the call fails for any reason, a deterministic template produces an
@@ -44,7 +44,7 @@ const RULE_LABEL = {
   trend_to_breach: 'is trending toward a threshold breach',
 };
 
-const SYSTEM_PROMPT = `You are an agent counterpart in Rewive, the decision accountability layer. Every business mandate is held twice — once by a person, once by you, watching the same number. Your deterministic drift rules have already fired; do not re-judge whether to raise. Your job is to author the finding narrative a busy operator will read.
+const SYSTEM_PROMPT = `You are an agent in Rewive, the decision accountability layer. Every business mandate is held twice — once by a person, once by you, watching the same number. Your deterministic drift rules have already fired; do not re-judge whether to raise. Your job is to author the finding narrative a busy operator will read.
 
 House style:
 - Drift is stated as fact, with the numbers in it ("Case fill collapsed to 84% against a 97% target"), never as blame.
@@ -118,7 +118,7 @@ export async function authorFinding(ctx) {
       messages: [{
         role: 'user',
         content: JSON.stringify({
-          counterpart: ctx.counterpartName,
+          agent: ctx.counterpartName,
           org: ctx.orgName,
           industry: ctx.industry,
           currency: ctx.currency,

@@ -1,5 +1,11 @@
-import app, { exportState, importState, persistLiveState } from '../mock-server/app.js';
+import app, { exportState, importState, persistLiveState, seedLiveTracking } from '../mock-server/app.js';
 import { loadState, saveState } from '../mock-server/kv.js';
+
+// Deployed demos never run server.js, so the default live-tracked mandates get
+// seeded here instead — once per instance, and a no-op once any tracking
+// config exists. Held as a promise so concurrent requests on a cold start
+// await the same attempt rather than racing it.
+let seedOnce = null;
 
 // Vercel's bracket catch-all (`[...path].js`) only reliably matched a single
 // path segment in this project, so instead every /api/v1/* request is rewritten
@@ -18,6 +24,13 @@ export default async function handler(req, res) {
   req.url = `/api/v1/${forwardedPath}${query ? `?${query}` : ''}`;
 
   importState(await loadState());
+
+  // After importState — the seed reads brainsState, which the snapshot rewrites.
+  seedOnce ??= seedLiveTracking().catch((err) => {
+    console.warn('[seed] live tracking seed failed:', err?.message ?? err);
+    return 0;
+  });
+  await seedOnce;
 
   await new Promise((resolve) => {
     res.on('finish', resolve);

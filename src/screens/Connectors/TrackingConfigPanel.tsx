@@ -69,7 +69,7 @@ export function TrackingConfigPanel() {
     <div className="card" style={{ padding: 20, marginBottom: 20 }}>
       <div style={{ fontWeight: 700, fontSize: 14.5, marginBottom: 4 }}>Live-tracked mandates</div>
       <div style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 12 }}>
-        Give a mandate a numeric target and thresholds, push real data, and its counterpart raises findings when the number drifts.
+        Give a mandate a numeric target and thresholds, push real data, and its agent raises findings when the number drifts.
       </div>
       <table className="t" style={{ fontSize: 13 }}>
         <thead>

@@ -5,7 +5,7 @@ import { useToast } from '../../components/shared/Toast';
 import type { Finding, FindingDisposition } from '../../api/types';
 
 const OPTIONS: { key: FindingDisposition; title: string; consequence: string }[] = [
-  { key: 'accept', title: 'Accept', consequence: 'Real — an exit condition is set and the counterpart watches it until met' },
+  { key: 'accept', title: 'Accept', consequence: 'Real — an exit condition is set and the agent watches it until met' },
   { key: 'act', title: 'Act', consequence: 'Open a solution design with tasks, straight into the build loop' },
   { key: 'acknowledge', title: 'Acknowledge', consequence: 'Known issue — watched, and it comes back harder if it worsens' },
   { key: 'abandon', title: 'Abandon', consequence: 'Not real — requires a reason, and the reason tunes the agent' },
@@ -35,7 +35,7 @@ export function DispositionBar({ finding }: { finding: Finding }) {
             showToast('Solution design opened from this finding');
             navigate(`/build/solutions/${updated.solutionDesignId}`);
           } else if (disposition === 'accept') {
-            showToast('Accepted — exit condition set, the counterpart keeps watching');
+            showToast('Accepted — exit condition set, the agent keeps watching');
           } else if (disposition === 'acknowledge') {
             showToast('Acknowledged — it will re-alert if it worsens');
           } else {
@@ -54,7 +54,7 @@ export function DispositionBar({ finding }: { finding: Finding }) {
         <button
           className="btn ghost sm"
           disabled={escalate.isPending}
-          onClick={() => escalate.mutate(undefined, { onSuccess: () => showToast('Escalated up the chain of counterparts') })}
+          onClick={() => escalate.mutate(undefined, { onSuccess: () => showToast('Escalated up the chain of agents') })}
         >
           Not mine — escalate ↑
         </button>

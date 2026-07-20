@@ -21,7 +21,7 @@ export function IngestKeysPanel() {
     <div className="card" style={{ padding: 20, marginBottom: 20 }}>
       <div style={{ fontWeight: 700, fontSize: 14.5, marginBottom: 4 }}>Ingest keys</div>
       <div style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 12 }}>
-        Any system can push real metric values to the mandates with an ingest key — the counterpart watches whatever lands.
+        Any system can push real metric values to the mandates with an ingest key — the agent watches whatever lands.
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>

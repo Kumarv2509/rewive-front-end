@@ -309,7 +309,7 @@ export type PlAnomalyStatus = 'raised' | 'watching' | 'cleared' | 'new';
 // A drift anomaly is a task: what drifted, against which base (budget /
 // forecast), on which P&L cell (line × dimA × dimB), whose call it is, and
 // where it stands in the loop. findingId links it to the thread when the
-// counterpart has raised it.
+// agent has raised it.
 export interface PlAnomalyTask {
   id: string;
   title: string;
@@ -366,7 +366,7 @@ export interface LoopSpeedRow {
   mandate: string;
   stream: string;
   owner: { name: string; initials: string; avatarBg: string };
-  counterpart: string;
+  agent: string;
   findings90d: number;
   medianTimeToDecide: string;
   medianTimeToClose: string;
@@ -1070,7 +1070,7 @@ export interface UpdateBrainNodeInput {
   dataSources?: string[];
 }
 
-// ---------- Shadow org (agent counterparts per function stream) ----------
+// ---------- Shadow org (agents per function stream) ----------
 export type ShadowAgentHealth = 'healthy' | 'attention' | 'critical';
 
 export interface ShadowAgent {
@@ -1085,7 +1085,7 @@ export interface ShadowAgent {
   temperament: number; // 0 quiet … 100 hair-trigger
   health: ShadowAgentHealth;
   lastFindingAt: string | null;
-  /** Set by the mock server's heartbeat — when this counterpart last re-checked its senses. */
+  /** Set by the mock server's heartbeat — when this agent last re-checked its senses. */
   lastSenseSweepAt?: string | null;
   reportsToAgentId: string | null;
 }
@@ -1245,6 +1245,10 @@ export interface MandateTrackingConfig {
   sustainedPoints: number; // consecutive drifting points before a finding
   minPoints: number; // minimum points before the rules run at all
   enabled: boolean;
+  /** Legal entity / region these numbers belong to — inherited by any finding
+   *  the sweep raises, so live activity appears in the entity/region rollups. */
+  entity?: string | null;
+  region?: string | null;
   updatedAt: string;
   // Read-side extras (joined by the server)
   latestValue?: number | null;
@@ -1277,6 +1281,41 @@ export interface SweepRun {
   authoredByClaude: number;
 }
 
+/**
+ * One mandate in a sweep's analysis trail. `queued` → `analyzing` →
+ * (`authoring` →) an outcome. Written mid-run, so a poll mid-sweep shows the
+ * agents partway through their walk.
+ */
+export type SweepStepStatus =
+  | 'queued'
+  | 'analyzing'
+  | 'authoring'
+  | 'clear'
+  | 'drift'
+  | 'raised'
+  | 're-alert'
+  | 'recovered'
+  | 'skipped';
+
+export interface SweepStep {
+  nodeId: string;
+  nodeName: string;
+  industry: string;
+  streamKey: string | null;
+  counterpartName: string;
+  persona: Persona | null;
+  status: SweepStepStatus;
+  detail: string | null;
+  /** Set once the step produces or touches a finding — the row deep-links to it. */
+  findingId: string | null;
+  severity: FindingSeverity | null;
+}
+
+/** The newest sweep, live or last-finished, with its per-mandate trail. */
+export interface SweepProgress extends SweepRun {
+  steps: SweepStep[];
+}
+
 export interface MetricImportResult {
   accepted: number;
   rejected: { index: number; reason: string }[];
@@ -1284,7 +1323,7 @@ export interface MetricImportResult {
 
 // ---------- Business context (the base data the mandates stand on) ----------
 // Company-wide context surfaces: not persona-partitioned — every lens sees
-// the same business. Rows that a counterpart has raised drift on carry the
+// the same business. Rows that an agent has raised drift on carry the
 // findingId of their thread.
 export type BaseDataHealth = 'ok' | 'watch' | 'drifting';
 
@@ -1296,7 +1335,7 @@ export interface BusinessDivision {
   revenueShare: string;
   brands: string[];
   note: string;
-  /** Which counterparts hold this division's mandates. */
+  /** Which agents hold this division's mandates. */
   watchedBy?: string;
 }
 

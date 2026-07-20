@@ -1,7 +1,7 @@
 // FP&A P&L statement seeds: the full P&L per industry, with Budget and
 // Forecast as the base of drift, drillable by two dimensions, and every
 // drift anomaly as a task routed to the role whose call it is. Anomalies
-// that a counterpart has raised carry the findingId of their thread.
+// that an agent has raised carry the findingId of their thread.
 //
 // Numbers are quarter-to-date in the statement's unit. Variances are
 // percentages vs budget / vs forecast; the UI flips good/bad via isCost.
@@ -115,63 +115,63 @@ export const plStatementSeed = {
 
   healthcare: {
     period: 'Q3 FY26 · quarter to date',
-    unit: '$ M',
+    unit: 'AED M',
     dimALabel: 'Service line',
     dimBLabel: 'Payer',
     lines: [
       {
         key: 'patient-revenue', label: 'Net patient revenue', kind: 'line', isCost: false,
-        actual: '84.2', budget: '87.5', forecast: '85.6', varBudgetPct: -3.8, varForecastPct: -1.6,
+        actual: '309.0', budget: '321.1', forecast: '314.2', varBudgetPct: -3.8, varForecastPct: -1.6,
         anomalyIds: ['hpl-a-1'],
         byDimA: [
-          { key: 'medsurg', label: 'Med/surg inpatient', actual: '31.4', budget: '33.0', forecast: '32.1', varBudgetPct: -4.8, varForecastPct: -2.2, anomalyIds: ['hpl-a-1'] },
-          { key: 'specialty', label: 'Specialty clinics', actual: '18.9', budget: '19.8', forecast: '19.2', varBudgetPct: -4.5, varForecastPct: -1.6, anomalyIds: [] },
-          { key: 'other', label: 'All other', actual: '33.9', budget: '34.7', forecast: '34.3', varBudgetPct: -2.3, varForecastPct: -1.2, anomalyIds: [] },
+          { key: 'medsurg', label: 'Inpatient wards', actual: '115.2', budget: '121.1', forecast: '117.8', varBudgetPct: -4.8, varForecastPct: -2.2, anomalyIds: ['hpl-a-1'] },
+          { key: 'specialty', label: 'Specialty medical centres', actual: '69.4', budget: '72.7', forecast: '70.5', varBudgetPct: -4.5, varForecastPct: -1.6, anomalyIds: [] },
+          { key: 'other', label: 'All other', actual: '124.4', budget: '127.3', forecast: '125.9', varBudgetPct: -2.3, varForecastPct: -1.2, anomalyIds: [] },
         ],
         byDimB: [
-          { key: 'payer-a', label: 'Payer A', actual: '24.6', budget: '26.4', forecast: '25.5', varBudgetPct: -6.8, varForecastPct: -3.5, anomalyIds: ['hpl-a-1'] },
-          { key: 'payer-b', label: 'Payer B', actual: '19.8', budget: '20.9', forecast: '20.2', varBudgetPct: -5.3, varForecastPct: -2.0, anomalyIds: ['hpl-a-1'] },
-          { key: 'other', label: 'All other payers', actual: '39.8', budget: '40.2', forecast: '39.9', varBudgetPct: -1.0, varForecastPct: -0.3, anomalyIds: [] },
+          { key: 'payer-a', label: 'Sukoon', actual: '90.3', budget: '96.9', forecast: '93.6', varBudgetPct: -6.8, varForecastPct: -3.5, anomalyIds: ['hpl-a-1'] },
+          { key: 'payer-b', label: 'AXA / GIG Gulf', actual: '72.7', budget: '76.7', forecast: '74.1', varBudgetPct: -5.3, varForecastPct: -2.0, anomalyIds: ['hpl-a-1'] },
+          { key: 'other', label: 'All other payers', actual: '146.0', budget: '147.5', forecast: '146.5', varBudgetPct: -1.0, varForecastPct: -0.3, anomalyIds: [] },
         ],
       },
       {
         key: 'denials', label: 'Denials & write-offs', kind: 'line', isCost: true,
-        actual: '6.1', budget: '4.8', forecast: '5.5', varBudgetPct: 27.1, varForecastPct: 10.9,
+        actual: '22.4', budget: '17.6', forecast: '20.2', varBudgetPct: 27.1, varForecastPct: 10.9,
         anomalyIds: ['hpl-a-2'],
         byDimB: [
-          { key: 'payer-a', label: 'Payer A', actual: '2.6', budget: '1.7', forecast: '2.1', varBudgetPct: 52.9, varForecastPct: 23.8, anomalyIds: ['hpl-a-2'] },
-          { key: 'payer-b', label: 'Payer B', actual: '1.9', budget: '1.4', forecast: '1.7', varBudgetPct: 35.7, varForecastPct: 11.8, anomalyIds: ['hpl-a-2'] },
-          { key: 'other', label: 'All other payers', actual: '1.6', budget: '1.7', forecast: '1.7', varBudgetPct: -5.9, varForecastPct: -5.9, anomalyIds: [] },
+          { key: 'payer-a', label: 'Sukoon', actual: '9.5', budget: '6.2', forecast: '7.7', varBudgetPct: 52.9, varForecastPct: 23.8, anomalyIds: ['hpl-a-2'] },
+          { key: 'payer-b', label: 'AXA / GIG Gulf', actual: '7.0', budget: '5.1', forecast: '6.3', varBudgetPct: 35.7, varForecastPct: 11.8, anomalyIds: ['hpl-a-2'] },
+          { key: 'other', label: 'All other payers', actual: '5.9', budget: '6.3', forecast: '6.2', varBudgetPct: -5.9, varForecastPct: -5.9, anomalyIds: [] },
         ],
       },
       {
         key: 'supply-pharmacy', label: 'Supply & pharmacy cost', kind: 'line', isCost: true,
-        actual: '21.3', budget: '21.9', forecast: '21.5', varBudgetPct: -2.7, varForecastPct: -0.9,
+        actual: '78.2', budget: '80.4', forecast: '78.9', varBudgetPct: -2.7, varForecastPct: -0.9,
         anomalyIds: ['hpl-a-3'],
         byDimA: [
-          { key: 'infusion', label: 'Infusion therapy', actual: '5.2', budget: '5.8', forecast: '5.5', varBudgetPct: -10.3, varForecastPct: -5.5, anomalyIds: ['hpl-a-3'] },
-          { key: 'other', label: 'All other', actual: '16.1', budget: '16.1', forecast: '16.0', varBudgetPct: 0.0, varForecastPct: 0.6, anomalyIds: [] },
+          { key: 'infusion', label: 'Infusion therapy', actual: '19.1', budget: '21.3', forecast: '20.2', varBudgetPct: -10.3, varForecastPct: -5.5, anomalyIds: ['hpl-a-3'] },
+          { key: 'other', label: 'All other', actual: '59.1', budget: '59.1', forecast: '58.7', varBudgetPct: 0.0, varForecastPct: 0.6, anomalyIds: [] },
         ],
       },
       {
-        key: 'labor', label: 'Labor & premium pay', kind: 'line', isCost: true,
-        actual: '38.6', budget: '37.4', forecast: '38.1', varBudgetPct: 3.2, varForecastPct: 1.3,
+        key: 'labor', label: 'Labour & premium pay', kind: 'line', isCost: true,
+        actual: '141.7', budget: '137.3', forecast: '139.8', varBudgetPct: 3.2, varForecastPct: 1.3,
         anomalyIds: ['hpl-a-4'],
         byDimA: [
-          { key: 'medsurg', label: 'Med/surg wards', actual: '14.8', budget: '13.9', forecast: '14.4', varBudgetPct: 6.5, varForecastPct: 2.8, anomalyIds: ['hpl-a-4'] },
-          { key: 'other', label: 'All other', actual: '23.8', budget: '23.5', forecast: '23.7', varBudgetPct: 1.3, varForecastPct: 0.4, anomalyIds: [] },
+          { key: 'medsurg', label: 'Inpatient wards', actual: '54.3', budget: '51.0', forecast: '52.8', varBudgetPct: 6.5, varForecastPct: 2.8, anomalyIds: ['hpl-a-4'] },
+          { key: 'other', label: 'All other', actual: '87.4', budget: '86.3', forecast: '87.0', varBudgetPct: 1.3, varForecastPct: 0.4, anomalyIds: [] },
         ],
       },
       {
         key: 'ebitda', label: 'EBITDA', kind: 'subtotal', isCost: false,
-        actual: '18.2', budget: '23.4', forecast: '20.5', varBudgetPct: -22.2, varForecastPct: -11.2, anomalyIds: [],
+        actual: '66.8', budget: '85.9', forecast: '75.2', varBudgetPct: -22.2, varForecastPct: -11.2, anomalyIds: [],
       },
     ],
     anomalies: [
-      { id: 'hpl-a-1', title: 'First-pass denials suppressing net revenue, two payers', plLineKey: 'patient-revenue', plLineLabel: 'Net patient revenue', dimA: 'Med/surg inpatient', dimB: 'Payer A + B', driftVsBudgetPct: -6.8, driftVsForecastPct: -3.5, impact: '≈ $1.8M revenue at risk this quarter', severity: 'critical', routedTo: 'commercial_finance', status: 'raised', findingId: 'hc-f-1' },
-      { id: 'hpl-a-2', title: 'Denial rate +3 pts after payer policy change', plLineKey: 'denials', plLineLabel: 'Denials & write-offs', dimB: 'Payer A', driftVsBudgetPct: 52.9, driftVsForecastPct: 23.8, impact: 'first-pass denial rate 11.8% vs 8.8% budget', severity: 'high', routedTo: 'commercial_finance', status: 'raised', findingId: 'hc-f-1' },
-      { id: 'hpl-a-3', title: 'Biosimilar switch tracking ahead of budget', plLineKey: 'supply-pharmacy', plLineLabel: 'Supply & pharmacy cost', dimA: 'Infusion therapy', driftVsBudgetPct: -10.3, driftVsForecastPct: -5.5, impact: '+$210k/yr — favorable, verdict logged', severity: 'low', routedTo: 'cfo', status: 'cleared' },
-      { id: 'hpl-a-4', title: 'ALOS drift holding beds, premium pay creeping', plLineKey: 'labor', plLineLabel: 'Labor & premium pay', dimA: 'Med/surg wards', driftVsBudgetPct: 6.5, driftVsForecastPct: 2.8, impact: 'ALOS 4.7 vs 4.3 target', severity: 'medium', routedTo: 'operations_head', status: 'watching', findingId: 'hc-f-3' },
+      { id: 'hpl-a-1', title: 'First-pass denials suppressing net revenue, two payers', plLineKey: 'patient-revenue', plLineLabel: 'Net patient revenue', dimA: 'Inpatient wards', dimB: 'Sukoon + AXA / GIG Gulf', driftVsBudgetPct: -6.8, driftVsForecastPct: -3.5, impact: '≈ AED 6.6M revenue at risk this quarter', severity: 'critical', routedTo: 'commercial_finance', status: 'raised', findingId: 'hc-f-1' },
+      { id: 'hpl-a-2', title: 'Denial rate +3 pts after payer prior-approval policy change', plLineKey: 'denials', plLineLabel: 'Denials & write-offs', dimB: 'Sukoon', driftVsBudgetPct: 52.9, driftVsForecastPct: 23.8, impact: 'first-pass denial rate 11.8% vs 8.8% budget — mostly AUTH-003 prior approval not obtained', severity: 'high', routedTo: 'commercial_finance', status: 'raised', findingId: 'hc-f-1' },
+      { id: 'hpl-a-3', title: 'Biosimilar switch tracking ahead of budget', plLineKey: 'supply-pharmacy', plLineLabel: 'Supply & pharmacy cost', dimA: 'Infusion therapy', driftVsBudgetPct: -10.3, driftVsForecastPct: -5.5, impact: '+AED 770k/yr — favourable, verdict logged', severity: 'low', routedTo: 'cfo', status: 'cleared' },
+      { id: 'hpl-a-4', title: 'ALOS drift holding beds, premium pay creeping', plLineKey: 'labor', plLineLabel: 'Labour & premium pay', dimA: 'Inpatient wards', driftVsBudgetPct: 6.5, driftVsForecastPct: 2.8, impact: 'ALOS 4.7 vs 4.3 target', severity: 'medium', routedTo: 'operations_head', status: 'watching', findingId: 'hc-f-3' },
     ],
   },
 

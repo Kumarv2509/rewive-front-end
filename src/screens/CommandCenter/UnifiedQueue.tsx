@@ -91,7 +91,7 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
         <div className="state-msg">
           {teamScope
             ? 'Nothing waiting on your disposition. What your organisation is carrying is rolled up on Findings.'
-            : 'Nothing waiting on you — your counterparts are watching, and the queue is clear.'}
+            : 'Nothing waiting on you — your agents are watching, and the queue is clear.'}
         </div>
       )}
 

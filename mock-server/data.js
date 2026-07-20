@@ -21,7 +21,7 @@ export let pendingDecisions = [
     icon: '📊',
     iconBg: 'var(--amber-soft)',
     title: 'FP&A Margin Run · variance commentary ready',
-    subtitle: 'Profitability Agent · needs approval before it reaches the board pack',
+    subtitle: 'Profitability Worker · needs approval before it reaches the board pack',
     actionLabel: 'Approve',
     actionVerb: 'approve',
     persona: 'cfo',
@@ -31,7 +31,7 @@ export let pendingDecisions = [
     icon: '⚠️',
     iconBg: 'var(--red-soft)',
     title: 'Pricing anomaly · SKU 4417 margin −6.2% in KSA',
-    subtitle: 'Anomaly Agent recommends repricing · est. impact +AED 84k / qtr',
+    subtitle: 'Anomaly Worker recommends repricing · est. impact +AED 84k / qtr',
     actionLabel: 'Act',
     actionVerb: 'act',
     persona: 'commercial_finance',
@@ -41,7 +41,7 @@ export let pendingDecisions = [
     icon: '🧾',
     iconBg: 'var(--teal-soft)',
     title: 'Month-end close · 2 reconciliation exceptions',
-    subtitle: 'Close Agent paused at review gate · waiting 3h 12m',
+    subtitle: 'Close Worker paused at review gate · waiting 3h 12m',
     actionLabel: 'Clear',
     actionVerb: 'clear',
     persona: 'cfo',
@@ -51,7 +51,7 @@ export let pendingDecisions = [
     icon: '👥',
     iconBg: 'var(--accent-soft)',
     title: 'HR Screening · 14 candidates shortlisted for review',
-    subtitle: 'Screening Agent · confidence 92% · Devaki tagged as reviewer',
+    subtitle: 'Screening Worker · confidence 92% · Devaki tagged as reviewer',
     actionLabel: 'Release',
     actionVerb: 'release',
     persona: 'operations_head',
@@ -117,14 +117,14 @@ export const topPerformer = {
   avatarBg: '#0D9488',
   initials: 'SJ',
   badge: '96% on-time',
-  statLine: 'Closed 31 actions · paired with Profitability Agent · 11h saved',
+  statLine: 'Closed 31 actions · paired with Profitability Worker · 11h saved',
 };
 
 export const runDetails = {
   'run-fpa-may': {
     id: 'run-fpa-may', persona: 'cfo',
     name: 'FP&A Full Analysis — May 2026 actuals',
-    meta: 'Margin Leakage Agent · started 14:02 by Sanju · est. finish 14:11 (9 min total)',
+    meta: 'Margin Leakage Worker · started 14:02 by Sanju · est. finish 14:11 (9 min total)',
     isLive: true,
     steps: [
       { id: 's1', status: 'done', label: 'Ingest & validate data', description: '3 files · 41,209 rows · columns auto-detected (Budget, Actual, SKU, Region)', duration: '1m 12s' },
@@ -137,17 +137,17 @@ export const runDetails = {
 };
 
 export const runs = [
-  { id: 'run-cashflow-q3', persona: 'cfo', name: 'Cash-flow Forecast · Q3', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Forecast Agent', status: 'running', duration: '6m 12s', outcome: '—' },
-  { id: 'run-hr-eng', persona: 'coo', name: 'HR Screening · Eng cohort', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Screening Agent', status: 'running', duration: '8m 47s', outcome: '—' },
-  { id: 'run-close-may', persona: 'cfo', name: 'Month-end close · May', owner: { name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, agentName: 'Close Agent', status: 'needs_decision', duration: 'paused 3h', outcome: '2 exceptions' },
-  { id: 'run-profit-gcc', persona: 'commercial_finance', name: 'Profitability by customer · GCC', owner: { name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, agentName: 'Profitability Agent', status: 'completed', duration: '7m 31s', outcome: '+AED 84k found' },
-  { id: 'run-anomaly-daily', persona: 'commercial_finance', name: 'Pricing anomaly scan · daily', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Anomaly Agent', status: 'completed', duration: '3m 02s', outcome: '1 flag · SKU 4417' },
-  { id: 'run-vendor-recon', persona: 'operations_head', name: 'Vendor reconciliation · weekly', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Recon Agent', status: 'failed', duration: '0m 41s', outcome: 'source timeout · retried ✓' },
+  { id: 'run-cashflow-q3', persona: 'cfo', name: 'Cash-flow Forecast · Q3', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Forecast Worker', status: 'running', duration: '6m 12s', outcome: '—' },
+  { id: 'run-hr-eng', persona: 'coo', name: 'HR Screening · Eng cohort', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Screening Worker', status: 'running', duration: '8m 47s', outcome: '—' },
+  { id: 'run-close-may', persona: 'cfo', name: 'Month-end close · May', owner: { name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, agentName: 'Close Worker', status: 'needs_decision', duration: 'paused 3h', outcome: '2 exceptions' },
+  { id: 'run-profit-gcc', persona: 'commercial_finance', name: 'Profitability by customer · GCC', owner: { name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, agentName: 'Profitability Worker', status: 'completed', duration: '7m 31s', outcome: '+AED 84k found' },
+  { id: 'run-anomaly-daily', persona: 'commercial_finance', name: 'Pricing anomaly scan · daily', owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, agentName: 'Anomaly Worker', status: 'completed', duration: '3m 02s', outcome: '1 flag · SKU 4417' },
+  { id: 'run-vendor-recon', persona: 'operations_head', name: 'Vendor reconciliation · weekly', owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, agentName: 'Recon Worker', status: 'failed', duration: '0m 41s', outcome: 'source timeout · retried ✓' },
 ];
 
 export const runExceptions = [
   { id: 'exc1', runId: 'run-vendor-recon', runName: 'Vendor reconciliation · weekly', severity: 'error', message: 'Source SFTP connection timed out after 3 retries — run failed.', status: 'open', createdAt: '2h ago' },
-  { id: 'exc2', runId: 'run-close-may', runName: 'Month-end close · May', severity: 'warning', message: 'Agent is unsure how to classify 2 reconciliation exceptions — needs your input.', status: 'open', createdAt: '3h ago' },
+  { id: 'exc2', runId: 'run-close-may', runName: 'Month-end close · May', severity: 'warning', message: 'Worker is unsure how to classify 2 reconciliation exceptions — needs your input.', status: 'open', createdAt: '3h ago' },
   { id: 'exc3', runId: 'run-anomaly-daily', runName: 'Pricing anomaly scan · daily', severity: 'info', message: 'Connector latency was elevated for 4 minutes, retried automatically, no data lost.', status: 'resolved', createdAt: '1d ago' },
 ];
 
@@ -160,44 +160,44 @@ export const runChases = [
 // (mock-server/halfyear.js) so they can't drift from the seeds.
 
 export const decisionLedger = [
-  { id: 'led-fnvcf1', persona: 'fnv_commercial_finance', title: 'Accept — realized price back to promo floor, watched weekly', subtitle: 'Field overrides were clearing short-dated stock 6% under floor', madeBy: { type: 'human', name: 'Rania Kassem', initials: 'RK', avatarBg: '#15803D' }, informedBy: { type: 'agent', name: 'Supply chain counterpart · F&V' }, date: '10 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', findingId: 'fmcg-f-fnv-commfin-overrides', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led-ambcho1', persona: 'ambient_production', title: 'Accept — SMED rework on the sauce line, changeover watched', subtitle: 'Allergen protocol bolted on took changeover 38 → 55 min', madeBy: { type: 'human', name: 'Khalid Mansour', initials: 'KM', avatarBg: '#A16207' }, informedBy: { type: 'agent', name: 'Manufacturing counterpart' }, date: '12 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', findingId: 'fmcg-f-ambient-cho', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led-fnvpp1', persona: 'fnv_production', title: 'Acknowledge — pre-pack capacity parked on a 92% trip-wire', subtitle: 'Summer peak hits line capacity mid-August at trend', madeBy: { type: 'human', name: 'Rania Kassem', initials: 'RK', avatarBg: '#15803D' }, informedBy: { type: 'agent', name: 'Supply chain counterpart · F&V' }, date: '07 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', findingId: 'fmcg-f-fnv-prepack', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led-gian1', persona: 'gi_analysts', title: 'Accept — Ramadan baseline corrected for pre-buy double count', subtitle: 'Build target was inflated ~8%; corrected baseline held', madeBy: { type: 'human', name: 'Salim Qureshi', initials: 'SQ', avatarBg: '#0369A1' }, informedBy: { type: 'agent', name: 'Supply chain counterpart · G&I' }, date: '18 Mar', verdict: 'worked', measuredImpact: { text: '≈ AED 520k write-off avoided', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-gi-baseline', assessorNote: 'Assessor agent: season sell-through hit 99% of the corrected build with no material post-season write-off, against AED 480k the prior year — loop closed 19 May.', entity: 'KSA Manufacturing Co.', region: 'KSA' },
-  { id: 'led-giprod1', persona: 'gi_production', title: 'Accept — re-machine the noodle-line cutting die', subtitle: 'Out-of-spec replacement die tripled scrap for 3 weeks', madeBy: { type: 'human', name: 'Salim Qureshi', initials: 'SQ', avatarBg: '#0369A1' }, informedBy: { type: 'agent', name: 'Manufacturing counterpart' }, date: '08 Mar', verdict: 'worked', measuredImpact: { text: '−AED 60k/week scrap ended', direction: 'up' }, function: 'procurement', findingId: 'fmcg-f-gi-diescrap', assessorNote: 'Assessor agent: scrap returned to standard within three weeks and held for eight — loop closed 09 Apr.', entity: 'KSA Manufacturing Co.', region: 'KSA' },
-  { id: 'led-proc0', persona: 'procurement', title: 'Accept — consolidate packaging board to a group contract', subtitle: 'Four suppliers, identical grades, 11% price spread', madeBy: { type: 'human', name: 'Yusuf Al Hammadi', initials: 'YA', avatarBg: '#0F766E' }, informedBy: { type: 'agent', name: 'Procurement counterpart' }, date: '16 Feb', verdict: 'worked', measuredImpact: { text: '+AED 340k/yr contracted', direction: 'up' }, function: 'procurement', findingId: 'fmcg-f-proc-board', assessorNote: 'Assessor agent: board spend ran at the contracted price for a full quarter across all four divisions — AED 87k saved QTD.', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led-proc1', persona: 'procurement', title: 'Accept — dual-source sunflower oil after the Q1 spike', subtitle: 'Single-supplier exposure flagged across three divisions', madeBy: { type: 'human', name: 'Yusuf Al Hammadi', initials: 'YA', avatarBg: '#0F766E' }, informedBy: { type: 'agent', name: 'Procurement counterpart' }, date: '08 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led-fnv1', persona: 'coo_fnv', title: 'Act — re-tender UAE produce inbound QC', subtitle: 'Shrink stepped up after the QC schedule change', madeBy: { type: 'human', name: 'Rania Kassem', initials: 'RK', avatarBg: '#15803D' }, informedBy: { type: 'agent', name: 'Supply chain counterpart · F&V' }, date: '05 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led-amb1', persona: 'coo_ambient', title: 'Accept — distributor drop compliance floor in Q-close week', subtitle: 'Quarter-end load-in was starving store replenishment', madeBy: { type: 'human', name: 'Khalid Mansour', initials: 'KM', avatarBg: '#A16207' }, informedBy: { type: 'agent', name: 'Supply chain counterpart · Ambient' }, date: '28 Jun', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', entity: 'Gulf Distribution Co.', region: 'UAE' },
-  { id: 'led7', persona: 'operations_head', title: 'Act — redesign Riyadh DC replenishment', subtitle: 'Case fill sliding · key-account penalties accruing', madeBy: { type: 'human', name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Planning counterpart' }, date: '18 Jun', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', findingId: 'fmcg-f-7', entity: 'KSA Manufacturing Co.', region: 'KSA' },
-  { id: 'led0', persona: 'sales_supervisor', title: 'Accept — OSA back above 96% in top-40 stores', subtitle: 'On-shelf availability finding · exit condition watched', madeBy: { type: 'human', name: 'Layla Nasser', initials: 'LN', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Commercial counterpart' }, date: '02 Jun', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', findingId: 'fmcg-f-5', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led8', persona: 'cfo', title: 'Acknowledge — Egypt receivables on a trip-wire', subtitle: 'Parked at 22% past 60 days · wire fired 28 Jun', madeBy: { type: 'human', name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8' }, informedBy: { type: 'agent', name: 'Finance counterpart' }, date: '14 May', verdict: 'not_worked', measuredImpact: { text: 'trip-wire fired · back open', direction: 'down' }, function: 'finance', findingId: 'fmcg-f-9', assessorNote: 'Assessor agent: the acknowledge did not hold — the Egypt book crossed the re-alert line six weeks later and the finding re-opened one level up.', entity: 'Egypt Foods S.A.E.', region: 'Egypt' },
-  { id: 'led1', persona: 'commercial_finance', title: 'Reprice SKU 2210 family in UAE', subtitle: 'Margin leakage driver #1, May run', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+AED 210k / qtr', direction: 'up' }, function: 'finance', originatingSignalId: 'sig1', assessorNote: 'Assessor agent: margin on the SKU 4417/2210 family recovered from -6.2% to -1.1% within 6 weeks of repricing, well ahead of the 3-week target — independently confirmed against the same gross-margin field used to raise the original signal.', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led2', persona: 'operations_head', title: 'Consolidate 3 logistics vendors', subtitle: 'Cost optimization recommendation', madeBy: { type: 'human', name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, informedBy: { type: 'agent', name: 'Cost Agent' }, date: '28 Apr', verdict: 'worked', measuredImpact: { text: '+AED 95k / qtr', direction: 'up' }, function: 'procurement', originatingSignalId: 'sig3', assessorNote: 'Assessor agent: invoice overlap across the 3 flagged vendors dropped to zero after consolidation — confirmed against the same vendor invoice feed, closing the signal that raised it.', entity: 'Gulf Distribution Co.', region: 'UAE' },
-  { id: 'led3', persona: 'coo', title: 'Hold hiring for support roles', subtitle: 'Forecast showed demand dip', madeBy: { type: 'human', name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '21 Apr', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'hr', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led4', persona: 'cfo', title: 'Extend payment terms — distributor KSA', subtitle: 'Cash-flow scenario B · exit condition regressed', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Forecast Agent' }, date: '14 Apr', verdict: 'not_worked', measuredImpact: { text: '−AED 40k DSO cost', direction: 'down' }, function: 'finance', findingId: 'fmcg-f-h3', assessorNote: 'Assessor agent: 60 days on, DSO worsened to 81 days — the extension legitimised the stretch instead of stopping it. The exit condition is regressed and awaiting a re-disposition.', entity: 'Gulf Distribution Co.', region: 'KSA' },
-  { id: 'led9', persona: 'coo', title: 'Accept — consolidate KSA long-haul loads', subtitle: 'Truck utilization under 70% on Riyadh/Dammam lanes', madeBy: { type: 'human', name: 'Tariq Aziz', initials: 'TA', avatarBg: '#0F766E' }, informedBy: { type: 'agent', name: 'Logistics counterpart' }, date: '04 Apr', verdict: 'worked', measuredImpact: { text: '+AED 90k / qtr freight', direction: 'up' }, function: 'procurement', findingId: 'fmcg-f-h5', assessorNote: 'Assessor agent: utilization held above 82% for six weeks after the milk-run change — loop closed 05 Jun.', entity: 'Gulf Distribution Co.', region: 'KSA' },
-  { id: 'led5', persona: 'commercial_finance', title: 'Shift Q2 spend to performance channels', subtitle: 'Customer-mix insight, March run', madeBy: { type: 'human', name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Profitability Agent' }, date: '02 Apr', verdict: 'worked', measuredImpact: { text: '+18% ROAS', direction: 'up' }, function: 'finance', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led10', persona: 'operations_head', title: 'Abandon — Ramadan surge flagged as forecast bias', subtitle: 'Seasonal calendar shift, not drift · counterpart tuned', madeBy: { type: 'human', name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Planning counterpart' }, date: '19 Mar', verdict: 'worked', measuredImpact: { text: 'false-positive rate −40%', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-h6', assessorNote: 'Assessor agent: the Hijri-calendar overlay removed the seasonal false positives — no genuine drift was missed in the following 90 days.', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led11', persona: 'operations_head', title: 'Accept — rebalance canned range across DCs', subtitle: 'Q1 obsolescence spike · write-offs 2.6x plan', madeBy: { type: 'human', name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Planning counterpart' }, date: '14 Mar', verdict: 'worked', measuredImpact: { text: '−AED 214k / mo write-offs', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-0', assessorNote: 'Assessor agent: write-offs held under AED 120k/month for a full quarter — loop closed 20 Jun.', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led12', persona: 'store_manager', title: 'Accept — resequence Sunday merchandiser routes', subtitle: 'Dubai hypermarkets shelf recovery gap', madeBy: { type: 'human', name: 'Layla Nasser', initials: 'LN', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Commercial counterpart' }, date: '03 Mar', verdict: 'worked', measuredImpact: { text: '+AED 140k / mo recovered', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-h4', assessorNote: 'Assessor agent: Sunday OSA matched the weekday average for four straight weeks — loop closed 28 Apr.', entity: 'UAE Trading Co.', region: 'UAE' },
-  { id: 'led13', persona: 'operations_head', title: 'Accept — pull compressor overhaul forward, Egypt plant', subtitle: 'OEE collapse traced to one aging unit', madeBy: { type: 'human', name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED' }, informedBy: { type: 'agent', name: 'Manufacturing counterpart' }, date: '05 Feb', verdict: 'worked', measuredImpact: { text: '+13 pts OEE recovered', direction: 'up' }, function: 'procurement', findingId: 'fmcg-f-h2', assessorNote: 'Assessor agent: OEE held above 72% for eight weeks after the overhaul — loop closed 02 Apr.', entity: 'Egypt Foods S.A.E.', region: 'Egypt' },
-  { id: 'led14', persona: 'sales_supervisor', title: 'Accept — merchandising blitz on Kuwait key accounts', subtitle: 'January promo compliance at 54% of contract', madeBy: { type: 'human', name: 'Layla Nasser', initials: 'LN', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Commercial counterpart' }, date: '09 Jan', verdict: 'worked', measuredImpact: { text: '+AED 180k spend recovered', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-h1', assessorNote: 'Assessor agent: compliance recovered to 91% and promo sell-out finished 4% over plan — loop closed 20 Feb.', entity: 'Gulf Distribution Co.', region: 'Kuwait & GCC' },
-  { id: 'led6', persona: 'cfo', title: 'Auto-approve invoices < AED 500', subtitle: 'Process decision · agent autonomous', madeBy: { type: 'agent', name: 'Close Agent' }, informedBy: { type: 'policy', name: 'policy' }, date: 'ongoing', verdict: 'worked', measuredImpact: { text: '22h / month saved', direction: 'up' }, function: 'finance', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led-fnvcf1', persona: 'fnv_commercial_finance', title: 'Accept — realized price back to promo floor, watched weekly', subtitle: 'Field overrides were clearing short-dated stock 6% under floor', madeBy: { type: 'human', name: 'Rania Kassem', initials: 'RK', avatarBg: '#15803D' }, informedBy: { type: 'agent', name: 'Logistics agent' }, date: '10 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', findingId: 'fmcg-f-fnv-commfin-overrides', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led-ambcho1', persona: 'ambient_production', title: 'Accept — SMED rework on the sauce line, changeover watched', subtitle: 'Allergen protocol bolted on took changeover 38 → 55 min', madeBy: { type: 'human', name: 'Khalid Mansour', initials: 'KM', avatarBg: '#A16207' }, informedBy: { type: 'agent', name: 'Manufacturing agent' }, date: '12 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', findingId: 'fmcg-f-ambient-cho', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led-fnvpp1', persona: 'fnv_production', title: 'Acknowledge — pre-pack capacity parked on a 92% trip-wire', subtitle: 'Summer peak hits line capacity mid-August at trend', madeBy: { type: 'human', name: 'Rania Kassem', initials: 'RK', avatarBg: '#15803D' }, informedBy: { type: 'agent', name: 'Logistics agent' }, date: '07 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', findingId: 'fmcg-f-fnv-prepack', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led-gian1', persona: 'gi_analysts', title: 'Accept — Ramadan baseline corrected for pre-buy double count', subtitle: 'Build target was inflated ~8%; corrected baseline held', madeBy: { type: 'human', name: 'Salim Qureshi', initials: 'SQ', avatarBg: '#0369A1' }, informedBy: { type: 'agent', name: 'Planning agent' }, date: '18 Mar', verdict: 'worked', measuredImpact: { text: '≈ AED 520k write-off avoided', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-gi-baseline', assessorNote: 'Assessor agent: season sell-through hit 99% of the corrected build with no material post-season write-off, against AED 480k the prior year — loop closed 19 May.', entity: 'KSA Manufacturing Co.', region: 'KSA' },
+  { id: 'led-giprod1', persona: 'gi_production', title: 'Accept — re-machine the noodle-line cutting die', subtitle: 'Out-of-spec replacement die tripled scrap for 3 weeks', madeBy: { type: 'human', name: 'Salim Qureshi', initials: 'SQ', avatarBg: '#0369A1' }, informedBy: { type: 'agent', name: 'Manufacturing agent' }, date: '08 Mar', verdict: 'worked', measuredImpact: { text: '−AED 60k/week scrap ended', direction: 'up' }, function: 'procurement', findingId: 'fmcg-f-gi-diescrap', assessorNote: 'Assessor agent: scrap returned to standard within three weeks and held for eight — loop closed 09 Apr.', entity: 'KSA Manufacturing Co.', region: 'KSA' },
+  { id: 'led-proc0', persona: 'procurement', title: 'Accept — consolidate packaging board to a group contract', subtitle: 'Four suppliers, identical grades, 11% price spread', madeBy: { type: 'human', name: 'Yusuf Al Hammadi', initials: 'YA', avatarBg: '#0F766E' }, informedBy: { type: 'agent', name: 'Procurement agent' }, date: '16 Feb', verdict: 'worked', measuredImpact: { text: '+AED 340k/yr contracted', direction: 'up' }, function: 'procurement', findingId: 'fmcg-f-proc-board', assessorNote: 'Assessor agent: board spend ran at the contracted price for a full quarter across all four divisions — AED 87k saved QTD.', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led-proc1', persona: 'procurement', title: 'Accept — dual-source sunflower oil after the Q1 spike', subtitle: 'Single-supplier exposure flagged across three divisions', madeBy: { type: 'human', name: 'Yusuf Al Hammadi', initials: 'YA', avatarBg: '#0F766E' }, informedBy: { type: 'agent', name: 'Procurement agent' }, date: '08 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led-fnv1', persona: 'coo_fnv', title: 'Act — re-tender UAE produce inbound QC', subtitle: 'Shrink stepped up after the QC schedule change', madeBy: { type: 'human', name: 'Rania Kassem', initials: 'RK', avatarBg: '#15803D' }, informedBy: { type: 'agent', name: 'Logistics agent' }, date: '05 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led-amb1', persona: 'coo_ambient', title: 'Accept — distributor drop compliance floor in Q-close week', subtitle: 'Quarter-end load-in was starving store replenishment', madeBy: { type: 'human', name: 'Khalid Mansour', initials: 'KM', avatarBg: '#A16207' }, informedBy: { type: 'agent', name: 'Planning agent' }, date: '28 Jun', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', entity: 'Gulf Distribution Co.', region: 'UAE' },
+  { id: 'led7', persona: 'operations_head', title: 'Act — redesign Riyadh DC replenishment', subtitle: 'Case fill sliding · key-account penalties accruing', madeBy: { type: 'human', name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Planning agent' }, date: '18 Jun', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'procurement', findingId: 'fmcg-f-7', entity: 'KSA Manufacturing Co.', region: 'KSA' },
+  { id: 'led0', persona: 'sales_supervisor', title: 'Accept — OSA back above 96% in top-40 stores', subtitle: 'On-shelf availability finding · exit condition watched', madeBy: { type: 'human', name: 'Layla Nasser', initials: 'LN', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Commercial agent' }, date: '02 Jun', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'finance', findingId: 'fmcg-f-5', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led8', persona: 'cfo', title: 'Acknowledge — Egypt receivables on a trip-wire', subtitle: 'Parked at 22% past 60 days · wire fired 28 Jun', madeBy: { type: 'human', name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8' }, informedBy: { type: 'agent', name: 'Finance agent' }, date: '14 May', verdict: 'not_worked', measuredImpact: { text: 'trip-wire fired · back open', direction: 'down' }, function: 'finance', findingId: 'fmcg-f-9', assessorNote: 'Assessor agent: the acknowledge did not hold — the Egypt book crossed the re-alert line six weeks later and the finding re-opened one level up.', entity: 'Egypt Foods S.A.E.', region: 'Egypt' },
+  { id: 'led1', persona: 'commercial_finance', title: 'Reprice SKU 2210 family in UAE', subtitle: 'Margin leakage driver #1, May run', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Profitability Worker' }, date: '12 May', verdict: 'worked', measuredImpact: { text: '+AED 210k / qtr', direction: 'up' }, function: 'finance', originatingSignalId: 'sig1', assessorNote: 'Assessor agent: margin on the SKU 4417/2210 family recovered from -6.2% to -1.1% within 6 weeks of repricing, well ahead of the 3-week target — independently confirmed against the same gross-margin field used to raise the original signal.', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led2', persona: 'operations_head', title: 'Consolidate 3 logistics vendors', subtitle: 'Cost optimization recommendation', madeBy: { type: 'human', name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, informedBy: { type: 'agent', name: 'Cost Worker' }, date: '28 Apr', verdict: 'worked', measuredImpact: { text: '+AED 95k / qtr', direction: 'up' }, function: 'procurement', originatingSignalId: 'sig3', assessorNote: 'Assessor agent: invoice overlap across the 3 flagged vendors dropped to zero after consolidation — confirmed against the same vendor invoice feed, closing the signal that raised it.', entity: 'Gulf Distribution Co.', region: 'UAE' },
+  { id: 'led3', persona: 'coo', title: 'Hold hiring for support roles', subtitle: 'Forecast showed demand dip', madeBy: { type: 'human', name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Forecast Worker' }, date: '21 Apr', verdict: 'too_early', measuredImpact: { text: 'measuring…', direction: 'flat' }, function: 'hr', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led4', persona: 'cfo', title: 'Extend payment terms — distributor KSA', subtitle: 'Cash-flow scenario B · exit condition regressed', madeBy: { type: 'human', name: 'Praveen', initials: 'PJ', avatarBg: '#D97706' }, informedBy: { type: 'agent', name: 'Forecast Worker' }, date: '14 Apr', verdict: 'not_worked', measuredImpact: { text: '−AED 40k DSO cost', direction: 'down' }, function: 'finance', findingId: 'fmcg-f-h3', assessorNote: 'Assessor agent: 60 days on, DSO worsened to 81 days — the extension legitimised the stretch instead of stopping it. The exit condition is regressed and awaiting a re-disposition.', entity: 'Gulf Distribution Co.', region: 'KSA' },
+  { id: 'led9', persona: 'coo', title: 'Accept — consolidate KSA long-haul loads', subtitle: 'Truck utilization under 70% on Riyadh/Dammam lanes', madeBy: { type: 'human', name: 'Tariq Aziz', initials: 'TA', avatarBg: '#0F766E' }, informedBy: { type: 'agent', name: 'Logistics agent' }, date: '04 Apr', verdict: 'worked', measuredImpact: { text: '+AED 90k / qtr freight', direction: 'up' }, function: 'procurement', findingId: 'fmcg-f-h5', assessorNote: 'Assessor agent: utilization held above 82% for six weeks after the milk-run change — loop closed 05 Jun.', entity: 'Gulf Distribution Co.', region: 'KSA' },
+  { id: 'led5', persona: 'commercial_finance', title: 'Shift Q2 spend to performance channels', subtitle: 'Customer-mix insight, March run', madeBy: { type: 'human', name: 'Sanju', initials: 'SJ', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Profitability Worker' }, date: '02 Apr', verdict: 'worked', measuredImpact: { text: '+18% ROAS', direction: 'up' }, function: 'finance', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led10', persona: 'operations_head', title: 'Abandon — Ramadan surge flagged as forecast bias', subtitle: 'Seasonal calendar shift, not drift · agent tuned', madeBy: { type: 'human', name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Planning agent' }, date: '19 Mar', verdict: 'worked', measuredImpact: { text: 'false-positive rate −40%', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-h6', assessorNote: 'Assessor agent: the Hijri-calendar overlay removed the seasonal false positives — no genuine drift was missed in the following 90 days.', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led11', persona: 'operations_head', title: 'Accept — rebalance canned range across DCs', subtitle: 'Q1 obsolescence spike · write-offs 2.6x plan', madeBy: { type: 'human', name: 'Omar Farouk', initials: 'OF', avatarBg: '#B45309' }, informedBy: { type: 'agent', name: 'Planning agent' }, date: '14 Mar', verdict: 'worked', measuredImpact: { text: '−AED 214k / mo write-offs', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-0', assessorNote: 'Assessor agent: write-offs held under AED 120k/month for a full quarter — loop closed 20 Jun.', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led12', persona: 'store_manager', title: 'Accept — resequence Sunday merchandiser routes', subtitle: 'Dubai hypermarkets shelf recovery gap', madeBy: { type: 'human', name: 'Layla Nasser', initials: 'LN', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Commercial agent' }, date: '03 Mar', verdict: 'worked', measuredImpact: { text: '+AED 140k / mo recovered', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-h4', assessorNote: 'Assessor agent: Sunday OSA matched the weekday average for four straight weeks — loop closed 28 Apr.', entity: 'UAE Trading Co.', region: 'UAE' },
+  { id: 'led13', persona: 'operations_head', title: 'Accept — pull compressor overhaul forward, Egypt plant', subtitle: 'OEE collapse traced to one aging unit', madeBy: { type: 'human', name: 'Priya Raman', initials: 'PR', avatarBg: '#7C3AED' }, informedBy: { type: 'agent', name: 'Manufacturing agent' }, date: '05 Feb', verdict: 'worked', measuredImpact: { text: '+13 pts OEE recovered', direction: 'up' }, function: 'procurement', findingId: 'fmcg-f-h2', assessorNote: 'Assessor agent: OEE held above 72% for eight weeks after the overhaul — loop closed 02 Apr.', entity: 'Egypt Foods S.A.E.', region: 'Egypt' },
+  { id: 'led14', persona: 'sales_supervisor', title: 'Accept — merchandising blitz on Kuwait key accounts', subtitle: 'January promo compliance at 54% of contract', madeBy: { type: 'human', name: 'Layla Nasser', initials: 'LN', avatarBg: '#0D9488' }, informedBy: { type: 'agent', name: 'Commercial agent' }, date: '09 Jan', verdict: 'worked', measuredImpact: { text: '+AED 180k spend recovered', direction: 'up' }, function: 'finance', findingId: 'fmcg-f-h1', assessorNote: 'Assessor agent: compliance recovered to 91% and promo sell-out finished 4% over plan — loop closed 20 Feb.', entity: 'Gulf Distribution Co.', region: 'Kuwait & GCC' },
+  { id: 'led6', persona: 'cfo', title: 'Auto-approve invoices < AED 500', subtitle: 'Process decision · worker autonomous', madeBy: { type: 'agent', name: 'Close Worker' }, informedBy: { type: 'policy', name: 'policy' }, date: 'ongoing', verdict: 'worked', measuredImpact: { text: '22h / month saved', direction: 'up' }, function: 'finance', entity: 'UAE Trading Co.', region: 'UAE' },
 ];
 
 export const leaderboardHighlights = [
   { id: 'h1', medal: '🥇', tag: 'Most efficient · people', name: 'Sanju Mathew', avatarBg: '#0D9488', initials: 'SJ', statLine: '31 actions · 96% on-time · 11h saved' },
-  { id: 'h2', medal: '🤖', tag: 'Top agent', name: 'Profitability Agent', avatarBg: '#4F46E5', initials: 'PA', statLine: '124 runs · 99.2% success · AED 389k impact' },
-  { id: 'h3', medal: '⚡', tag: 'Best human + agent pair', name: 'Praveen + Close Agent', avatarBg: '#D97706', initials: 'PJ', statLine: 'Close time 9 days → 3 days' },
+  { id: 'h2', medal: '🤖', tag: 'Top worker', name: 'Profitability Worker', avatarBg: '#4F46E5', initials: 'PA', statLine: '124 runs · 99.2% success · AED 389k impact' },
+  { id: 'h3', medal: '⚡', tag: 'Best human + worker pair', name: 'Praveen + Close Worker', avatarBg: '#D97706', initials: 'PJ', statLine: 'Close time 9 days → 3 days' },
 ];
 
 export const leaderboard = [
   { id: 'l1', persona: 'commercial_finance', type: 'human', name: 'Sanju Mathew', initials: 'SJ', avatarBg: '#0D9488', actionsClosed: 31, onTimePct: 96, decisionWinRatePct: 83, timeSaved: '11h', trend: [16, 13, 14, 9, 7, 3], trendColor: '#16A34A' },
-  { id: 'l2', persona: 'commercial_finance', type: 'agent', name: 'Profitability Agent', initials: 'PA', avatarBg: '#4F46E5', actionsClosed: 124, onTimePct: 99.2, decisionWinRatePct: 81, timeSaved: '64h', trend: [14, 12, 10, 10, 6, 4], trendColor: '#16A34A' },
+  { id: 'l2', persona: 'commercial_finance', type: 'agent', name: 'Profitability Worker', initials: 'PA', avatarBg: '#4F46E5', actionsClosed: 124, onTimePct: 99.2, decisionWinRatePct: 81, timeSaved: '64h', trend: [14, 12, 10, 10, 6, 4], trendColor: '#16A34A' },
   { id: 'l3', persona: 'cfo', type: 'human', name: 'Praveen Jagadeesan', initials: 'PJ', avatarBg: '#D97706', actionsClosed: 22, onTimePct: 91, decisionWinRatePct: 88, timeSaved: '—', trend: [15, 11, 12, 8, 8, 5], trendColor: '#16A34A' },
   { id: 'l4', persona: 'coo', type: 'human', name: 'Devaki Habib', initials: 'DH', avatarBg: '#0D9488', actionsClosed: 19, onTimePct: 87, decisionWinRatePct: 74, timeSaved: '6h', trend: [10, 12, 9, 11, 8, 7], trendColor: '#D97706' },
-  { id: 'l5', persona: 'cfo', type: 'agent', name: 'Forecast Agent', initials: 'FA', avatarBg: '#4F46E5', actionsClosed: 58, onTimePct: 98, decisionWinRatePct: 69, timeSaved: '29h', trend: [8, 10, 7, 9, 10, 8], trendColor: '#A8A29E' },
+  { id: 'l5', persona: 'cfo', type: 'agent', name: 'Forecast Worker', initials: 'FA', avatarBg: '#4F46E5', actionsClosed: 58, onTimePct: 98, decisionWinRatePct: 69, timeSaved: '29h', trend: [8, 10, 7, 9, 10, 8], trendColor: '#A8A29E' },
   { id: 'l6', persona: 'operations_head', type: 'human', name: 'Ganesh Rajasekaran', initials: 'GR', avatarBg: '#4F46E5', actionsClosed: 17, onTimePct: 84, decisionWinRatePct: 71, timeSaved: '4h', trend: [12, 10, 13, 10, 9, 9], trendColor: '#A8A29E' },
 ];
 
@@ -205,7 +205,7 @@ export const outcomeReports = {
   latest: {
     runId: 'latest',
     title: 'FP&A Outcome — May 2026',
-    runMeta: 'Margin Leakage Agent · run completed in 8m 41s · approved by Praveen',
+    runMeta: 'Margin Leakage Worker · run completed in 8m 41s · approved by Praveen',
     published: true,
     scoreCards: [
       { id: 'sc1', label: 'Revenue', value: 'AED 12.4M', deltaLabel: '▲ 6.2% vs budget', deltaTone: 'green', sparkline: [24, 21, 22, 16, 17, 12, 9, 5], sparklineColor: '#16A34A' },
@@ -234,7 +234,7 @@ export function makeAgentBuilderSession() {
       {
         id: 'm1',
         role: 'user',
-        text: 'I need an FP&A agent that analyses my P&L and tells me where margin is leaking — something my finance team can run themselves.',
+        text: 'I need an FP&A worker that analyses my P&L and tells me where margin is leaking — something my finance team can run themselves.',
       },
       {
         id: 'm2',
@@ -256,7 +256,7 @@ export function makeAgentBuilderSession() {
         role: 'bot',
         stepType: 'data_context',
         stepLabel: 'Step 2 · Data context',
-        text: 'What data will the team have when they run it? The agent adapts to whatever is ticked at run time.',
+        text: 'What data will the team have when they run it? The worker adapts to whatever is ticked at run time.',
         choices: [
           { id: 'd1', label: 'P&L data', selected: true },
           { id: 'd2', label: 'Pricing data', selected: true },
@@ -271,7 +271,7 @@ export function makeAgentBuilderSession() {
         stepLabel: 'Step 3 · The plan',
         text: "Here's what I'll build. Everything below runs under the hood — your team only sees inputs and outcomes.",
         plan: {
-          name: 'Margin Leakage Agent',
+          name: 'Margin Leakage Worker',
           estRuntime: '7–9 min',
           steps: [
             { n: 1, text: 'Ingest & validate P&L, pricing, customer files (auto-detect columns)' },
@@ -289,7 +289,7 @@ export function makeAgentBuilderSession() {
 export function makeDraftPreview() {
   return {
     state: 'draft',
-    name: 'Margin Leakage Agent',
+    name: 'Margin Leakage Worker',
     function: 'FP&A · Finance',
     capabilitiesCount: 4,
     dataInputs: 'P&L · Pricing · Customers',
@@ -521,10 +521,10 @@ export const kpiCatalog = [
     driversNeeded: [{ name: 'Demand forecast', dataSource: 'Planning system' }, { name: 'Actual sell-in', dataSource: 'ERP shipments' }] },
 ];
 
-// ---------- Agent Space ----------
+// ---------- Worker Space ----------
 export const agentCatalog = [
   {
-    agentId: 'agent-margin-leakage', state: 'live', name: 'Margin Leakage Agent', function: 'FP&A · Finance',
+    agentId: 'worker-margin-leakage', state: 'live', name: 'Margin Leakage Worker', function: 'FP&A · Finance',
     capabilitiesCount: 4, dataInputs: 'P&L · Pricing · Customers', reviewGate: 'Human approval · step 4',
     owner: { name: 'Praveen J.', initials: 'PJ', avatarBg: '#D97706' }, guardrails: 'Finance pack · PII off', estRuntime: '7–9 min',
     description: 'Analyses P&L and pricing data to find where margin is leaking, ranked by driver.',
@@ -534,7 +534,7 @@ export const agentCatalog = [
     runsCount: 124, lastRunAt: '2h ago',
   },
   {
-    agentId: 'agent-forecast', state: 'live', name: 'Forecast Agent', function: 'FP&A · Finance',
+    agentId: 'worker-forecast', state: 'live', name: 'Forecast Worker', function: 'FP&A · Finance',
     capabilitiesCount: 3, dataInputs: 'Cash-flow · Pipeline', reviewGate: 'Human approval before publish',
     owner: { name: 'Ganesh', initials: 'GR', avatarBg: '#4F46E5' }, guardrails: 'Finance pack', estRuntime: '5–8 min',
     description: 'Builds cash-flow and demand forecasts across scenarios.',
@@ -544,7 +544,7 @@ export const agentCatalog = [
     runsCount: 58, lastRunAt: '6h ago',
   },
   {
-    agentId: 'agent-screening', state: 'live', name: 'Screening Agent', function: 'Talent · HR',
+    agentId: 'worker-screening', state: 'live', name: 'Screening Worker', function: 'Talent · HR',
     capabilitiesCount: 2, dataInputs: 'Resumes · Job requisitions', reviewGate: 'Human review before release',
     owner: { name: 'Devaki', initials: 'DH', avatarBg: '#0D9488' }, guardrails: 'HR pack · PII on, masked', estRuntime: '3–5 min',
     description: 'Shortlists and ranks candidates against job requisitions.',
@@ -554,7 +554,7 @@ export const agentCatalog = [
     runsCount: 31, lastRunAt: '1d ago',
   },
   {
-    agentId: 'agent-recipe-cost', state: 'live', name: 'Recipe Cost Agent', function: 'Menu Engineering',
+    agentId: 'worker-recipe-cost', state: 'live', name: 'Recipe Cost Worker', function: 'Menu Engineering',
     capabilitiesCount: 3, dataInputs: 'Supplier invoices · Recipe BOMs', reviewGate: 'Human approval before menu repricing',
     owner: { name: 'Sanju Mathew', initials: 'SJ', avatarBg: '#0D9488' }, guardrails: 'F&B pack', estRuntime: '4–6 min',
     description: 'Tracks ingredient cost drift against recipe bills-of-material and flags menu items losing margin.',
@@ -564,7 +564,7 @@ export const agentCatalog = [
     runsCount: 47, lastRunAt: '5h ago',
   },
   {
-    agentId: 'agent-spoilage', state: 'live', name: 'Spoilage & Waste Agent', function: 'Operations',
+    agentId: 'worker-spoilage', state: 'live', name: 'Spoilage & Waste Worker', function: 'Operations',
     capabilitiesCount: 2, dataInputs: 'POS data · Inventory counts', reviewGate: 'None — autonomous',
     owner: { name: 'Devaki Habib', initials: 'DH', avatarBg: '#0D9488' }, guardrails: 'F&B pack', estRuntime: '2–3 min',
     description: 'Cross-references sales against inventory draw-down to estimate spoilage and waste by location.',
@@ -574,7 +574,7 @@ export const agentCatalog = [
     runsCount: 89, lastRunAt: '40m ago',
   },
   {
-    agentId: 'agent-noshow', state: 'live', name: 'Patient No-Show Predictor', function: 'Scheduling',
+    agentId: 'worker-noshow', state: 'live', name: 'Patient No-Show Predictor', function: 'Scheduling',
     capabilitiesCount: 3, dataInputs: 'Appointment history · EHR scheduling feed', reviewGate: 'Human review before overbooking',
     owner: { name: 'Lena Farouk', initials: 'LF', avatarBg: '#0D9488' }, guardrails: 'Healthcare pack · PHI masked', estRuntime: '3–4 min',
     description: 'Predicts appointment no-show risk and recommends safe overbooking slots to protect clinician utilization.',
@@ -584,7 +584,7 @@ export const agentCatalog = [
     runsCount: 63, lastRunAt: '3h ago',
   },
   {
-    agentId: 'agent-claims-denial', state: 'live', name: 'Claims Denial Triage Agent', function: 'Revenue Cycle',
+    agentId: 'worker-claims-denial', state: 'live', name: 'Claims Denial Triage Worker', function: 'Revenue Cycle',
     capabilitiesCount: 4, dataInputs: 'Claims data · Payer rules', reviewGate: 'Human approval before resubmission',
     owner: { name: 'Anita Krishnan', initials: 'AK', avatarBg: '#D97706' }, guardrails: 'Healthcare pack · PHI masked', estRuntime: '5–7 min',
     description: 'Classifies denied claims by root cause and drafts resubmission packets for the highest-recovery cases first.',
@@ -594,7 +594,7 @@ export const agentCatalog = [
     runsCount: 52, lastRunAt: '1d ago',
   },
   {
-    agentId: 'agent-shrinkage', state: 'live', name: 'Inventory Shrinkage Agent', function: 'Loss Prevention',
+    agentId: 'worker-shrinkage', state: 'live', name: 'Inventory Shrinkage Worker', function: 'Loss Prevention',
     capabilitiesCount: 3, dataInputs: 'POS data · Stock counts · CCTV event logs', reviewGate: 'Human review before flags escalate',
     owner: { name: 'Ganesh Rajasekaran', initials: 'GR', avatarBg: '#4F46E5' }, guardrails: 'Retail pack', estRuntime: '4–5 min',
     description: 'Correlates point-of-sale, stock counts and event logs to flag stores with abnormal shrinkage patterns.',
@@ -604,7 +604,7 @@ export const agentCatalog = [
     runsCount: 36, lastRunAt: '8h ago',
   },
   {
-    agentId: 'agent-assortment', state: 'live', name: 'Assortment Optimization Agent', function: 'Merchandising',
+    agentId: 'worker-assortment', state: 'live', name: 'Assortment Optimization Worker', function: 'Merchandising',
     capabilitiesCount: 3, dataInputs: 'Sales history · Planogram data', reviewGate: 'Human approval before planogram change',
     owner: { name: 'Sanju Mathew', initials: 'SJ', avatarBg: '#0D9488' }, guardrails: 'Retail pack', estRuntime: '6–8 min',
     description: 'Recommends shelf-space reallocation by store cluster based on sell-through and basket affinity.',
@@ -614,7 +614,7 @@ export const agentCatalog = [
     runsCount: 21, lastRunAt: '2d ago',
   },
   {
-    agentId: 'agent-predictive-maintenance', state: 'live', name: 'Predictive Maintenance Agent', function: 'Plant Operations',
+    agentId: 'worker-predictive-maintenance', state: 'live', name: 'Predictive Maintenance Worker', function: 'Plant Operations',
     capabilitiesCount: 4, dataInputs: 'IoT sensor feed · Maintenance logs', reviewGate: 'Human approval before scheduling downtime',
     owner: { name: 'Praveen Jagadeesan', initials: 'PJ', avatarBg: '#D97706' }, guardrails: 'Manufacturing pack', estRuntime: '8–10 min',
     description: 'Scores equipment failure risk from sensor telemetry and proposes a maintenance schedule that minimizes downtime cost.',
@@ -624,7 +624,7 @@ export const agentCatalog = [
     runsCount: 44, lastRunAt: '6h ago',
   },
   {
-    agentId: 'agent-defect-vision', state: 'live', name: 'Defect Vision Agent', function: 'Quality Control',
+    agentId: 'worker-defect-vision', state: 'live', name: 'Defect Vision Worker', function: 'Quality Control',
     capabilitiesCount: 2, dataInputs: 'Line camera feed · Defect taxonomy', reviewGate: 'Human review before line stop',
     owner: { name: 'Ganesh Rajasekaran', initials: 'GR', avatarBg: '#4F46E5' }, guardrails: 'Manufacturing pack', estRuntime: '1–2 min',
     description: 'Flags visual defects on the production line in real time against a configurable defect taxonomy.',
@@ -634,7 +634,7 @@ export const agentCatalog = [
     runsCount: 6, lastRunAt: '9d ago',
   },
   {
-    agentId: 'agent-freight-exception', state: 'live', name: 'Freight Exception Agent', function: 'Logistics Ops',
+    agentId: 'worker-freight-exception', state: 'live', name: 'Freight Exception Worker', function: 'Logistics Ops',
     capabilitiesCount: 3, dataInputs: 'Carrier tracking feed · SLA terms', reviewGate: 'None — autonomous',
     owner: { name: 'Devaki Habib', initials: 'DH', avatarBg: '#0D9488' }, guardrails: 'Logistics pack', estRuntime: '3–4 min',
     description: 'Watches in-transit shipments against carrier SLAs and auto-drafts exception claims for late or damaged freight.',
@@ -644,7 +644,7 @@ export const agentCatalog = [
     runsCount: 112, lastRunAt: '20m ago',
   },
   {
-    agentId: 'agent-route-optimizer', state: 'live', name: 'Last-Mile Route Optimizer', function: 'Fleet Ops',
+    agentId: 'worker-route-optimizer', state: 'live', name: 'Last-Mile Route Optimizer', function: 'Fleet Ops',
     capabilitiesCount: 3, dataInputs: 'Delivery orders · Live traffic feed', reviewGate: 'Human approval for route changes mid-shift',
     owner: { name: 'Ganesh Rajasekaran', initials: 'GR', avatarBg: '#4F46E5' }, guardrails: 'Logistics pack', estRuntime: '2–3 min',
     description: 'Re-sequences last-mile delivery routes against live traffic to cut fuel cost and missed delivery windows.',
@@ -654,7 +654,7 @@ export const agentCatalog = [
     runsCount: 201, lastRunAt: '5m ago',
   },
   {
-    agentId: 'agent-churn-risk', state: 'live', name: 'Churn Risk Agent', function: 'Customer Success',
+    agentId: 'worker-churn-risk', state: 'live', name: 'Churn Risk Worker', function: 'Customer Success',
     capabilitiesCount: 3, dataInputs: 'Product usage telemetry · Support tickets', reviewGate: 'Human review before outreach',
     owner: { name: 'Lena Farouk', initials: 'LF', avatarBg: '#0D9488' }, guardrails: 'Technology pack', estRuntime: '4–5 min',
     description: 'Scores accounts by churn risk from usage decay and support sentiment, and drafts a save-play for CS to act on.',
@@ -664,7 +664,7 @@ export const agentCatalog = [
     runsCount: 67, lastRunAt: '1h ago',
   },
   {
-    agentId: 'agent-vendor-risk', state: 'live', name: 'Vendor Risk Agent', function: 'Procurement',
+    agentId: 'worker-vendor-risk', state: 'live', name: 'Vendor Risk Worker', function: 'Procurement',
     capabilitiesCount: 3, dataInputs: 'Vendor financials · News/sanctions feed', reviewGate: 'Human approval before vendor suspension',
     owner: { name: 'Praveen Jagadeesan', initials: 'PJ', avatarBg: '#D97706' }, guardrails: 'Finance pack', estRuntime: '5–6 min',
     description: 'Monitors vendor financial health and adverse news to flag supply-chain risk before it disrupts operations.',
@@ -674,7 +674,7 @@ export const agentCatalog = [
     runsCount: 28, lastRunAt: '11h ago',
   },
   {
-    agentId: 'agent-lease-abstraction', state: 'draft', name: 'Lease Abstraction Agent', function: 'Portfolio Ops',
+    agentId: 'worker-lease-abstraction', state: 'draft', name: 'Lease Abstraction Worker', function: 'Portfolio Ops',
     capabilitiesCount: 2, dataInputs: 'Lease PDFs · Portfolio register', reviewGate: 'Human review before register update',
     owner: { name: 'Rohan Mehta', initials: 'RM', avatarBg: '#4F46E5' }, guardrails: 'Real estate pack', estRuntime: '6–9 min',
     description: 'Extracts key terms (rent escalation, break clauses, renewal dates) from lease PDFs into the portfolio register.',
@@ -685,7 +685,7 @@ export const agentCatalog = [
   },
 ];
 
-// ---------- Agent Studio ----------
+// ---------- Worker Studio ----------
 export function makeSeedWorkflow(id, name) {
   const now = new Date().toISOString();
   return {
@@ -719,7 +719,7 @@ const promptTemplates = [
 export function generatePromptFromInstructions(instructions) {
   const hit = promptTemplates.find((t) => t.match.test(instructions));
   if (hit) return hit.template;
-  return `You are an agent that ${instructions || 'processes the configured input'}. Process the input data accordingly and produce structured output matching the configured output type.`;
+  return `You are a worker that ${instructions || 'processes the configured input'}. Process the input data accordingly and produce structured output matching the configured output type.`;
 }
 
 const outputPreviews = {

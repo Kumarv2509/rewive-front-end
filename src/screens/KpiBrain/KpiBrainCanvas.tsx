@@ -42,19 +42,19 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
 
   const lit = useMemo(() => (selectedId ? tracePath(brain, selectedId) : null), [brain, selectedId]);
 
-  // Who holds the selected mandate: its human owner + counterpart (held twice),
+  // Who holds the selected mandate: its human owner + agent (held twice),
   // plus any workforce agents whose mandateIds name this node.
   const { data: shadowOrg } = useShadowOrg();
   const { data: catalog } = useAgentCatalog();
   const held = useMemo(() => {
     const node = selectedId ? brain.nodes.find((n) => n.id === selectedId) : null;
     if (!node || (node.kind !== 'stream_kpi' && node.kind !== 'target')) return null;
-    const counterpart =
+    const agent =
       shadowOrg?.agents.find((a) => a.watchesNodeIds.includes(node.id)) ??
       shadowOrg?.agents.find((a) => a.streamKey !== null && a.streamKey === node.streamKey);
     const workedBy = (catalog ?? []).filter((a) => a.mandateIds?.includes(node.id));
-    if (!counterpart && workedBy.length === 0) return null;
-    return { node, counterpart, workedBy };
+    if (!agent && workedBy.length === 0) return null;
+    return { node, agent, workedBy };
   }, [selectedId, brain.nodes, shadowOrg, catalog]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -114,7 +114,7 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
 
       {proposedEdges.length > 0 && (
         <div className="brain-proposals">
-          <div className="bp-title">{proposedEdges.length} petition{proposedEdges.length > 1 ? 's' : ''} from the counterparts</div>
+          <div className="bp-title">{proposedEdges.length} petition{proposedEdges.length > 1 ? 's' : ''} from the agents</div>
           {proposedEdges.map((e) => (
             <div key={e.id} className="bp-item">
               <div className="bp-rationale">{e.rationale ?? 'Agent-petitioned link'}</div>
@@ -133,12 +133,12 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
       {held && (
         <div className="brain-legend" style={{ top: 'auto', bottom: 12, maxWidth: 'min(720px, calc(100% - 24px))' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>Held twice</span>
-          {held.counterpart && (
+          {held.agent && (
             <span>
-              <b>{held.counterpart.humanOwner.name}</b> · {held.counterpart.humanOwner.role}
+              <b>{held.agent.humanOwner.name}</b> · {held.agent.humanOwner.role}
               {' + '}
               <Link to="/operate/counterparts" style={{ color: 'var(--accent-deep)', textDecoration: 'none', fontWeight: 600 }}>
-                {held.counterpart.name} →
+                {held.agent.name} →
               </Link>
             </span>
           )}

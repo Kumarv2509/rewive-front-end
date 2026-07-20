@@ -58,7 +58,7 @@ export function SolutionDesignScreen() {
 
       <div className="concept-note">
         {approved
-          ? 'Approved. Design each agent below using the Unified Agent Studio — business altitude alone is enough for some, others will need a developer.'
+          ? 'Approved. Design each worker below using the Unified Worker Studio — business altitude alone is enough for some, others will need a developer.'
           : 'This is a solution design document. No development work has started yet.'}
       </div>
 
@@ -117,7 +117,7 @@ export function SolutionDesignScreen() {
                   )
                 }
               >
-                Design agent &rarr;
+                Design worker &rarr;
               </button>
             )}
             {approved && task.type === 'human_task' && <Link className="btn ghost sm" to="/operate/tasks">Track in Tasks &rarr;</Link>}
@@ -128,7 +128,7 @@ export function SolutionDesignScreen() {
 
       <div className="card" style={{ marginBottom: 16, padding: '16px 20px', background: 'var(--teal-soft)', border: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontWeight: 700, fontSize: 12.5, color: 'var(--teal)' }}>Validation agent review</span>
+          <span style={{ fontWeight: 700, fontSize: 12.5, color: 'var(--teal)' }}>Validation worker review</span>
           {solution.validation && <Pill tone={solution.validation.recommendation === 'dev_handoff' ? 'amber' : 'green'} style={{ marginLeft: 'auto' }}>
             recommends: {solution.validation.recommendation === 'dev_handoff' ? 'hand off to dev / IT' : 'ready for Runs & Actions'}
           </Pill>}

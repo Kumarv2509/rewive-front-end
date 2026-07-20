@@ -49,6 +49,7 @@ import { deriveHalfYear, deriveStatTiles } from './halfyear.js';
 import * as tracking from './tracking.js';
 import { registerTrackingRoutes } from './tracking-routes.js';
 import { runSweep } from './sweep.js';
+import { seedTrackingIfEmpty } from './seed-tracking.js';
 
 const app = express();
 app.use(cors());
@@ -72,7 +73,16 @@ app.use(express.json({ limit: '5mb' }));
 // cost is irrelevant next to not losing dispositions.
 let liveLock = Promise.resolve();
 
+// Read-only routes that never read or write findingsState — they go straight
+// to the tracking store, so the serialization above buys them nothing. The
+// sweep holds the lock for its whole run (seconds, by design — it is paced so
+// the analysis is watchable), and the live strip has to be able to poll
+// *during* that run or there is nothing to watch. Keep this list to routes
+// that genuinely touch no shared in-memory state.
+const LIVE_LOCK_EXEMPT = new Set(['/api/v1/sweep-progress']);
+
 app.use((req, res, next) => {
+  if (req.method === 'GET' && LIVE_LOCK_EXEMPT.has(req.path)) return next();
   const prev = liveLock;
   let release;
   liveLock = new Promise((resolve) => { release = resolve; });
@@ -132,6 +142,23 @@ app.get('/api/v1/me', (req, res) => res.json(currentUser));
 function filterByPersona(items, persona, scope) {
   const roles = personaScope(persona, scope);
   return roles ? items.filter((d) => roles.has(d.persona) || (d.dottedPersona && roles.has(d.dottedPersona))) : items;
+}
+
+// Exit conditions carry no persona of their own — they belong to whoever owns
+// the finding they came from, so they inherit its scope. Pass the UNFILTERED
+// findings here; filtering both against each other would compound.
+// Fails open on an unresolvable findingId: two seeded manufacturing closures
+// (mfg-c-h1, mfg-c-h2) point at findings that don't exist, and hiding them
+// under every lens would be a worse bug than showing them under all of them.
+function filterClosuresByPersona(closures, findings, persona, scope) {
+  const roles = personaScope(persona, scope);
+  if (!roles) return closures;
+  const byId = new Map(findings.map((f) => [f.id, f]));
+  return closures.filter((c) => {
+    const f = byId.get(c.findingId);
+    if (!f) return true;
+    return roles.has(f.persona) || (f.dottedPersona && roles.has(f.dottedPersona));
+  });
 }
 
 // Greeting + summary sentence only. The old kpis block (and its per-persona
@@ -230,10 +257,20 @@ app.post('/api/v1/runs/:id/resume', (req, res) => {
 // the product (and with each other).
 app.get('/api/v1/decisions/stats', (req, res) => {
   const industry = v4Industry(req);
-  const findings = findingsState[industry] ?? [];
-  const ledger = op(req).decisionLedger ?? [];
-  const currency = industry === 'fmcg' ? 'AED' : '$';
-  const halfYear = deriveHalfYear({ findings, closures: closureKpisState[industry] ?? [], ledger, currency });
+  const { persona, scope } = req.query;
+  // Scoped to the lens, same as the ledger table below these tiles. Without
+  // this the tiles and the By-entity/By-region rollups were company-wide while
+  // the table under them was role-scoped — so a division COO saw other
+  // divisions' entities in the rollup and the two halves of the screen
+  // disagreed about the same period.
+  const findings = filterByPersona(findingsState[industry] ?? [], persona, scope);
+  const ledger = filterByPersona(op(req).decisionLedger ?? [], persona, scope);
+  // FMCG and Healthcare are both UAE orgs and seed their impact figures in AED;
+  // Manufacturing is the only USD pack. Keep this in step with the seeds, or
+  // the tiles re-badge a sum of AED figures with a dollar sign.
+  const currency = industry === 'manufacturing' ? '$' : 'AED';
+  const closures = filterClosuresByPersona(closureKpisState[industry] ?? [], findingsState[industry] ?? [], persona, scope);
+  const halfYear = deriveHalfYear({ findings, closures, ledger, currency });
   res.json({ ...deriveStatTiles({ findings, ledger, currency }), ...(halfYear ? { halfYear } : {}) });
 });
 
@@ -336,7 +373,7 @@ app.post('/api/v1/agents', (req, res) => {
   const session = getOrCreateSession(sessionId);
   const planMessage = session.messages.find((m) => m.stepType === 'plan');
   const agentId = `agent-${Date.now()}`;
-  const preview = { ...makeDraftPreview(), state: 'live', name: planMessage?.plan?.name ?? 'New Agent' };
+  const preview = { ...makeDraftPreview(), state: 'live', name: planMessage?.plan?.name ?? 'New Worker' };
   createdAgents.set(agentId, { sessionId, preview });
   res.json({ agentId, state: 'live', name: preview.name });
 });
@@ -765,6 +802,7 @@ const agentSpecs = new Map();
 // live Act in this session.
 solutionDesigns.set('sol-fmcg-riyadh-otif', {
   id: 'sol-fmcg-riyadh-otif',
+  industry: 'fmcg',
   signalId: 'fmcg-f-7',
   signalName: 'Riyadh DC case fill sliding — key-account penalties accruing',
   signalCategory: 'laggard',
@@ -783,6 +821,109 @@ solutionDesigns.set('sol-fmcg-riyadh-otif', {
   validation: null,
   createdAt: '2026-06-18T09:00:00Z',
   updatedAt: '2026-06-18T09:00:00Z',
+});
+
+// Healthcare's Act loops, pre-seeded the same way: each of these findings was
+// dispositioned Act earlier in the demo timeline, so the task list exists from
+// the seed rather than only after a live Act. Tasks carry their own persona —
+// a network-level fix fans work out to the sites that have to do it.
+// The CFO's Act loop. Worth reading as a whole: the front office had already
+// acknowledged the same drift with a trip-wire because the fix — showing the
+// desk what the patient actually owes — was not in their control. This is the
+// level that owns it acting, which is what releases the level below.
+solutionDesigns.set('sol-hc-cfo-poscash', {
+  id: 'sol-hc-cfo-poscash',
+  industry: 'healthcare',
+  signalId: 'hc-f-poscash',
+  signalName: 'Point-of-service collections stuck at 41% while patient co-pay share keeps rising',
+  signalCategory: 'revenue_leakage',
+  status: 'drafting',
+  approach: 'Stop asking the desk to collect an amount it cannot verify. Put the payer’s own liability response on the check-in screen, take card-on-file consent at booking, and re-base the collection target on verified liability rather than billed value.',
+  dataNeeded: 'eClaimLink eligibility and benefits responses; patient liability by visit; desk collection events by site and hour; self-pay recovery after the visit',
+  owner: { name: 'Rashid Al Balushi', initials: 'RB', avatarBg: '#B45309' },
+  guardrails: 'Never quote a patient a liability figure the payer response does not support. No collection pressure at the point of clinical need — emergency presentations are exempt.',
+  copiedFromLabel: null,
+  taskList: [
+    { id: 'sol-hc-cfo-poscash-t1', type: 'new_agent', title: 'Patient liability agent — live benefits lookup at check-in', owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona: 'cfo' },
+    { id: 'sol-hc-cfo-poscash-t2', type: 'human_task', title: 'Ship the benefits display to the three busiest desks', owner: 'Rashid Al Balushi', status: 'in_progress', channel: 'app', comments: [], persona: 'cfo' },
+    { id: 'sol-hc-cfo-poscash-t3', type: 'human_task', title: 'Re-base the desk collection target on verified liability, not billed value', owner: 'Anita Mathew', status: 'confirmed', channel: 'app', comments: [], persona: 'fpa' },
+    { id: 'sol-hc-cfo-poscash-t4', type: 'human_task', title: 'Add card-on-file consent to the booking call', owner: 'Omar Sheikh', status: 'needs_review', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-hc-cfo-poscash-t5', type: 'human_task', title: 'Agree the emergency-presentation exemption with clinical', owner: 'Dr. Meera Nair', status: 'confirmed', channel: 'app', comments: [], persona: 'operations_head' },
+    { id: 'sol-hc-cfo-poscash-t6', type: 'existing_agent', title: 'Revenue cycle agent — track desk collection by site weekly', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'cfo' },
+  ],
+  validation: null,
+  createdAt: '2026-07-16T07:10:00Z',
+  updatedAt: '2026-07-19T13:25:00Z',
+});
+
+solutionDesigns.set('sol-hc-coo-access', {
+  id: 'sol-hc-coo-access',
+  industry: 'healthcare',
+  signalId: 'hc-f-coo-access',
+  signalName: 'Appointment lead time is 9 days network-wide and every site is solving it separately',
+  signalCategory: 'laggard',
+  status: 'drafting',
+  approach: 'Stop three local fixes and run one: a shared slot pool across the three sites, an agent that offers the patient the earliest appointment anywhere in the network at booking, and one owner for network capacity rather than three.',
+  dataNeeded: 'Scheduling system slot inventory across all sites; booking-to-appointment intervals; patient home postcode for travel tolerance',
+  owner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5' },
+  guardrails: 'Never offer a cross-site appointment without showing the travel implication. No change to clinical triage priority.',
+  copiedFromLabel: null,
+  taskList: [
+    { id: 'sol-hc-coo-access-t1', type: 'new_agent', title: 'Network slot-matching agent — offer earliest availability across sites', owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona: 'coo' },
+    { id: 'sol-hc-coo-access-t2', type: 'human_task', title: 'Name a single owner for network capacity', owner: 'Kumara Vijayan', status: 'needs_review', channel: 'app', comments: [], persona: 'coo' },
+    { id: 'sol-hc-coo-access-t3', type: 'human_task', title: 'Publish Sharjah slot inventory to the shared pool', owner: 'Layla Haddad', status: 'confirmed', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-coo-access-t4', type: 'human_task', title: 'Add the cross-site offer to the booking-call script', owner: 'Omar Sheikh', status: 'in_progress', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-hc-coo-access-t5', type: 'existing_agent', title: 'Patient experience agent — watch lead time by site weekly', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'coo' },
+  ],
+  validation: null,
+  createdAt: '2026-07-08T08:30:00Z',
+  updatedAt: '2026-07-17T11:15:00Z',
+});
+
+solutionDesigns.set('sol-hc-fo-elig', {
+  id: 'sol-hc-fo-elig',
+  industry: 'healthcare',
+  signalId: 'hc-f-fo-elig',
+  signalName: 'Eligibility is not being verified at check-in on roughly one visit in six',
+  signalCategory: 'cost_drainer',
+  status: 'drafting',
+  approach: 'Make the check impossible to skip rather than asking people to remember it under queue pressure: hard-stop the registration screen without an eligibility response, pre-run eligibility overnight for booked patients so the desk only handles walk-ins, and staff the 08:00 rush to the arrival curve.',
+  dataNeeded: 'Registration timestamps by desk and hour; eClaimLink eligibility responses; ELIG-001 rejections traced to registration',
+  owner: { name: 'Omar Sheikh', initials: 'OS', avatarBg: '#0369A1' },
+  guardrails: 'Never block a clinical encounter on an eligibility failure — flag for billing and let the patient be seen.',
+  copiedFromLabel: 'Adapted from the February registration checklist loop',
+  taskList: [
+    { id: 'sol-hc-fo-elig-t1', type: 'new_agent', title: 'Overnight eligibility pre-check agent — booked patients', owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-hc-fo-elig-t2', type: 'human_task', title: 'Hard-stop registration without an eligibility response', owner: 'Omar Sheikh', status: 'confirmed', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-hc-fo-elig-t3', type: 'human_task', title: 'Staff the 08:00–09:00 desk rush to the arrival curve', owner: 'Layla Haddad', status: 'in_progress', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-fo-elig-t4', type: 'existing_agent', title: 'Revenue cycle agent — trace ELIG-001 back to the registering desk', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'sales_supervisor' },
+  ],
+  validation: null,
+  createdAt: '2026-07-15T06:20:00Z',
+  updatedAt: '2026-07-19T14:40:00Z',
+});
+
+solutionDesigns.set('sol-hc-cm-wait', {
+  id: 'sol-hc-cm-wait',
+  industry: 'healthcare',
+  signalId: 'hc-f-cm-wait',
+  signalName: 'Sharjah afternoon sessions are running 38 minutes behind by the third patient',
+  signalCategory: 'laggard',
+  status: 'validated',
+  approach: 'Re-base slot length on the measured consultation time rather than the booked one, protect the session start, and stop counting the check-in queue as free time.',
+  dataNeeded: 'Consultation start/end timestamps by clinician; session start times; check-in to called-in intervals',
+  owner: { name: 'Layla Haddad', initials: 'LH', avatarBg: '#9333EA' },
+  guardrails: 'No reduction in daily appointment volume without the clinical lead agreeing the trade.',
+  copiedFromLabel: null,
+  taskList: [
+    { id: 'sol-hc-cm-wait-t1', type: 'human_task', title: 'Re-base afternoon slots to 17 minutes on the three worst clinics', owner: 'Layla Haddad', status: 'done', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-cm-wait-t2', type: 'human_task', title: 'Protect the 14:00 start — no admin block in the preceding slot', owner: 'Layla Haddad', status: 'confirmed', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-cm-wait-t3', type: 'existing_agent', title: 'Patient experience agent — alert when a session starts 10+ min late', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-cm-wait-t4', type: 'human_task', title: 'Report arrival-to-check-in inside the wait-time mandate', owner: 'Omar Sheikh', status: 'needs_review', channel: 'app', comments: [], persona: 'sales_supervisor' },
+  ],
+  validation: null,
+  createdAt: '2026-07-11T09:45:00Z',
+  updatedAt: '2026-07-18T16:05:00Z',
 });
 
 function makeDefaultTaskList(solutionId, signalName, persona = 'operations_head') {
@@ -836,6 +977,7 @@ app.post('/api/v1/solutions', (req, res) => {
   const now = new Date().toISOString();
   const solution = {
     id,
+    industry: v4Industry(req),
     signalId,
     signalName: signal.name,
     signalCategory: signal.category,
@@ -949,8 +1091,13 @@ app.post('/api/v1/quick-solutions/:id/confirm', (req, res) => {
 // ---------- Tasks (assigned across all solution designs, and confirmed quick solutions) ----------
 app.get('/api/v1/tasks', (req, res) => {
   const { status, persona, scope } = req.query;
+  const industry = v4Industry(req);
   const all = [];
+  // Tasks fan out of a solution design, which belongs to the org whose finding
+  // opened it. Without this filter every tenant sees every other tenant's task
+  // list — a Medcare lens showing an Americana penalty waiver.
   for (const solution of solutionDesigns.values()) {
+    if (solution.industry && solution.industry !== industry) continue;
     for (const task of solution.taskList) {
       all.push({ ...task, solutionId: solution.id, solutionName: solution.signalName });
     }
@@ -1148,7 +1295,7 @@ app.post('/api/v1/agent-specs/:id/publish', (req, res) => {
   };
   createdAgents.set(agentId, { sessionId: null, preview, catalogMeta });
   spec.linkedAgentId = agentId;
-  pushVersion(spec, 'Published — now live in Agent Space', spec.needsTechnicalWork ? 'developer' : 'business');
+  pushVersion(spec, 'Published — now live in Workforce', spec.needsTechnicalWork ? 'developer' : 'business');
 
   const found = findTask(spec.taskId);
   if (found) found.task.status = 'done';
@@ -1488,6 +1635,11 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
       watchedByAgentName: finding.raisedByAgentName,
       createdAt: now,
       closedAt: null,
+      // Inherited from the finding: an exit condition belongs to the same
+      // entity and region as the drift that created it, and the By-entity
+      // rollup skips rows with no entity.
+      ...(finding.entity ? { entity: finding.entity } : {}),
+      ...(finding.region ? { region: finding.region } : {}),
     };
     closureKpisState[industry].push(closure);
     finding.status = 'accepted';
@@ -1499,6 +1651,7 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
     const categoryByStream = { finance: 'cost_drainer', commercial: 'revenue_leakage', marketing: 'revenue_leakage' };
     const solution = {
       id: solutionId,
+      industry,
       signalId: finding.id,
       signalName: finding.title,
       signalCategory: categoryByStream[finding.streamKey] ?? (finding.severity === 'critical' ? 'derailer' : 'laggard'),
@@ -1541,7 +1694,7 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
   res.json(stripServerFields(finding));
 });
 
-// The chief counterpart of an industry is the stream-less agent at the top of
+// The chief agent of an industry is the stream-less agent at the top of
 // its shadow org (persona group_ceo for FMCG, coo for the legacy industries).
 // Escalation routes to its real id — never a templated `${industry}-sa-chief`,
 // which only matched FMCG and left healthcare/manufacturing escalations
@@ -1666,7 +1819,11 @@ app.post('/api/v1/findings/:id/re-alert', (req, res) => {
 });
 
 // ---------- Exit conditions (closure) ----------
-app.get('/api/v1/closure-kpis', (req, res) => res.json(closureKpisState[v4Industry(req)]));
+app.get('/api/v1/closure-kpis', (req, res) => {
+  const industry = v4Industry(req);
+  const { persona, scope } = req.query;
+  res.json(filterClosuresByPersona(closureKpisState[industry] ?? [], findingsState[industry] ?? [], persona, scope));
+});
 
 // Close the loop: mark an exit condition met, which closes its originating finding too.
 app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
@@ -1698,7 +1855,7 @@ app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
 // through each route — keeps this additive instead of rewriting ~40 handlers.
 // ============ Demo heartbeat (dev server only) ============
 // Makes the loop run by itself: SLA clocks tick down and expired findings walk
-// up the org unprompted ("silence escalates" — live), counterparts sweep the
+// up the org unprompted ("silence escalates" — live), agents sweep the
 // senses they watch on a cadence, and active connectors pull fresh loads.
 // Only server.js starts this — never the serverless handler (api/handler.js),
 // where an interval can't survive the invocation.
@@ -1708,7 +1865,7 @@ const TICK_MS = 30_000;
 //   REWIVE_SLA_HOURS_PER_TICK=0    freeze the clocks
 //   REWIVE_SLA_HOURS_PER_TICK=1    stage speed — the hero escalates in ~2 min
 const SLA_HOURS_PER_TICK = Number(process.env.REWIVE_SLA_HOURS_PER_TICK ?? 0.1);
-const SENSE_SWEEP_EVERY_TICKS = 4; // each counterpart re-checks its senses every ~2 min
+const SENSE_SWEEP_EVERY_TICKS = 4; // each agent re-checks its senses every ~2 min
 const CONNECTOR_LOAD_EVERY_MS = 5 * 60_000; // active connectors pull a load every ~5 min
 
 let heartbeatTickCount = 0;
@@ -1746,7 +1903,7 @@ function heartbeatTick() {
     }
   }
 
-  // 2) Sense sweeps — counterparts re-check the numbers they watch, staggered
+  // 2) Sense sweeps — agents re-check the numbers they watch, staggered
   // so the timestamps read organically. First tick sweeps everyone.
   for (const org of Object.values(shadowOrgsSeed)) {
     org.agents.forEach((agent, i) => {
@@ -1914,6 +2071,9 @@ const sweepCtx = {
 };
 
 export const runLiveSweep = (trigger) => runSweep(trigger, sweepCtx);
+
+/** Default live-tracked mandates — no-ops once any config exists. */
+export const seedLiveTracking = () => seedTrackingIfEmpty(() => brainsState);
 
 registerTrackingRoutes(app, {
   v4Industry,

@@ -119,6 +119,20 @@ export function registerTrackingRoutes(app, ctx) {
     res.json(run);
   });
 
+  // The newest run plus its analysis trail — in flight or just finished. The
+  // Findings strip polls this to watch the agents work.
+  app.get('/api/v1/sweep-progress', async (req, res) => {
+    const run = await tracking.latestSweepRun();
+    if (!run) return res.json(null);
+    const { progress, ...rest } = run;
+    // A sweep walks every industry's mandates in one pass; a viewer only ever
+    // holds one. Scope the trail, or Medcare watches FMCG fill rates.
+    const industry = v4Industry(req);
+    const steps = (progress?.steps ?? []).filter((s) => !industry || s.industry === industry);
+    if (!steps.length) return res.json(null);
+    res.json({ ...rest, steps });
+  });
+
   app.get('/api/v1/sweep-runs', async (req, res) => {
     res.json(await tracking.listSweepRuns(Math.min(Number(req.query.limit) || 20, 100)));
   });

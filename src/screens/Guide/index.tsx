@@ -31,11 +31,11 @@ const STEPS: {
     where: 'Findings',
     to: '/operate/findings',
     cta: 'See the findings',
-    what: 'A finding is what a counterpart raises when a number drifts from its mandate — with severity, evidence, an impact estimate, and an impact path tracing the drift up to the intent it threatens.',
+    what: 'A finding is what an agent raises when a number drifts from its mandate — with severity, evidence, an impact estimate, and an impact path tracing the drift up to the intent it threatens.',
     doThis: [
-      'Check the SLA pill — unanswered findings escalate up the chain of counterparts.',
+      'Check the SLA pill — unanswered findings escalate up the chain of agents.',
       'Follow the impact path to the intent at risk; view it on the Operating Picture.',
-      'Read the evidence before you decide — the counterpart shows its working.',
+      'Read the evidence before you decide — the agent shows its working.',
     ],
   },
   {
@@ -43,7 +43,7 @@ const STEPS: {
     where: 'On the finding',
     to: '/operate/findings',
     cta: 'Try it on a finding',
-    what: 'Every finding demands exactly one answer. Accept: it\'s real — set an exit condition the counterpart watches until met. Act: fix it now — opens a solution design with tasks. Acknowledge: known — parked on a trip-wire. Abandon: not real — the reason you give tunes the counterpart.',
+    what: 'Every finding demands exactly one answer. Accept: it\'s real — set an exit condition the agent watches until met. Act: fix it now — opens a solution design with tasks. Acknowledge: known — parked on a trip-wire. Abandon: not real — the reason you give tunes the agent.',
     doThis: [
       'Real but no project needed? Accept and set the exit condition.',
       'Needs work? Act — you land in a solution design.',
@@ -55,7 +55,7 @@ const STEPS: {
     where: 'Findings · Watching',
     to: '/operate/findings?tab=watching',
     cta: 'Open Watching',
-    what: 'Nothing is "done" until the number is back. Accepted findings live on the Watching tab as exit conditions with progress bars; acknowledged ones sit on their trip-wires. The counterpart keeps watching either way.',
+    what: 'Nothing is "done" until the number is back. Accepted findings live on the Watching tab as exit conditions with progress bars; acknowledged ones sit on their trip-wires. The agent keeps watching either way.',
     doThis: [
       'Track each exit condition\'s progress toward target.',
       'Only "Mark met · close loop" when the number is truly back.',
@@ -90,20 +90,20 @@ const STEPS: {
     where: 'Reached from a finding\'s Act disposition',
     to: '/operate/tasks',
     cta: 'See your tasks',
-    what: 'Act opens a solution design: approach, data needed, guardrails, and a task list — new agents to build, existing agents to reuse, human tasks. A validation agent reviews the plan before approval; agent builds continue in the studio.',
+    what: 'Act opens a solution design: approach, data needed, guardrails, and a task list — new workers to build, existing workers to reuse, human tasks. A validation worker reviews the plan before approval; agent builds continue in the studio.',
     doThis: [
       'You never browse to the build screens — they come to you when a finding needs them.',
       'Everything assigned to you or your team lands in Execution · Tasks.',
     ],
   },
   {
-    title: 'Meet your counterparts',
-    where: 'Agents · Counterparts',
+    title: 'Meet your agents',
+    where: 'Agents',
     to: '/operate/counterparts',
     cta: 'Meet them',
-    what: 'One agent per function, plus an org-level chief of staff watching the intents. Every mandate is held twice — once by a person, once by its counterpart. Each card shows open findings, SLA breaches, and a temperament dial from quiet to hair-trigger.',
+    what: 'One agent per function, plus an org-level chief of staff watching the intents. Every mandate is held twice — once by a person, once by its agent. Each card shows open findings, SLA breaches, and a temperament dial from quiet to hair-trigger.',
     doThis: [
-      'Expand "What it\'s flagging" to jump straight to a counterpart\'s open findings.',
+      'Expand "What it\'s flagging" to jump straight to an agent\'s open findings.',
       'A "needs you" pill means findings are breaching SLA — someone is not answering.',
     ],
   },
@@ -112,21 +112,21 @@ const STEPS: {
     where: 'Foundation',
     to: '/build/picture',
     cta: 'Open the Operating Picture',
-    what: 'The Operating Picture is the map the counterparts reason over: intents, the mandates that carry them, the senses that verify them. The Mandate Library is where a new company starts; Data Connectors wire up the senses — a mandate without a sense is blind.',
+    what: 'The Operating Picture is the map the agents reason over: intents, the mandates that carry them, the senses that verify them. The Mandate Library is where a new company starts; Data Connectors wire up the senses — a mandate without a sense is blind.',
     doThis: [
       'Switch industry from the Operating Picture header to see another context.',
-      'Counterparts petition for new nodes and edges — approve or decline their proposals.',
+      'Agents petition for new nodes and edges — approve or decline their proposals.',
     ],
   },
   {
     title: 'Measure what is actually working',
-    where: 'Performance · Outcomes · Agents',
+    where: 'Performance · Outcomes · Workforce',
     to: '/insights/outcomes',
     cta: 'Open Outcomes',
-    what: 'Outcomes turns runs into scorecards and recommended actions. Performance shows where the loop closes fastest. Agent Space lists every agent running for your context, ROI and token cost side by side.',
+    what: 'Outcomes turns runs into scorecards and recommended actions. Performance shows where the loop closes fastest. Workforce lists every worker running for your context, ROI and token cost side by side.',
     doThis: [
       'Assign or schedule the recommended actions on an outcome report.',
-      'Use Agent Space to weigh what each agent costs against what it returns.',
+      'Use Workforce to weigh what each worker costs against what it returns.',
     ],
   },
 ];
@@ -242,7 +242,7 @@ export function GuideScreen() {
                   {i < LOOP.length - 1 && <span className="arr">→</span>}
                 </span>
               ))}
-              <span className="gd-loopnote">You own one stage: <b style={{ color: 'var(--teal)' }}>Decide</b>. The counterparts run the rest.</span>
+              <span className="gd-loopnote">You own one stage: <b style={{ color: 'var(--teal)' }}>Decide</b>. The agents run the rest.</span>
             </div>
             <p className="gd-what">Nine screens, one loop. Scroll through — each step links straight into the live screen it describes.</p>
             <button className="gd-cta" onClick={() => { startTour(); navigate('/command'); }}>
@@ -275,7 +275,7 @@ export function GuideScreen() {
             <div className="gd-eyebrow">That's the whole system</div>
             <h1>Every mandate, <span className="grad">held twice</span>.</h1>
             <p className="gd-what" style={{ maxWidth: 520, margin: '0 auto 26px' }}>
-              Your counterparts are already watching. Answer what they bring you, and let the loop close.
+              Your agents are already watching. Answer what they bring you, and let the loop close.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link to="/command" className="gd-cta">Start in the Command Center →</Link>

@@ -288,7 +288,7 @@ function HeroViz() {
       <div className="fcard">
         <div className="fc-head">
           <span className="fc-ava">P</span>
-          <span className="fc-who">Planning counterpart</span>
+          <span className="fc-who">Planning agent</span>
           <span className="fc-when">raised 9:20 AM</span>
         </div>
         <div className="fc-title">Frozen category forecast bias is starving modern trade</div>
@@ -303,7 +303,7 @@ function HeroViz() {
           <span className="fbtn">Acknowledge</span>
           <span className="fbtn">Abandon</span>
         </div>
-        <div className="fc-foot">3 · Decide — yours. The counterparts run the rest.</div>
+        <div className="fc-foot">3 · Decide — yours. The agents run the rest.</div>
       </div>
       <div className="viz-cap">A finding, waiting — decide, or it escalates on its SLA</div>
     </div>
@@ -329,8 +329,8 @@ export function LandingScreen() {
           <div>
             <span className="kicker"><span className="live" /> The Decision Accountability Layer</span>
             <h1>Nothing drifts <span className="grad-text">unanswered</span>.</h1>
-            <p className="lede">Every number has an owner and a counterpart. When it drifts, a finding demands a decision — and silence escalates until someone owns the call.</p>
-            <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by its counterpart.</p>
+            <p className="lede">Every number has an owner and an agent. When it drifts, a finding demands a decision — and silence escalates until someone owns the call.</p>
+            <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by its agent.</p>
             <IndustryPicker />
           </div>
           <HeroViz />
@@ -351,7 +351,7 @@ export function LandingScreen() {
           </div>
           <div className="acard">
             <span className="a-where">Operate</span>
-            <h3>Counterparts</h3>
+            <h3>Agents</h3>
             <span className="a-what">The second holder</span>
             <p>One agent per function stream, plus an org-level chief. Each holds the same mandates its human owner does — and <b>never looks away</b>.</p>
           </div>
@@ -359,7 +359,7 @@ export function LandingScreen() {
             <span className="a-where">Operate</span>
             <h3>Findings</h3>
             <span className="a-what">Drift, made answerable</span>
-            <p>When reality leaves a mandate, the counterpart raises a finding with the impact traced to an intent — and an <b>SLA that escalates silence</b>.</p>
+            <p>When reality leaves a mandate, the agent raises a finding with the impact traced to an intent — and an <b>SLA that escalates silence</b>.</p>
           </div>
           <div className="acard">
             <span className="a-where">Operate</span>
@@ -395,7 +395,7 @@ export function LandingScreen() {
           <div className="col new">
             <div className="col-tag">The accountability layer</div>
             <ul>
-              <li><span className="m">→</span> A metric is a <b>mandate</b> with an owner and a counterpart.</li>
+              <li><span className="m">→</span> A metric is a <b>mandate</b> with an owner and an agent.</li>
               <li><span className="m">→</span> Drift is caught the moment it starts.</li>
               <li><span className="m">→</span> A problem arrives as a <b>finding that must be answered</b>.</li>
               <li><span className="m">→</span> Silence escalates until someone owns the call.</li>
@@ -409,7 +409,7 @@ export function LandingScreen() {
       <section className="wrap">
         <div className="sec-eyebrow"><span className="eyebrow">The Operating Picture</span><span className="tick" /></div>
         <h2>One live picture of what the company is trying to make true.</h2>
-        <p className="lede" style={{ marginTop: 18 }}>Not a dashboard you visit — a structure every counterpart reasons over. Three layers, wired together, so a problem anywhere can be traced to the goal it threatens.</p>
+        <p className="lede" style={{ marginTop: 18 }}>Not a dashboard you visit — a structure every agent reasons over. Three layers, wired together, so a problem anywhere can be traced to the goal it threatens.</p>
         <div className="tiers">
           <div className="tier intent">
             <div className="t-label"><span className="dot" />Intents</div>
@@ -418,7 +418,7 @@ export function LandingScreen() {
           <div className="tier-arrow">▲ carried by</div>
           <div className="tier mandate">
             <div className="t-label"><span className="dot" />Mandates</div>
-            <div className="t-def"><b>Enforceable commitments each function owns.</b> "Case fill above 97%." "Waste under 3.5%." Not indicators to admire — promises with an owner and a counterpart watching them.</div>
+            <div className="t-def"><b>Enforceable commitments each function owns.</b> "Case fill above 97%." "Waste under 3.5%." Not indicators to admire — promises with an owner and an agent watching them.</div>
           </div>
           <div className="tier-arrow">▲ verified by</div>
           <div className="tier sense">
@@ -426,7 +426,7 @@ export function LandingScreen() {
             <div className="t-def"><b>What the agents perceive through.</b> The data feeds behind every mandate — POS, plant telemetry, the planning system. A mandate without a sense is blind, and the picture says so.</div>
           </div>
         </div>
-        <p className="held">Every mandate is held twice — once by a person, once by its counterpart. The person decides. The counterpart never looks away.</p>
+        <p className="held">Every mandate is held twice — once by a person, once by its agent. The person decides. The agent never looks away.</p>
       </section>
 
       {/* THE LOOP */}
@@ -460,11 +460,11 @@ export function LandingScreen() {
             </svg>
           </div>
           <ol className="stages">
-            <li className="stage"><span className="n">1</span><div><h3>Sense</h3><p>Each counterpart watches the data feeds behind its mandates — <b>continuously</b>, not on a reporting cadence.</p></div></li>
-            <li className="stage"><span className="n">2</span><div><h3>Find</h3><p>When reality drifts from a mandate, the counterpart raises a <b>finding</b> and traces its impact path up to the intent it threatens.</p></div></li>
-            <li className="stage"><span className="n">3</span><div><h3>Decide</h3><p>The finding demands a human call — one of <b>four dispositions</b>. Nothing proceeds without it; unanswered findings escalate up the chain of counterparts.</p></div></li>
-            <li className="stage"><span className="n">4</span><div><h3>Act</h3><p>The decision sets the machine in motion: a watched exit condition, a solution with tasks handed to agents, or a deliberate pause.</p></div></li>
-            <li className="stage"><span className="n">5</span><div><h3>Close</h3><p>Nothing is "done" until the number is back — met exit conditions retire the finding, a dismissal <b>tunes the counterpart</b>, and every decision lands in the ledger with a verdict. Then back to sensing.</p></div></li>
+            <li className="stage"><span className="n">1</span><div><h3>Sense</h3><p>Each agent watches the data feeds behind its mandates — <b>continuously</b>, not on a reporting cadence.</p></div></li>
+            <li className="stage"><span className="n">2</span><div><h3>Find</h3><p>When reality drifts from a mandate, the agent raises a <b>finding</b> and traces its impact path up to the intent it threatens.</p></div></li>
+            <li className="stage"><span className="n">3</span><div><h3>Decide</h3><p>The finding demands a human call — one of <b>four dispositions</b>. Nothing proceeds without it; unanswered findings escalate up the chain of agents.</p></div></li>
+            <li className="stage"><span className="n">4</span><div><h3>Act</h3><p>The decision sets the machine in motion: a watched exit condition, a solution with tasks handed to workers, or a deliberate pause.</p></div></li>
+            <li className="stage"><span className="n">5</span><div><h3>Close</h3><p>Nothing is "done" until the number is back — met exit conditions retire the finding, a dismissal <b>tunes the agent</b>, and every decision lands in the ledger with a verdict. Then back to sensing.</p></div></li>
           </ol>
         </div>
       </section>
@@ -475,12 +475,12 @@ export function LandingScreen() {
         <h2>The agent brings the finding. The human owns the call.</h2>
         <p className="lede" style={{ marginTop: 18 }}>Every finding forces a choice — and each choice is a different instruction to the organization, not a status you set and forget.</p>
         <div className="dispo">
-          <div className="dcard accept"><span className="tag">it's real</span><div className="verb">Accept</div><p>Set a measurable exit condition. The counterpart keeps watching until the number is truly back — then closes the loop itself.</p></div>
-          <div className="dcard act"><span className="tag">fix it now</span><div className="verb">Act</div><p>Open a solution, broken into tasks. New work goes to agents, existing agents are reused, humans own the rest.</p></div>
+          <div className="dcard accept"><span className="tag">it's real</span><div className="verb">Accept</div><p>Set a measurable exit condition. The agent keeps watching until the number is truly back — then closes the loop itself.</p></div>
+          <div className="dcard act"><span className="tag">fix it now</span><div className="verb">Act</div><p>Open a solution, broken into tasks. New work goes to new workers, existing workers are reused, humans own the rest.</p></div>
           <div className="dcard ack"><span className="tag">not yet</span><div className="verb">Acknowledge</div><p>A known issue, parked with a trip-wire. It comes back — louder — the moment it crosses the line you set.</p></div>
           <div className="dcard abandon"><span className="tag">not real</span><div className="verb">Abandon</div><p>Dismiss it with a reason. The reason isn't paperwork — it's the signal that <b>tunes the agent</b> so it learns what not to raise.</p></div>
         </div>
-        <p className="dispo-foot">No disposition is a decision too — <b>ignored findings escalate automatically</b> up the chain of counterparts until someone owns them.</p>
+        <p className="dispo-foot">No disposition is a decision too — <b>ignored findings escalate automatically</b> up the chain of agents until someone owns them.</p>
       </section>
 
       {/* THE PROOF — NUMBERS + DECISION LEDGER */}
@@ -506,7 +506,7 @@ export function LandingScreen() {
           </div>
           <div className="tier sense">
             <div className="t-label"><span className="dot" />Closed</div>
-            <div className="t-def"><b>Nothing is "done" until the number is back.</b> Accepted findings become exit conditions the counterpart watches; acknowledged ones sit on a trip-wire.</div>
+            <div className="t-def"><b>Nothing is "done" until the number is back.</b> Accepted findings become exit conditions the agent watches; acknowledged ones sit on a trip-wire.</div>
           </div>
         </div>
         <p className="held">Auditable by a CFO, not just admired in a review meeting — the ledger is what the accountability layer produces.</p>
@@ -520,7 +520,7 @@ export function LandingScreen() {
           <div className="seat">
             <span className="s-role">Rewive for the store manager</span>
             <h3>Your mandates, your findings, one tap to answer.</h3>
-            <p>The Command Center filters to the mandates you hold. A finding arrives sized to your store — <b>what drifted, what it costs, what the counterpart suggests</b> — and your disposition is one tap, with the SLA clock visible.</p>
+            <p>The Command Center filters to the mandates you hold. A finding arrives sized to your store — <b>what drifted, what it costs, what the agent suggests</b> — and your disposition is one tap, with the SLA clock visible.</p>
             <span className="s-screen">Command Center · persona: store manager</span>
           </div>
           <div className="seat">
@@ -544,7 +544,7 @@ export function LandingScreen() {
         <h2>What the loop looks like on a real problem.</h2>
         <div className="example">
           <div className="ex-head">
-            <span className="who">Raised by the Planning counterpart</span>
+            <span className="who">Raised by the Planning agent</span>
             <span className="impact">≈ AED 1.2M revenue at risk this quarter</span>
           </div>
           <div className="ex-flow">
@@ -560,7 +560,7 @@ export function LandingScreen() {
       {/* CLOSE */}
       <section className="close wrap">
         <h2>A red number is <span className="grad-text">no longer nobody's problem</span>.</h2>
-        <p className="lede">The organization does the work. Its counterparts make sure the work still serves the intent, catch it when it doesn't, and bring you the decision the moment it counts.</p>
+        <p className="lede">The organization does the work. Its agents make sure the work still serves the intent, catch it when it doesn't, and bring you the decision the moment it counts.</p>
         <div><a href="#start" className="cta">Choose your context <span className="arr">↑</span></a></div>
         <p className="sig">Every mandate, held twice.</p>
       </section>

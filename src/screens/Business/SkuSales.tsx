@@ -22,7 +22,7 @@ export function SkuSalesScreen() {
       <h1 className="page">Sales by {data.skuDimension}</h1>
       <Intro
         line={`Year-to-date sales, margin and service level per ${data.skuDimension} — the base data the mandates watch.`}
-        more={<>Each row is a number someone owns and a counterpart watches. {drifting} of {data.skus.length} rows are off plan right now — where a counterpart has already raised the drift, the row links to the finding's thread, and that thread is where the call gets made.</>}
+        more={<>Each row is a number someone owns and an agent watches. {drifting} of {data.skus.length} rows are off plan right now — where an agent has already raised the drift, the row links to the finding's thread, and that thread is where the call gets made.</>}
       />
       <BusinessTabs />
 
@@ -67,7 +67,7 @@ export function SkuSalesScreen() {
       </div>
 
       <div style={{ marginTop: 14, fontSize: 12, color: 'var(--ink-3)' }}>
-        “Drifting” means the counterpart watching this number has raised a finding — the link opens its thread, where the four-A call is made.
+        “Drifting” means the agent watching this number has raised a finding — the link opens its thread, where the four-A call is made.
       </div>
     </section>
   );

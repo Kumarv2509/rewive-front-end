@@ -1,12 +1,24 @@
-# Handoff — senior-leadership findings view, counterpart view, screen help (2026-07-20, latest session)
+# Handoff — live agent analysis strip, seeded tracking, entity scoping, counterpart→agent rename (2026-07-20, latest session)
 
 ## Where things stand
 
-- **This session (2026-07-20) worked in the PRODUCT repo and COMMITTED
+- **This session (2026-07-20, later) is ENTIRELY UNCOMMITTED** — 71 modified
+  files + 2 new (`mock-server/seed-tracking.js`,
+  `src/screens/Findings/LiveAnalysisStrip.tsx`). Five pieces of work, in
+  order: the live analysis strip on Findings, 12 default live-tracked
+  mandates, removal of the non-Protein division counterparts, three
+  persona-scoping bug fixes, and a **product-wide terminology rename
+  (counterpart → agent, workforce agent → worker)**. Build + lint clean;
+  every backend claim verified against the running API. **Nothing is
+  visually verified — the browser extension never connected this session
+  either.** Full detail in the "This session (2026-07-20, later)" section
+  directly below.
+
+- **The earlier session that day (2026-07-20) worked in the PRODUCT repo and COMMITTED
   everything** — two commits, `814ab8e` (senior-leadership findings view)
   and `fbefa56` (counterpart view, screen help, hierarchy default), plus
   this handoff. Working tree clean at handoff. Full detail in the
-  "This session (2026-07-20)" section below. **Neither is visually
+  "Previous session (2026-07-20, earlier)" section below. **Neither is visually
   verified — the browser extension never connected; look at the screens
   first thing next session.**
 
@@ -229,7 +241,182 @@
   SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
 
-## This session (2026-07-20): the senior-leadership problem — roll-up, counterpart view, help popup (`814ab8e`, `fbefa56`)
+## This session (2026-07-20, later): live agent analysis, seeded tracking, entity scoping, the rename (ALL UNCOMMITTED)
+
+### What prompted it
+
+Four asks in sequence, each uncovering the next: *"i want something on finding
+that the agents started working ... kind of a live view that agents are doing
+their analysis"* → *"yes seed a few tracked mandates by default"* → *"remove all
+the counterports which is not protein ones"* + *"i think the Entity view is very
+critical as it is mixing up"* → *"instead of counterpart can we rename it as
+agent or something"*.
+
+### 1. The live analysis strip (`src/screens/Findings/LiveAnalysisStrip.tsx`)
+
+The sweep was **atomic and opaque**: it wrote nothing between `insertSweepRun`
+and `finishSweepRun`, so there was nothing to watch. It now writes a per-mandate
+analysis trail to a new `sweep_runs.progress` jsonb column as it walks —
+`queued → analyzing → authoring →` an outcome (`clear` / `drift` / `raised` /
+`re-alert` / `recovered` / `skipped`). `GET /sweep-progress` serves the newest
+run **industry-scoped** (a sweep walks every industry in one pass; without the
+filter Metro Health watched FMCG fill rates).
+
+**Two things make it watchable and MUST stay:**
+
+1. **Pacing** — `REWIVE_SWEEP_PACE_MS`, default 900ms per mandate, **skipped on
+   `cron`**. Six mandates otherwise finish in well under a second and the strip
+   flashes rather than reads.
+2. **The `liveLock` exemption.** `app.js:73` deliberately serializes every
+   request (hydrate → handler → persist) so concurrent polls can't lose a
+   disposition. The sweep holds that lock for its **whole run**, so the first
+   poll didn't return until the sweep finished — the feature was dead on
+   arrival. Diagnosed by timing: POST returned at 5.42s, first GET also at
+   5.42s. Fixed with a `LIVE_LOCK_EXEMPT` set containing **only**
+   `/api/v1/sweep-progress`, which reads the tracking store and touches no
+   shared in-memory state. **Do not add a route to that set unless the same is
+   true of it** — the lock is load-bearing.
+
+Client: `useSweepProgress()` polls 1.2s while live, backs off to 20s idle.
+The strip invalidates the `findings` query as each raise lands — counted off
+`steps`, **not** `run.findingsRaised`, because the counters are only written at
+`finishSweepRun` and this has to move mid-run. It settles when **your**
+mandates are done rather than when the global run finishes (otherwise it pulsed
+"4 of 4" for ~7s more), and the button stays disabled until the global run ends
+because a click would hit the lock and return `skipped`.
+
+### 2. Default live-tracked mandates (`mock-server/seed-tracking.js`)
+
+12 mandates, 4 per industry — 2 reading `clear`, 2 that raise on the first
+sweep. Called from `server.js` at boot **and** once per instance from
+`api/handler.js` (deployed demos never run `server.js`).
+
+- **Numbers are NOT invented**: target and latest are parsed off each brain
+  node's own `targetValue`/`currentValue`. Since `overlayLiveTracking` writes
+  the same figures back, the Operating Picture is unchanged — verified fill
+  rate still reads 92.4% / 97%.
+- **Thresholds are per-mandate** because real tolerances differ (bed occupancy
+  wanders further than a food-safety audit score). This is what lets a genuinely
+  near-target mandate read `clear` instead of tripping `sustained_deviation`.
+- **Idempotent two ways**: no-ops once any config exists, and points are
+  **snapped to midnight UTC** so a re-seed updates the same 30 rows. Without
+  that, boot-time-of-day timestamps meant two instances cold-starting at once
+  would lay down a second offset series. Tested concurrent re-seed: still 30
+  points.
+- Cosmetic: currency now renders `AED 3.9`, not `AED 3.90` — that is
+  `formatValue`'s existing trailing-zero behavior for any live-tracked currency
+  node, not something this change introduced.
+
+### 3. Non-Protein division counterparts removed (19 → 16)
+
+Removed `fmcg-sa-gi-supply`, `fmcg-sa-fnv-supply`, `fmcg-sa-ambient-supply`.
+The Protein three and all function-level ones stay; **G&I / F&V / Ambient still
+exist as roles in the hierarchy** — only their agents are gone.
+
+Their 8 seeded findings were **repointed** to the function-level agent owning
+each stream (planning → Planning, logistics → Logistics, …). By-agent grouping
+tolerates a missing agent (`agent: ShadowAgent | undefined`), but the removed
+names would have kept appearing as group headings. **A later pass caught 7 more
+display strings naming the deleted agents** — `informedBy.name` in `data.js`
+ledger rows and `watchedByAgentName` on two `v4data.js` closures. Verified: 0
+orphaned agent refs across 42 findings.
+
+### 4. The entity mixing — three real scoping bugs
+
+**The diagnosis matters more than the fix.** `entity` is a legal-entity string
+on three types; a **division** is a subtree of the persona hierarchy. **Nothing
+joins them**, so nothing validates that a row's entity matches its persona's
+division — and the seed data disagrees with itself (`KSA Manufacturing Co.` is
+clearly the G&I entity, yet Protein rows are seeded onto it; `UAE Trading Co.`
+carries all four divisions).
+
+But the mixing the founder saw was two missing filters:
+
+- **`/decisions/stats` took no persona/scope at all.** It builds the stat tiles
+  AND the By-entity/By-region half-year rollups, so a division COO saw a
+  company-wide rollup above a correctly role-scoped ledger table — the two
+  halves of one screen disagreeing. Now lens-scoped; `useDecisionStats(persona,
+  scope)` threaded through `StatsRow`, `HalfYearReview`, `TodayStats`.
+  Verified: COO — G&I went from all four entities to just `KSA Manufacturing Co.`
+- **`/closure-kpis` was unfiltered** → Watching/Closed listed every division's
+  exit conditions. **`ClosureKpi` has no `persona`**, so `filterByPersona` would
+  have dropped every row; they now inherit their finding's scope via
+  `filterClosuresByPersona`. It **fails open** on an unresolvable `findingId`
+  because two seeded manufacturing closures (`mfg-c-h1`, `mfg-c-h2`) point at
+  findings that don't exist — a pre-existing seed bug; hiding them under every
+  lens would be worse than showing them under all.
+  **`FindingDetail` deliberately stays unscoped** — it looks up one closure by
+  id, and the detail page lets you read findings you don't own.
+- **Entity was dropped on every runtime-created row.** Rollups skip blank-entity
+  rows, so live activity was invisible in By-entity while still counted in the
+  tiles above it. Sweep-raised findings now inherit entity/region from their
+  **tracking config** (new `entity`/`region` columns), and Accept-created
+  closures inherit from their finding.
+
+**NOT fixed — a data decision, not a bug:** the Protein COO still sees all four
+entities. `personas.ts:115` puts legacy roles (`operations_head`,
+`sales_supervisor`, `store_manager`) under `coo`, and their seeded findings span
+every entity. The filter is correct; the seeded entity assignments are what
+disagree. Needs someone to decide the intended mapping.
+
+### 5. The rename — three concepts, not two
+
+The founder asked for counterpart → "agent or something". **"Agent" was already
+taken** by the rail item containing counterparts, plus the whole Workforce
+concept (executors with capabilities/ROI/token cost, built from Act). Founder
+chose agent anyway, with Workforce agents becoming **workers**.
+
+| Concept | Word | Does |
+|---|---|---|
+| Mandate holder | **agent** | Watches a number, raises findings |
+| Executor | **worker** | Runs tasks; built from a finding's Act flow |
+| Assessor | **assessor agent** | Delivers the later verdict |
+
+*The Planning **agent** raised it → you spawn a **worker** to fix it → an
+**assessor agent** says whether it worked.* Nav: rail "Agents" → tabs
+**Agents** | **Workforce**.
+
+**Order mattered**: Workforce (agent→worker) FIRST, then counterpart→agent —
+once counterparts were "agents" the two were mechanically indistinguishable.
+
+**Frozen from the replace** (a blanket find-and-replace over "agent" WILL break
+the app): union literals (`type: 'agent' | 'policy'`), CSS classes
+(`agent-card`, `agent-grid`), route slugs (`/insights/agents`,
+`/build/agent-studio`, `/operate/counterparts`), camelCase identifiers
+(`counterpartName`, `findCounterpart`, `agentType`), and **"Assessor agent"**.
+URLs and internals keep the old names on purpose — same convention as the older
+`shadow` naming — so bookmarks keep working.
+
+**The mechanical pass DID produce damage; all of it was found and fixed:**
+
+- **20 broken articles** — "a counterpart" became "**a** agent" (plus 3 "an
+  worker"). This hit the Landing thesis line.
+- **"counterpart agents" collapsed to "agent agent"** in 4 files, including the
+  Claude authoring system prompt in `authoring.js`.
+- **Landing + Tasks conflated the concepts at the Act stage** — "tasks handed to
+  agents", "new work goes to agents, existing agents are reused" → workers.
+- **Guide taught stale screen names** — "Agent Space lists every agent" when the
+  screen is now Workforce listing workers; breadcrumbs `Agents · Agents` and
+  `Performance · Outcomes · Agents`.
+- One stray `app.js` publish message: "now live in Agent Space" → Workforce.
+
+`CLAUDE.md` now carries the three-concept table and an explicit warning against
+blanket-replacing "agent".
+
+### Verified / not verified
+
+**Verified against the running API**: mid-sweep polling advances one mandate at
+a time; `?industry=healthcare` returns null during an FMCG sweep; 16 agents, 0
+orphaned refs; G&I COO scoped to one entity; live findings carry entity/region
+and appear in the By-entity rollup; 13 "Assessor agent" strings intact, 0
+wrongly renamed; workforce catalog reads "… Worker". Build + lint clean.
+
+**NOT verified**: anything visual. The Chrome extension never connected. The
+strip's pulse/spacing/dark-mode, and whether "Workforce" overflows a nav chip or
+card heading where "Agents" fit, are unchecked. `/`, `/guide`, and
+`/operate/findings` are the three to eyeball.
+
+## Previous session (2026-07-20, earlier): the senior-leadership problem — roll-up, counterpart view, help popup (`814ab8e`, `fbefa56`)
 
 ### What prompted it
 
@@ -1309,6 +1496,27 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 - Currency: impact in AED (FMCG), token/API costs USD; Healthcare in USD.
 
 ## Open threads / natural next steps
+
+### Next steps — in priority order (as of 2026-07-20, later session)
+
+1. **Look at the five pieces that shipped blind** — `/operate/findings` (the
+   live strip: hit "Run sweep now" and watch the paced walk), `/` and `/guide`
+   (heaviest renamed prose), `/insights/agents` (does "Workforce" fit the
+   chrome where "Agents" did?), and `/operate/decisions` (tiles and By-entity
+   table should now agree with the ledger below them).
+2. **Commit this session.** 71 modified + 2 new files, all uncommitted. Natural
+   split: (a) live strip + seeded tracking, (b) counterpart removal + scoping
+   fixes, (c) the rename.
+3. **Decide the legacy-role entity mapping** (see §4 above) — the Protein COO
+   still sees all four entities because `operations_head` /
+   `sales_supervisor` / `store_manager` sit under `coo` with findings spanning
+   every entity. This is the remaining half of "the Entity view is mixing up".
+4. **Consider renaming the internals** — `ShadowAgent`, `useShadowOrg`,
+   `counterpartName`, `/operate/counterparts` now lag the UI by two
+   generations of naming. Optional, but the gap is wider than it was.
+5. **Fix the two orphaned manufacturing closures** (`mfg-c-h1`, `mfg-c-h2`
+   point at findings that don't exist) so `filterClosuresByPersona` no longer
+   needs its fail-open branch.
 
 ### Next steps — in priority order (as of 2026-07-20)
 

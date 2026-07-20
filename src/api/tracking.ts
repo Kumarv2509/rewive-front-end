@@ -6,6 +6,7 @@ import type {
   MandateTrackingConfig,
   MetricImportResult,
   MetricPoint,
+  SweepProgress,
   SweepRun,
 } from './types';
 
@@ -103,6 +104,19 @@ export function useSweepRuns() {
     queryKey: ['sweep-runs'],
     queryFn: async () => (await apiClient.get<SweepRun[]>('/sweep-runs')).data,
     refetchInterval: 30_000,
+  });
+}
+
+/**
+ * The live analysis trail. Polls fast while a sweep is in flight and backs off
+ * to a slow heartbeat once it finishes — same shape as the live-run poll in
+ * `runs.ts`, so an idle Findings screen costs one request a minute.
+ */
+export function useSweepProgress() {
+  return useQuery({
+    queryKey: ['sweep-progress'],
+    queryFn: async () => (await apiClient.get<SweepProgress | null>('/sweep-progress')).data,
+    refetchInterval: (query) => (query.state.data && !query.state.data.finishedAt ? 1_200 : 20_000),
   });
 }
 

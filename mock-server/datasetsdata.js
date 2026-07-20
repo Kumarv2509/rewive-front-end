@@ -91,7 +91,7 @@ export const datasetsSeed = {
     {
       id: 'hc-ds-claims',
       name: 'Claims 835/837 feed',
-      description: 'Submitted claims and remittances from the clearinghouse.',
+      description: 'Submitted claims and remittance advice from eClaimLink / Shafafiya.',
       source: 'Clearinghouse SFTP',
       cadence: 'daily',
       status: 'live',
@@ -116,7 +116,7 @@ export const datasetsSeed = {
     },
     {
       id: 'hc-ds-or',
-      name: 'OR schedule & utilization',
+      name: 'Theatre schedule & utilisation',
       description: 'Block schedules, case times and turnover, all sites.',
       source: 'Surgical scheduling system',
       cadence: 'daily',
@@ -125,7 +125,7 @@ export const datasetsSeed = {
       columns: [],
       lastLoadAt: null,
       feeds: ['OR utilization'],
-      analysisIdeas: ['Block-release behavior after the Lakeside rule change'],
+      analysisIdeas: ['Block-release behaviour after the JLT rule change'],
     },
   ],
   manufacturing: [

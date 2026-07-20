@@ -1,5 +1,5 @@
 import { useDecisionStats } from '../../api/decisions';
-import type { HalfYearBreakdownRow, HalfYearMonth } from '../../api/types';
+import type { HalfYearBreakdownRow, HalfYearMonth, Persona, RoleScope } from '../../api/types';
 
 // Series colors come from the theme tokens (accent / teal / green) so they stay
 // legible on the light card surface. Applied via style objects — var() is not
@@ -125,8 +125,8 @@ function BreakdownTable({ title, rows }: { title: string; rows: HalfYearBreakdow
 
 // The half-year review: how the loop ran over the last six months, and where —
 // by month, by business entity, and by region.
-export function HalfYearReview() {
-  const { data } = useDecisionStats();
+export function HalfYearReview({ persona, scope }: { persona: Persona | 'all'; scope?: RoleScope }) {
+  const { data } = useDecisionStats(persona, scope);
   const hy = data?.halfYear;
   if (!hy) return null;
 

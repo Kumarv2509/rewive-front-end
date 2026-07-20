@@ -363,7 +363,7 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
 .seg button:hover{background:var(--glass)}
 .seg button.on{background:var(--accent-soft);color:var(--accent-deep)}
 
-/* ---------- Findings · by counterpart ---------- */
+/* ---------- Findings · by agent ---------- */
 .ag-lede{font-size:13px;color:var(--ink-2);margin-bottom:14px}
 .ag-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 @media (max-width:1080px){.ag-grid{grid-template-columns:1fr}}
@@ -412,6 +412,32 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
 .thread .th-title{font-weight:700;font-size:13.5px}
 .thread .th-when{font-size:11.5px;color:var(--ink-3);font-family:var(--font-mono)}
 .thread .th-body{margin-top:8px}
+
+/* ---- Live analysis strip (the sweep, mid-walk, on Findings) ---- */
+.sweep-strip{border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:16px;overflow:hidden}
+.sweep-strip.live{border-color:var(--accent)}
+.sw-head{display:flex;align-items:center;gap:10px;padding:12px 16px}
+.sw-head b{font-size:13.5px}
+.sw-sub{font-size:12px;color:var(--ink-2)}
+.sw-acts{margin-left:auto;display:flex;align-items:center;gap:8px}
+.sw-beacon{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex-shrink:0}
+.sw-beacon.on{background:var(--accent);animation:pulse 1.6s infinite}
+.sw-bar{height:3px;background:var(--border)}
+.sw-bar i{display:block;height:100%;background:var(--accent);transition:width .5s ease}
+.sw-steps{border-top:1px solid var(--border);max-height:236px;overflow-y:auto}
+.sw-step{display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:12.5px;border-bottom:1px solid var(--border);color:var(--ink);text-decoration:none;animation:sw-in .35s ease}
+.sw-step:last-child{border-bottom:none}
+.sw-step.linked:hover{background:var(--accent-soft)}
+.sw-step.queued{opacity:.5}
+@keyframes sw-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.sw-dot{width:16px;height:16px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;border:1px solid var(--border-strong);color:var(--ink-3)}
+.sw-dot.clear,.sw-dot.recovered{background:var(--green-soft);color:var(--green);border-color:rgba(27,127,77,.3)}
+.sw-dot.drift{background:var(--amber-soft);color:var(--amber);border-color:rgba(154,103,0,.3)}
+.sw-dot.raised,.sw-dot.re-alert{background:var(--red-soft);color:var(--red);border-color:rgba(180,35,24,.28)}
+.sw-dot.analyzing,.sw-dot.authoring{background:var(--accent);border-color:var(--accent);animation:pulse 1.6s infinite}
+.sw-who{font-weight:600;white-space:nowrap}
+.sw-node{color:var(--ink-2);white-space:nowrap}
+.sw-detail{color:var(--ink-3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 
 /* ---- Organization sign-in (tenant login) ---- */
 .login{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}

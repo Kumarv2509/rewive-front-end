@@ -1,8 +1,9 @@
 import { useDecisionStats } from '../../api/decisions';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
+import type { Persona, RoleScope } from '../../api/types';
 
-export function StatsRow() {
-  const { data, isLoading, isError } = useDecisionStats();
+export function StatsRow({ persona, scope }: { persona: Persona | 'all'; scope?: RoleScope }) {
+  const { data, isLoading, isError } = useDecisionStats(persona, scope);
 
   if (isLoading) return <Loading />;
   if (isError || !data) return <ErrorMessage />;

@@ -24,8 +24,8 @@ export function AgentStudioScreen() {
   if (!workflowId) {
     return (
       <section className="screen">
-        <h1 className="page">Agent Studio</h1>
-        <Intro line="Build agents visually — drag, connect, and simulate before publishing." />
+        <h1 className="page">Worker Studio</h1>
+        <Intro line="Build workers visually — drag, connect, and simulate before publishing." />
         <div className="card" style={{ padding: 40, textAlign: 'center' }}>
           <button
             className="btn primary"
@@ -36,7 +36,7 @@ export function AgentStudioScreen() {
               })
             }
           >
-            + Create an agent
+            + Create a worker
           </button>
         </div>
       </section>
@@ -67,7 +67,7 @@ export function AgentStudioScreen() {
           saveWorkflow.mutate(graphRef.current, {
             onSuccess: () =>
               publish.mutate(undefined, {
-                onSuccess: () => showToast(`${workflow.name} published to Agent Space`),
+                onSuccess: () => showToast(`${workflow.name} published to Worker Space`),
               }),
           })
         }

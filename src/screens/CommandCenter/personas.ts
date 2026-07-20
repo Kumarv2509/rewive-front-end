@@ -50,15 +50,28 @@ const FMCG_LABEL_OVERRIDES: Partial<Record<Persona, string>> = {
   coo: 'COO — Protein',
 };
 
-// Healthcare and Manufacturing packs only seed the original six roles; the
-// full org tree is an FMCG-context feature. Mirrored in mock-server/roles.js
-// (LEGACY_PERSONAS) — keep the two in sync.
+// A clinic network has no stores and sells no cases: the generic labels read
+// wrong on every healthcare screen. Only the words change — the tree, the
+// escalation line and the data partition are the same roles.
+const HEALTHCARE_LABEL_OVERRIDES: Partial<Record<Persona, string>> = {
+  operations_head: 'Clinical operations head',
+  store_manager: 'Clinic manager',
+  sales_supervisor: 'Front-office supervisor',
+  commercial_finance: 'Payer contracting',
+};
+
+// Healthcare and Manufacturing packs only seed the original roles; the full
+// org tree (divisions, the group tier) is an FMCG-context feature. Both packs
+// have a CFO, so both offer the CFO's two reports — FP&A and the commercial
+// finance line — otherwise a CFO lens rolls up branches no one can sign in as.
+// Mirrored in mock-server/roles.js (LEGACY_PERSONAS) — keep the two in sync.
 export const LEGACY_PERSONAS: Persona[] = [
   'coo',
   'operations_head',
   'store_manager',
   'sales_supervisor',
   'cfo',
+  'fpa',
   'commercial_finance',
 ];
 
@@ -67,7 +80,9 @@ function isLegacyIndustry(industry: string | null = getActiveIndustry()): boolea
 }
 
 export function personaLabel(p: Persona, industry?: string): string {
-  if (!isLegacyIndustry(industry ?? getActiveIndustry())) return FMCG_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
+  const ind = industry ?? getActiveIndustry();
+  if (ind === 'healthcare') return HEALTHCARE_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
+  if (!isLegacyIndustry(ind)) return FMCG_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
   return PERSONA_LABEL[p];
 }
 

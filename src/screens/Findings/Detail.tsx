@@ -92,8 +92,8 @@ export function FindingDetailScreen() {
                   <><b>Take it</b> only if the call really is yours — ownership transfers and you then owe the disposition.</>,
                 ]
               : [
-                  <>Read the <b>evidence</b> and follow the <b>impact path</b> before deciding — the counterpart shows its working.</>,
-                  <>Give it one of four answers. Accept sets an exit condition; Act opens a solution; Acknowledge sets a trip-wire; Abandon needs a reason, which tunes the counterpart.</>,
+                  <>Read the <b>evidence</b> and follow the <b>impact path</b> before deciding — the agent shows its working.</>,
+                  <>Give it one of four answers. Accept sets an exit condition; Act opens a solution; Acknowledge sets a trip-wire; Abandon needs a reason, which tunes the agent.</>,
                   <>Not yours? <b>Escalate</b> rather than leaving it — the clock escalates it anyway, just later and with your name on the delay.</>,
                 ]
           }
@@ -225,7 +225,7 @@ export function FindingDetailScreen() {
           <ThreadStep
             n={4}
             state={closedState}
-            title={finding.assessorVerdict ? `Closed — assessor verdict: ${finding.assessorVerdict.verdict.replace('_', ' ')}` : isAbandoned ? 'Closed — dismissed, counterpart tuned' : 'Close + verdict'}
+            title={finding.assessorVerdict ? `Closed — assessor verdict: ${finding.assessorVerdict.verdict.replace('_', ' ')}` : isAbandoned ? 'Closed — dismissed, agent tuned' : 'Close + verdict'}
             when={finding.assessorVerdict ? new Date(finding.assessorVerdict.at).toLocaleString() : undefined}
           >
             {finding.assessorVerdict ? (
@@ -235,7 +235,7 @@ export function FindingDetailScreen() {
             ) : (
               <div style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>
                 {isAbandoned
-                  ? 'The dismissal reason was fed back to the counterpart so it learns what not to raise.'
+                  ? 'The dismissal reason was fed back to the agent so it learns what not to raise.'
                   : 'Nothing is "done" until the number is back — when the exit condition holds, the finding retires itself and the assessor returns a verdict: worked, didn\'t, or too early.'}
               </div>
             )}

@@ -22,8 +22,15 @@ CREATE TABLE IF NOT EXISTS tracking_configs (
   sustained_points integer NOT NULL DEFAULT 3,
   min_points       integer NOT NULL DEFAULT 3,
   enabled          boolean NOT NULL DEFAULT true,
+  -- Legal entity / region these numbers belong to. Sweep-raised findings
+  -- inherit them so live activity lands in the By-entity + By-region rollups.
+  entity           text,
+  region           text,
   updated_at       timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE tracking_configs ADD COLUMN IF NOT EXISTS entity text;
+ALTER TABLE tracking_configs ADD COLUMN IF NOT EXISTS region text;
 
 CREATE TABLE IF NOT EXISTS metric_points (
   id            bigserial PRIMARY KEY,
@@ -73,5 +80,12 @@ CREATE TABLE IF NOT EXISTS sweep_runs (
   re_alerts_fired     integer NOT NULL DEFAULT 0,
   closures_progressed integer NOT NULL DEFAULT 0,
   authored_by_claude  integer NOT NULL DEFAULT 0,
-  errors              jsonb
+  errors              jsonb,
+  -- Per-node analysis trail, written as the sweep walks its mandates so the
+  -- Findings screen can watch the agents work instead of only seeing
+  -- the result. Shape: { steps: [{ nodeId, nodeName, counterpartName, status,
+  -- detail, findingId, severity }] }.
+  progress            jsonb
 );
+
+ALTER TABLE sweep_runs ADD COLUMN IF NOT EXISTS progress jsonb;

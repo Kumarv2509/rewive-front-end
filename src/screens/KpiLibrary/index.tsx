@@ -19,7 +19,7 @@ export function KpiLibraryScreen() {
         more={
           <>
             This is the starting point when onboarding a new company. Every mandate you track lists exactly which
-            senses (data feeds) need to be connected before its counterpart can watch it and findings can surface —
+            senses (data feeds) need to be connected before its agent can watch it and findings can surface —
             a mandate without a sense is blind, and the Operating Picture says so.
           </>
         }

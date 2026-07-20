@@ -121,7 +121,7 @@ export function KpiBrainScreen() {
           <>
             Read it top-down like a DuPont tree: every intent decomposes into P&amp;L lines, every line into the
             mandates that move it, every mandate into the senses that watch it. Every mandate is held twice — once
-            by a person, once by its counterpart — and a finding on any node traces its impact up the same path:
+            by a person, once by its agent — and a finding on any node traces its impact up the same path:
             sense → mandate → P&amp;L line → intent. A mandate without a sense is blind, and the picture says so.
           </>
         }

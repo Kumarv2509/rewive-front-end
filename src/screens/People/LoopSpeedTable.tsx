@@ -20,7 +20,7 @@ export function LoopSpeedTable() {
       <table className="t">
         <thead>
           <tr>
-            <th>Mandate</th><th>Owner</th><th>Counterpart</th><th>Findings · 90d</th><th>Time to decide</th><th>Time to close</th><th>Closed in window</th><th>Close-time trend</th>
+            <th>Mandate</th><th>Owner</th><th>Agent</th><th>Findings · 90d</th><th>Time to decide</th><th>Time to close</th><th>Closed in window</th><th>Close-time trend</th>
           </tr>
         </thead>
         <tbody>
@@ -38,7 +38,7 @@ export function LoopSpeedTable() {
                   {row.owner.name}
                 </span>
               </td>
-              <td><Pill tone="indigo">{row.counterpart}</Pill></td>
+              <td><Pill tone="indigo">{row.agent}</Pill></td>
               <td><b>{row.findings90d}</b></td>
               <td>{row.medianTimeToDecide}</td>
               <td><b>{row.medianTimeToClose}</b></td>
