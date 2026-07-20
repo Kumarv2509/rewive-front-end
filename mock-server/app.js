@@ -44,7 +44,7 @@ import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
 import { businessContextSeed } from './businessdata.js';
 import { datasetsSeed } from './datasetsdata.js';
-import { personaScope, escalationParent, escalateFinding } from './roles.js';
+import { personaScope, escalationParent, escalateFinding, roleSubtree, ROLE_CHILDREN } from './roles.js';
 import { deriveHalfYear, deriveStatTiles } from './halfyear.js';
 import * as tracking from './tracking.js';
 import { registerTrackingRoutes } from './tracking-routes.js';
@@ -1577,6 +1577,75 @@ app.post('/api/v1/findings/:id/escalate', (req, res) => {
   const { parentRole, dottedRole } = escalateFindingUp(finding, industry);
   syncLiveDeadline(finding);
   logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} — now ${parentRole ? `${parentRole}'s` : 'the top role’s'} call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`);
+  res.json(stripServerFields(finding));
+});
+
+// ---------- Leadership actions ----------
+// A senior role looking at a finding owned below them must NOT get the four-A
+// disposition — that is the owner's call, and offering it quietly breaks the
+// accountability model. What a leader can legitimately do is push on it: ask
+// for a status, move it to a different report, raise its priority, or pull
+// ownership up to themselves. Everything here is logged on the finding so the
+// thread shows who leaned on it and when.
+const SEVERITY_LADDER = ['low', 'medium', 'high', 'critical'];
+const LEADERSHIP_ACTIONS = new Set(['ask', 'reassign', 'raise_priority', 'take']);
+
+app.post('/api/v1/findings/:id/leadership', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  const { finding } = hit;
+  const { action, byPersona, toPersona, note } = req.body ?? {};
+
+  if (!LEADERSHIP_ACTIONS.has(action)) return res.status(400).json({ message: 'Unknown leadership action' });
+  if (!byPersona || !ROLE_CHILDREN[byPersona]) return res.status(400).json({ message: 'A valid acting role is required' });
+  if (finding.status !== 'open') return res.status(400).json({ message: 'Only open findings can be pushed on' });
+
+  // Authority check: the actor must sit strictly above the current owner.
+  // Acting on your own finding is a disposition, not a leadership action.
+  const below = roleSubtree(byPersona).filter((r) => r !== byPersona);
+  if (!below.includes(finding.persona)) {
+    return res.status(403).json({ message: 'This finding is not owned below you' });
+  }
+
+  const at = new Date().toISOString();
+  const entry = { action, byPersona, at, note: note || null, toPersona: null };
+  let summary;
+
+  if (action === 'ask') {
+    // No ownership change and no clock change — asking is not deciding.
+    finding.awaitingResponseTo = byPersona;
+    summary = `${byPersona} asked ${finding.persona} for a status`;
+  } else if (action === 'reassign') {
+    if (!toPersona || !below.includes(toPersona)) {
+      return res.status(400).json({ message: 'Reassign target must be a role below you' });
+    }
+    entry.toPersona = toPersona;
+    summary = `${byPersona} reassigned this from ${finding.persona} to ${toPersona}`;
+    finding.persona = toPersona;
+    finding.slaHoursRemaining = 24; // a new owner gets a fresh clock
+    syncLiveDeadline(finding);
+  } else if (action === 'raise_priority') {
+    const i = SEVERITY_LADDER.indexOf(finding.severity);
+    const next = SEVERITY_LADDER[Math.min(i + 1, SEVERITY_LADDER.length - 1)];
+    summary = next === finding.severity
+      ? `${byPersona} flagged this as already at top severity`
+      : `${byPersona} raised severity ${finding.severity} → ${next}`;
+    finding.severity = next;
+    finding.slaHoursRemaining = Math.max(4, Math.round(finding.slaHoursRemaining / 2));
+    syncLiveDeadline(finding);
+  } else {
+    // take — ownership moves up. The leader now owns the disposition.
+    entry.toPersona = byPersona;
+    summary = `${byPersona} took ownership from ${finding.persona}`;
+    finding.takenFrom = finding.persona;
+    finding.persona = byPersona;
+    finding.slaHoursRemaining = 24;
+    syncLiveDeadline(finding);
+  }
+
+  entry.summary = summary;
+  finding.leadershipLog = [...(finding.leadershipLog ?? []), entry];
+  logAudit('finding', finding.id, summary);
   res.json(stripServerFields(finding));
 });
 

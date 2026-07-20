@@ -1112,6 +1112,33 @@ export interface FindingEvidenceItem {
   value: string;
 }
 
+/** What a senior role can do to a finding owned below them — deliberately not
+ *  the four A's, which belong to the owner. */
+export type LeadershipAction = 'ask' | 'reassign' | 'raise_priority' | 'take';
+
+export interface LeadershipLogEntry {
+  action: LeadershipAction;
+  byPersona: Persona;
+  toPersona: Persona | null;
+  note: string | null;
+  summary: string;
+  at: string;
+}
+
+export interface EscalationTrailEntry {
+  from: Persona;
+  to: Persona;
+  at: string;
+}
+
+export interface LeadershipActionInput {
+  action: LeadershipAction;
+  /** The role acting — the lens role, which must sit above the owner. */
+  byPersona: Persona;
+  toPersona?: Persona; // required for reassign
+  note?: string;
+}
+
 export interface Finding {
   id: string;
   title: string;
@@ -1142,6 +1169,17 @@ export interface Finding {
       parent (e.g. the CFO for division commercial finance) sees this finding
       in their queue too, while ownership moves up the solid line. */
   dottedPersona?: Persona | null;
+  /** The role this escalated away from, set the moment ownership moved up.
+      Present means "this is your call because the level below let the clock
+      lapse" — the difference between an inherited finding and a native one. */
+  escalatedFrom?: Persona | null;
+  escalationTrail?: EscalationTrailEntry[];
+  /** Leadership pressure applied from above — ask / reassign / raise / take. */
+  leadershipLog?: LeadershipLogEntry[];
+  /** Set by "ask": the senior role waiting on a status from the owner. */
+  awaitingResponseTo?: Persona | null;
+  /** Set by "take": ownership was pulled up from this role. */
+  takenFrom?: Persona | null;
   /** Business entity and region the drift sits in (multi-entity orgs). */
   entity?: string;
   region?: string;

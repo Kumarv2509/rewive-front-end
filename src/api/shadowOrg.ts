@@ -8,6 +8,7 @@ import type {
   FindingStatus,
   IndustryOption,
   KpiBrain,
+  LeadershipActionInput,
   OrgProfile,
   Persona,
   RoleScope,
@@ -135,6 +136,22 @@ export function useEscalateFinding(findingId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => (await apiClient.post<Finding>(`/findings/${findingId}/escalate`)).data,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['findings', findingId], updated);
+      queryClient.invalidateQueries({ queryKey: ['findings'] });
+      queryClient.invalidateQueries({ queryKey: ['shadow-org'] });
+    },
+  });
+}
+
+// Pushing on a finding owned below you: ask, reassign, raise priority, take.
+// Distinct from useDisposeFinding — a leader does not get the four A's on
+// someone else's call.
+export function useLeadershipAction(findingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: LeadershipActionInput) =>
+      (await apiClient.post<Finding>(`/findings/${findingId}/leadership`, input)).data,
     onSuccess: (updated) => {
       queryClient.setQueryData(['findings', findingId], updated);
       queryClient.invalidateQueries({ queryKey: ['findings'] });

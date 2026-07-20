@@ -5,10 +5,12 @@ import { Intro } from '../../components/shared/Intro';
 import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
-import { personaLabel } from '../CommandCenter/personas';
+import { PERSONAS, personaLabel, roleSubtree } from '../CommandCenter/personas';
 import { ExitConditionCard, TripWireRow } from './Lifecycle';
 import { severityTone, slaTone, statusLabel, statusTone } from './meta';
-import type { Finding } from '../../api/types';
+import { OrgRollup } from './OrgRollup';
+import { detectThemes, rollupByReport, splitByOwnership } from './rollup';
+import type { Finding, Persona } from '../../api/types';
 
 // One finding, one lifecycle: Open (waiting on a disposition) → Watching
 // (exit conditions, solutions in motion, trip-wires) → Closed. The old
@@ -29,7 +31,9 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
         <div className="t1">
           <Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link>{' '}
           <Pill tone={severityTone[finding.severity]}>{finding.severity}</Pill>
-          {finding.escalationLevel > 0 && <> <Pill tone="red">escalated</Pill></>}
+          {finding.escalationLevel > 0 && (
+            <> <Pill tone="red">{finding.escalatedFrom ? `escalated from ${personaLabel(finding.escalatedFrom)}` : 'escalated'}</Pill></>
+          )}
           {' '}<Pill tone="gray">→ {personaLabel(finding.persona)}</Pill>
           {finding.origin === 'sweep' && <> <Pill tone="green">live data</Pill></>}
           {finding.dottedPersona && <> <Pill tone="amber">⋯ {personaLabel(finding.dottedPersona)} · functional line</Pill></>}
@@ -56,10 +60,14 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
 
 export function FindingsScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { persona, scope } = useEffectiveLens();
+  const { persona, scope, rolesInScope } = useEffectiveLens();
   const tab = (TABS.some((t) => t.key === searchParams.get('tab')) ? searchParams.get('tab') : 'open') as TabKey;
   const stream = searchParams.get('stream') ?? 'all';
   const region = searchParams.get('region') ?? 'all';
+  // Drill-down from a rollup row: narrow the open tab to one report's branch.
+  // Validated — a hand-edited URL must not reach roleSubtree with a junk role.
+  const ownerParam = searchParams.get('owner');
+  const owner = ownerParam && PERSONAS.includes(ownerParam as Persona) ? (ownerParam as Persona) : null;
 
   // The global lens routes here too: a sales supervisor sees sales findings,
   // Commercial finance sees returns / discounts / trade spend, the COO sees
@@ -68,10 +76,12 @@ export function FindingsScreen() {
   const { data: closures } = useClosureKpis();
   const { data: brain } = useKpiBrain();
 
-  const setParam = (key: 'tab' | 'stream' | 'region', value: string) => {
+  const setParam = (key: 'tab' | 'stream' | 'region' | 'owner', value: string) => {
     const next = new URLSearchParams(searchParams);
-    if ((key === 'tab' && value === 'open') || ((key === 'stream' || key === 'region') && value === 'all')) next.delete(key);
+    if ((key === 'tab' && value === 'open') || (key !== 'tab' && value === 'all')) next.delete(key);
     else next.set(key, value);
+    // Switching tabs or filters drops a drill-down — it only scopes the open tab.
+    if (key !== 'owner') next.delete('owner');
     setSearchParams(next, { replace: true });
   };
 
@@ -90,8 +100,31 @@ export function FindingsScreen() {
   const inFlight = scopedClosures?.filter((c) => c.status !== 'closed') ?? [];
   const closedLoops = scopedClosures?.filter((c) => c.status === 'closed') ?? [];
 
+  // A senior lens does not inherit its team's queue — it inherits its team's
+  // exceptions. With "+ their team" on, the open tab splits in two: the
+  // findings this role must answer itself, and a roll-up (one row per direct
+  // report, plus cross-division patterns) of what the organisation is
+  // carrying. Without hierarchy mode nothing below applies — the role's own
+  // list is the whole list.
+  const lensRole = persona === 'all' ? null : persona;
+  const hierarchyOn = lensRole !== null && (rolesInScope?.length ?? 1) > 1;
+  const split = lensRole ? splitByOwnership(scoped ?? [], lensRole) : null;
+  const allMyOpen = split ? split.mine.filter((f) => f.status === 'open') : [];
+  // Escalations are the one thing that reaches a senior role on its own: the
+  // level below let a clock lapse, so ownership moved up. They lead the page.
+  const escalatedToMe = allMyOpen.filter((f) => f.escalationLevel > 0 && f.escalatedFrom);
+  const myOpen = allMyOpen.filter((f) => !escalatedToMe.includes(f));
+  const dottedOpen = split ? split.dotted.filter((f) => f.status === 'open') : [];
+  const delegated = split?.delegated ?? [];
+  const rollupRows = hierarchyOn && lensRole ? rollupByReport(delegated, lensRole) : [];
+  const themes = hierarchyOn && lensRole ? detectThemes(delegated, lensRole) : [];
+  const drillRoles = owner ? roleSubtree(owner) : null;
+  const drilled = drillRoles ? open.filter((f) => drillRoles.includes(f.persona)) : [];
+
   const tabCount: Record<TabKey, number> = {
-    open: open.length,
+    // In hierarchy mode the tab counts what this role must answer, not what
+    // the whole subtree is holding — the rest is a roll-up, not a queue.
+    open: hierarchyOn ? allMyOpen.length : open.length,
     watching: inFlight.length + acting.length + acknowledged.length,
     closed: closedLoops.length + abandoned.length,
   };
@@ -147,7 +180,7 @@ export function FindingsScreen() {
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
 
-      {tab === 'open' && scoped && (
+      {tab === 'open' && scoped && !hierarchyOn && (
         <>
           {open.length > 0 ? (
             <div className="card" style={{ marginBottom: 16 }} data-tour="findings-open">
@@ -162,6 +195,82 @@ export function FindingsScreen() {
               <div className="state-msg">Nothing open — the counterparts are quiet here. Accepted and acknowledged findings live under Watching.</div>
             </div>
           )}
+        </>
+      )}
+
+      {/* Drilled into one report's branch from a roll-up row. */}
+      {tab === 'open' && scoped && hierarchyOn && owner && (
+        <>
+          <div style={{ marginBottom: 12 }}>
+            <button
+              className="btn sm"
+              onClick={() => setParam('owner', 'all')}
+            >
+              ← All reports
+            </button>
+          </div>
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div className="sec-head">
+              <h3>{personaLabel(owner)} — open in this branch</h3>
+              <Pill tone={drilled.length ? 'red' : 'green'}>{drilled.length}</Pill>
+            </div>
+            {drilled.length === 0 && <div className="state-msg">Nothing open in this branch right now.</div>}
+            {drilled.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+          </div>
+        </>
+      )}
+
+      {tab === 'open' && scoped && hierarchyOn && !owner && (
+        <>
+          {escalatedToMe.length > 0 && (
+            <>
+              <div className="sec-head" style={{ padding: '0 0 12px' }}>
+                <h3>Escalated to you</h3>
+                <Pill tone="red">{escalatedToMe.length}</Pill>
+              </div>
+              <div className="t2" style={{ margin: '-6px 0 12px', color: 'var(--ink-3)' }}>
+                An SLA lapsed below you, so ownership moved up. These are yours now — nothing else in your organisation
+                reaches you automatically.
+              </div>
+              <div className="card" style={{ marginBottom: 24 }}>
+                {escalatedToMe.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+              </div>
+            </>
+          )}
+
+          <div className="card" style={{ marginBottom: 24 }} data-tour="findings-open">
+            <div className="sec-head">
+              <h3>Your call</h3>
+              <Pill tone={myOpen.length ? 'red' : 'green'}>{myOpen.length}</Pill>
+            </div>
+            {myOpen.length === 0 && (
+              <div className="state-msg">
+                {escalatedToMe.length > 0
+                  ? 'Nothing raised directly to you — only the escalations above. What your organisation is carrying is rolled up below.'
+                  : 'Nothing is waiting on your disposition. What your organisation is carrying is rolled up below.'}
+              </div>
+            )}
+            {myOpen.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+          </div>
+
+          {dottedOpen.length > 0 && (
+            <>
+              <div className="sec-head" style={{ padding: '0 0 12px' }}>
+                <h3>Functional line — visibility, not your call</h3>
+                <Pill tone="amber">{dottedOpen.length}</Pill>
+              </div>
+              <div className="card" style={{ marginBottom: 24 }}>
+                {dottedOpen.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+              </div>
+            </>
+          )}
+
+          <OrgRollup
+            rows={rollupRows}
+            themes={themes}
+            delegatedCount={delegated.filter((f) => f.status === 'open').length}
+            onDrill={(role) => setParam('owner', role)}
+          />
         </>
       )}
 

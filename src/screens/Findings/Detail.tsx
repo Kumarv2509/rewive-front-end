@@ -4,7 +4,9 @@ import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { ImpactPath } from './ImpactPath';
 import { DispositionBar } from './DispositionBar';
-import { personaLabel } from '../CommandCenter/personas';
+import { LeadershipBar } from './LeadershipBar';
+import { useEffectiveLens } from '../../components/layout/personaLens';
+import { personaLabel, roleSubtree } from '../CommandCenter/personas';
 import { severityTone, slaTone, statusLabel, statusTone } from './meta';
 import type { ReactNode } from 'react';
 
@@ -39,6 +41,7 @@ export function FindingDetailScreen() {
   const { data: finding, isLoading, isError } = useFinding(findingId);
   const { data: brain } = useKpiBrain();
   const { data: closures } = useClosureKpis();
+  const { persona: lensRole } = useEffectiveLens();
 
   if (isLoading) return <section className="screen"><Loading /></section>;
   if (isError || !finding) {
@@ -49,6 +52,11 @@ export function FindingDetailScreen() {
   const closure = finding.closureKpiId ? closures?.find((c) => c.id === finding.closureKpiId) : undefined;
 
   const isOpen = finding.status === 'open';
+  // Whose call is this from where the viewer is standing? The owner gets the
+  // four A's; a role above the owner gets leadership actions instead.
+  const isOwner = lensRole !== 'all' && finding.persona === lensRole;
+  const leadsOwner =
+    lensRole !== 'all' && !isOwner && roleSubtree(lensRole).includes(finding.persona);
   const isAbandoned = finding.status === 'abandoned';
   const watchState: StepState = isOpen ? 'todo' : isAbandoned ? 'done' : closure?.status === 'closed' ? 'done' : 'now';
   const closedState: StepState = finding.assessorVerdict || isAbandoned || closure?.status === 'closed' ? 'done' : 'todo';
@@ -65,6 +73,7 @@ export function FindingDetailScreen() {
         {finding.entity && <>{finding.entity}{finding.region ? ` (${finding.region})` : ''} · </>}
         {finding.impactEstimate}
         {finding.escalationLevel > 0 && <> {' '}<Pill tone="red">escalated ×{finding.escalationLevel}</Pill></>}
+        {finding.awaitingResponseTo && <> {' '}<Pill tone="amber">status asked by {personaLabel(finding.awaitingResponseTo)}</Pill></>}
         {finding.dottedPersona && <> {' '}<Pill tone="amber">⋯ flagged to {personaLabel(finding.dottedPersona)} · functional line</Pill></>}
         {isOpen
           ? <> {' '}<Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h left on SLA</Pill></>
@@ -102,7 +111,21 @@ export function FindingDetailScreen() {
           {/* 2 — DECIDED */}
           {isOpen ? (
             <ThreadStep n={2} state="now" title={`Decide — ${personaLabel(finding.persona)}'s call`} when={`${finding.slaHoursRemaining}h before this escalates`}>
-              <DispositionBar finding={finding} />
+              {finding.escalatedFrom && (
+                <div style={{ fontSize: 12.5, color: 'var(--ink-2)', marginBottom: 10 }}>
+                  ↑ This became {personaLabel(finding.persona)}'s call because {personaLabel(finding.escalatedFrom)} let
+                  the SLA lapse
+                  {finding.escalationTrail && finding.escalationTrail.length > 1
+                    ? ` (${finding.escalationTrail.length} levels so far)`
+                    : ''}
+                  .
+                </div>
+              )}
+              {leadsOwner ? (
+                <LeadershipBar finding={finding} lensRole={lensRole} />
+              ) : (
+                <DispositionBar finding={finding} />
+              )}
             </ThreadStep>
           ) : (
             <ThreadStep
@@ -120,6 +143,21 @@ export function FindingDetailScreen() {
                 </Link>
               </div>
             </ThreadStep>
+          )}
+
+          {/* Pressure from above — kept on the spine so the thread records who
+              leaned on this finding, not just who decided it. */}
+          {finding.leadershipLog && finding.leadershipLog.length > 0 && (
+            <div style={{ margin: '0 0 14px 34px', borderLeft: '2px solid var(--border-strong)', paddingLeft: 14 }}>
+              <div className="eyebrow" style={{ padding: '0 0 6px' }}>From above</div>
+              {finding.leadershipLog.map((e, i) => (
+                <div key={i} style={{ fontSize: 12.5, color: 'var(--ink-2)', padding: '3px 0' }}>
+                  {e.summary}
+                  <span style={{ color: 'var(--ink-3)' }}> · {new Date(e.at).toLocaleString()}</span>
+                  {e.note && <div style={{ color: 'var(--ink-3)', fontSize: 12 }}>“{e.note}”</div>}
+                </div>
+              ))}
+            </div>
           )}
 
           {/* 3 — WATCHING */}

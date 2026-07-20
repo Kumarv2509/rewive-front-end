@@ -59,9 +59,14 @@ function SectionHead({ label, hint, count }: { label: string; hint?: string | nu
 // approval, in one ranked list with one count — the only "waiting on you"
 // number anywhere in the product. Findings first (they carry an SLA clock),
 // sectioned by the mandate that drifted, most urgent mandate on top.
+//
+// Always role-scoped, even when the lens is widened to "+ their team" — this
+// queue means "your call", and a subordinate's finding is not. What the team
+// is carrying is rolled up on Findings instead (see OrgRollup).
 export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; scope?: RoleScope }) {
-  const findingsQ = useFindings({ persona, scope, status: 'open' });
-  const decisionsQ = usePendingDecisions(persona, scope);
+  const teamScope = scope === 'team' && persona !== 'all';
+  const findingsQ = useFindings({ persona, scope: 'role', status: 'open' });
+  const decisionsQ = usePendingDecisions(persona, 'role');
   const approve = useApproveDecision();
   const { showToast } = useToast();
 
@@ -83,7 +88,11 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
       {!isLoading && !isError && total === 0 && (
-        <div className="state-msg">Nothing waiting on you — your counterparts are watching, and the queue is clear.</div>
+        <div className="state-msg">
+          {teamScope
+            ? 'Nothing waiting on your disposition. What your organisation is carrying is rolled up on Findings.'
+            : 'Nothing waiting on you — your counterparts are watching, and the queue is clear.'}
+        </div>
       )}
 
       {sections.map((s) => (
@@ -133,6 +142,13 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
           </div>
         </div>
       ))}
+
+      {teamScope && (
+        <div className="state-msg" style={{ borderTop: '1px solid var(--border)', textAlign: 'left' }}>
+          Your team's open work isn't in this queue — it's rolled up by report on{' '}
+          <Link to="/operate/findings">Findings</Link>.
+        </div>
+      )}
     </div>
   );
 }

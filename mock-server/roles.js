@@ -91,11 +91,22 @@ export function escalationParent(persona, industry) {
 export function escalateFinding(finding, { industry, chiefId }) {
   const dottedRole = DOTTED_PARENT[finding.persona];
   if (dottedRole) finding.dottedPersona = dottedRole;
+  const fromRole = finding.persona;
   const parentRole = escalationParent(finding.persona, industry);
   finding.escalationLevel += 1;
   finding.slaHoursRemaining = 12;
   if (chiefId) finding.escalatedToAgentId = chiefId;
-  if (parentRole) finding.persona = parentRole;
+  if (parentRole) {
+    finding.persona = parentRole;
+    // The trail is what makes an escalation legible to the role that receives
+    // it: "this is your call because the level below let the clock lapse".
+    // Without it an escalated finding is indistinguishable from a native one.
+    finding.escalatedFrom = fromRole;
+    finding.escalationTrail = [
+      ...(finding.escalationTrail ?? []),
+      { from: fromRole, to: parentRole, at: new Date().toISOString() },
+    ];
+  }
   return { parentRole, dottedRole };
 }
 
