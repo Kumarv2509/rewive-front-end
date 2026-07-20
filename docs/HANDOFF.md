@@ -1,6 +1,14 @@
-# Handoff — live mandate tracking, Manufacturing at parity, marketing-site design passes (2026-07-18/19, latest session)
+# Handoff — website: static product tour, type rebrand, hero loop player, Umani-style cinematic pass (2026-07-19/20, latest session)
 
 ## Where things stand
+
+- **This session touched ONLY the sibling website repo**
+  (`../rewive-front-end_website`), which is **entirely UNCOMMITTED on top
+  of its single `init` commit `9c195e7`** — every file changed or added
+  (`index.html`, `preview.html` NEW, `story.html`, `demo.html`,
+  `fonts.css` NEW, `README.md`). Nothing in this product repo changed
+  this session except this handoff. Full detail in the
+  "This session (2026-07-19/20)" section below.
 
 - **`v5` is 12 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
   1. `e0e365e` — **paper-ledger redesign** (parallel session, documented below).
@@ -205,6 +213,126 @@
   uncommitted manufacturing work (re-verified 2026-07-19). Bundle note:
   SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
+
+## This session (2026-07-19/20): the website — static tour, type rebrand, hero loop player, Umani pass (sibling repo, ALL UNCOMMITTED)
+
+All work in `/Users/praveenj/Developer/rewive-front-end_website` (paths
+below relative to it). The Chrome extension was NOT connected this
+session — no screenshots were possible; verification was `open <file>`
+for the founder's eyes plus a python tag-balance check and a node
+`new Function()` parse of the inline script after every structural edit
+(no test suite exists; keep doing this).
+
+### 1. Product CTAs → static tour (`preview.html`, NEW)
+
+- **Decision (founder): the site never links to the running app.** All
+  former `http://localhost:5173/` CTAs across `index/story/demo.html`
+  now land on `preview.html` — "Inside the product", a static tour of
+  four faithful app-frame stills built from the real app's tokens
+  (rail with Business + Foundation, topnav, `#F4F3EE` rail bg, flat
+  paper-ledger, NO gradients — mirrors `src/styles/globals.css`,
+  `areas.ts`, KpiBrain screens):
+  1. `#foundation` — Operating Picture: full shell mockup + node canvas
+     (intent/P&L/mandate/sense tiers in teal/amber/indigo/gray, lit
+     impact path, one blind dashed sense, held-twice strip, industry
+     chips FMCG 26 / Healthcare 22 / Manufacturing 17).
+  2. `#today` — the one queue (3 items, SLA clocks, 4-A buttons).
+  3. `#thread` — a finding's thread (raised → decided → watching w/
+     progress bar → close greyed "when the number is back").
+  4. `#ledger` — 3 ledger rows with worked / didn't / too-early pills.
+  Wide frames scroll horizontally inside `.frame-scroll` on mobile.
+- `story.html` refreshed: missing **Manufacturing card restored** (17
+  mandates), CTAs → `preview.html`. `demo.html` rebuilt as a tour
+  launcher (jump links → preview anchors + index sections; localhost
+  dev-server notes removed). All links made relative (file:// safe).
+  `README.md` documents the no-live-app rule: if a hosted demo ever
+  exists, add a separate CTA — don't repoint the tour.
+
+### 2. Type rebrand — "remove the Claude touch" (`fonts.css`, NEW)
+
+- Founder called the Iowan/Palatino serif + SF Mono pairing "so obvious
+  … that Claude touch". Two comparison rounds (throwaway compare pages,
+  since deleted) led to: **Space Grotesk** for display (all four pages)
+  and **Oxanium** for labels/figures/eyebrows/clocks — picked over
+  Share Tech Mono / Chakra Petch / Michroma / Orbitron ("ok but not
+  distinct") / Syncopate / Zen Dots / etc.
+- Both are embedded as **base64 woff2 in `fonts.css`** (OFL, variable
+  weights, latin subsets, ~46KB total) — site stays fully
+  self-contained, no Google Fonts request. Verified via fontTools that
+  **Oxanium's ten digits are all 578 units wide** (naturally tabular →
+  the ticking SLA clock doesn't jitter). Non-latin glyphs (→ ≥ ✓ ◷)
+  intentionally fall through to system mono.
+- **Var names `--serif`/`--mono` were kept; only values changed** (same
+  trick as the app's paper-ledger rebrand). SVG `font-family`
+  presentation attrs don't resolve CSS vars — the loop-SVG texts and
+  org-tree labels carry literal `'Space Grotesk'`/`'Oxanium'` stacks;
+  keep updating those by hand if faces ever change again.
+
+### 3. Hero loop player (replaces the static finding card)
+
+- The hero vignette is now an auto-playing "screen recording": **five
+  scenes swipe horizontally** (Sense → Find → Decide → Act → Close),
+  3.4s each (`HOLD`), first slide cloned so the wrap swipes forward
+  then snaps home (`.notrans`). The old escalation ladder is now the
+  5-stage rail; a gradient `.loop-progress` bar times each scene.
+- **Agent work made visible** (founder: "no place agent work is
+  evident"): a one-line **counterpart console** (`.agent-log`, indigo,
+  typed per scene from the `LOGS` array, blinking cursor, "counterpart
+  · live" cap) + **AGENT WORK / HUMAN CALL badges** on every scene
+  footer — 4 agent, 1 human (Decide). That asymmetry is the point.
+- **Declutter history (don't re-add)**: orbit stage-chips + dashed ring
+  around the frame, two-line console, per-scene path chips and third
+  sense row were all added then CUT after "somewhat cluttered … make it
+  good for a pitch". Each scene now leads with ONE big statement
+  (`.slide .fc-title` 1.32rem etc.). SLA clock burns ~35 demo-min per
+  real second, resets each cycle.
+
+### 4. Umani Ronchi pass (founder reference: umanironchi.com)
+
+- Founder wants the site "like this" — cinematic editorial. Applied:
+  **full-viewport chapters** (`section.blk{min-height:92vh;
+  display:flex;align-items:center;isolation:isolate}`), hero fills the
+  first screen with a **scroll cue** (`.scrolldn`, dropping pulse);
+  **ghost outline numerals 01–11** per chapter
+  (`.wrap::before`, 13rem, `-webkit-text-stroke` at 8% ink —
+  `isolation:isolate` on sections is REQUIRED: without it the
+  `z-index:-1` numerals vanish behind the tinted section washes, which
+  was a founder-reported bug); verbatim strip → **seamless marquee**
+  (items duplicated once, `translateX(-50%)` loop, 36s); nav links
+  uppercase letterspaced; reveals slowed to 1.1s
+  `cubic-bezier(.16,1,.3,1)`.
+- **Scroll model**: snap went `mandatory` (earlier "each scroll lands
+  on next page" request) → **`proximity`** in the Umani pass (their
+  sites never grab). The **3D depth engine** stays: 12 set-pieces + 3
+  figures carry `data-z` (0.5–1), a rAF `zTick` applies single-axis
+  `rotateX + translateY/Z` around viewport center; ≥861px and
+  non-reduced-motion only.
+- **Removed at founder request — do NOT reintroduce**: the left
+  "journey rail" icon nav (two iterations, then "not to the mark,
+  remove it"), the winding alternate-side rotateY, and the hero
+  camera pull-back.
+- **Three big data-art figures** (`.art`, inline SVG, in the depth
+  pass) carry the imagery role since there's no photography:
+  FIG 01 drift-unanswered chart (#problem), FIG 02 operating-picture
+  cascade (#foundation), FIG 03 the-number-comes-back recovery curve
+  (#example). Style: white panel, dot-grain pattern, Oxanium
+  annotations, brand hues. Founder asked for "big pictures to support
+  the sections" — more figures in this language are the expected next
+  ask (candidates: #held-twice, #industries, #rollout).
+
+### 5. Open threads (website)
+
+1. **Commit the website repo** — everything above is uncommitted.
+2. `og:image` still missing (site-wide); "Book a walkthrough" is still
+   `mailto:hello@rewive.app` — swap for a scheduling link when one
+   exists.
+3. Mobile: nav links hide <880px with no hamburger; ghost numerals and
+   depth engine are desktop-only by design.
+4. Reduced-motion coverage is complete (marquee, scroll cue, player,
+   console cursor, depth engine all guarded) — keep guarding new motion.
+5. The founder iterates visually in fast rounds ("open the html" →
+   react). Keep changes reversible and validate with the
+   tag-balance + `new Function` checks before reopening.
 
 ## This session (2026-07-18/19): live mandate tracking — the one real pipeline (`b8e4143`)
 
