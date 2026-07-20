@@ -1,8 +1,16 @@
-# Handoff — website: static product tour, type rebrand, hero loop player, Umani-style cinematic pass (2026-07-19/20, latest session)
+# Handoff — senior-leadership findings view, counterpart view, screen help (2026-07-20, latest session)
 
 ## Where things stand
 
-- **This session touched ONLY the sibling website repo**
+- **This session (2026-07-20) worked in the PRODUCT repo and COMMITTED
+  everything** — two commits, `814ab8e` (senior-leadership findings view)
+  and `fbefa56` (counterpart view, screen help, hierarchy default), plus
+  this handoff. Working tree clean at handoff. Full detail in the
+  "This session (2026-07-20)" section below. **Neither is visually
+  verified — the browser extension never connected; look at the screens
+  first thing next session.**
+
+- **The previous session touched ONLY the sibling website repo**
   (`../rewive-front-end_website`), which is **entirely UNCOMMITTED on top
   of its single `init` commit `9c195e7`** — every file changed or added
   (`index.html`, `preview.html` NEW, `story.html`, `demo.html`,
@@ -97,7 +105,14 @@
       (2026-07-18 session, documented below): real metric ingestion →
       drift rules → counterpart-raised findings, Postgres-backed,
       Claude-authored narratives with template fallback.
-  29. this handoff commit.
+  29. `814ab8e` — **senior-leadership findings view** (2026-07-20,
+      documented below): roll-up by direct report, cross-division
+      themes, escalation trail, leadership actions.
+  30. `fbefa56` — **counterpart view + screen help + hierarchy default**
+      (same session): Findings grouped by the agent that raised each
+      finding (now the default view), help moved into one popup, the
+      lens picker trimmed to Group + Protein.
+  31. this handoff commit.
 - **UNCOMMITTED at handoff (deliberate — founder hasn't picked what to
   keep):**
   (a) **Manufacturing at parity + Gulf Precision tenant** — `v4data.js`,
@@ -213,6 +228,158 @@
   uncommitted manufacturing work (re-verified 2026-07-19). Bundle note:
   SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
+
+## This session (2026-07-20): the senior-leadership problem — roll-up, counterpart view, help popup (`814ab8e`, `fbefa56`)
+
+### What prompted it
+
+The founder, looking at the app as a CEO/CFO lens: *"the findings seems to be
+overwhelming for someone to act on ... i can understand for the supply chain
+team, but how to optimize this view for senior leadership"*.
+
+Measured against the running API before touching anything — the diagnosis is
+the whole design:
+
+| Lens | Role scope | + their team |
+|---|---|---|
+| Group CEO | 1 open | **25 open** (42 total) |
+| CFO | 1 open | 6 open |
+| COO — Protein | 2 open | 9 open |
+
+Role scope was fine. With "+ their team" on, `useEffectiveLens` returned
+`[self, ...subtree]` and `Findings/index.tsx` filtered ONE array, so a
+store-level finding rendered identically to the CEO's own call — same red SLA
+pill, same **Disposition** button. The product's model already said escalation
+is what moves a finding up the line; the UI ignored it.
+
+**The principle the session settled on:** *a senior leader does not inherit
+their team's queue, they inherit their team's exceptions.* Everything below
+follows from that one sentence — keep it if this gets reworked.
+
+### `814ab8e` — the senior view
+
+- **`src/screens/Findings/rollup.ts`** (pure, no API): `splitByOwnership`
+  (mine / delegated / dotted), `rollupByReport` (open, breached, at-risk,
+  tightest SLA, severe, watching, closed, impact — one row per direct report),
+  `detectThemes` (same mandate open under 2+ branches), `parseImpact`/
+  `totalImpact`. **Impact deliberately does NOT normalize periods** ("/month"
+  vs "this quarter"); the label reads "impact named", not a comparable total.
+  Don't "fix" this into a sum without deciding the period question first.
+- **`OrgRollup.tsx`** — themes band + report rows. **Nothing in it offers a
+  disposition**, on purpose.
+- **Open tab (hierarchy mode only)** is now: Escalated to you → Your call →
+  Functional line → Patterns → Your organisation is carrying. Roll-up rows
+  drill in via `?owner=` (validated against `PERSONAS` — an unknown value
+  would otherwise crash `roleSubtree`). **With hierarchy off the screen is
+  byte-identical to before.**
+- **Escalation trail**: `escalateFinding` in `mock-server/roles.js` now records
+  `escalatedFrom` + `escalationTrail`, so an inherited finding is
+  distinguishable from a native one and the thread can say why. Verified a
+  finding walking `sales_supervisor → coo → group_ceo`.
+- **Leadership actions** — `POST /findings/:id/leadership`, ask / reassign /
+  raise_priority / take, logged on the finding and in the audit log.
+  `LeadershipBar` replaces `DispositionBar` when the lens sits above the owner.
+  **Authority is enforced server-side, not just hidden in the UI**: actor must
+  sit strictly above the owner (403), reassign targets must be inside the
+  actor's subtree (400), and — the property worth preserving — **Take it
+  transfers ownership and thereby forfeits the leadership actions**, so you
+  cannot push a finding around forever; pulling it up means owing the call.
+  All five cases verified by curl.
+- **Today keeps one honest count**: "Waiting on you" and `UnifiedQueue` are
+  pinned to role scope regardless of lens (a CEO reading 25 there stops
+  believing the number). Team volume gets a separate "Open below you" tile;
+  the extra query reuses the role query's key when hierarchy is off, so it
+  costs no request.
+
+### `fbefa56` — reachability, the counterpart view, help
+
+**Why it was needed: the founder reloaded and said "i dont see any major
+changes ... it feels the same" — and was right.** The roll-up sat behind two
+off-by-default switches, and `Login/index.tsx` called `setHierarchy(false)` on
+EVERY sign-in, so team scope was re-hidden each time. Also `Topbar.tsx` hides
+the "+ their team" checkbox entirely when the lens is "All roles" (the
+default), so there was no toggle on screen to find. Lesson for future work:
+**a feature gated behind an off-by-default switch that is itself invisible in
+the default state does not exist.**
+
+- **Hierarchy defaults on for roles with reports** — `defaultHierarchyFor()`;
+  an explicit choice still wins. Storage is tri-state now (`'1'`/`'0'`/absent);
+  **the old `''` keeps meaning off** so anyone who deliberately turned it off
+  isn't flipped on. Resolved against the *effective* persona, so locked
+  non-admins see a truthful checkbox. Sign-in now clears the choice (`null`)
+  instead of forcing false.
+- **Findings · By counterpart (`AgentView.tsx`) — NOW THE DEFAULT VIEW.** Same
+  lens-scoped findings, grouped by the agent that raised them: sigil + health
+  dot, cadence sparkline, open/breached/temperament/last-sensed, and a **track
+  record — landed vs dismissed-as-noise, since Abandon means the counterpart
+  was wrong**. That metric is the point of the screen; it produces real
+  variance on seed data (Commercial 3/3, Planning 2/3, **Quality 0/1**).
+  Lifecycle is the opt-in (`?view=lifecycle`); an explicit `?tab=` implies
+  lifecycle so guide deep links and "All findings →" still land right.
+  The cadence label only claims the 14d window when something landed in it —
+  **12 of 42 seeded findings predate it**, and a flat line beside "5 raised"
+  would have been a lie.
+- **Screen help is one popup.** `Intro` gained `doThis`; both it and the
+  how-it-works prose now sit behind a single "What to do here" button (the old
+  inline `<details>` disclosure is gone, dead CSS removed). Lens-aware on
+  Today / Findings / a finding's thread — a leader is told the roll-up is
+  visibility and that Take it forfeits the leadership actions.
+- **The guide was lying** and is fixed: it pointed at `/operate/closure`
+  (retired, redirects) and named "Operate · Command Center", "Foundation
+  area", "Insights area" — none of which exist in the current IA. All `where`
+  labels relabelled + a new step on the senior view.
+- **Lens picker trimmed to Group + Protein** (founder ask, for easier working).
+  **Picker-only**, via `PICKER_GROUP_LABELS` in `personas.ts`. `PERSONAS` stays
+  complete ON PURPOSE — narrowing it would break the `?owner=` drill-down,
+  since a Group CEO still rolls up and drills into G&I/F&V/Ambient. Widen by
+  adding labels back to that one array. A held-but-unoffered lens renders as
+  "… (current)" rather than letting the select show "All lenses" while the data
+  stays filtered elsewhere.
+- **`ScopeBanner` removed** from all 8 screens and deleted (founder ask). The
+  roles-in-scope information still lives in the "+ their team" tooltip.
+- Fixed `var(--ink-1)` — **never defined in the paper-ledger palette** (it is
+  `--ink`) — in `OrgRollup` and the help modal.
+
+### Founder decisions taken this session (don't re-litigate)
+
+1. **Protein-only working is a LENS, not a data deletion.** Offered the
+   destructive option (strip G&I/F&V/Ambient/extended/group tier from seeds);
+   founder chose "just use the lens". `COO — Protein` gives 16 findings /
+   8 counterparts with nothing removed. **Note the consequence**: from inside
+   one division "Patterns" is always empty — themes need 2+ divisions. That is
+   correct behaviour, not a bug.
+2. **Ask deliberately does not touch the SLA clock** — asking is not deciding,
+   and it should neither buy the owner time nor take it away. Flagged to the
+   founder as a unilateral call; unchallenged so far.
+3. Help lives in a popup, not inline ("keep it simple").
+
+### Verification status — READ THIS
+
+Everything this session is **type-checked, linted, built, and verified against
+the running mock API** (routes, all authority guards, escalation trail, the
+grouping and track-record maths). **NOTHING WAS VISUALLY VERIFIED** — the
+Chrome extension never connected (`tabs_context_mcp` → "Browser extension is
+not connected") for the whole session, so the roll-up, the counterpart cards,
+the help modal and the segmented control have been reasoned about and never
+seen. **First job next session: look at them.** Sizing, contrast, and the
+19-card density at Group-CEO scope are all unproven.
+
+### Known rough edge
+
+At Group CEO + team scope the counterpart view renders **19 cards**, most
+holding a single finding. Sorting puts breached-then-open first so the useful
+ones lead, but it is a long page. If it reads as bloated, collapse
+single-finding counterparts into a compact "also raised" strip at the bottom.
+The Protein lens (8 cards) is much closer to right.
+
+### Servers / demo state
+
+`npm run dev:all` was running all session. **The mock server is plain `node`
+with no watch — edit `mock-server/` and you MUST restart it** (this bit the
+session once: new routes 404'd until restart, and `concurrently` does not
+revive a killed child). Restarting resets in-memory seed state. `fmcg-f-8` was
+escalated twice by hand so the "Escalated to you" band renders non-empty for
+the Group CEO; that is scaffolding and dies on restart — nothing depends on it.
 
 ## This session (2026-07-19/20): the website — static tour, type rebrand, hero loop player, Umani pass (sibling repo, ALL UNCOMMITTED)
 
@@ -1142,6 +1309,33 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 - Currency: impact in AED (FMCG), token/API costs USD; Healthcare in USD.
 
 ## Open threads / natural next steps
+
+### Next steps — in priority order (as of 2026-07-20)
+
+1. **Look at what shipped blind.** Two commits of UI were written without
+   the browser extension ever connecting. Sign in as **Group CEO** (lens
+   picker now offers only Group + Protein), and check: the counterpart
+   cards (default view on Findings), the "What to do here" popup, the
+   segmented control, the roll-up bands, and `LeadershipBar` on a
+   subordinate's finding. Density at 19 cards is the most likely complaint.
+2. **Unblock the push — unchanged, founder-only action.** `v5` is now ~32
+   commits ahead, none pushed. `~/.ssh/config` correctly routes GitHub over
+   :443 and the key `id_ed25519_rewive`
+   (`SHA256:qi700T0YxECL3859MQIEId9q2+/3E09fi/vgYPdR2P8`) has no passphrase
+   — GitHub simply doesn't have it. `ssh -T` returns *Permission denied
+   (publickey)*, i.e. the network path is FINE and the key is unregistered.
+   Paste `~/.ssh/id_ed25519_rewive.pub` at github.com/settings/ssh/new,
+   then `git push origin v5`. (`gh` is unusable — TLS MITM.)
+3. **Finish the help pass.** Only the loop screens (Today, Findings, a
+   finding's thread, Decisions) have `doThis`. Foundation and Execution
+   screens still show doctrine-only popups. Founder scoped it to "loop
+   screens first" — the rest is the natural continuation.
+4. **Decide the counterpart-view density question** (see the rough edge in
+   this session's section) — collapse single-finding counterparts, or leave.
+5. **Consider a materiality floor per role** — the one recommendation from
+   the original senior-leadership analysis that was NOT built (items 1, 2,
+   3, 5, 6, 7 were). Team-scope items below a role's impact threshold would
+   collapse into "+31 below your threshold" instead of rendering.
 
 ### Next steps — in priority order (as of 2026-07-19)
 
