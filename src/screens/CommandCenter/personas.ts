@@ -81,12 +81,20 @@ export const PERSONA_GROUPS: { label: string; roles: Persona[] }[] = [
   { label: 'Extended functions', roles: ['shared_services', 'procurement', 'hr_services', 'audit'] },
 ];
 
+// Every role that exists in the data — the source of truth for labels, lens
+// validation, and roll-up drill-downs. Stays complete even when the picker is
+// narrowed: a Group CEO still rolls up G&I/F&V/Ambient and can drill into
+// them, they just can't *become* those roles.
 export const PERSONAS: Persona[] = PERSONA_GROUPS.flatMap((g) => g.roles);
+
+// What the lens picker (and the login "Sign in as") actually offers. Trimmed
+// to Group + Protein to keep the demo workable; widen by adding groups back.
+const PICKER_GROUP_LABELS = ['Group', 'Protein'];
 
 /** The lens roles offered for an industry (grouped for FMCG, flat legacy list otherwise). Defaults to the active industry. */
 export function personaGroupsForIndustry(industry?: string): { label: string; roles: Persona[] }[] {
   if (isLegacyIndustry(industry ?? getActiveIndustry())) return [{ label: 'Roles', roles: LEGACY_PERSONAS }];
-  return PERSONA_GROUPS;
+  return PERSONA_GROUPS.filter((g) => PICKER_GROUP_LABELS.includes(g.label));
 }
 
 /** Whether a lens value is selectable in the given industry's picker — a lens

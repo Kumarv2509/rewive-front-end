@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useClosureKpis, useFinding, useKpiBrain } from '../../api/shadowOrg';
 import { Pill } from '../../components/shared/Pill';
+import { Intro } from '../../components/shared/Intro';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { ImpactPath } from './ImpactPath';
 import { DispositionBar } from './DispositionBar';
@@ -79,6 +80,25 @@ export function FindingDetailScreen() {
           ? <> {' '}<Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h left on SLA</Pill></>
           : <> {' '}<Pill tone={statusTone[finding.status]}>{statusLabel[finding.status]}</Pill></>}
       </div>
+
+      {isOpen && (
+        <Intro
+          line="This is the thread — one finding's whole life on a single spine: raised → decided → watching → closed."
+          doThis={
+            leadsOwner
+              ? [
+                  <>This is <b>{personaLabel(finding.persona)}'s</b> call. Read it, but do not decide it — the ledger records the decision against whoever makes it.</>,
+                  <>To push: <b>Ask</b> for a status, <b>Reassign</b> it, or <b>Raise priority</b>. None of these move the decision to you.</>,
+                  <><b>Take it</b> only if the call really is yours — ownership transfers and you then owe the disposition.</>,
+                ]
+              : [
+                  <>Read the <b>evidence</b> and follow the <b>impact path</b> before deciding — the counterpart shows its working.</>,
+                  <>Give it one of four answers. Accept sets an exit condition; Act opens a solution; Acknowledge sets a trip-wire; Abandon needs a reason, which tunes the counterpart.</>,
+                  <>Not yours? <b>Escalate</b> rather than leaving it — the clock escalates it anyway, just later and with your name on the delay.</>,
+                ]
+          }
+        />
+      )}
 
       <div className="card" style={{ padding: '22px 24px' }}>
         <div className="thread">

@@ -15,20 +15,20 @@ const STEPS: {
   doThis: string[];
 }[] = [
   {
-    title: 'Start your day in the Command Center',
-    where: 'Operate · Command Center',
+    title: 'Start your day on Today',
+    where: 'Today',
     to: '/command',
-    cta: 'Open the Command Center',
-    what: 'The greeting tells you what Rewive executed since yesterday and how many calls are waiting on you. Below it: findings waiting on a disposition, decisions pending, the live pulse, and runs in flight.',
+    cta: 'Open Today',
+    what: 'The greeting tells you what Rewive executed since yesterday and how many calls are waiting on you. Below it: one queue of findings and approvals, the live pulse, and runs in flight.',
     doThis: [
       'Read the summary sentence — it is your morning briefing.',
-      'Admins can switch the persona lens: Store manager, CFO, or Operations head.',
-      'Anything under "Findings — waiting on you" is your first job. Click one.',
+      '"Waiting on you" is always your own call — even with the lens widened to your team.',
+      'Anything in that queue is your first job. Click one.',
     ],
   },
   {
     title: 'Open a finding and read the case',
-    where: 'Operate · Findings',
+    where: 'Findings',
     to: '/operate/findings',
     cta: 'See the findings',
     what: 'A finding is what a counterpart raises when a number drifts from its mandate — with severity, evidence, an impact estimate, and an impact path tracing the drift up to the intent it threatens.',
@@ -51,11 +51,11 @@ const STEPS: {
     ],
   },
   {
-    title: 'Watch the loop stay open in Closure',
-    where: 'Operate · Closure',
-    to: '/operate/closure',
-    cta: 'Open Closure',
-    what: 'Nothing is "done" until the number is back. Accepted findings live here as exit conditions with progress bars; acknowledged ones sit on their trip-wires. The counterpart keeps watching either way.',
+    title: 'Watch the loop stay open — the Watching tab',
+    where: 'Findings · Watching',
+    to: '/operate/findings?tab=watching',
+    cta: 'Open Watching',
+    what: 'Nothing is "done" until the number is back. Accepted findings live on the Watching tab as exit conditions with progress bars; acknowledged ones sit on their trip-wires. The counterpart keeps watching either way.',
     doThis: [
       'Track each exit condition\'s progress toward target.',
       'Only "Mark met · close loop" when the number is truly back.',
@@ -63,8 +63,20 @@ const STEPS: {
     ],
   },
   {
+    title: 'Leading a team? You get exceptions, not a queue',
+    where: 'Findings · with "+ their team" on',
+    to: '/operate/findings',
+    cta: 'See the roll-up',
+    what: 'A senior lens does not inherit its team\'s queue. Findings owned below you appear as a roll-up — one row per direct report — plus the patterns worth your attention. Only escalations reach you as items you must answer.',
+    doThis: [
+      '"Escalated to you" first — an SLA lapsed below and ownership moved up to you.',
+      'Read "Patterns" as one decision: the same mandate drifting under several divisions.',
+      'On a report\'s finding you get Ask, Reassign, Raise priority or Take it — not the four A\'s. The decision stays theirs unless you take it.',
+    ],
+  },
+  {
     title: 'The Decision Ledger — the memory of judgment',
-    where: 'Operate · Decision Ledger',
+    where: 'Decisions',
     to: '/operate/decisions',
     cta: 'Open the ledger',
     what: 'Every decision is recorded: who made it (human or agent), what finding prompted it, what it cost or earned. Later an assessor returns a verdict — worked, didn\'t, or too early — next to the estimate that justified the call.',
@@ -81,12 +93,12 @@ const STEPS: {
     what: 'Act opens a solution design: approach, data needed, guardrails, and a task list — new agents to build, existing agents to reuse, human tasks. A validation agent reviews the plan before approval; agent builds continue in the studio.',
     doThis: [
       'You never browse to the build screens — they come to you when a finding needs them.',
-      'Everything assigned to you or your team lands in Operate · Tasks.',
+      'Everything assigned to you or your team lands in Execution · Tasks.',
     ],
   },
   {
     title: 'Meet your counterparts',
-    where: 'Operate · Counterparts',
+    where: 'Agents · Counterparts',
     to: '/operate/counterparts',
     cta: 'Meet them',
     what: 'One agent per function, plus an org-level chief of staff watching the intents. Every mandate is held twice — once by a person, once by its counterpart. Each card shows open findings, SLA breaches, and a temperament dial from quiet to hair-trigger.',
@@ -97,7 +109,7 @@ const STEPS: {
   },
   {
     title: 'The Foundation: what everything runs on',
-    where: 'Foundation area',
+    where: 'Foundation',
     to: '/build/picture',
     cta: 'Open the Operating Picture',
     what: 'The Operating Picture is the map the counterparts reason over: intents, the mandates that carry them, the senses that verify them. The Mandate Library is where a new company starts; Data Connectors wire up the senses — a mandate without a sense is blind.',
@@ -107,10 +119,10 @@ const STEPS: {
     ],
   },
   {
-    title: 'Measure what is working in Insights',
-    where: 'Insights area',
+    title: 'Measure what is actually working',
+    where: 'Performance · Outcomes · Agents',
     to: '/insights/outcomes',
-    cta: 'Open Insights',
+    cta: 'Open Outcomes',
     what: 'Outcomes turns runs into scorecards and recommended actions. Performance shows where the loop closes fastest. Agent Space lists every agent running for your context, ROI and token cost side by side.',
     doThis: [
       'Assign or schedule the recommended actions on an outcome report.',

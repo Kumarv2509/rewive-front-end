@@ -14,9 +14,21 @@ export type PersonaLens = Persona | 'all';
 interface LensContextValue {
   lens: PersonaLens;
   setLens: (l: PersonaLens) => void;
-  /** Hierarchy mode: widen the lens to the role's whole reporting subtree. */
+  /** Hierarchy mode resolved against the picked lens — what the toggle shows. */
   hierarchy: boolean;
-  setHierarchy: (on: boolean) => void;
+  /** The user's explicit choice, or null when they have never touched it (in
+   *  which case the role's default applies). */
+  hierarchyChoice: boolean | null;
+  /** Pass null to clear the choice and fall back to the role's default. */
+  setHierarchy: (on: boolean | null) => void;
+}
+
+/** A role with reports manages a team, and for them the team view IS the job —
+ *  role-only is the unusual case. So hierarchy defaults on for those roles and
+ *  off for leaf roles, until the user says otherwise. */
+// eslint-disable-next-line react-refresh/only-export-components -- co-located with its provider intentionally
+export function defaultHierarchyFor(lens: PersonaLens): boolean {
+  return lens !== 'all' && (ROLE_CHILDREN[lens]?.length ?? 0) > 0;
 }
 
 const LensContext = createContext<LensContextValue | null>(null);
@@ -31,22 +43,37 @@ function readStoredLens(): PersonaLens {
   return 'all';
 }
 
-function readStoredHierarchy(): boolean {
-  try { return localStorage.getItem(HIERARCHY_KEY) === '1'; } catch { return false; }
+// null = never chosen, so the role's default applies. Distinguishing "off"
+// from "unset" is the whole point — an older build wrote '' for off, and that
+// must keep meaning off rather than silently flipping on.
+function readStoredHierarchy(): boolean | null {
+  try {
+    const v = localStorage.getItem(HIERARCHY_KEY);
+    if (v === null) return null;
+    return v === '1';
+  } catch { return null; }
 }
 
 export function PersonaLensProvider({ children }: { children: ReactNode }) {
   const [lens, setLensState] = useState<PersonaLens>(readStoredLens);
-  const [hierarchy, setHierarchyState] = useState<boolean>(readStoredHierarchy);
+  const [hierarchyChoice, setHierarchyState] = useState<boolean | null>(readStoredHierarchy);
   const setLens = useCallback((l: PersonaLens) => {
     setLensState(l);
     try { localStorage.setItem(LENS_KEY, l); } catch { /* ignore */ }
   }, []);
-  const setHierarchy = useCallback((on: boolean) => {
+  const setHierarchy = useCallback((on: boolean | null) => {
     setHierarchyState(on);
-    try { localStorage.setItem(HIERARCHY_KEY, on ? '1' : ''); } catch { /* ignore */ }
+    try {
+      if (on === null) localStorage.removeItem(HIERARCHY_KEY);
+      else localStorage.setItem(HIERARCHY_KEY, on ? '1' : '0');
+    } catch { /* ignore */ }
   }, []);
-  return <LensContext.Provider value={{ lens, setLens, hierarchy, setHierarchy }}>{children}</LensContext.Provider>;
+  const hierarchy = hierarchyChoice ?? defaultHierarchyFor(lens);
+  return (
+    <LensContext.Provider value={{ lens, setLens, hierarchy, hierarchyChoice, setHierarchy }}>
+      {children}
+    </LensContext.Provider>
+  );
 }
 
 // eslint-disable-next-line react-refresh/only-export-components -- co-located with its provider intentionally
@@ -63,6 +90,9 @@ export function usePersonaLens() {
 export function useEffectiveLens(): {
   persona: PersonaLens;
   scope: RoleScope;
+  /** Hierarchy resolved against the *effective* persona — which differs from
+      the picked lens for non-admins, who are locked to their own role. */
+  hierarchy: boolean;
   /** Roles in view (null when the lens is 'all'). */
   rolesInScope: Persona[] | null;
   /** Roles below the lens role that hierarchy mode pulls in. */
@@ -70,12 +100,13 @@ export function useEffectiveLens(): {
   /** Roles reporting into the lens role on the dotted (functional) line. */
   dotted: Persona[];
 } {
-  const { lens, hierarchy } = usePersonaLens();
+  const { lens, hierarchyChoice } = usePersonaLens();
   const { data: currentUser } = useCurrentUser();
   const persona = currentUser && !currentUser.isAdmin ? currentUser.defaultPersona : lens;
+  const hierarchy = hierarchyChoice ?? defaultHierarchyFor(persona);
   const scope: RoleScope = hierarchy ? 'team' : 'role';
   const reports = persona === 'all' ? [] : ROLE_CHILDREN[persona].flatMap(roleSubtree);
   const dotted = persona === 'all' ? [] : dottedReports(persona);
   const rolesInScope = persona === 'all' ? null : hierarchy ? [persona, ...reports, ...dotted] : [persona];
-  return { persona, scope, rolesInScope, reports, dotted };
+  return { persona, scope, hierarchy, rolesInScope, reports, dotted };
 }

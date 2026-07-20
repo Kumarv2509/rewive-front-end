@@ -6,8 +6,10 @@ import { personaLabel, personaGroupsForIndustry, ROLE_CHILDREN } from '../../scr
 
 // Hierarchy mode: only offered when the lens role actually has reports.
 function HierarchyToggle() {
-  const { hierarchy, setHierarchy } = usePersonaLens();
-  const { persona, reports } = useEffectiveLens();
+  const { setHierarchy } = usePersonaLens();
+  // Resolved against the effective persona, so a locked non-admin sees the
+  // box match what their screens are actually doing.
+  const { persona, reports, hierarchy } = useEffectiveLens();
   if (persona === 'all' || ROLE_CHILDREN[persona].length === 0) return null;
 
   return (
@@ -49,6 +51,12 @@ function LensPicker() {
         <span className="lens-label">Lens</span>
         <select value={lens} onChange={(e) => setLens(e.target.value as PersonaLens)}>
           <option value="all">All lenses</option>
+          {/* A lens held from before the picker was narrowed still filters the
+              data, so show it rather than let the select fall back to "All
+              lenses" and misreport what is on screen. */}
+          {lens !== 'all' && !personaGroupsForIndustry().some((g) => g.roles.includes(lens)) && (
+            <option value={lens}>{personaLabel(lens)} (current)</option>
+          )}
           {personaGroupsForIndustry().map((group) => (
             <optgroup key={group.label} label={group.label}>
               {group.roles.map((p) => (

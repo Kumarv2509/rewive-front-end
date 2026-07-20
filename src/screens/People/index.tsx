@@ -1,5 +1,4 @@
 import { Intro } from '../../components/shared/Intro';
-import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { HighlightCards } from './HighlightCards';
 import { LeaderboardTable } from './LeaderboardTable';
 import { LoopSpeedTable } from './LoopSpeedTable';
@@ -12,7 +11,6 @@ export function PeopleScreen() {
         line="Where the loop closes fastest — every mandate, its owner, its counterpart, and how quickly drift comes back to target."
         more="Scores measure execution, not surveillance: actions closed, timeliness, and whether the decisions a person sponsored actually worked. Agents and people are held to the same standard."
       />
-      <ScopeBanner />
 
       <HighlightCards />
 

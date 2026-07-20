@@ -35,7 +35,10 @@ export function LoginScreen() {
     e.preventDefault();
     setActiveTenantId(tenant.id);
     setLens(role);
-    setHierarchy(false);
+    // Clear rather than force off: a role with reports should land on its team
+    // view, which is the job. Forcing false here hid team scope on every
+    // sign-in regardless of role.
+    setHierarchy(null);
     setIndustry.mutate(tenant.industry, { onSettled: () => navigate('/command') });
   };
 

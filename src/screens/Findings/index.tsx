@@ -1,13 +1,13 @@
 import { Link, useSearchParams } from 'react-router-dom';
-import { useClosureKpis, useFindings, useKpiBrain } from '../../api/shadowOrg';
+import { useClosureKpis, useFindings, useKpiBrain, useShadowOrg } from '../../api/shadowOrg';
 import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
-import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { PERSONAS, personaLabel, roleSubtree } from '../CommandCenter/personas';
 import { ExitConditionCard, TripWireRow } from './Lifecycle';
 import { severityTone, slaTone, statusLabel, statusTone } from './meta';
+import { AgentView } from './AgentView';
 import { OrgRollup } from './OrgRollup';
 import { detectThemes, rollupByReport, splitByOwnership } from './rollup';
 import type { Finding, Persona } from '../../api/types';
@@ -68,6 +68,13 @@ export function FindingsScreen() {
   // Validated — a hand-edited URL must not reach roleSubtree with a junk role.
   const ownerParam = searchParams.get('owner');
   const owner = ownerParam && PERSONAS.includes(ownerParam as Persona) ? (ownerParam as Persona) : null;
+  // Grouping by the counterpart that raised each finding is the default view —
+  // "who found this, and have they been right before". Lifecycle (Open /
+  // Watching / Closed) is the opt-in, so it takes the explicit param.
+  // An explicit ?tab= (guide deep links, "All findings →") means the caller
+  // wants the lifecycle view, so it wins when no view is named.
+  const viewParam = searchParams.get('view');
+  const byAgent = viewParam ? viewParam !== 'lifecycle' : !searchParams.get('tab');
 
   // The global lens routes here too: a sales supervisor sees sales findings,
   // Commercial finance sees returns / discounts / trade spend, the COO sees
@@ -75,8 +82,9 @@ export function FindingsScreen() {
   const { data: findings, isLoading, isError } = useFindings({ stream, persona, scope });
   const { data: closures } = useClosureKpis();
   const { data: brain } = useKpiBrain();
+  const { data: org } = useShadowOrg(persona, scope);
 
-  const setParam = (key: 'tab' | 'stream' | 'region' | 'owner', value: string) => {
+  const setParam = (key: 'tab' | 'stream' | 'region' | 'owner' | 'view', value: string) => {
     const next = new URLSearchParams(searchParams);
     if ((key === 'tab' && value === 'open') || (key !== 'tab' && value === 'all')) next.delete(key);
     else next.set(key, value);
@@ -144,16 +152,42 @@ export function FindingsScreen() {
             decision is in the ledger.
           </>
         }
+        // The instructions change with the lens, because the job does: an
+        // operator works a queue, a leader works exceptions and patterns.
+        doThis={
+          hierarchyOn
+            ? [
+                <><b>Escalated to you</b> first — an SLA lapsed below and ownership moved up. Nothing else in your organisation reaches you automatically.</>,
+                <>Disposition anything under <b>Your call</b>. Silence escalates it further up, same as it did to get here.</>,
+                <>Read <b>Patterns</b> as one decision, not many — the same mandate drifting under several divisions is the call that is actually yours.</>,
+                <>The roll-up is visibility, not a queue. Open a report's row to push on a finding — Ask, Reassign, Raise priority, or Take it — without taking the decision off them.</>,
+              ]
+            : [
+                <>You land on <b>By counterpart</b> — who raised what, and whether their past calls landed or were dismissed as noise. Switch to <b>Lifecycle</b> for the Open / Watching / Closed queue.</>,
+                <>Work <b>Open</b> from the top — the tightest SLA sorts first, and an unanswered finding escalates to your manager.</>,
+                <>Open a finding, read the evidence and impact path, then give it one of four answers: Accept, Act, Acknowledge, or Abandon.</>,
+                <>Check <b>Watching</b> — an accepted finding is not done until its exit condition is met and the number is back.</>,
+              ]
+        }
       />
-      <ScopeBanner />
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-        <div className="tabs" style={{ marginBottom: 0, borderBottom: 'none', flex: 1 }}>
-          {TABS.map((t) => (
-            <button key={t.key} className={`tab${tab === t.key ? ' active' : ''}`} onClick={() => setParam('tab', t.key)}>
-              {t.label} <span style={{ color: 'var(--ink-3)', fontWeight: 600 }}>{tabCount[t.key]}</span>
-            </button>
-          ))}
+        {byAgent ? (
+          <div style={{ flex: 1, fontSize: 13, color: 'var(--ink-2)' }}>
+            Every finding in your scope, grouped by the counterpart that raised it.
+          </div>
+        ) : (
+          <div className="tabs" style={{ marginBottom: 0, borderBottom: 'none', flex: 1 }}>
+            {TABS.map((t) => (
+              <button key={t.key} className={`tab${tab === t.key ? ' active' : ''}`} onClick={() => setParam('tab', t.key)}>
+                {t.label} <span style={{ color: 'var(--ink-3)', fontWeight: 600 }}>{tabCount[t.key]}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="seg">
+          <button className={byAgent ? 'on' : ''} onClick={() => setParam('view', 'all')}>By counterpart</button>
+          <button className={byAgent ? '' : 'on'} onClick={() => setParam('view', 'lifecycle')}>Lifecycle</button>
         </div>
         <select
           value={stream}
@@ -180,7 +214,9 @@ export function FindingsScreen() {
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
 
-      {tab === 'open' && scoped && !hierarchyOn && (
+      {byAgent && scoped && <AgentView findings={scoped} agents={org?.agents ?? []} />}
+
+      {!byAgent && tab === 'open' && scoped && !hierarchyOn && (
         <>
           {open.length > 0 ? (
             <div className="card" style={{ marginBottom: 16 }} data-tour="findings-open">
@@ -199,7 +235,7 @@ export function FindingsScreen() {
       )}
 
       {/* Drilled into one report's branch from a roll-up row. */}
-      {tab === 'open' && scoped && hierarchyOn && owner && (
+      {!byAgent && tab === 'open' && scoped && hierarchyOn && owner && (
         <>
           <div style={{ marginBottom: 12 }}>
             <button
@@ -220,7 +256,7 @@ export function FindingsScreen() {
         </>
       )}
 
-      {tab === 'open' && scoped && hierarchyOn && !owner && (
+      {!byAgent && tab === 'open' && scoped && hierarchyOn && !owner && (
         <>
           {escalatedToMe.length > 0 && (
             <>
@@ -274,7 +310,7 @@ export function FindingsScreen() {
         </>
       )}
 
-      {tab === 'watching' && (
+      {!byAgent && tab === 'watching' && (
         <>
           <div className="sec-head" style={{ padding: '0 0 12px' }}>
             <h3>Exit conditions in flight</h3>
@@ -311,7 +347,7 @@ export function FindingsScreen() {
         </>
       )}
 
-      {tab === 'closed' && (
+      {!byAgent && tab === 'closed' && (
         <>
           <div className="sec-head" style={{ padding: '0 0 12px' }}>
             <h3>Closed loops — the number came back</h3>

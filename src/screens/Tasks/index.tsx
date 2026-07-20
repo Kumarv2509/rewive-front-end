@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
 import { Pill } from '../../components/shared/Pill';
-import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useTasks, useAddTaskFeedback, useUpdateTaskStatus, useUpdateTaskChannel } from '../../api/solutionDesign';
@@ -103,7 +102,6 @@ export function TasksScreen() {
       <h1 className="page">Execution</h1>
       <Intro line="Everything assigned to you or your team from an approved solution design, with a spot to leave feedback." />
       <SectionTabs tabs={EXECUTION_TABS} />
-      <ScopeBanner />
 
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}

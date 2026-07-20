@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
-import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { StatsRow } from './StatsRow';
 import { HalfYearReview } from './HalfYearReview';
 import { DecisionsTable } from './DecisionsTable';
@@ -39,6 +38,11 @@ export function DecisionsScreen() {
             Rows link back to the finding they answered, so the whole thread is one click away.
           </>
         }
+        doThis={[
+          <>Click any row to jump back to the finding it answered — the decision and its cause stay attached.</>,
+          <>Compare the <b>verdict</b> against the estimate that justified the call; that gap is the thing worth learning from.</>,
+          <>Nothing to action here — this is the record. Use it to check whether the calls you made actually worked.</>,
+        ]}
       />
 
       <StatsRow />
@@ -50,7 +54,6 @@ export function DecisionsScreen() {
 
       {view === 'ledger' && (
         <>
-          <ScopeBanner />
           <HalfYearReview />
           <div className="filters">
             {functionFilters.map((f) => (

@@ -16,7 +16,7 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: '
         style={{
           fontSize: 15,
           fontWeight: 600,
-          color: tone === 'red' ? 'var(--red)' : tone === 'amber' ? 'var(--amber)' : 'var(--ink-1)',
+          color: tone === 'red' ? 'var(--red)' : tone === 'amber' ? 'var(--amber)' : 'var(--ink)',
         }}
       >
         {value}
