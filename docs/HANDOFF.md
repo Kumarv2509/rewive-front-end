@@ -745,15 +745,32 @@ with HTTPS and scope the firewall to the office network.
   absence of any test suite). The two places reviewer time actually pays
   off are the tracking pipeline and the P&L cascade — most of the rest is
   seeds and renames.
-- **Servers at handoff (2026-07-21, later): LEFT RUNNING on :5173 +
-  :4000, with the SLA clock FROZEN** (`REWIVE_SLA_HOURS_PER_TICK=0`) —
-  started as `npx concurrently … "REWIVE_SLA_HOURS_PER_TICK=0 node
-  mock-server/server.js"` rather than `npm run dev:all`, so no finding
-  escalates while you work. **Seed state is mutated** by the disposition
-  test run (several findings dispositioned, solutions and a worker spec
-  created) — restart to reset. The lingering-children gotcha still
-  applies: stopping the task does not reliably kill `concurrently`'s
-  children, and a stale :4000 silently serves old seeds. Reset with
+- **Servers at handoff (2026-07-21, latest): LEFT RUNNING on :5173 +
+  :4000 in a NON-DEFAULT configuration — both the SLA clock and the
+  sweep interval are OFF.** Started as:
+
+  ```
+  npx concurrently -n web,api -c blue,green "npm:dev" \
+    "REWIVE_SWEEP_MS=0 REWIVE_SLA_HOURS_PER_TICK=0 node mock-server/server.js"
+  ```
+
+  **This is not `npm run dev:all`, and the difference will mislead you.**
+  `REWIVE_SLA_HOURS_PER_TICK=0` freezes SLA clocks, so nothing escalates
+  and finding personas stay put (essential for UI tests — see the
+  disposition section). `REWIVE_SWEEP_MS=0` disables the 60s background
+  sweep, so **the agents will never sweep on their own**: a strip that
+  sits idle forever is this flag, not a bug. Restart with plain
+  `npm run dev:all` for normal demo behaviour (12x SLA decay, sweep
+  every 60s).
+
+  **Seed state is heavily mutated** by this session's tests — findings
+  dispositioned, solution designs and a worker spec created, sweeps run.
+  Restart to reset (no `DATABASE_URL`, so tracking state is in-memory
+  too).
+
+  The lingering-children gotcha still applies: stopping the task does
+  not reliably kill `concurrently`'s children, and a stale :4000
+  silently serves old seeds. Reset with
   `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
   Confirming the previous session's note: killing by port DID take down
   the long-lived `dev:all` task cleanly.
