@@ -54,8 +54,10 @@ function StepRow({ step }: { step: SweepStep }) {
 }
 
 export function LiveAnalysisStrip() {
-  const { data: run } = useSweepProgress();
   const runSweep = useRunSweepNow();
+  // While the trigger is in flight the cache still holds the previous run, so
+  // the poll has to be told a sweep is happening — see useSweepProgress.
+  const { data: run } = useSweepProgress(runSweep.isPending);
   const queryClient = useQueryClient();
   const lastRaised = useRef(0);
 

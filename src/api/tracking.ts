@@ -112,11 +112,20 @@ export function useSweepRuns() {
  * to a slow heartbeat once it finishes — same shape as the live-run poll in
  * `runs.ts`, so an idle Findings screen costs one request a minute.
  */
-export function useSweepProgress() {
+/**
+ * Pass `sweeping` while a trigger mutation is in flight. Polling on the data
+ * alone is a chicken-and-egg: POST /agent-sweep is synchronous and holds the
+ * request for the entire run (~13s), so until it resolves the cache still holds
+ * the PREVIOUS, finished run — which reads as idle and sits on the 20s poll.
+ * That is longer than the sweep itself, so the strip would miss the whole run
+ * and only learn about it after the fact, never rendering a live state.
+ */
+export function useSweepProgress(sweeping = false) {
   return useQuery({
     queryKey: ['sweep-progress'],
     queryFn: async () => (await apiClient.get<SweepProgress | null>('/sweep-progress')).data,
-    refetchInterval: (query) => (query.state.data && !query.state.data.finishedAt ? 1_200 : 20_000),
+    refetchInterval: (query) =>
+      (sweeping || (query.state.data && !query.state.data.finishedAt) ? 1_200 : 20_000),
   });
 }
 
@@ -125,6 +134,9 @@ export function useRunSweepNow() {
   return useMutation({
     mutationFn: async () => (await apiClient.post<SweepRun>('/agent-sweep')).data,
     onSuccess: () => {
+      // Includes sweep-progress so the strip lands on the finished run at once
+      // rather than waiting out its poll interval.
+      queryClient.invalidateQueries({ queryKey: ['sweep-progress'] });
       queryClient.invalidateQueries({ queryKey: ['sweep-runs'] });
       queryClient.invalidateQueries({ queryKey: ['findings'] });
       queryClient.invalidateQueries({ queryKey: ['shadow-org'] });

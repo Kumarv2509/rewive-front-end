@@ -1,6 +1,35 @@
-# Handoff — disposition flows driven interactively, two defects fixed (2026-07-21, latest session)
+# Handoff — the live analysis strip never went live; fixed (2026-07-21, latest session)
 
 ## Where things stand
+
+- **THE LIVE SWEEP IS NOW EXERCISED, AND IT WAS BROKEN IN THE UI.** The
+  last unexercised piece of the loop turned out to hide a real defect:
+  the live analysis strip **never rendered a live state at all** when
+  you pressed its own button — the whole point of the feature. Fixed and
+  verified walking `1 of 4 → 2 of 4` at 25% → 50%. Detail in "This
+  session (2026-07-21, latest)" below.
+
+- **THE LATEST SESSION CHANGED NO CODE.** It opened the running product
+  and read both tabs under the Agents rail item, ending on a design
+  question the founder had not yet answered. Five observations came out
+  of the read — two of them structural (the tabs share a rail item but
+  not a design vocabulary; only one of the two has a detail page).
+  Detail in "This session (2026-07-21, latest)" directly below. If you
+  are picking up work, **that unanswered question is the live thread.**
+
+- **[ANSWERED — the two "unexplained" dirty files were the live-sweep
+  fix, and they are now committed.]** A concurrent session saw
+  `src/api/tracking.ts` and `src/screens/Findings/LiveAnalysisStrip.tsx`
+  dirty, could not account for them, and flagged them as mystery edits
+  from "an earlier session". They were neither mystery nor earlier: a
+  session running **at the same time** was mid-way through fixing the
+  live analysis strip (see "This session (2026-07-21, latest)" below).
+  Its instinct — *diff before committing, do not sweep unexplained work
+  into an unrelated commit* — was exactly right and is worth keeping.
+  **Two sessions edited this file concurrently on 2026-07-21**; the same
+  hazard the website sections warn about ("the file changes out from
+  under sessions, re-read before every edit") now applies to THIS file.
+  Re-read before editing, and prefer targeted edits over rewrites.
 
 - **THE FOUR-A DISPOSITION FLOWS ARE NOW EXERCISED INTERACTIVELY** — the
   open thread the previous session named as "the natural next piece of
@@ -328,6 +357,154 @@
   uncommitted manufacturing work (re-verified 2026-07-19). Bundle note:
   SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
+
+## This session (2026-07-21, latest): the live sweep — the strip never went live
+
+Closes the last "unexercised interactively" item. The sweep **worked
+server-side all along** (14 mandates walked, findings raised, outcomes
+correct); what had never been checked was whether the UI shows any of it.
+It did not.
+
+### The defect — the live analysis strip never went live
+
+Pressing "Run sweep now" on the Findings strip left the header reading
+**"Agents idle · last swept 15s ago"** for the entire ~13s run. The
+progress bar never rendered. The new run's data only landed ~18s in,
+long after it finished. A feature built to make agent work watchable —
+and deliberately paced at 900ms/mandate so it *reads* rather than
+flashes — showed nothing.
+
+**Root cause: a chicken-and-egg in the poll interval.**
+`useSweepProgress` polled fast only when the cached data already held an
+unfinished run: `data && !data.finishedAt ? 1_200 : 20_000`. Starting
+from idle the cache holds the *previous, finished* run, so it sat on the
+**20s** interval — longer than the ~12.6s sweep. The next poll therefore
+always landed after `finishedAt` was set, so an in-flight run was never
+observed and the live branch never rendered.
+
+`useRunSweepNow` could not rescue it: **`POST /agent-sweep` is
+synchronous**, holding the request for the whole run (measured: 12.6s),
+so `onSuccess` fires after the sweep is already over — and it did not
+invalidate `sweep-progress` at all.
+
+**Fix** (`src/api/tracking.ts`, `LiveAnalysisStrip.tsx`):
+`useSweepProgress(sweeping = false)` also polls at 1.2s while a trigger
+mutation is in flight, and the strip passes `runSweep.isPending`. Plus
+`sweep-progress` added to the mutation's invalidation so the finished
+run lands at once. **Verified**: polls now tick steadily every ~1.2s
+through the run and the strip walks `25% "1 of 4" → 50% "2 of 4"`.
+
+Why it survived: the previous session verified mid-sweep polling
+**against the API with curl**, which works fine — the bug lives entirely
+in the client's polling schedule. Same lesson as the CSS defects: an
+API-level check cannot see it.
+
+### Two behaviours that are correct — do not "fix" them
+
+1. **The strip settles at ~3.9s, before the run ends at ~12.7s.** That
+   is intended: it settles when **your** industry's 4 mandates are done,
+   not when the global 14-mandate run finishes. Verified deliberate in
+   the earlier handoff section.
+2. **Cold start renders no strip at all.** With no run ever recorded,
+   `/sweep-progress` returns `null` and the strip — *including its
+   button* — does not exist. You must trigger the first sweep from
+   **Connectors**; only then does Findings gain a strip. Worth knowing
+   for a deployed demo cold start, and it is why a test that clicks the
+   strip's button must seed a run first.
+
+### Minor, unfixed
+
+- The bar never reaches 100%: it goes `2 of 4` → settled, because `live`
+  turns false the instant `done === steps.length`. You never see a
+  completion state.
+- While settled-but-still-running the header says "Agents idle" whilst
+  the button still reads "Sweeping…". Defensible (idle *for your
+  mandates*) but it reads oddly next to a spinner.
+
+### Test mechanics that cost time — reuse these
+
+- **Sample the DOM with `page.evaluate`, never `locator.innerText()`.**
+  On a missing selector Playwright's locator blocks for its full 30s
+  timeout — longer than the sweep — so the first three samples burned
+  90s and the entire live window was missed. `evaluate` returns `null`
+  instantly.
+- **Disable the dev sweep interval** (`REWIVE_SWEEP_MS=0`) or a
+  background sweep fires every 60s mid-test and holds the `liveLock`.
+- The strip's own button and the Connectors button are different paths:
+  triggering from Connectors leaves an idle Findings tab on its 20s
+  poll, so it still will not see the run. Only the strip's own button
+  now goes live.
+
+## This session (2026-07-21, Agents rail survey): read but not touched
+
+A short session. The founder asked to open the product, then to "work on
+the Agent page", chose **both tabs** and **"show me it first"** — so this
+was a read, and it stopped at the point where the next move needed a
+decision that hadn't been made. **No files were changed.**
+
+### Mechanics worth keeping
+
+- **Both servers were already up** from a previous session (mock API
+  :4000 pid 31068, vite :5173 pid 31093). Check before launching —
+  `lsof -i:5173 -i:4000 -sTCP:LISTEN -P`. The stale-port trap in the
+  section below is real; a second `dev:all` would have drifted vite to
+  :5174 and served stale code.
+- **The Chrome extension failed for a SIXTH time** —
+  `tabs_context_mcp` returned "Browser extension is not connected".
+  Fell back to `open http://localhost:5173/`, which works but gives you
+  no way to read the page back. **The product was never visually
+  verified this session** — everything below comes from reading source,
+  not from looking at pixels. If you need to see it, use headless
+  Playwright as the earlier sessions did.
+
+### The two tabs, as they actually are
+
+`AGENTS_TABS` in `src/components/shared/SectionTabs.tsx` binds them.
+
+**Agents (mandate holders)** — `/operate/counterparts` →
+`src/screens/ShadowOrg/index.tsx`, 230 lines, everything in one file.
+A chief banner (the agent with `reportsToAgentId === null`) carrying
+three roll-ups, then a 3-column grid of per-stream cards. Each card:
+health pill, an "agent to" human block (the *held twice* pairing),
+three stats, mandate chips deep-linking to `/build/picture?focus=<id>`,
+the temperament dial with its consequence hint, and a footer that
+expands the agent's open findings inline. Data via
+`useShadowOrg` / `useFindings` / `useKpiBrain`, all lens-scoped.
+
+**Workforce (workers)** — `/insights/agents` →
+`src/screens/AgentSpace/`, 5 files, ~140 lines total. FilterBar
+(status chips, build-path chips, search) → AgentGrid → AgentCard
+(pills + ROI / token cost / runs), plus a detail route at
+`/insights/agents/:agentId` rendering a `.card.preview` spec sheet.
+
+### Five observations — the raw material for whatever comes next
+
+1. **The two tabs are stylistically unrelated.** ShadowOrg is
+   hand-built with ~40 inline style objects; AgentSpace uses CSS
+   classes (`.agent-card`, `.ac-name`, `.ac-stats`). Same rail item,
+   two design vocabularies — the stat tiles in particular render
+   completely differently on each tab. This is the biggest finding.
+2. **Asymmetric depth.** Workforce has a detail page; Agents has none.
+   Clicking a worker navigates, clicking an agent does nothing.
+3. **`ShadowOrg/index.tsx:50` uses `var(--accent-grad)`** on the
+   temperament dial fill. It *renders correctly* — the token is a
+   same-colour `linear-gradient(135deg,#3B3BC4,#3B3BC4)`, verified in
+   `globals.css:7` — but per the paper-ledger rules `var(--accent)`
+   would say what is meant. Cosmetic, not a bug.
+4. **Hardcoded colours bypass the tokens**: `#fff` on the dial knob
+   (`:51`), `rgba(59,59,196,.28)` on the chief card border (`:209`).
+5. **The Agents grid is fixed at `repeat(3, 1fr)`** with no responsive
+   fallback, unlike Workforce's `.agent-grid` class.
+
+### The open question this session ended on
+
+The founder was asked to choose between **unifying the two tabs' visual
+language**, **giving Agents a detail page**, or something else — and the
+session ended before an answer. Do not guess: (1) and (2) are different
+sizes of job and (1) in particular means deciding whether ShadowOrg
+moves to classes or AgentSpace moves to inline styles. That is a
+founder call about where this codebase's styling convention is heading,
+not a cleanup you can infer.
 
 ## This session (2026-07-21, later): the disposition flows, driven for real
 
