@@ -23,7 +23,38 @@
   disposition-fixes commit. **Push state was last verified when PR #5
   was opened — re-check with `git status -sb` rather than trusting this
   line**, which is exactly the kind of claim this file's push saga is a
-  warning about. Plain `git push` works over HTTPS.
+  warning about. HTTPS is the right remote, but see the next bullet —
+  **pushing was blocked again later on 2026-07-21** from the office
+  network. `a8c19fc` is committed locally and unpushed.
+
+- **THE FORTIGATE BLOCK IS LIVE AGAIN (confirmed 2026-07-21, later).**
+  `git push` failed with *"SSL certificate problem: self signed
+  certificate"*. This is **network location, not credentials** — and
+  this time it is not even MITM inspection: the certificate presented
+  for `github.com` is issued by `O = Fortinet, CN = Fortiguard SDNS
+  Blocked Page`, i.e. GitHub is **category-blocked** outright.
+  Reproduce in two seconds:
+
+  ```
+  curl -sS -o /dev/null -w "%{http_code}" https://github.com   # -> 000
+  echo | openssl s_client -connect github.com:443 -servername github.com 2>/dev/null \
+    | openssl x509 -noout -issuer                              # -> O = Fortinet ...
+  ```
+
+  **`gh auth status` LIES about this, and the lie is the same shape as
+  the SSH dead end above.** It reports *"The token in keyring is
+  invalid — run `gh auth refresh`"*. It is not invalid: `gh` cannot
+  complete the TLS handshake, so it never validates the token at all,
+  and it reports a network failure as an auth failure. **Do NOT run
+  `gh auth refresh` or `gh auth logout`** — that would discard a
+  working credential chasing a phantom, which is precisely how three
+  sessions were lost to the SSH-key theory.
+
+  **The fix is to move off the office network** (home, or a phone
+  hotspot); then plain `git push` fast-forwards. **Never** disable TLS
+  verification (`GIT_SSL_NO_VERIFY`, `http.sslVerify=false`) to get
+  around it — you would be trusting whatever the block page returns.
+  Memory `fortinet-git-push` carries the same rule.
 
   **The sibling WEBSITE repo is the exception** — still entirely
   uncommitted, deliberately deferred by the founder ("we will push
@@ -266,12 +297,15 @@
   after boot, watched in the browser (queue pill flipped, 12h reset,
   audit entry by 'Rewive (system)'). Server was then reset to the
   default 12x speed — that's what is running at handoff.
-- **[RESOLVED 2026-07-21.]** The FortiGate-MITM diagnosis in this bullet
-  was accurate ON THE OFFICE NETWORK but was wrongly generalized into a
-  permanent property of the machine. `gh` and HTTPS work fine elsewhere.
+- **[RESOLVED 2026-07-21 — but NOT permanently; see the FortiGate bullet
+  near the top, it fired again the same day.]** The FortiGate diagnosis
+  in this bullet was accurate ON THE OFFICE NETWORK but was wrongly
+  generalized into a permanent property of the machine. `gh` and HTTPS
+  work fine elsewhere. The honest framing is that **this alternates with
+  your location** — neither "push is blocked" nor "push works" is a
+  durable fact about this repo, so **test, don't inherit either claim**.
   Memory `fortinet-git-push` still applies when actually on that network
-  — never disable TLS verification to get around it — but check WHERE
-  you are before assuming it applies.
+  — never disable TLS verification to get around it.
 - **Processes at handoff (2026-07-19, later): ALL DEV SERVERS DOWN** —
   session B's background `dev:all` task was stopped and this time the
   kill DID release :5173, :4000 and :5174 (verified by port probe;
