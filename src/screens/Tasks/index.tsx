@@ -43,7 +43,7 @@ function TaskRow({ task }: { task: SolutionTask }) {
         <Pill tone={statusTone[task.status]}>{task.status.replace('_', ' ')}</Pill>
       </div>
       <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 10 }}>
-        {task.solutionName && <>from <Link to={`/build/solutions/${task.solutionId}`}>{task.solutionName}</Link> &middot; </>}
+        {task.solutionName && <>from <Link className="link" to={`/build/solutions/${task.solutionId}`}>{task.solutionName}</Link> &middot; </>}
         assigned to {task.owner}
       </div>
 

@@ -146,7 +146,7 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
       {teamScope && (
         <div className="state-msg" style={{ borderTop: '1px solid var(--border)', textAlign: 'left' }}>
           Your team's open work isn't in this queue — it's rolled up by report on{' '}
-          <Link to="/operate/findings">Findings</Link>.
+          <Link className="link" to="/operate/findings">Findings</Link>.
         </div>
       )}
     </div>

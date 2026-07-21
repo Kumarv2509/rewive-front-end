@@ -1,26 +1,48 @@
-# Handoff — live agent analysis strip, seeded tracking, entity scoping, counterpart→agent rename (2026-07-20, latest session)
+# Handoff — Medcare UAE healthcare tenant, every lens seeded, CFO pitch (2026-07-20, latest session)
 
 ## Where things stand
 
-- **This session (2026-07-20, later) is ENTIRELY UNCOMMITTED** — 71 modified
-  files + 2 new (`mock-server/seed-tracking.js`,
-  `src/screens/Findings/LiveAnalysisStrip.tsx`). Five pieces of work, in
-  order: the live analysis strip on Findings, 12 default live-tracked
-  mandates, removal of the non-Protein division counterparts, three
-  persona-scoping bug fixes, and a **product-wide terminology rename
-  (counterpart → agent, workforce agent → worker)**. Build + lint clean;
-  every backend claim verified against the running API. **Nothing is
-  visually verified — the browser extension never connected this session
-  either.** Full detail in the "This session (2026-07-20, later)" section
-  directly below.
+- **This session (2026-07-20, latest) is COMMITTED — `7783839`**, and it
+  swept up the previously-uncommitted work with it. One commit, 77 files
+  (+2286 −675), including the 2 files that had been untracked for several
+  sessions (`mock-server/seed-tracking.js`,
+  `src/screens/Findings/LiveAnalysisStrip.tsx`). Working tree clean.
+  The work: **rebrand the healthcare pack to Medcare UAE (demo)**, a UAE
+  private hospital/clinic network, and seed it deeply enough to pitch the
+  whole loop to a CFO — plus four real bug fixes found on the way. Full
+  detail in the "This session (2026-07-20, latest)" section directly below.
+
+- **The counterpart → agent rename is now committed too**, inside
+  `7783839`. It could not be split out: ~65 files were rename-only, but 10
+  more (`v4data.js`, `v4content.js`, `personas.ts`, `CLAUDE.md`, …) carried
+  both the rename and this session's Medcare edits, and interactive
+  staging is unavailable in the Claude Code environment. The user chose
+  one honest commit over a partial split where neither half would
+  typecheck. **The commit message says so explicitly** — don't be
+  surprised by 65 files of renames inside a tenant-rebrand commit.
+
+- **VISUALLY VERIFIED AT LAST (2026-07-21)** — the four-session-old open
+  thread is closed. The Chrome extension failed to connect for a **fourth**
+  time; stop waiting on it and use **headless Playwright** instead
+  (chromium via the npx cache at
+  `~/.npm/_npx/e41f203b7505f1fb/node_modules/playwright`, imported as
+  `index.mjs`). Seed the session by `addInitScript`-ing four localStorage
+  keys — `rewive.tenant`, `rewive.industry`, `rewive.personaLens`,
+  **`rewive.guideSeen='1'`** (without the last one `/command` redirects to
+  `/guide` on every fresh context — that redirect is intentional,
+  `CommandCenter/index.tsx:23`, not a bug). Scripts are reusable in this
+  session's scratchpad (`shots.mjs` screenshots, `probe.mjs` overflow,
+  `links.mjs` a 13-route link/overflow sweep).
+  **13 routes swept across 3 viewport widths: 0 console errors.**
+  Three real visual defects found and fixed — see "This session
+  (2026-07-21)" directly below.
 
 - **The earlier session that day (2026-07-20) worked in the PRODUCT repo and COMMITTED
   everything** — two commits, `814ab8e` (senior-leadership findings view)
   and `fbefa56` (counterpart view, screen help, hierarchy default), plus
   this handoff. Working tree clean at handoff. Full detail in the
-  "Previous session (2026-07-20, earlier)" section below. **Neither is visually
-  verified — the browser extension never connected; look at the screens
-  first thing next session.**
+  "Previous session (2026-07-20, earlier)" section below. Not visually
+  verified either.
 
 - **The previous session touched ONLY the sibling website repo**
   (`../rewive-front-end_website`), which is **entirely UNCOMMITTED on top
@@ -30,7 +52,14 @@
   this session except this handoff. Full detail in the
   "This session (2026-07-19/20)" section below.
 
-- **`v5` is 12 commits ahead of the PR-#4 merge point, NOT pushed, no PR yet**:
+- **`v5` is 40 commits ahead of `origin/v5`, NOT pushed, no PR yet.**
+  `origin/v5` still sits at `45378ac` ("handoff — PR #4 merged to master"),
+  so this branch has been accumulating locally across many sessions, well
+  before today. Nothing is behind — it would be a clean fast-forward. The
+  remote is already SSH (`git@github.com:Kumarv2509/rewive-front-end.git`),
+  which matters because the office firewall MITMs HTTPS; push over the
+  SSH-on-:443 remote. The numbered list below is older and undercounts —
+  trust the `git log`, not the count. Commits since the merge point:
   1. `e0e365e` — **paper-ledger redesign** (parallel session, documented below).
   2. `53257e4` — **org tree + commercial-finance dotted line** (part 1 — supersedes the second-hand description the previous handoff had for it).
   3. `a3da560` — the previous handoff commit.
@@ -240,6 +269,79 @@
   uncommitted manufacturing work (re-verified 2026-07-19). Bundle note:
   SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
+
+## This session (2026-07-21): first visual verification — three CSS defects fixed
+
+Servers were down at start; `npm run dev:all` brought both up clean. The
+extension refused a fourth time, so verification moved to headless
+Playwright (mechanics in the bullet above). All three defects were
+**CSS-only**; no component logic changed. Build + lint clean.
+
+### 1. Findings · By agent was clipping its whole right column (the bad one)
+
+`.ag-grid` was `repeat(2,1fr)`. Grid items default to `min-width:auto`, so a
+wide child **floored the track at 600px** instead of letting it shrink. At
+1440px the second card's right edge sat 76px past the viewport; at 1280px,
+236px past. Critically `document.scrollWidth === clientWidth`, so the
+overflow was **clipped and unreachable — not scrollable**: the disposition
+pills (`acting` / `accepted` / `closed`) sat entirely off-screen, meaning a
+finding's state was invisible in what `fbefa56` made the **default** view.
+Fix: `repeat(2,minmax(0,1fr))` — one token. `.ag-row-title` and the
+`.ag-head` flex child already carried `min-width:0`, so nothing else needed
+touching. Re-probed at 1440/1280/1024: zero offenders.
+**Watch for this class of bug elsewhere** — it is invisible to `tsc`, to
+eslint, and to any API-level check, which is exactly why it survived
+several sessions of backend-only verification.
+
+### 2. `.btn` rendered as a `<Link>` came out underlined
+
+There is **no global `a{text-decoration:none}`** in `globals.css` — every
+class opts in individually (`.ag-row`, `.agent-card`, `.nav-item`,
+`.sw-step` all do), and `.btn` never had. So every `<Link className="btn">`
+in the app — the Disposition buttons all down the Today queue — drew a
+browser-default underline through solid button text. Added
+`text-decoration:none` to `.btn`.
+
+### 3. Queue titles and prose links were default browser blue
+
+`.dec-item .t1 a` had no rule → underlined blue finding titles in
+`UnifiedQueue`. Now `text-decoration:none;color:inherit` with a
+`.dec-item:hover .t1 a` accent, matching the `.ag-row` convention.
+Three inline prose links (`UnifiedQueue` "…on Findings.",
+`DecisionsTable` "View the finding it answered →", `Tasks` line 46 —
+whose `task.solutionName` is a finding title) got a new reusable
+**`.link`** utility (accent-deep, no underline, underline on hover),
+matching `.sec-head .all` and the inline copy at `PlStatement.tsx:152`.
+**Use `.link` for inline prose links from here on** rather than another
+one-off inline style.
+
+### Verified this session
+
+`/command`, `/operate/findings` (both views), `/operate/decisions`,
+`/operate/runs`, `/operate/tasks`, `/operate/counterparts`,
+`/insights/agents`, `/insights/people`, `/build/picture`, `/build/kpis`,
+`/build/connectors`, `/guide`, `/`, `/login?org=medcare-uae` — under
+Medcare/CFO and Americana/Group-CEO lenses. Zero console errors, zero
+underlined links, zero horizontal overflow. The Medcare CFO pitch reads
+as intended (mandate-sectioned queue: CLAIM DENIAL RATE ×4 → denials &
+write-offs, DAYS IN AR ×3 → net patient revenue; AED 3.1M measured
+impact).
+
+### Still unresolved
+
+- The **Group-CEO density edge** the previous handoff flagged is real but
+  looks better than feared: 16 agent cards / 44 findings, with the rich
+  cards (Planning 9, Logistics 5) sorted to the top. Now that the columns
+  actually fit it reads as a long page, not a broken one. **Founder call**
+  whether to collapse single-finding agents into an "also raised" strip —
+  don't do it unprompted.
+- `fullPage` screenshots only capture the viewport: the app scrolls an
+  inner container, not the document. Screenshot per-scroll-position or
+  target the scroll container if you need full-page images.
+- Nothing was clicked. Disposition flows, the Act path, the sweep button
+  and the help popup are still **unexercised interactively** — the sweep
+  strip was only seen in its idle state ("Agents idle · last swept 42s
+  ago"). That is the natural next verification step.
 
 ## This session (2026-07-20, later): live agent analysis, seeded tracking, entity scoping, the rename (ALL UNCOMMITTED)
 
