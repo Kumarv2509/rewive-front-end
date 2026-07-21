@@ -42,7 +42,13 @@ export function DispositionBar({ finding }: { finding: Finding }) {
             showToast('Abandoned — the reason was fed back to tune the agent');
           }
         },
-        onError: () => showToast('Could not record the disposition — abandon needs a reason'),
+        // The server's own message is the truthful one — a stale tab whose
+        // finding was already dispositioned elsewhere used to be told
+        // "abandon needs a reason", which is about a different failure entirely.
+        onError: (err: unknown) => {
+          const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+          showToast(message ?? 'Could not record the disposition — please try again.');
+        },
       },
     );
   };

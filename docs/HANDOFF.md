@@ -1,15 +1,29 @@
-# Handoff — first visual verification, push unblocked, PR #5 opened (2026-07-21, latest session)
+# Handoff — disposition flows driven interactively, two defects fixed (2026-07-21, latest session)
 
 ## Where things stand
 
-- **EVERYTHING IS PUSHED AND A PR IS OPEN.** `v5` sits at `79b7cbf` on
-  both local and `origin/v5` (verified against the GitHub API, not just
-  `git status`) — 0 unpushed. **PR #5** is open, `v5` → `master`:
-  https://github.com/Kumarv2509/rewive-front-end/pull/5 — 43 commits,
-  112 files, +10,911 −1,397. Nothing is stranded locally in THIS repo
-  for the first time in many sessions. Two commits added 2026-07-21:
-  `e5a79ae` (three CSS fixes, below) and `79b7cbf` (this handoff + the
-  push-saga corrections). Working tree clean.
+- **THE FOUR-A DISPOSITION FLOWS ARE NOW EXERCISED INTERACTIVELY** — the
+  open thread the previous session named as "the natural next piece of
+  work" is closed. Accept / Act / Acknowledge / Abandon all driven
+  through the real UI with headless Playwright, plus the full Act chain
+  (solution design → validation → approval → approve → Worker Studio)
+  and the escalate button. **Two defects found and fixed**; one
+  authority gap found and deliberately left for a founder call. Full
+  detail in "This session (2026-07-21, later)" directly below.
+  **UNCOMMITTED at the time this section was written** — two files,
+  `DispositionBar.tsx` and `SolutionDesign/index.tsx` — committed
+  together with this handoff at the end of the session.
+
+- **A PR IS OPEN; check whether the latest commits are pushed.**
+  **PR #5** is open, `v5` → `master`:
+  https://github.com/Kumarv2509/rewive-front-end/pull/5 — it was
+  43 commits / 112 files / +10,911 −1,397 when opened, and has grown
+  since. The 2026-07-21 commits are `e5a79ae` (three CSS fixes),
+  `79b7cbf` + `76c710d` (handoffs), then this session's
+  disposition-fixes commit. **Push state was last verified when PR #5
+  was opened — re-check with `git status -sb` rather than trusting this
+  line**, which is exactly the kind of claim this file's push saga is a
+  warning about. Plain `git push` works over HTTPS.
 
   **The sibling WEBSITE repo is the exception** — still entirely
   uncommitted, deliberately deferred by the founder ("we will push
@@ -281,7 +295,121 @@
   SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
 
-## This session (2026-07-21): first visual verification — three CSS defects fixed
+## This session (2026-07-21, later): the disposition flows, driven for real
+
+The previous session ended with "Nothing was clicked." This one clicked
+everything in the four-A loop. Verification was again **headless
+Playwright** — the Chrome extension failed for a **fifth** time. Stop
+trying it; the mechanics in the bullet near the top of this file are the
+supported path. Scripts live in the session scratchpad (`dispo.mjs` the
+four-A driver, `actchain.mjs` the Act chain, `escalate.mjs` escalate +
+the error path, `overflow.mjs` the reachability probe) — they are
+throwaway but worth rewriting the same way.
+
+### Two methodology traps that cost real time — read before writing UI tests
+
+1. **A finding's persona DRIFTS out from under you.** The first run was
+   built on personas read from a mock server that had been running for
+   hours, and the demo heartbeat had walked the entire queue up to the
+   Group CEO. Three of four cases then rendered `LeadershipBar` instead
+   of `DispositionBar` and found nothing to click. **Never hardcode a
+   lens** — read the owner from the API at run time, and run the mock
+   server frozen (`REWIVE_SLA_HOURS_PER_TICK=0`, i.e.
+   `npm run mock-server:frozen`) so nothing escalates mid-test. This is
+   the same "restart to reset" hazard the heartbeat bullet already
+   warned about, in a new disguise.
+2. **`LeadershipBar` and `DispositionBar` both use `.dispo-opt`.**
+   Counting that selector tells you nothing about which component
+   rendered — the leadership actions (Ask / Reassign / Raise priority /
+   Take it) carry the identical class. Key off the heading string
+   **"This finding needs a disposition"** instead.
+
+Each finding must be driven under a lens that OWNS it (`isOwner` in
+`Detail.tsx:58`), or you get the leadership bar by design.
+
+### What passed
+
+All four dispositions, end to end, correct toast, and the bar retiring
+into a decided thread step afterwards:
+
+- **Accept** → closure KPI created. One run landed on a `live-*`
+  finding and correctly produced a `live-c-*` closure — the
+  Postgres-routed branch, covered by accident but worth keeping.
+- **Act** → solution design, seeded from the finding's own narrative,
+  and onward through the whole chain: Run validation → Send for
+  approval → Approve (as reviewer) → **Design worker →** →
+  `/build/agent-studio/agt-*`. Note the final CTA says **worker**, not
+  "agent spec" — the rename landed here.
+- **Acknowledge** → custom re-alert condition persisted verbatim.
+- **Abandon** → the reason guard genuinely works: Confirm is disabled
+  with an empty reason and enables on input.
+- **Escalate** ("Not mine — escalate ↑") → ownership moved
+  `protein_supply_chain → coo` with the trail recorded.
+
+Also probed: the finding-thread impact path overflows horizontally but
+is **`overflow-x:auto` and genuinely scrollable** — it is NOT a
+recurrence of this file's defect #1 (which was clipped-and-unreachable,
+`scrollWidth === clientWidth`). Document never overflows at 1440 /
+1280 / 1024.
+
+### Defect 1 (fixed) — every Act navigation fired two 404s
+
+`SolutionDesign/index.tsx` called `useSignalDetail(solution.signalId)`,
+but a solution opened by Act carries the **finding** id as `signalId`
+(`app.js`: `signalId: finding.id`), and `/signals/:id/detail` only knows
+legacy v1 signals. Result: `404 GET /api/v1/signals/<findingId>/detail`
+twice on every Act, console noise on a demo path.
+
+Not a crash — `signalDetail` feeds only `matchesWithSolutions`, guarded
+with `?? []`. The real consequence is quieter and worse: the **"copy
+from a prior solution" affordance is permanently dead for anything
+reached through Act**, which is the only way findings enter the build
+loop. Fixed by not making the request: the `/-f-/` test that already
+existed for the back link is now a named `isFindingId` helper used in
+both places.
+
+### Defect 2 (fixed) — the disposition error toast lied
+
+`DispositionBar`'s `onError` was a single hardcoded string, so **every**
+failure — 400, 404, network drop — told the user *"Could not record the
+disposition — abandon needs a reason"*. Reproduced with two tabs on one
+finding: tab 1 accepts, tab 2 is stale, its click returns
+`400 This finding already has a disposition`, and the user is told to
+write an abandon reason for a disposition they never chose.
+
+Now surfaces the server's own message, falling back to a neutral line.
+There was **no existing convention** for this in the codebase (every
+`onError` is a hardcoded string), so the extraction is deliberately
+local and inline rather than a new shared error layer — if a second
+screen needs it, that is the moment to lift it.
+
+**Cosmetic, not fixed**: the `.toast` component renders a ✓ glyph even
+for errors. It has no error variant; adding one touches every toast in
+the app, so it wants a deliberate pass rather than a drive-by.
+
+### Found and NOT fixed — a founder call: disposition has no authority check
+
+`POST /findings/:id/disposition` (`app.js:1611`) checks only
+`status === 'open'`. It never checks **who** is deciding — no actor is
+even sent. Verified: escalate a finding two levels up to `group_ceo`,
+then POST a disposition as the original owner → **HTTP 200**. The UI
+agrees: after clicking "Not mine — escalate ↑", the four-A buttons are
+still offered to the person who just disowned it (lens is below the new
+owner, so `leadsOwner` is false and `DispositionBar` renders).
+
+This is **asymmetric with the leadership route**, which enforces
+authority server-side (403 if not strictly above the owner, 400 for an
+out-of-subtree reassign) and where this file records a deliberate
+property: *"Take it transfers ownership and thereby forfeits the
+leadership actions, so you cannot push a finding around forever."*
+Escalation has no equivalent — you can disown a finding and still
+decide it.
+
+Left alone on purpose: tightening it is a product decision, and it could
+change demo behaviour. **Decide whether escalating should forfeit the
+disposition** the way Take it forfeits the leadership actions.
+
+## This session (2026-07-21, earlier): first visual verification — three CSS defects fixed
 
 Servers were down at start; `npm run dev:all` brought both up clean. The
 extension refused a fourth time, so verification moved to headless
@@ -392,24 +520,32 @@ with HTTPS and scope the firewall to the office network.
 - `fullPage` screenshots only capture the viewport: the app scrolls an
   inner container, not the document. Screenshot per-scroll-position or
   target the scroll container if you need full-page images.
-- Nothing was clicked. Disposition flows, the Act path, the sweep button
-  and the help popup are still **unexercised interactively** — the sweep
-  strip was only seen in its idle state ("Agents idle · last swept 42s
-  ago"). **This is the natural next piece of work**: drive the four-A
-  dispositions, the Act → solution → agent-spec path, and a live sweep
-  (whose pulse/pacing has still never been watched) with Playwright's
-  `click()`, reusing this session's scratchpad scripts.
+- **[RESOLVED 2026-07-21, later — partially.]** "Nothing was clicked."
+  The four-A dispositions, the full Act → solution → **worker** chain,
+  and escalate are now all driven interactively (see the section above).
+  **Still unexercised: the live sweep and the help popup** — the sweep
+  strip has only ever been seen idle ("Agents idle · last swept 42s
+  ago"), so its pulse and pacing remain unwatched. That is the natural
+  next piece of work; reuse the scratchpad scripts and remember to run
+  the mock server frozen.
 - **PR #5 is open but unreviewed and unmerged.** It is a large diff; the
   body already flags the two things that would otherwise look like
   problems (the ~65 rename-only files bundled into `7783839`, and the
   absence of any test suite). The two places reviewer time actually pays
   off are the tracking pipeline and the P&L cascade — most of the rest is
   seeds and renames.
-- **Servers at handoff: `npm run dev:all` LEFT RUNNING** (background task
-  `bd6jjtcwz`, :5173 + :4000). The lingering-children gotcha still
-  applies — stopping the task does not reliably kill `concurrently`'s
+- **Servers at handoff (2026-07-21, later): LEFT RUNNING on :5173 +
+  :4000, with the SLA clock FROZEN** (`REWIVE_SLA_HOURS_PER_TICK=0`) —
+  started as `npx concurrently … "REWIVE_SLA_HOURS_PER_TICK=0 node
+  mock-server/server.js"` rather than `npm run dev:all`, so no finding
+  escalates while you work. **Seed state is mutated** by the disposition
+  test run (several findings dispositioned, solutions and a worker spec
+  created) — restart to reset. The lingering-children gotcha still
+  applies: stopping the task does not reliably kill `concurrently`'s
   children, and a stale :4000 silently serves old seeds. Reset with
   `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+  Confirming the previous session's note: killing by port DID take down
+  the long-lived `dev:all` task cleanly.
 
 ## This session (2026-07-20, later): live agent analysis, seeded tracking, entity scoping, the rename (ALL UNCOMMITTED)
 
