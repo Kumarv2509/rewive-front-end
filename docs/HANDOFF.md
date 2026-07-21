@@ -52,14 +52,32 @@
   this session except this handoff. Full detail in the
   "This session (2026-07-19/20)" section below.
 
-- **`v5` is 40 commits ahead of `origin/v5`, NOT pushed, no PR yet.**
-  `origin/v5` still sits at `45378ac` ("handoff — PR #4 merged to master"),
-  so this branch has been accumulating locally across many sessions, well
-  before today. Nothing is behind — it would be a clean fast-forward. The
-  remote is already SSH (`git@github.com:Kumarv2509/rewive-front-end.git`),
-  which matters because the office firewall MITMs HTTPS; push over the
-  SSH-on-:443 remote. The numbered list below is older and undercounts —
-  trust the `git log`, not the count. Commits since the merge point:
+- **PUSHED (2026-07-21) — `v5` is fully in sync with `origin/v5` at
+  `e5a79ae`.** All 41 accumulated commits went up in one clean
+  fast-forward (`45378ac..e5a79ae`). Zero unpushed. No PR opened yet.
+
+  **The multi-session "push is blocked" saga is OVER, and the diagnosis
+  in it was stale, not wrong-at-the-time.** HTTPS and `gh` work fine now
+  — the FortiGate MITM was a property of the OFFICE network, not the
+  machine. A `rianpraveen` token with `repo` scope was in the gh keyring
+  the entire time; `gh api repos/Kumarv2509/rewive-front-end` confirms
+  `"push": true` via collaborator access (Kumarv2509 is the owner
+  account, rianpraveen is the founder's). The remote is now
+  **HTTPS** (`https://github.com/Kumarv2509/rewive-front-end.git`) with
+  `gh auth setup-git`, so plain `git push` just works.
+
+  **The lesson worth keeping**: a previous session switched the remote to
+  SSH to route around the firewall, and that workaround outlived the
+  problem it solved — leaving SSH as the ONLY path, gated on a key nobody
+  ever registered. Several sessions then inherited "push is blocked" as
+  settled fact and never re-tested it. **Re-test environment assumptions
+  before repeating them** — network conditions change between sessions.
+  The SSH key thread (`id_ed25519_rewive`, github.com/settings/keys) is
+  now MOOT; don't chase it. If HTTPS ever fails again, check whether
+  you're on the office network before concluding anything.
+
+  The numbered list below is older and undercounts — trust the `git log`,
+  not the count. Commits since the merge point:
   1. `e0e365e` — **paper-ledger redesign** (parallel session, documented below).
   2. `53257e4` — **org tree + commercial-finance dotted line** (part 1 — supersedes the second-hand description the previous handoff had for it).
   3. `a3da560` — the previous handoff commit.
@@ -203,50 +221,25 @@
   Entry 10 "How it lands" + Entry 11 FAQ, OG/Twitter meta, scroll-spy
   nav. The two passes compose — do not clobber either; the file changes
   out from under sessions, re-read before every edit.
-- **Push STILL blocked (SSH) — three failed attempts as of 2026-07-17.**
-  The client side is PROVEN good: we reach real GitHub (server host key
-  matches GitHub's published
-  `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`), and ssh offers
-  the right key — `~/.ssh/id_ed25519_rewive` (generated fresh this
-  session after the founder reported a fingerprint mismatch on the first
-  key), fingerprint `SHA256:qi700T0YxECL3859MQIEId9q2+/3E09fi/vgYPdR2P8`,
-  wired as the `github.com` IdentityFile in `~/.ssh/config`
-  (`IdentitiesOnly yes`; old `~/.ssh/id_ed25519` no longer used).
-  **The GitHub side is where it dies**: after each "added it" from the
-  founder, `github.com/rianpraveen.keys` AND `github.com/Kumarv2509.keys`
-  are still EMPTY (checked cache-busted via WebFetch — these public pages
-  list an account's authentication keys), and `ssh -T` still says
-  *Permission denied (publickey)*, which means NO github.com account
-  holds the key. Open questions put to the founder, unanswered at
-  handoff: (a) which username is in the top-right when adding the key —
-  possibly a third account; (b) what the **Authentication keys** section
-  of `github.com/settings/keys` actually lists (vs Signing keys — those
-  don't authenticate and don't appear at `.keys`); (c) whether the page
-  is really github.com and not a company GitHub Enterprise host. The
-  add may also be dying at the sudo/2FA confirmation step.
-  **Success test that needs no session**: a line starting
-  `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMGi…` visible at
-  `github.com/<username>.keys` → then `git push origin v5` will work.
-  Copy helper for the founder: `pbcopy < ~/.ssh/id_ed25519_rewive.pub`.
-  Don't fall back to HTTPS/`gh` — the FortiGate MITM breaks TLS
-  (memory `fortinet-git-push`).
+- **[RESOLVED 2026-07-21 — kept for the lesson only.]** Three sessions
+  recorded an SSH push failure here and concluded the founder had to
+  register `~/.ssh/id_ed25519_rewive` at github.com/settings/keys. That
+  conclusion was a dead end: the key was never the path. The remote had
+  been switched to SSH purely to dodge the office FortiGate, and once
+  off that network plain HTTPS + the existing `gh` keyring token pushed
+  first try. See the PUSHED bullet at the top. **Do not resurrect the
+  SSH-key thread.**
 - **Escalation demoed live to the founder (2026-07-17)**: at stage speed
   the hero finding walked `protein_supply_chain → coo` on its own ~2 min
   after boot, watched in the browser (queue pill flipped, 12h reset,
   audit entry by 'Rewive (system)'). Server was then reset to the
   default 12x speed — that's what is running at handoff.
-- **Push is blocked on exactly one founder action.** This network's FortiGate
-  MITMs GitHub HTTPS and its CA is in no local trust store, so git, curl
-  **and `gh` all fail TLS** (don't fix by disabling verification; memory
-  `fortinet-git-push` has the full diagnosis). The remote was switched to
-  **SSH** (`git@github.com:Kumarv2509/rewive-front-end.git`) which rides
-  `~/.ssh/config`'s `github.com → ssh.github.com:443` mapping — the network
-  path works, but GitHub answers *Permission denied (publickey)* because the
-  local ed25519 key was never registered. **Founder: add
-  `~/.ssh/id_ed25519.pub`** (comment `praveenj@broqr (claude-code)`) at
-  github.com/settings/keys on the account with push access (`gh` config says
-  `rianpraveen`), then `git push origin v5`. `gh` CLI is unusable on this
-  network — hand the founder compare/PR URLs instead of using `gh pr create`.
+- **[RESOLVED 2026-07-21.]** The FortiGate-MITM diagnosis in this bullet
+  was accurate ON THE OFFICE NETWORK but was wrongly generalized into a
+  permanent property of the machine. `gh` and HTTPS work fine elsewhere.
+  Memory `fortinet-git-push` still applies when actually on that network
+  — never disable TLS verification to get around it — but check WHERE
+  you are before assuming it applies.
 - **Processes at handoff (2026-07-19, later): ALL DEV SERVERS DOWN** —
   session B's background `dev:all` task was stopped and this time the
   kill DID release :5173, :4000 and :5174 (verified by port probe;
