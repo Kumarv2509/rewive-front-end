@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { Avatar } from '../shared/Avatar';
+import { useCurrentUser } from '../../api/dashboard';
 import { NAV_ITEMS, isNavItemActive } from './areas';
 import { NavIcon } from './NavIcon';
 
@@ -7,6 +8,7 @@ import { NavIcon } from './NavIcon';
 // Today screen itself — the rail carries no competing badges.
 export function AreaSidebar() {
   const { pathname } = useLocation();
+  const { data: user } = useCurrentUser();
 
   return (
     <aside className="side area-side">
@@ -24,13 +26,15 @@ export function AreaSidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="side-foot">
-        <Avatar initials="KV" background="#4F46E5" />
-        <div>
-          <div className="who">Kumara Vijayan</div>
-          <div className="role">Co-founder · Admin</div>
+      {user && (
+        <div className="side-foot">
+          <Avatar initials={user.initials} background={user.avatarBg} />
+          <div>
+            <div className="who">{user.name}</div>
+            <div className="role">{user.role}</div>
+          </div>
         </div>
-      </div>
+      )}
     </aside>
   );
 }

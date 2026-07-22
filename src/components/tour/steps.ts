@@ -31,7 +31,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'findings-open',
     where: 'Findings · Open',
     title: 'Every finding demands one answer',
-    body: 'Unanswered findings escalate up the chain of counterparts when the SLA runs out. Open one and make the call: Accept (set an exit condition), Act (opens a solution design), Acknowledge (park it on a trip-wire), or Abandon (your reason tunes the counterpart).',
+    body: 'Unanswered findings escalate up the chain of agents when the SLA runs out. Open one and make the call: Accept (set an exit condition), Act (opens a solution design), Acknowledge (park it on a trip-wire), or Abandon (your reason tunes the agent).',
   },
   {
     route: '/operate/findings',
@@ -39,7 +39,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'closure-exit',
     where: 'Findings · Watching',
     title: 'Nothing is "done" until the number is back',
-    body: 'Accepted findings live here as exit conditions with progress toward target. The counterpart keeps watching either way — regressed conditions and tripped wires resurface on their own.',
+    body: 'Accepted findings live here as exit conditions with progress toward target. The agent keeps watching either way — regressed conditions and tripped wires resurface on their own.',
   },
   {
     route: '/operate/decisions',
@@ -50,8 +50,8 @@ export const TOUR_STEPS: TourStep[] = [
   },
   {
     route: '/operate/counterparts',
-    target: 'counterpart-grid',
-    where: 'Agents · Counterparts',
+    target: 'agent-grid',
+    where: 'Agents · Agents',
     title: 'Every mandate, held twice',
     body: 'One agent per function, plus an org-level chief watching the intents. Each card shows its human, open findings, SLA breaches, and a temperament dial from quiet to hair-trigger. A "needs you" pill means someone is not answering.',
   },
@@ -60,20 +60,20 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'picture-map',
     where: 'Foundation · Operating Picture',
     title: 'The map it all runs on',
-    body: 'Intents at the top, the mandates that carry them, the senses that verify them. This is what the counterparts reason over — a finding on any node traces its impact up to the intent it threatens.',
+    body: 'Intents at the top, the mandates that carry them, the senses that verify them. This is what the agents reason over — a finding on any node traces its impact up to the intent it threatens.',
   },
   {
     route: '/insights/people',
     target: 'loop-speed',
     where: 'Performance',
     title: 'Where the loop closes fastest',
-    body: 'Every mandate, its owner, its counterpart, and how quickly drift comes back to target — time to decide, time to close, and the share of loops closed inside the exit condition\'s window.',
+    body: 'Every mandate, its owner, its agent, and how quickly drift comes back to target — time to decide, time to close, and the share of loops closed inside the exit condition\'s window.',
   },
   {
     route: '/command',
     target: null,
     where: 'That\'s the whole system',
     title: 'Nothing drifts unanswered',
-    body: 'Sense → Find → Decide → Act → Close. Your counterparts are already watching — answer what they bring you, and let the loop close.',
+    body: 'Sense → Find → Decide → Act → Close. Your agents are already watching — answer what they bring you, and let the loop close.',
   },
 ];

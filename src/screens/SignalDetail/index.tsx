@@ -44,7 +44,7 @@ export function SignalDetailScreen() {
 
   return (
     <section className="screen">
-      <Link to="/insights/signals" className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Signal Studio</Link>
+      <Link to="/operate/findings" className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Findings</Link>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <Pill tone={categoryTone[signal.category]}>{signal.category.replace('_', ' ')}</Pill>

@@ -14,6 +14,10 @@ import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useToast } from '../../components/shared/Toast';
 import type { SolutionTaskType, Verdict } from '../../api/types';
 
+/** Solutions opened by a finding's "act" disposition carry the finding id as
+    signalId (v4) — including live sweep ids like `live-f-fmcg-k-cpc-…`. */
+const isFindingId = (signalId: string) => /-f-/.test(signalId);
+
 const verdictTone: Record<Verdict, 'green' | 'red' | 'amber'> = { worked: 'green', not_worked: 'red', too_early: 'amber' };
 const taskTone: Record<SolutionTaskType, { tone: 'indigo' | 'teal' | 'gray'; label: string }> = {
   new_agent: { tone: 'indigo', label: 'new' },
@@ -26,7 +30,12 @@ export function SolutionDesignScreen() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { data: solution, isLoading, isError } = useSolutionDesign(solutionId);
-  const { data: signalDetail } = useSignalDetail(solution?.signalId);
+  // Only legacy v1 signals have a /signals/:id/detail record. Asking for one
+  // with a finding id 404s on every Act navigation, and the prior-solution
+  // lookup it feeds is meaningless for a finding, so skip the request entirely.
+  const { data: signalDetail } = useSignalDetail(
+    solution?.signalId && !isFindingId(solution.signalId) ? solution.signalId : undefined,
+  );
   const copySolution = useCopySolution(solutionId ?? '');
   const runValidation = useRunValidation(solutionId ?? '');
   const sendForApproval = useSendForApproval(solutionId ?? '');
@@ -38,8 +47,7 @@ export function SolutionDesignScreen() {
 
   const matchesWithSolutions = signalDetail?.similarSignals.filter((s) => s.priorSolution) ?? [];
   const approved = solution.status === 'approved';
-  // Solutions opened by a finding's "act" disposition carry the finding id as signalId (v4).
-  const fromFinding = /-f-/.test(solution.signalId);
+  const fromFinding = isFindingId(solution.signalId);
 
   return (
     <section className="screen">
@@ -58,7 +66,7 @@ export function SolutionDesignScreen() {
 
       <div className="concept-note">
         {approved
-          ? 'Approved. Design each agent below using the Unified Agent Studio — business altitude alone is enough for some, others will need a developer.'
+          ? 'Approved. Design each worker below using the Unified Worker Studio — business altitude alone is enough for some, others will need a developer.'
           : 'This is a solution design document. No development work has started yet.'}
       </div>
 
@@ -117,7 +125,7 @@ export function SolutionDesignScreen() {
                   )
                 }
               >
-                Design agent &rarr;
+                Design worker &rarr;
               </button>
             )}
             {approved && task.type === 'human_task' && <Link className="btn ghost sm" to="/operate/tasks">Track in Tasks &rarr;</Link>}
@@ -128,7 +136,7 @@ export function SolutionDesignScreen() {
 
       <div className="card" style={{ marginBottom: 16, padding: '16px 20px', background: 'var(--teal-soft)', border: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontWeight: 700, fontSize: 12.5, color: '#0D9488' }}>Validation agent review</span>
+          <span style={{ fontWeight: 700, fontSize: 12.5, color: 'var(--teal)' }}>Validation worker review</span>
           {solution.validation && <Pill tone={solution.validation.recommendation === 'dev_handoff' ? 'amber' : 'green'} style={{ marginLeft: 'auto' }}>
             recommends: {solution.validation.recommendation === 'dev_handoff' ? 'hand off to dev / IT' : 'ready for Runs & Actions'}
           </Pill>}

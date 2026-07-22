@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAddBrainNode, useIndustries, useKpiBrain, useOrgProfile, useSetIndustry } from '../../api/shadowOrg';
+import { usePersonaLens } from '../../components/layout/personaLens';
+import { lensOfferedForIndustry } from '../CommandCenter/personas';
 import { Intro } from '../../components/shared/Intro';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
+import { SectionTabs, FOUNDATION_TABS } from '../../components/shared/SectionTabs';
 import { useToast } from '../../components/shared/Toast';
 import { KpiBrainCanvas } from './KpiBrainCanvas';
 import type { IndustryKey, KpiBrain } from '../../api/types';
@@ -11,7 +14,20 @@ function IndustrySwitcher() {
   const { data: industries } = useIndustries();
   const { data: profile } = useOrgProfile();
   const setIndustry = useSetIndustry();
+  const { lens, setLens } = usePersonaLens();
   const { showToast } = useToast();
+
+  const switchTo = (ind: { id: string; name: string }) => {
+    setIndustry.mutate(ind.id as IndustryKey, {
+      onSuccess: () => {
+        // A lens carried over from another industry (e.g. an FMCG division role)
+        // isn't offered here — it would filter every screen to empty while the
+        // picker misrenders as "All lenses". Drop it back to All.
+        if (!lensOfferedForIndustry(lens, ind.id)) setLens('all');
+        showToast(`Switched to the ${ind.name} picture`);
+      },
+    });
+  };
 
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
@@ -20,7 +36,7 @@ function IndustrySwitcher() {
           key={ind.id}
           className={`fchip${profile?.industry === ind.id ? ' on' : ''}`}
           disabled={setIndustry.isPending}
-          onClick={() => setIndustry.mutate(ind.id as IndustryKey, { onSuccess: () => showToast(`Switched to the ${ind.name} picture`) })}
+          onClick={() => switchTo(ind)}
           title={ind.description}
         >
           {ind.name}
@@ -41,7 +57,7 @@ function AddKpiForm({ brain }: { brain: KpiBrain }) {
   const add = useAddBrainNode();
   const { showToast } = useToast();
 
-  const feedTargets = brain.nodes.filter((n) => n.kind === 'stream_kpi' || n.kind === 'target');
+  const feedTargets = brain.nodes.filter((n) => n.kind === 'stream_kpi' || n.kind === 'pl_line' || n.kind === 'target');
   const inputStyle = { width: '100%', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit' as const };
 
   if (!open) {
@@ -97,14 +113,16 @@ export function KpiBrainScreen() {
 
   return (
     <section className="screen" style={{ maxWidth: 1280 }}>
+      <SectionTabs tabs={FOUNDATION_TABS} />
       <h1 className="page">Operating Picture</h1>
       <Intro
-        line="What the organization is trying to make true — intents, the mandates that carry them, the senses that verify them."
+        line="The DuPont cascade: intents at the top, the P&L line by line beneath them, the mandates that move each line, and the senses that verify each mandate."
         more={
           <>
-            Every mandate is held twice: once by a person, once by its counterpart. This is the picture the
-            counterparts reason over — a finding on any node traces its impact all the way up to the intent it
-            threatens. A mandate without a sense is blind, and the picture says so.
+            Read it top-down like a DuPont tree: every intent decomposes into P&amp;L lines, every line into the
+            mandates that move it, every mandate into the senses that watch it. Every mandate is held twice — once
+            by a person, once by its agent — and a finding on any node traces its impact up the same path:
+            sense → mandate → P&amp;L line → intent. A mandate without a sense is blind, and the picture says so.
           </>
         }
       />

@@ -3,7 +3,7 @@ import { useUpdateBrainNode } from '../../api/shadowOrg';
 import { useToast } from '../../components/shared/Toast';
 import type { BrainNode, StreamDef } from '../../api/types';
 
-const kindNoun = { target: 'intent', stream_kpi: 'mandate', driver: 'sense' } as const;
+const kindNoun = { target: 'intent', pl_line: 'P&L line', stream_kpi: 'mandate', driver: 'sense' } as const;
 
 export function NodeEditor({ node, streams, onClose }: { node: BrainNode; streams: StreamDef[]; onClose: () => void }) {
   const update = useUpdateBrainNode();
@@ -15,7 +15,7 @@ export function NodeEditor({ node, streams, onClose }: { node: BrainNode; stream
   const [dataSources, setDataSources] = useState((node.dataSources ?? []).join(', '));
 
   const noun = kindNoun[node.kind];
-  const inputStyle = { width: '100%', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 11px', fontSize: 12.5, fontFamily: 'inherit' as const, background: 'rgba(255,255,255,.05)', color: 'var(--ink)' };
+  const inputStyle = { width: '100%', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 11px', fontSize: 12.5, fontFamily: 'inherit' as const, background: 'var(--surface)', color: 'var(--ink)' };
   const labelStyle = { fontSize: 10.5, textTransform: 'uppercase' as const, letterSpacing: '.4px', color: 'var(--ink-3)', marginBottom: 4, display: 'block' };
 
   const save = () => {

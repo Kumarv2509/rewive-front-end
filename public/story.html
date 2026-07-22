@@ -7,12 +7,13 @@
 <title>Rewive · The story</title>
 <style>
   :root{
-    --ground:#07070F; --ink:#F1F1F7; --ink-2:#A6A9C8; --ink-3:#63678B;
-    --i1:#6366F1; --i2:#8B5CF6; --i3:#A855F7; --teal:#2DD4BF;
-    --grad:linear-gradient(120deg,#6366F1 0%,#8B5CF6 52%,#A855F7 100%);
-    --glass:rgba(255,255,255,.045); --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
-    --good:#4ADE80; --warn:#FBBF24; --crit:#F87171;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --ground:#FAF9F6; --ink:#1A1A2E; --ink-2:#5A5D72; --ink-3:#9A9DB0;
+    --accent:#3B3BC4; --accent-deep:#2E2EA8; --teal:#0D7E74;
+    --surface:#FFFFFF; --line:rgba(26,26,46,.10); --line-2:rgba(26,26,46,.18);
+    --shadow:0 1px 3px rgba(26,26,46,.05);
+    --good:#1B7F4D; --warn:#9A6700; --crit:#B42318;
+    --serif:"Iowan Old Style",Palatino,Georgia,serif;
+    --sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
     --mono:ui-monospace,"SF Mono",Menlo,Monaco,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -20,52 +21,47 @@
   body{
     font-family:var(--sans);color:var(--ink);line-height:1.7;background:var(--ground);
     min-height:100vh;overflow-x:hidden;
-    background-image:
-      radial-gradient(1100px 720px at 82% -8%,rgba(139,92,246,.20),transparent 58%),
-      radial-gradient(900px 640px at -12% 22%,rgba(45,212,191,.08),transparent 55%),
-      radial-gradient(1000px 720px at 50% 118%,rgba(99,102,241,.16),transparent 60%);
-    background-attachment:fixed;
   }
   .wrap{max-width:1020px;margin:0 auto;padding:0 24px}
   header{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
   .brand{display:flex;align-items:center;gap:11px}
   .brand img{width:30px;height:30px}
-  .brand .nm{font-weight:700;font-size:16px;letter-spacing:-.3px}
+  .brand .nm{font-family:var(--serif);font-weight:700;font-size:16px;letter-spacing:-.3px}
   .brand .tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
-  .enter{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-decoration:none;color:var(--ink);border:1px solid var(--line-2);background:var(--glass);border-radius:99px;padding:10px 20px;transition:all .2s;backdrop-filter:blur(12px)}
-  .enter:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.28)}
+  .enter{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-decoration:none;color:var(--ink);border:1px solid var(--line-2);background:var(--surface);border-radius:99px;padding:10px 20px;transition:all .2s;box-shadow:var(--shadow)}
+  .enter:hover{background:#F4F3EF;border-color:rgba(26,26,46,.28)}
   section{padding:clamp(52px,8vh,104px) 0;border-top:1px solid var(--line)}
   .hero{border-top:none;padding-top:clamp(48px,9vh,120px)}
-  .kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);border:1px solid var(--line);background:var(--glass);border-radius:99px;padding:7px 15px;margin-bottom:32px}
-  .live{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal);animation:blink 2.4s ease-in-out infinite}
-  h1{font-size:clamp(2.4rem,6vw,4.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.08;max-width:16ch;margin-bottom:26px;text-wrap:balance}
-  .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 15px;margin-bottom:32px;box-shadow:var(--shadow)}
+  .live{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:blink 2.4s ease-in-out infinite}
+  h1{font-family:var(--serif);font-size:clamp(2.4rem,6vw,4.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.08;max-width:16ch;margin-bottom:26px;text-wrap:balance}
+  .grad{color:var(--accent)}
   .teal{color:var(--teal)}
   .lede{font-size:clamp(1.05rem,1.7vw,1.3rem);color:var(--ink-2);max-width:60ch;margin-bottom:32px}
-  .thesis{font-family:var(--mono);font-size:.92rem;color:var(--ink-2);border-left:2px solid var(--i2);padding-left:16px;max-width:56ch;margin-bottom:38px}
+  .thesis{font-family:var(--mono);font-size:.92rem;color:var(--ink-2);border-left:2px solid var(--accent);padding-left:16px;max-width:56ch;margin-bottom:38px}
   .thesis b{color:var(--ink);font-weight:500}
-  .cta{display:inline-flex;align-items:center;gap:9px;font-size:1rem;font-weight:600;text-decoration:none;color:#fff;background:var(--grad);border-radius:13px;padding:15px 28px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 34px rgba(124,99,255,.4);transition:filter .2s,transform .2s}
-  .cta:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  .cta{display:inline-flex;align-items:center;gap:9px;font-size:1rem;font-weight:600;text-decoration:none;color:#fff;background:var(--accent);border-radius:8px;padding:15px 28px;transition:background .2s,transform .2s}
+  .cta:hover{background:var(--accent-deep);transform:translateY(-1px)}
   .cta .arr{font-family:var(--mono)}
-  h2{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:700;letter-spacing:-.02em;margin-bottom:8px;text-wrap:balance}
+  h2{font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.3rem);font-weight:700;letter-spacing:-.02em;margin-bottom:8px;text-wrap:balance}
   .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:22px;display:block}
   .loop{display:grid;grid-template-columns:minmax(0,400px) 1fr;gap:clamp(24px,5vw,60px);align-items:center}
   svg{width:100%;height:auto;overflow:visible}
   .stages{list-style:none;display:flex;flex-direction:column;gap:2px}
   .stage{padding:14px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:34px 1fr;gap:14px}
   .stage:first-child{border-top:none}
-  .stage .n{font-family:var(--mono);font-size:.9rem;color:var(--i3);border:1px solid var(--line-2);border-radius:9px;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
-  .stage h3{font-size:1rem;font-weight:600;margin-bottom:3px}
+  .stage .n{font-family:var(--mono);font-size:.9rem;color:var(--accent);border:1px solid var(--line-2);border-radius:9px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--surface)}
+  .stage h3{font-family:var(--serif);font-size:1rem;font-weight:600;margin-bottom:3px}
   .stage p{font-size:.92rem;color:var(--ink-2)}
   .stage b{color:var(--ink);font-weight:500}
   .dispo{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px}
-  .dcard{border:1px solid var(--line);border-radius:15px;background:var(--glass);backdrop-filter:blur(16px);padding:18px}
-  .dcard .verb{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+  .dcard{border:1px solid var(--line);border-radius:15px;background:var(--surface);box-shadow:var(--shadow);padding:18px}
+  .dcard .verb{font-family:var(--serif);font-size:1.1rem;font-weight:700;margin-bottom:8px}
   .dcard p{font-size:.84rem;color:var(--ink-2);line-height:1.5}
-  .dcard.a .verb{color:var(--teal)} .dcard.b .verb{color:#B9C0FF} .dcard.c .verb{color:var(--warn)} .dcard.d .verb{color:var(--ink-2)}
+  .dcard.a .verb{color:var(--teal)} .dcard.b .verb{color:var(--accent)} .dcard.c .verb{color:var(--warn)} .dcard.d .verb{color:var(--ink-2)}
   .inds{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:24px}
-  .ind{border:1px solid var(--line);border-radius:15px;background:var(--glass);backdrop-filter:blur(16px);padding:18px}
-  .ind .in{font-size:1rem;font-weight:700;margin-bottom:5px}
+  .ind{border:1px solid var(--line);border-radius:15px;background:var(--surface);box-shadow:var(--shadow);padding:18px}
+  .ind .in{font-family:var(--serif);font-size:1rem;font-weight:700;margin-bottom:5px}
   .ind .ib{font-size:.84rem;color:var(--ink-2);line-height:1.5}
   .ind .ic{font-family:var(--mono);font-size:.7rem;color:var(--ink-3);margin-top:10px;display:block}
   .close{text-align:center;padding-bottom:clamp(70px,12vh,120px)}
@@ -89,8 +85,8 @@
     <section class="hero">
       <span class="kicker"><span class="live"></span> The decision accountability layer</span>
       <h1>Nothing drifts <span class="grad">unanswered</span>.</h1>
-      <p class="lede">Every number has an owner and a counterpart. When it drifts, a finding demands a decision — and silence escalates until someone owns the call.</p>
-      <p class="thesis"><b>Every mandate is held twice</b> — once by a person, once by its counterpart.</p>
+      <p class="lede">Every number has an owner and an agent. When it drifts, a finding demands a decision — and silence escalates until someone owns the call.</p>
+      <p class="thesis"><b>Every mandate is held twice</b> — once by a person, once by its agent.</p>
       <a class="cta" href="http://localhost:5173/">Enter Rewive <span class="arr">→</span></a>
     </section>
 
@@ -99,24 +95,20 @@
       <h2>A loop that runs whether or not anyone is watching.</h2>
       <div class="loop" style="margin-top:26px">
         <svg viewBox="0 0 600 600" role="img" aria-label="The five-stage operating loop">
-          <defs>
-            <linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366F1"/><stop offset=".55" stop-color="#8B5CF6"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
-            <filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          </defs>
-          <circle cx="300" cy="300" r="240" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1.5"/>
-          <circle class="pulse" cx="300" cy="300" r="240" fill="none" stroke="url(#r)" stroke-width="3" stroke-linecap="round" stroke-dasharray="90 1418" filter="url(#g)"/>
-          <text x="300" y="292" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" letter-spacing="3" fill="#63678B">CONTINUOUS</text>
-          <text x="300" y="320" text-anchor="middle" font-family="-apple-system,system-ui,sans-serif" font-size="22" font-weight="700" fill="#F1F1F7">The loop</text>
+          <circle cx="300" cy="300" r="240" fill="none" stroke="rgba(26,26,46,.10)" stroke-width="1.5"/>
+          <circle class="pulse" cx="300" cy="300" r="240" fill="none" stroke="#3B3BC4" stroke-width="3" stroke-linecap="round" stroke-dasharray="90 1418"/>
+          <text x="300" y="292" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" letter-spacing="3" fill="#9A9DB0">CONTINUOUS</text>
+          <text x="300" y="320" text-anchor="middle" font-family="'Iowan Old Style',Palatino,Georgia,serif" font-size="22" font-weight="700" fill="#1A1A2E">The loop</text>
           <g font-family="ui-monospace,monospace" font-size="15" font-weight="600">
-            <circle cx="300" cy="60" r="27" fill="#0B0B16" stroke="url(#r)" stroke-width="1.6"/><text x="300" y="66" text-anchor="middle" fill="#B9C0FF">1</text><text x="300" y="24" text-anchor="middle" font-size="14" fill="#F1F1F7">Sense</text>
-            <circle cx="528" cy="226" r="27" fill="#0B0B16" stroke="url(#r)" stroke-width="1.6"/><text x="528" y="232" text-anchor="middle" fill="#B9C0FF">2</text><text x="528" y="277" text-anchor="middle" font-size="14" fill="#F1F1F7">Find</text>
-            <circle cx="441" cy="494" r="27" fill="#0B0B16" stroke="#2DD4BF" stroke-width="1.8"/><text x="441" y="500" text-anchor="middle" fill="#2DD4BF">3</text><text x="441" y="545" text-anchor="middle" font-size="14" fill="#F1F1F7">Decide</text>
-            <circle cx="159" cy="494" r="27" fill="#0B0B16" stroke="url(#r)" stroke-width="1.6"/><text x="159" y="500" text-anchor="middle" fill="#B9C0FF">4</text><text x="159" y="545" text-anchor="middle" font-size="14" fill="#F1F1F7">Act</text>
-            <circle cx="72" cy="226" r="27" fill="#0B0B16" stroke="url(#r)" stroke-width="1.6"/><text x="72" y="232" text-anchor="middle" fill="#B9C0FF">5</text><text x="72" y="277" text-anchor="middle" font-size="14" fill="#F1F1F7">Close</text>
+            <circle cx="300" cy="60" r="27" fill="#FFFFFF" stroke="#3B3BC4" stroke-width="1.6"/><text x="300" y="66" text-anchor="middle" fill="#3B3BC4">1</text><text x="300" y="24" text-anchor="middle" font-size="14" fill="#1A1A2E">Sense</text>
+            <circle cx="528" cy="226" r="27" fill="#FFFFFF" stroke="#3B3BC4" stroke-width="1.6"/><text x="528" y="232" text-anchor="middle" fill="#3B3BC4">2</text><text x="528" y="277" text-anchor="middle" font-size="14" fill="#1A1A2E">Find</text>
+            <circle cx="441" cy="494" r="27" fill="#FFFFFF" stroke="#0D7E74" stroke-width="1.8"/><text x="441" y="500" text-anchor="middle" fill="#0D7E74">3</text><text x="441" y="545" text-anchor="middle" font-size="14" fill="#1A1A2E">Decide</text>
+            <circle cx="159" cy="494" r="27" fill="#FFFFFF" stroke="#3B3BC4" stroke-width="1.6"/><text x="159" y="500" text-anchor="middle" fill="#3B3BC4">4</text><text x="159" y="545" text-anchor="middle" font-size="14" fill="#1A1A2E">Act</text>
+            <circle cx="72" cy="226" r="27" fill="#FFFFFF" stroke="#3B3BC4" stroke-width="1.6"/><text x="72" y="232" text-anchor="middle" fill="#3B3BC4">5</text><text x="72" y="277" text-anchor="middle" font-size="14" fill="#1A1A2E">Close</text>
           </g>
         </svg>
         <ol class="stages">
-          <li class="stage"><span class="n">1</span><div><h3>Sense</h3><p>Each counterpart watches the feeds behind its mandates — <b>continuously</b>.</p></div></li>
+          <li class="stage"><span class="n">1</span><div><h3>Sense</h3><p>Each agent watches the feeds behind its mandates — <b>continuously</b>.</p></div></li>
           <li class="stage"><span class="n">2</span><div><h3>Find</h3><p>When reality drifts, it raises a <b>finding</b> and traces the impact up to the intent it threatens.</p></div></li>
           <li class="stage"><span class="n">3</span><div><h3>Decide</h3><p>The finding demands a human call — one of <b>four dispositions</b>. Unanswered, it escalates.</p></div></li>
           <li class="stage"><span class="n">4</span><div><h3>Act</h3><p>An exit condition to watch, a solution with tasks, or a deliberate pause.</p></div></li>
@@ -129,7 +121,7 @@
       <span class="eyebrow">The decision — four dispositions</span>
       <h2>The agent brings the finding. The human owns the call.</h2>
       <div class="dispo">
-        <div class="dcard a"><div class="verb">Accept</div><p>It's real — an exit condition is set and the counterpart watches it until met.</p></div>
+        <div class="dcard a"><div class="verb">Accept</div><p>It's real — an exit condition is set and the agent watches it until met.</p></div>
         <div class="dcard b"><div class="verb">Act</div><p>Open a solution, broken into tasks, straight into the build loop.</p></div>
         <div class="dcard c"><div class="verb">Acknowledge</div><p>Known issue, parked on a trip-wire — it comes back louder if it worsens.</p></div>
         <div class="dcard d"><div class="verb">Abandon</div><p>Not real — a reason is required, and the reason tunes the agent.</p></div>
@@ -147,7 +139,7 @@
 
     <section class="close">
       <h2>A red number is <span class="grad">no longer nobody’s problem</span>.</h2>
-      <p class="lede">Pick your operating context and step inside — the counterparts are already watching.</p>
+      <p class="lede">Pick your operating context and step inside — the agents are already watching.</p>
       <a class="cta" href="http://localhost:5173/">Enter Rewive <span class="arr">→</span></a>
       <p class="sig">Every mandate, held twice.</p>
     </section>

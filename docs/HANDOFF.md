@@ -1,32 +1,1904 @@
-# Handoff — H1 2026 lifecycle history, entities & regions, self-refreshing demo clock (2026-07-16)
+# Handoff — the live analysis strip never went live; fixed + all pushed (2026-07-22)
 
 ## Where things stand
 
-- **Committed and pushed; PR #4 (`v5` → `master`) is OPEN** —
-  https://github.com/Kumarv2509/rewive-front-end/pull/4 — three commits:
-  `f645682` (mock+api: H1 history, entity/region, clock-relative seeds),
-  `2c9d76a` (decisions+findings: half-year panel + entity/region surfaces),
-  `da02eb0` (this handoff). Build + eslint clean; verified live against the
-  mock API (curl) **and** driven headlessly in Chromium (Playwright
-  screenshots of every screen — zero console errors / failed requests).
-- **Processes at session end**: Vite dev on :5173 (user's own `dev:all`
-  session, untouched) + a **detached** mock API on :4000 (`nohup node
-  mock-server/server.js`, log at the session scratchpad's `mock-api.log`).
-  It was launched detached because harness-managed background tasks kept
-  getting reaped between turns, taking the API down (the user's tab then
-  showed error states everywhere). To take over: `lsof -ti:4000 | xargs
-  kill`, then `npm run mock-server`. The mock server has **no watch mode**:
-  seed edits in `mock-server/` need a restart.
-- **Push gotcha (intermittent, from 2026-07-15): one of this machine's
-  networks MITMs GitHub HTTPS.** `git push` fails with "SSL certificate
-  problem" — a FortiGate firewall re-signs github.com (issuer
-  `CN=FG201FT922921744, O=Fortinet`). Fix: change network / drop the VPN, or
-  use an SSH key, or set repo-local `http.sslCAInfo`. Do **not** disable
-  `http.sslVerify`. (`gh` CLI auth works — `rianpraveen`.)
-- PR #3 (`v5` → `master`) merged 2026-07-15 (`17ea4e4`); `master` carries
-  everything up to `1cba44e`.
+- **PUSHED (2026-07-22) — `v5` is fully in sync with `origin/v5` at
+  `98c52e9`; working tree clean.** The 4 commits the previous handoff
+  left unpushed (`a8c19fc` disposition fixes, `17c505b` FortiGate doc,
+  `550a72d` live-sweep fix, `98c52e9` server-flags doc) went up in one
+  clean fast-forward (`76c710d..98c52e9`). **PR #5** (`v5` → `master`)
+  now carries them too. Confirming the file's own lesson: the FortiGate
+  block **was live on the office network at the start of the session**
+  (`curl https://github.com` → self-signed Fortinet cert, HTTP 000) and
+  cleared the moment the founder moved off it (→ HTTP 200), after which
+  plain `git push` just worked. Zero unpushed at handoff.
 
-## New this session (2026-07-16)
+
+- **THE LIVE SWEEP IS NOW EXERCISED, AND IT WAS BROKEN IN THE UI.** The
+  last unexercised piece of the loop turned out to hide a real defect:
+  the live analysis strip **never rendered a live state at all** when
+  you pressed its own button — the whole point of the feature. Fixed and
+  verified walking `1 of 4 → 2 of 4` at 25% → 50%. Detail in "This
+  session (2026-07-21, latest)" below.
+
+- **THE LATEST SESSION CHANGED NO CODE.** It opened the running product
+  and read both tabs under the Agents rail item, ending on a design
+  question the founder had not yet answered. Five observations came out
+  of the read — two of them structural (the tabs share a rail item but
+  not a design vocabulary; only one of the two has a detail page).
+  Detail in "This session (2026-07-21, latest)" directly below. If you
+  are picking up work, **that unanswered question is the live thread.**
+
+- **[ANSWERED — the two "unexplained" dirty files were the live-sweep
+  fix, and they are now committed.]** A concurrent session saw
+  `src/api/tracking.ts` and `src/screens/Findings/LiveAnalysisStrip.tsx`
+  dirty, could not account for them, and flagged them as mystery edits
+  from "an earlier session". They were neither mystery nor earlier: a
+  session running **at the same time** was mid-way through fixing the
+  live analysis strip (see "This session (2026-07-21, latest)" below).
+  Its instinct — *diff before committing, do not sweep unexplained work
+  into an unrelated commit* — was exactly right and is worth keeping.
+  **Two sessions edited this file concurrently on 2026-07-21**; the same
+  hazard the website sections warn about ("the file changes out from
+  under sessions, re-read before every edit") now applies to THIS file.
+  Re-read before editing, and prefer targeted edits over rewrites.
+
+- **THE FOUR-A DISPOSITION FLOWS ARE NOW EXERCISED INTERACTIVELY** — the
+  open thread the previous session named as "the natural next piece of
+  work" is closed. Accept / Act / Acknowledge / Abandon all driven
+  through the real UI with headless Playwright, plus the full Act chain
+  (solution design → validation → approval → approve → Worker Studio)
+  and the escalate button. **Two defects found and fixed**; one
+  authority gap found and deliberately left for a founder call. Full
+  detail in "This session (2026-07-21, later)" directly below.
+  **UNCOMMITTED at the time this section was written** — two files,
+  `DispositionBar.tsx` and `SolutionDesign/index.tsx` — committed
+  together with this handoff at the end of the session.
+
+- **A PR IS OPEN; check whether the latest commits are pushed.**
+  **PR #5** is open, `v5` → `master`:
+  https://github.com/Kumarv2509/rewive-front-end/pull/5 — it was
+  43 commits / 112 files / +10,911 −1,397 when opened, and has grown
+  since. The 2026-07-21 commits are `e5a79ae` (three CSS fixes),
+  `79b7cbf` + `76c710d` (handoffs), then this session's
+  disposition-fixes commit. **Push state was last verified when PR #5
+  was opened — re-check with `git status -sb` rather than trusting this
+  line**, which is exactly the kind of claim this file's push saga is a
+  warning about. HTTPS is the right remote, but see the next bullet —
+  **pushing was blocked again later on 2026-07-21** from the office
+  network. `a8c19fc` is committed locally and unpushed.
+
+- **THE FORTIGATE BLOCK IS LIVE AGAIN (confirmed 2026-07-21, later).**
+  `git push` failed with *"SSL certificate problem: self signed
+  certificate"*. This is **network location, not credentials** — and
+  this time it is not even MITM inspection: the certificate presented
+  for `github.com` is issued by `O = Fortinet, CN = Fortiguard SDNS
+  Blocked Page`, i.e. GitHub is **category-blocked** outright.
+  Reproduce in two seconds:
+
+  ```
+  curl -sS -o /dev/null -w "%{http_code}" https://github.com   # -> 000
+  echo | openssl s_client -connect github.com:443 -servername github.com 2>/dev/null \
+    | openssl x509 -noout -issuer                              # -> O = Fortinet ...
+  ```
+
+  **`gh auth status` LIES about this, and the lie is the same shape as
+  the SSH dead end above.** It reports *"The token in keyring is
+  invalid — run `gh auth refresh`"*. It is not invalid: `gh` cannot
+  complete the TLS handshake, so it never validates the token at all,
+  and it reports a network failure as an auth failure. **Do NOT run
+  `gh auth refresh` or `gh auth logout`** — that would discard a
+  working credential chasing a phantom, which is precisely how three
+  sessions were lost to the SSH-key theory.
+
+  **The fix is to move off the office network** (home, or a phone
+  hotspot); then plain `git push` fast-forwards. **Never** disable TLS
+  verification (`GIT_SSL_NO_VERIFY`, `http.sslVerify=false`) to get
+  around it — you would be trusting whatever the block page returns.
+  Memory `fortinet-git-push` carries the same rule.
+
+  **The sibling WEBSITE repo is the exception** — still entirely
+  uncommitted, deliberately deferred by the founder ("we will push
+  later"). **Do not push it without asking**: the founder has a second
+  clone of it in another folder, so the two copies may have diverged.
+  Establish which is newer before pushing either — a force-push from the
+  wrong folder silently destroys the other's work. Its `origin` is still
+  the retired SSH URL and its GitHub repo may not exist yet; now that
+  HTTPS + `gh` work, both are fixable in minutes when the founder asks.
+
+- **This session (2026-07-20, latest) is COMMITTED — `7783839`**, and it
+  swept up the previously-uncommitted work with it. One commit, 77 files
+  (+2286 −675), including the 2 files that had been untracked for several
+  sessions (`mock-server/seed-tracking.js`,
+  `src/screens/Findings/LiveAnalysisStrip.tsx`). Working tree clean.
+  The work: **rebrand the healthcare pack to Medcare UAE (demo)**, a UAE
+  private hospital/clinic network, and seed it deeply enough to pitch the
+  whole loop to a CFO — plus four real bug fixes found on the way. Full
+  detail in the "This session (2026-07-20, latest)" section directly below.
+
+- **The counterpart → agent rename is now committed too**, inside
+  `7783839`. It could not be split out: ~65 files were rename-only, but 10
+  more (`v4data.js`, `v4content.js`, `personas.ts`, `CLAUDE.md`, …) carried
+  both the rename and this session's Medcare edits, and interactive
+  staging is unavailable in the Claude Code environment. The user chose
+  one honest commit over a partial split where neither half would
+  typecheck. **The commit message says so explicitly** — don't be
+  surprised by 65 files of renames inside a tenant-rebrand commit.
+
+- **VISUALLY VERIFIED AT LAST (2026-07-21)** — the four-session-old open
+  thread is closed. The Chrome extension failed to connect for a **fourth**
+  time; stop waiting on it and use **headless Playwright** instead
+  (chromium via the npx cache at
+  `~/.npm/_npx/e41f203b7505f1fb/node_modules/playwright`, imported as
+  `index.mjs`). Seed the session by `addInitScript`-ing four localStorage
+  keys — `rewive.tenant`, `rewive.industry`, `rewive.personaLens`,
+  **`rewive.guideSeen='1'`** (without the last one `/command` redirects to
+  `/guide` on every fresh context — that redirect is intentional,
+  `CommandCenter/index.tsx:23`, not a bug). Scripts are reusable in this
+  session's scratchpad (`shots.mjs` screenshots, `probe.mjs` overflow,
+  `links.mjs` a 13-route link/overflow sweep).
+  **13 routes swept across 3 viewport widths: 0 console errors.**
+  Three real visual defects found and fixed — see "This session
+  (2026-07-21)" directly below.
+
+- **The earlier session that day (2026-07-20) worked in the PRODUCT repo and COMMITTED
+  everything** — two commits, `814ab8e` (senior-leadership findings view)
+  and `fbefa56` (counterpart view, screen help, hierarchy default), plus
+  this handoff. Working tree clean at handoff. Full detail in the
+  "Previous session (2026-07-20, earlier)" section below. Not visually
+  verified either.
+
+- **The previous session touched ONLY the sibling website repo**
+  (`../rewive-front-end_website`), which is **entirely UNCOMMITTED on top
+  of its single `init` commit `9c195e7`** — every file changed or added
+  (`index.html`, `preview.html` NEW, `story.html`, `demo.html`,
+  `fonts.css` NEW, `README.md`). Nothing in this product repo changed
+  this session except this handoff. Full detail in the
+  "This session (2026-07-19/20)" section below.
+
+- **PUSHED (2026-07-21) — `v5` is fully in sync with `origin/v5` at
+  `e5a79ae`.** All 41 accumulated commits went up in one clean
+  fast-forward (`45378ac..e5a79ae`). Zero unpushed. No PR opened yet.
+
+  **The multi-session "push is blocked" saga is OVER, and the diagnosis
+  in it was stale, not wrong-at-the-time.** HTTPS and `gh` work fine now
+  — the FortiGate MITM was a property of the OFFICE network, not the
+  machine. A `rianpraveen` token with `repo` scope was in the gh keyring
+  the entire time; `gh api repos/Kumarv2509/rewive-front-end` confirms
+  `"push": true` via collaborator access (Kumarv2509 is the owner
+  account, rianpraveen is the founder's). The remote is now
+  **HTTPS** (`https://github.com/Kumarv2509/rewive-front-end.git`) with
+  `gh auth setup-git`, so plain `git push` just works.
+
+  **The lesson worth keeping**: a previous session switched the remote to
+  SSH to route around the firewall, and that workaround outlived the
+  problem it solved — leaving SSH as the ONLY path, gated on a key nobody
+  ever registered. Several sessions then inherited "push is blocked" as
+  settled fact and never re-tested it. **Re-test environment assumptions
+  before repeating them** — network conditions change between sessions.
+  The SSH key thread (`id_ed25519_rewive`, github.com/settings/keys) is
+  now MOOT; don't chase it. If HTTPS ever fails again, check whether
+  you're on the office network before concluding anything.
+
+  The numbered list below is older and undercounts — trust the `git log`,
+  not the count. Commits since the merge point:
+  1. `e0e365e` — **paper-ledger redesign** (parallel session, documented below).
+  2. `53257e4` — **org tree + commercial-finance dotted line** (part 1 — supersedes the second-hand description the previous handoff had for it).
+  3. `a3da560` — the previous handoff commit.
+  4. `cdba393` — **Business base-data section + roped findings** (part 2).
+  5. `ec5d3ac` — mid-session handoff commit.
+  6. `6d3181f` — **holistic seeds: lifecycle-diverse findings across every role + business fact sections** (part 3).
+  7. `ce02dec` — **DuPont cascade: full P&L tier in the FMCG Operating Picture** (part 4).
+  8. `7885692` — **healthcare P&L tier** (part 4, seeds only).
+  9. `1c6a3aa` — the previous handoff commit.
+  10. `a2fb841` — **finding impactPath seeds routed through the P&L tier** (resolved old open thread 3b: 24 FMCG findings now carry `pl_line` steps; the hero fill finding reads sense → mandate → gross revenue → intent).
+  11. `13d63b9` — **half-year review derived from live state** (2026-07-17 session, documented below; resolved old open thread 3).
+  12. `d667457` — the previous handoff commit.
+  13. `b7db762` — **stat tiles derived too** (same session; no hand-seeded decision stats remain anywhere).
+  14. `0de608e` — the previous handoff commit.
+  15. `49bf366` — **Today queue sectioned by mandate**: `UnifiedQueue.tsx`
+      groups findings under mono eyebrow headers per mandate (first
+      `stream_kpi` step of the finding's `impactPath`), with the DuPont
+      P&L line as a right-aligned `→` hint and a `× N` count; sections
+      ordered by most-urgent SLA; approvals under a trailing "Approvals"
+      section. One count unchanged. Verified headless (all-lens: 17
+      mandate sections + approvals; COO — Protein lens: 2).
+  16. `697fe66` — the previous handoff commit.
+  17. `4ea8961` — **demo heartbeat**: a 30s interval in `app.js`
+      (`startHeartbeat()`, called ONLY by `server.js` — never the Vercel
+      handler) that (a) decays open findings' SLA clocks at **12x demo
+      time** and auto-escalates expired ones up the role tree with the
+      shared `escalateFindingUp()` (dotted forks included; top-of-tree
+      findings clamp at 0h "breached and waiting" instead of looping),
+      (b) stamps staggered `lastSenseSweepAt` on counterparts (new
+      optional ShadowAgent field; card footers show "senses swept 2m
+      ago"), and (c) refreshes active connectors' `lastSyncedAt` +
+      audit-logs loads as 'Rewive (system)'. Tune with
+      `REWIVE_SLA_HOURS_PER_TICK` (0 freezes clocks; 1 = stage speed,
+      hero escalates in ~2 min; default 0.1 ≈ hero in ~20 min).
+      **Demo consequence**: left running for hours, the whole queue
+      migrates to the Group CEO breached — restart the mock server to
+      reset, or freeze the clock between demos. Findings/counterpart
+      queries already poll every 30s, so escalations appear live with
+      no frontend work. Verified with a throwaway
+      `REWIVE_SLA_HOURS_PER_TICK=5` instance on :4100: hero walked
+      `protein_supply_chain → coo`, trade-spend forked to the CFO,
+      connectors loaded, all 19 counterparts swept.
+  18. `02076f3` — the previous handoff commit.
+  19. `6c7bcf1` — **npm scripts for the heartbeat speeds**:
+      `mock-server:stage` (1h/tick — hero escalates ~2 min after boot)
+      and `mock-server:frozen` (clocks stopped); plain `mock-server`
+      stays the 12x default.
+  20. `e686ac3` — the previous handoff commit.
+  21. `e71bf9b` — **Datasets placeholder** (`/build/datasets`, Foundation):
+      per-industry registry of the data to come — `expected` slots naming
+      source/cadence/the Operating Picture nodes they'll feed +
+      analysis ideas tied to existing findings; `live` ones ride the
+      heartbeat (fresh loads, row growth). CSV staging (client-side
+      profiling → `POST /datasets` as 'receiving') and an analysis
+      workbench (`POST /analysis-requests`, queued until data lands).
+      Contract: `Dataset`/`AnalysisRequest` in types.ts,
+      `src/api/datasets.ts`, seeds in `mock-server/datasetsdata.js`,
+      state in the serverless snapshot. **Foundation now has a
+      `FOUNDATION_TABS` SectionTabs header on all four screens** —
+      its sub-screens were previously unreachable by browsing.
+      Company-wide like business context (no persona). Verified:
+      endpoints + headless screenshot.
+  22. `74aa7cf` + `b885a11` — handoff commits (Datasets, SSH saga).
+  23. `5636aff` — **Picture statuses reconciled with Datasets**: the
+      kpi-brain endpoint derives node statuses at read time
+      (`reconcileBrainStatuses` in app.js) — mandate 'connected' only if
+      a **live** dataset names it in `feeds` (exact node-name match —
+      keep dataset `feeds` in sync with node names!), sense 'connected'
+      only if its stream has a live dataset, everything else
+      'needs_data'; 'proposed'/targets/P&L lines keep seeded status.
+      FMCG now honestly shows 4/26 mandates + 2/6 senses connected
+      (POS + trade-spend feeds), healthcare 2/22 + 1/8, manufacturing
+      0. Fixed hc dataset feed names to exact node names. The founder
+      chose this over the fully-lit picture ("reconcile it") — flipping
+      a dataset seed to 'live' is how you light up more of the tree.
+  24. `25226e5` + `6c08996` — handoff commits (Datasets reconciliation;
+      prioritized next steps).
+  25. `337b46c` — **organization sign-in (tenancy)** — the SaaS front
+      door; 2026-07-18 session, documented below.
+  26. `98d1324` — **agents ↔ mandates, both directions** — same session,
+      documented below.
+  27. `7c325b3` — the previous handoff commit.
+  28. `b8e4143` — **live mandate tracking — the one real pipeline**
+      (2026-07-18 session, documented below): real metric ingestion →
+      drift rules → counterpart-raised findings, Postgres-backed,
+      Claude-authored narratives with template fallback.
+  29. `814ab8e` — **senior-leadership findings view** (2026-07-20,
+      documented below): roll-up by direct report, cross-division
+      themes, escalation trail, leadership actions.
+  30. `fbefa56` — **counterpart view + screen help + hierarchy default**
+      (same session): Findings grouped by the agent that raised each
+      finding (now the default view), help moved into one popup, the
+      lens picker trimmed to Group + Protein.
+  31. this handoff commit.
+- **UNCOMMITTED at handoff (deliberate — founder hasn't picked what to
+  keep):**
+  (a) **Manufacturing at parity + Gulf Precision tenant** — `v4data.js`,
+  `datasetsdata.js`, `tenants.ts`, `CLAUDE.md`, one card in `site.html`;
+  verified end-to-end, build+lint clean; documented below. Safe to commit
+  as `feat(industry): manufacturing at parity`.
+  (b) **MOVED OUT (2026-07-19): the marketing site now lives in its own
+  sibling repo `~/Developer/rewive-front-end_website`** (founder's ask:
+  "split the website build from the core product"). `public/site.html`
+  → `index.html` there (root commit `9c195e7`, branch `master`, no
+  remote yet); `story.html`/`demo.html`/`favicon.svg` were COPIED (the
+  product keeps its originals — nothing in the app referenced site.html,
+  verified by grep). Links rewritten for standalone serving (favicon +
+  story relative; the 5 "Enter the live demo" CTAs →
+  `http://localhost:5173/`, same convention as story.html). Its README
+  carries the copy rules, the gradient exception, and the placeholder
+  list. Preview: open `index.html` directly (fully self-contained) —
+  `:5173/site.html` no longer serves it (vite's SPA fallback answers
+  200 with the app shell; don't be fooled).
+  **GitHub (2026-07-19, founder ask "create a repo in github also as
+  a seperate under the sames git")**: `origin` is wired to
+  `git@github.com:Kumarv2509/rewive-front-end_website.git` (same
+  account + ssh.github.com:443 path as the product). Repo does NOT
+  exist on GitHub yet and CANNOT be created from this machine (repo
+  creation needs web UI/API; FortiGate breaks GitHub HTTPS; `ssh -T`
+  re-tested this day: still *Permission denied (publickey)*). Two
+  founder actions unblock it: (1) register
+  `~/.ssh/id_ed25519_rewive.pub` under **Authentication keys** at
+  github.com/settings/keys (`pbcopy < ~/.ssh/id_ed25519_rewive.pub`;
+  success = key visible at `github.com/<username>.keys`) — this also
+  unblocks the product's `git push origin v5`; (2) create an EMPTY
+  repo (no README/license) named `rewive-front-end_website` under
+  `Kumarv2509` at github.com/new. Then `git push -u origin master`
+  from the website folder. History of how it was
+  built (both sessions' passes below) remains valid — the file is the
+  same, just relocated. **The site sections below say
+  "`public/site.html`, UNTRACKED" — read that as the new repo now.**
+  Original pre-split description, for context — the site was built and
+  iterated by TWO sessions concurrently on 2026-07-18/19
+  (both are documented first-hand below; neither description is
+  second-hand). Session A (the "four looks" section): 3D depth pass →
+  night-ledger dark → dark + gradients → **light + gradients** (current
+  ground). Session B (the "pitch site" section): created the file in the
+  first place (11 ledger-numbered entries + FAQ, animated SLA/escalation
+  hero), then the color pass (washes/colorbar/hue-coded loop), the
+  light-gradient conversion of those washes, the parallax orb backdrop,
+  Entry 10 "How it lands" + Entry 11 FAQ, OG/Twitter meta, scroll-spy
+  nav. The two passes compose — do not clobber either; the file changes
+  out from under sessions, re-read before every edit.
+- **[RESOLVED 2026-07-21 — kept for the lesson only.]** Three sessions
+  recorded an SSH push failure here and concluded the founder had to
+  register `~/.ssh/id_ed25519_rewive` at github.com/settings/keys. That
+  conclusion was a dead end: the key was never the path. The remote had
+  been switched to SSH purely to dodge the office FortiGate, and once
+  off that network plain HTTPS + the existing `gh` keyring token pushed
+  first try. See the PUSHED bullet at the top. **Do not resurrect the
+  SSH-key thread.**
+- **Escalation demoed live to the founder (2026-07-17)**: at stage speed
+  the hero finding walked `protein_supply_chain → coo` on its own ~2 min
+  after boot, watched in the browser (queue pill flipped, 12h reset,
+  audit entry by 'Rewive (system)'). Server was then reset to the
+  default 12x speed — that's what is running at handoff.
+- **[RESOLVED 2026-07-21 — but NOT permanently; see the FortiGate bullet
+  near the top, it fired again the same day.]** The FortiGate diagnosis
+  in this bullet was accurate ON THE OFFICE NETWORK but was wrongly
+  generalized into a permanent property of the machine. `gh` and HTTPS
+  work fine elsewhere. The honest framing is that **this alternates with
+  your location** — neither "push is blocked" nor "push works" is a
+  durable fact about this repo, so **test, don't inherit either claim**.
+  Memory `fortinet-git-push` still applies when actually on that network
+  — never disable TLS verification to get around it.
+- **Processes at handoff (2026-07-19, later): ALL DEV SERVERS DOWN** —
+  session B's background `dev:all` task was stopped and this time the
+  kill DID release :5173, :4000 and :5174 (verified by port probe;
+  the old lingering-children gotcha didn't bite, but keep the
+  kill-by-port reset handy: `for p in 4000 5173 5174; do kill $(lsof
+  -ti tcp:$p); done`). Session A's :4000 API went down with it. Start
+  fresh with `npm run dev:all`. Mock server still has
+  no watch mode — restart after seed edits (and note a restart resets the
+  in-memory industry to `fmcg`; see the gotcha above). **Process gotcha
+  learned the hard way**: stopping the background `dev:all` task does NOT
+  kill concurrently's children — vite and the API linger holding :5173/
+  :4000 (a relaunch then "listens" and silently exits, and vite drifts to
+  :5174, so you test STALE code). Kill by port before relaunching:
+  `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+- **The previous handoff's open thread #1 is DONE**: all of this session's
+  browser verification (grouped lens dropdown, amber ⋯ dotted pills,
+  escalation walking up the tree, Group-CEO team scope, Business section)
+  ran **on the paper-ledger theme** at HEAD.
+- Build (`tsc -b && vite build`) and `eslint .` clean including the
+  uncommitted manufacturing work (re-verified 2026-07-19). Bundle note:
+  SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
+- PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
+
+## This session (2026-07-21, latest): the live sweep — the strip never went live
+
+Closes the last "unexercised interactively" item. The sweep **worked
+server-side all along** (14 mandates walked, findings raised, outcomes
+correct); what had never been checked was whether the UI shows any of it.
+It did not.
+
+### The defect — the live analysis strip never went live
+
+Pressing "Run sweep now" on the Findings strip left the header reading
+**"Agents idle · last swept 15s ago"** for the entire ~13s run. The
+progress bar never rendered. The new run's data only landed ~18s in,
+long after it finished. A feature built to make agent work watchable —
+and deliberately paced at 900ms/mandate so it *reads* rather than
+flashes — showed nothing.
+
+**Root cause: a chicken-and-egg in the poll interval.**
+`useSweepProgress` polled fast only when the cached data already held an
+unfinished run: `data && !data.finishedAt ? 1_200 : 20_000`. Starting
+from idle the cache holds the *previous, finished* run, so it sat on the
+**20s** interval — longer than the ~12.6s sweep. The next poll therefore
+always landed after `finishedAt` was set, so an in-flight run was never
+observed and the live branch never rendered.
+
+`useRunSweepNow` could not rescue it: **`POST /agent-sweep` is
+synchronous**, holding the request for the whole run (measured: 12.6s),
+so `onSuccess` fires after the sweep is already over — and it did not
+invalidate `sweep-progress` at all.
+
+**Fix** (`src/api/tracking.ts`, `LiveAnalysisStrip.tsx`):
+`useSweepProgress(sweeping = false)` also polls at 1.2s while a trigger
+mutation is in flight, and the strip passes `runSweep.isPending`. Plus
+`sweep-progress` added to the mutation's invalidation so the finished
+run lands at once. **Verified**: polls now tick steadily every ~1.2s
+through the run and the strip walks `25% "1 of 4" → 50% "2 of 4"`.
+
+Why it survived: the previous session verified mid-sweep polling
+**against the API with curl**, which works fine — the bug lives entirely
+in the client's polling schedule. Same lesson as the CSS defects: an
+API-level check cannot see it.
+
+### Two behaviours that are correct — do not "fix" them
+
+1. **The strip settles at ~3.9s, before the run ends at ~12.7s.** That
+   is intended: it settles when **your** industry's 4 mandates are done,
+   not when the global 14-mandate run finishes. Verified deliberate in
+   the earlier handoff section.
+2. **Cold start renders no strip at all.** With no run ever recorded,
+   `/sweep-progress` returns `null` and the strip — *including its
+   button* — does not exist. You must trigger the first sweep from
+   **Connectors**; only then does Findings gain a strip. Worth knowing
+   for a deployed demo cold start, and it is why a test that clicks the
+   strip's button must seed a run first.
+
+### Minor, unfixed
+
+- The bar never reaches 100%: it goes `2 of 4` → settled, because `live`
+  turns false the instant `done === steps.length`. You never see a
+  completion state.
+- While settled-but-still-running the header says "Agents idle" whilst
+  the button still reads "Sweeping…". Defensible (idle *for your
+  mandates*) but it reads oddly next to a spinner.
+
+### Test mechanics that cost time — reuse these
+
+- **Sample the DOM with `page.evaluate`, never `locator.innerText()`.**
+  On a missing selector Playwright's locator blocks for its full 30s
+  timeout — longer than the sweep — so the first three samples burned
+  90s and the entire live window was missed. `evaluate` returns `null`
+  instantly.
+- **Disable the dev sweep interval** (`REWIVE_SWEEP_MS=0`) or a
+  background sweep fires every 60s mid-test and holds the `liveLock`.
+- The strip's own button and the Connectors button are different paths:
+  triggering from Connectors leaves an idle Findings tab on its 20s
+  poll, so it still will not see the run. Only the strip's own button
+  now goes live.
+
+## This session (2026-07-21, Agents rail survey): read but not touched
+
+A short session. The founder asked to open the product, then to "work on
+the Agent page", chose **both tabs** and **"show me it first"** — so this
+was a read, and it stopped at the point where the next move needed a
+decision that hadn't been made. **No files were changed.**
+
+### Mechanics worth keeping
+
+- **Both servers were already up** from a previous session (mock API
+  :4000 pid 31068, vite :5173 pid 31093). Check before launching —
+  `lsof -i:5173 -i:4000 -sTCP:LISTEN -P`. The stale-port trap in the
+  section below is real; a second `dev:all` would have drifted vite to
+  :5174 and served stale code.
+- **The Chrome extension failed for a SIXTH time** —
+  `tabs_context_mcp` returned "Browser extension is not connected".
+  Fell back to `open http://localhost:5173/`, which works but gives you
+  no way to read the page back. **The product was never visually
+  verified this session** — everything below comes from reading source,
+  not from looking at pixels. If you need to see it, use headless
+  Playwright as the earlier sessions did.
+
+### The two tabs, as they actually are
+
+`AGENTS_TABS` in `src/components/shared/SectionTabs.tsx` binds them.
+
+**Agents (mandate holders)** — `/operate/counterparts` →
+`src/screens/ShadowOrg/index.tsx`, 230 lines, everything in one file.
+A chief banner (the agent with `reportsToAgentId === null`) carrying
+three roll-ups, then a 3-column grid of per-stream cards. Each card:
+health pill, an "agent to" human block (the *held twice* pairing),
+three stats, mandate chips deep-linking to `/build/picture?focus=<id>`,
+the temperament dial with its consequence hint, and a footer that
+expands the agent's open findings inline. Data via
+`useShadowOrg` / `useFindings` / `useKpiBrain`, all lens-scoped.
+
+**Workforce (workers)** — `/insights/agents` →
+`src/screens/AgentSpace/`, 5 files, ~140 lines total. FilterBar
+(status chips, build-path chips, search) → AgentGrid → AgentCard
+(pills + ROI / token cost / runs), plus a detail route at
+`/insights/agents/:agentId` rendering a `.card.preview` spec sheet.
+
+### Five observations — the raw material for whatever comes next
+
+1. **The two tabs are stylistically unrelated.** ShadowOrg is
+   hand-built with ~40 inline style objects; AgentSpace uses CSS
+   classes (`.agent-card`, `.ac-name`, `.ac-stats`). Same rail item,
+   two design vocabularies — the stat tiles in particular render
+   completely differently on each tab. This is the biggest finding.
+2. **Asymmetric depth.** Workforce has a detail page; Agents has none.
+   Clicking a worker navigates, clicking an agent does nothing.
+3. **`ShadowOrg/index.tsx:50` uses `var(--accent-grad)`** on the
+   temperament dial fill. It *renders correctly* — the token is a
+   same-colour `linear-gradient(135deg,#3B3BC4,#3B3BC4)`, verified in
+   `globals.css:7` — but per the paper-ledger rules `var(--accent)`
+   would say what is meant. Cosmetic, not a bug.
+4. **Hardcoded colours bypass the tokens**: `#fff` on the dial knob
+   (`:51`), `rgba(59,59,196,.28)` on the chief card border (`:209`).
+5. **The Agents grid is fixed at `repeat(3, 1fr)`** with no responsive
+   fallback, unlike Workforce's `.agent-grid` class.
+
+### The open question this session ended on
+
+The founder was asked to choose between **unifying the two tabs' visual
+language**, **giving Agents a detail page**, or something else — and the
+session ended before an answer. Do not guess: (1) and (2) are different
+sizes of job and (1) in particular means deciding whether ShadowOrg
+moves to classes or AgentSpace moves to inline styles. That is a
+founder call about where this codebase's styling convention is heading,
+not a cleanup you can infer.
+
+## This session (2026-07-21, later): the disposition flows, driven for real
+
+The previous session ended with "Nothing was clicked." This one clicked
+everything in the four-A loop. Verification was again **headless
+Playwright** — the Chrome extension failed for a **fifth** time. Stop
+trying it; the mechanics in the bullet near the top of this file are the
+supported path. Scripts live in the session scratchpad (`dispo.mjs` the
+four-A driver, `actchain.mjs` the Act chain, `escalate.mjs` escalate +
+the error path, `overflow.mjs` the reachability probe) — they are
+throwaway but worth rewriting the same way.
+
+### Two methodology traps that cost real time — read before writing UI tests
+
+1. **A finding's persona DRIFTS out from under you.** The first run was
+   built on personas read from a mock server that had been running for
+   hours, and the demo heartbeat had walked the entire queue up to the
+   Group CEO. Three of four cases then rendered `LeadershipBar` instead
+   of `DispositionBar` and found nothing to click. **Never hardcode a
+   lens** — read the owner from the API at run time, and run the mock
+   server frozen (`REWIVE_SLA_HOURS_PER_TICK=0`, i.e.
+   `npm run mock-server:frozen`) so nothing escalates mid-test. This is
+   the same "restart to reset" hazard the heartbeat bullet already
+   warned about, in a new disguise.
+2. **`LeadershipBar` and `DispositionBar` both use `.dispo-opt`.**
+   Counting that selector tells you nothing about which component
+   rendered — the leadership actions (Ask / Reassign / Raise priority /
+   Take it) carry the identical class. Key off the heading string
+   **"This finding needs a disposition"** instead.
+
+Each finding must be driven under a lens that OWNS it (`isOwner` in
+`Detail.tsx:58`), or you get the leadership bar by design.
+
+### What passed
+
+All four dispositions, end to end, correct toast, and the bar retiring
+into a decided thread step afterwards:
+
+- **Accept** → closure KPI created. One run landed on a `live-*`
+  finding and correctly produced a `live-c-*` closure — the
+  Postgres-routed branch, covered by accident but worth keeping.
+- **Act** → solution design, seeded from the finding's own narrative,
+  and onward through the whole chain: Run validation → Send for
+  approval → Approve (as reviewer) → **Design worker →** →
+  `/build/agent-studio/agt-*`. Note the final CTA says **worker**, not
+  "agent spec" — the rename landed here.
+- **Acknowledge** → custom re-alert condition persisted verbatim.
+- **Abandon** → the reason guard genuinely works: Confirm is disabled
+  with an empty reason and enables on input.
+- **Escalate** ("Not mine — escalate ↑") → ownership moved
+  `protein_supply_chain → coo` with the trail recorded.
+
+Also probed: the finding-thread impact path overflows horizontally but
+is **`overflow-x:auto` and genuinely scrollable** — it is NOT a
+recurrence of this file's defect #1 (which was clipped-and-unreachable,
+`scrollWidth === clientWidth`). Document never overflows at 1440 /
+1280 / 1024.
+
+### Defect 1 (fixed) — every Act navigation fired two 404s
+
+`SolutionDesign/index.tsx` called `useSignalDetail(solution.signalId)`,
+but a solution opened by Act carries the **finding** id as `signalId`
+(`app.js`: `signalId: finding.id`), and `/signals/:id/detail` only knows
+legacy v1 signals. Result: `404 GET /api/v1/signals/<findingId>/detail`
+twice on every Act, console noise on a demo path.
+
+Not a crash — `signalDetail` feeds only `matchesWithSolutions`, guarded
+with `?? []`. The real consequence is quieter and worse: the **"copy
+from a prior solution" affordance is permanently dead for anything
+reached through Act**, which is the only way findings enter the build
+loop. Fixed by not making the request: the `/-f-/` test that already
+existed for the back link is now a named `isFindingId` helper used in
+both places.
+
+### Defect 2 (fixed) — the disposition error toast lied
+
+`DispositionBar`'s `onError` was a single hardcoded string, so **every**
+failure — 400, 404, network drop — told the user *"Could not record the
+disposition — abandon needs a reason"*. Reproduced with two tabs on one
+finding: tab 1 accepts, tab 2 is stale, its click returns
+`400 This finding already has a disposition`, and the user is told to
+write an abandon reason for a disposition they never chose.
+
+Now surfaces the server's own message, falling back to a neutral line.
+There was **no existing convention** for this in the codebase (every
+`onError` is a hardcoded string), so the extraction is deliberately
+local and inline rather than a new shared error layer — if a second
+screen needs it, that is the moment to lift it.
+
+**Cosmetic, not fixed**: the `.toast` component renders a ✓ glyph even
+for errors. It has no error variant; adding one touches every toast in
+the app, so it wants a deliberate pass rather than a drive-by.
+
+### Found and NOT fixed — a founder call: disposition has no authority check
+
+`POST /findings/:id/disposition` (`app.js:1611`) checks only
+`status === 'open'`. It never checks **who** is deciding — no actor is
+even sent. Verified: escalate a finding two levels up to `group_ceo`,
+then POST a disposition as the original owner → **HTTP 200**. The UI
+agrees: after clicking "Not mine — escalate ↑", the four-A buttons are
+still offered to the person who just disowned it (lens is below the new
+owner, so `leadsOwner` is false and `DispositionBar` renders).
+
+This is **asymmetric with the leadership route**, which enforces
+authority server-side (403 if not strictly above the owner, 400 for an
+out-of-subtree reassign) and where this file records a deliberate
+property: *"Take it transfers ownership and thereby forfeits the
+leadership actions, so you cannot push a finding around forever."*
+Escalation has no equivalent — you can disown a finding and still
+decide it.
+
+Left alone on purpose: tightening it is a product decision, and it could
+change demo behaviour. **Decide whether escalating should forfeit the
+disposition** the way Take it forfeits the leadership actions.
+
+## This session (2026-07-21, earlier): first visual verification — three CSS defects fixed
+
+Servers were down at start; `npm run dev:all` brought both up clean. The
+extension refused a fourth time, so verification moved to headless
+Playwright (mechanics in the bullet above). All three defects were
+**CSS-only**; no component logic changed. Build + lint clean.
+
+### 1. Findings · By agent was clipping its whole right column (the bad one)
+
+`.ag-grid` was `repeat(2,1fr)`. Grid items default to `min-width:auto`, so a
+wide child **floored the track at 600px** instead of letting it shrink. At
+1440px the second card's right edge sat 76px past the viewport; at 1280px,
+236px past. Critically `document.scrollWidth === clientWidth`, so the
+overflow was **clipped and unreachable — not scrollable**: the disposition
+pills (`acting` / `accepted` / `closed`) sat entirely off-screen, meaning a
+finding's state was invisible in what `fbefa56` made the **default** view.
+Fix: `repeat(2,minmax(0,1fr))` — one token. `.ag-row-title` and the
+`.ag-head` flex child already carried `min-width:0`, so nothing else needed
+touching. Re-probed at 1440/1280/1024: zero offenders.
+**Watch for this class of bug elsewhere** — it is invisible to `tsc`, to
+eslint, and to any API-level check, which is exactly why it survived
+several sessions of backend-only verification.
+
+### 2. `.btn` rendered as a `<Link>` came out underlined
+
+There is **no global `a{text-decoration:none}`** in `globals.css` — every
+class opts in individually (`.ag-row`, `.agent-card`, `.nav-item`,
+`.sw-step` all do), and `.btn` never had. So every `<Link className="btn">`
+in the app — the Disposition buttons all down the Today queue — drew a
+browser-default underline through solid button text. Added
+`text-decoration:none` to `.btn`.
+
+### 3. Queue titles and prose links were default browser blue
+
+`.dec-item .t1 a` had no rule → underlined blue finding titles in
+`UnifiedQueue`. Now `text-decoration:none;color:inherit` with a
+`.dec-item:hover .t1 a` accent, matching the `.ag-row` convention.
+Three inline prose links (`UnifiedQueue` "…on Findings.",
+`DecisionsTable` "View the finding it answered →", `Tasks` line 46 —
+whose `task.solutionName` is a finding title) got a new reusable
+**`.link`** utility (accent-deep, no underline, underline on hover),
+matching `.sec-head .all` and the inline copy at `PlStatement.tsx:152`.
+**Use `.link` for inline prose links from here on** rather than another
+one-off inline style.
+
+### Verified this session
+
+`/command`, `/operate/findings` (both views), `/operate/decisions`,
+`/operate/runs`, `/operate/tasks`, `/operate/counterparts`,
+`/insights/agents`, `/insights/people`, `/build/picture`, `/build/kpis`,
+`/build/connectors`, `/guide`, `/`, `/login?org=medcare-uae` — under
+Medcare/CFO and Americana/Group-CEO lenses. Zero console errors, zero
+underlined links, zero horizontal overflow. The Medcare CFO pitch reads
+as intended (mandate-sectioned queue: CLAIM DENIAL RATE ×4 → denials &
+write-offs, DAYS IN AR ×3 → net patient revenue; AED 3.1M measured
+impact).
+
+### Then: the push saga ended — and it was a self-inflicted wound
+
+Worth reading before trusting any environment claim in this file.
+
+The founder asked to push. Following this handoff, the session reported
+push as blocked on an unregistered SSH key, tested both local keys,
+re-ran the push to show the real error, and told the founder several
+times that only they could unblock it — pointing them at
+github.com/settings/keys. **All of that was wrong.**
+
+The founder said *"so far i was able to push"*. That one line was the
+signal, and it should have been acted on immediately instead of after
+several more refusals. Investigating it took under a minute:
+
+- `gh auth status` → logged in as `rianpraveen`, token in keyring, scopes
+  include `repo`
+- `gh api user` → live call succeeds; `curl https://github.com` → **200**
+- `gh api repos/Kumarv2509/rewive-front-end` → **`"push": true`**
+  (Kumarv2509 is the owner account, rianpraveen is the founder's, with
+  collaborator write)
+
+`gh auth setup-git` + an HTTPS push worked first try:
+`45378ac..e5a79ae`, 41 commits, clean fast-forward. Remote switched to
+`https://github.com/Kumarv2509/rewive-front-end.git`; plain `git push`
+now works with no flags.
+
+**Root cause — a workaround that outlived its problem.** An earlier
+session hit the office FortiGate MITM and switched the remote to SSH to
+route around it. The FortiGate diagnosis was CORRECT ON THAT NETWORK but
+got generalized into a permanent property of the machine. That left SSH
+as the ONLY path, gated on a key nobody ever registered — and three
+sessions inherited "push is blocked" as settled fact without re-testing.
+A valid credential sat in the keyring the whole time.
+
+**Rule going forward: re-test inherited environment claims before
+repeating them to the founder.** Network conditions change between
+sessions. The two-second test is `gh api user` and
+`curl -sS -o /dev/null -w "%{http_code}" https://github.com`. The
+`id_ed25519_rewive` / settings/keys thread is **dead — do not resurrect
+it**; the two stale "push is blocked" bullets further down are stubbed
+with pointers here, and memory `fortinet-git-push` was rewritten to lead
+with HTTPS and scope the firewall to the office network.
+
+### Still unresolved
+
+- The **Group-CEO density edge** the previous handoff flagged is real but
+  looks better than feared: 16 agent cards / 44 findings, with the rich
+  cards (Planning 9, Logistics 5) sorted to the top. Now that the columns
+  actually fit it reads as a long page, not a broken one. **Founder call**
+  whether to collapse single-finding agents into an "also raised" strip —
+  don't do it unprompted.
+- `fullPage` screenshots only capture the viewport: the app scrolls an
+  inner container, not the document. Screenshot per-scroll-position or
+  target the scroll container if you need full-page images.
+- **[RESOLVED 2026-07-21, later — partially.]** "Nothing was clicked."
+  The four-A dispositions, the full Act → solution → **worker** chain,
+  and escalate are now all driven interactively (see the section above).
+  **Still unexercised: the live sweep and the help popup** — the sweep
+  strip has only ever been seen idle ("Agents idle · last swept 42s
+  ago"), so its pulse and pacing remain unwatched. That is the natural
+  next piece of work; reuse the scratchpad scripts and remember to run
+  the mock server frozen.
+- **PR #5 is open but unreviewed and unmerged.** It is a large diff; the
+  body already flags the two things that would otherwise look like
+  problems (the ~65 rename-only files bundled into `7783839`, and the
+  absence of any test suite). The two places reviewer time actually pays
+  off are the tracking pipeline and the P&L cascade — most of the rest is
+  seeds and renames.
+- **Servers at handoff (2026-07-21, latest): LEFT RUNNING on :5173 +
+  :4000 in a NON-DEFAULT configuration — both the SLA clock and the
+  sweep interval are OFF.** Started as:
+
+  ```
+  npx concurrently -n web,api -c blue,green "npm:dev" \
+    "REWIVE_SWEEP_MS=0 REWIVE_SLA_HOURS_PER_TICK=0 node mock-server/server.js"
+  ```
+
+  **This is not `npm run dev:all`, and the difference will mislead you.**
+  `REWIVE_SLA_HOURS_PER_TICK=0` freezes SLA clocks, so nothing escalates
+  and finding personas stay put (essential for UI tests — see the
+  disposition section). `REWIVE_SWEEP_MS=0` disables the 60s background
+  sweep, so **the agents will never sweep on their own**: a strip that
+  sits idle forever is this flag, not a bug. Restart with plain
+  `npm run dev:all` for normal demo behaviour (12x SLA decay, sweep
+  every 60s).
+
+  **Seed state is heavily mutated** by this session's tests — findings
+  dispositioned, solution designs and a worker spec created, sweeps run.
+  Restart to reset (no `DATABASE_URL`, so tracking state is in-memory
+  too).
+
+  The lingering-children gotcha still applies: stopping the task does
+  not reliably kill `concurrently`'s children, and a stale :4000
+  silently serves old seeds. Reset with
+  `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+  Confirming the previous session's note: killing by port DID take down
+  the long-lived `dev:all` task cleanly.
+
+## This session (2026-07-20, later): live agent analysis, seeded tracking, entity scoping, the rename (ALL UNCOMMITTED)
+
+### What prompted it
+
+Four asks in sequence, each uncovering the next: *"i want something on finding
+that the agents started working ... kind of a live view that agents are doing
+their analysis"* → *"yes seed a few tracked mandates by default"* → *"remove all
+the counterports which is not protein ones"* + *"i think the Entity view is very
+critical as it is mixing up"* → *"instead of counterpart can we rename it as
+agent or something"*.
+
+### 1. The live analysis strip (`src/screens/Findings/LiveAnalysisStrip.tsx`)
+
+The sweep was **atomic and opaque**: it wrote nothing between `insertSweepRun`
+and `finishSweepRun`, so there was nothing to watch. It now writes a per-mandate
+analysis trail to a new `sweep_runs.progress` jsonb column as it walks —
+`queued → analyzing → authoring →` an outcome (`clear` / `drift` / `raised` /
+`re-alert` / `recovered` / `skipped`). `GET /sweep-progress` serves the newest
+run **industry-scoped** (a sweep walks every industry in one pass; without the
+filter Metro Health watched FMCG fill rates).
+
+**Two things make it watchable and MUST stay:**
+
+1. **Pacing** — `REWIVE_SWEEP_PACE_MS`, default 900ms per mandate, **skipped on
+   `cron`**. Six mandates otherwise finish in well under a second and the strip
+   flashes rather than reads.
+2. **The `liveLock` exemption.** `app.js:73` deliberately serializes every
+   request (hydrate → handler → persist) so concurrent polls can't lose a
+   disposition. The sweep holds that lock for its **whole run**, so the first
+   poll didn't return until the sweep finished — the feature was dead on
+   arrival. Diagnosed by timing: POST returned at 5.42s, first GET also at
+   5.42s. Fixed with a `LIVE_LOCK_EXEMPT` set containing **only**
+   `/api/v1/sweep-progress`, which reads the tracking store and touches no
+   shared in-memory state. **Do not add a route to that set unless the same is
+   true of it** — the lock is load-bearing.
+
+Client: `useSweepProgress()` polls 1.2s while live, backs off to 20s idle.
+The strip invalidates the `findings` query as each raise lands — counted off
+`steps`, **not** `run.findingsRaised`, because the counters are only written at
+`finishSweepRun` and this has to move mid-run. It settles when **your**
+mandates are done rather than when the global run finishes (otherwise it pulsed
+"4 of 4" for ~7s more), and the button stays disabled until the global run ends
+because a click would hit the lock and return `skipped`.
+
+### 2. Default live-tracked mandates (`mock-server/seed-tracking.js`)
+
+12 mandates, 4 per industry — 2 reading `clear`, 2 that raise on the first
+sweep. Called from `server.js` at boot **and** once per instance from
+`api/handler.js` (deployed demos never run `server.js`).
+
+- **Numbers are NOT invented**: target and latest are parsed off each brain
+  node's own `targetValue`/`currentValue`. Since `overlayLiveTracking` writes
+  the same figures back, the Operating Picture is unchanged — verified fill
+  rate still reads 92.4% / 97%.
+- **Thresholds are per-mandate** because real tolerances differ (bed occupancy
+  wanders further than a food-safety audit score). This is what lets a genuinely
+  near-target mandate read `clear` instead of tripping `sustained_deviation`.
+- **Idempotent two ways**: no-ops once any config exists, and points are
+  **snapped to midnight UTC** so a re-seed updates the same 30 rows. Without
+  that, boot-time-of-day timestamps meant two instances cold-starting at once
+  would lay down a second offset series. Tested concurrent re-seed: still 30
+  points.
+- Cosmetic: currency now renders `AED 3.9`, not `AED 3.90` — that is
+  `formatValue`'s existing trailing-zero behavior for any live-tracked currency
+  node, not something this change introduced.
+
+### 3. Non-Protein division counterparts removed (19 → 16)
+
+Removed `fmcg-sa-gi-supply`, `fmcg-sa-fnv-supply`, `fmcg-sa-ambient-supply`.
+The Protein three and all function-level ones stay; **G&I / F&V / Ambient still
+exist as roles in the hierarchy** — only their agents are gone.
+
+Their 8 seeded findings were **repointed** to the function-level agent owning
+each stream (planning → Planning, logistics → Logistics, …). By-agent grouping
+tolerates a missing agent (`agent: ShadowAgent | undefined`), but the removed
+names would have kept appearing as group headings. **A later pass caught 7 more
+display strings naming the deleted agents** — `informedBy.name` in `data.js`
+ledger rows and `watchedByAgentName` on two `v4data.js` closures. Verified: 0
+orphaned agent refs across 42 findings.
+
+### 4. The entity mixing — three real scoping bugs
+
+**The diagnosis matters more than the fix.** `entity` is a legal-entity string
+on three types; a **division** is a subtree of the persona hierarchy. **Nothing
+joins them**, so nothing validates that a row's entity matches its persona's
+division — and the seed data disagrees with itself (`KSA Manufacturing Co.` is
+clearly the G&I entity, yet Protein rows are seeded onto it; `UAE Trading Co.`
+carries all four divisions).
+
+But the mixing the founder saw was two missing filters:
+
+- **`/decisions/stats` took no persona/scope at all.** It builds the stat tiles
+  AND the By-entity/By-region half-year rollups, so a division COO saw a
+  company-wide rollup above a correctly role-scoped ledger table — the two
+  halves of one screen disagreeing. Now lens-scoped; `useDecisionStats(persona,
+  scope)` threaded through `StatsRow`, `HalfYearReview`, `TodayStats`.
+  Verified: COO — G&I went from all four entities to just `KSA Manufacturing Co.`
+- **`/closure-kpis` was unfiltered** → Watching/Closed listed every division's
+  exit conditions. **`ClosureKpi` has no `persona`**, so `filterByPersona` would
+  have dropped every row; they now inherit their finding's scope via
+  `filterClosuresByPersona`. It **fails open** on an unresolvable `findingId`
+  because two seeded manufacturing closures (`mfg-c-h1`, `mfg-c-h2`) point at
+  findings that don't exist — a pre-existing seed bug; hiding them under every
+  lens would be worse than showing them under all.
+  **`FindingDetail` deliberately stays unscoped** — it looks up one closure by
+  id, and the detail page lets you read findings you don't own.
+- **Entity was dropped on every runtime-created row.** Rollups skip blank-entity
+  rows, so live activity was invisible in By-entity while still counted in the
+  tiles above it. Sweep-raised findings now inherit entity/region from their
+  **tracking config** (new `entity`/`region` columns), and Accept-created
+  closures inherit from their finding.
+
+**NOT fixed — a data decision, not a bug:** the Protein COO still sees all four
+entities. `personas.ts:115` puts legacy roles (`operations_head`,
+`sales_supervisor`, `store_manager`) under `coo`, and their seeded findings span
+every entity. The filter is correct; the seeded entity assignments are what
+disagree. Needs someone to decide the intended mapping.
+
+### 5. The rename — three concepts, not two
+
+The founder asked for counterpart → "agent or something". **"Agent" was already
+taken** by the rail item containing counterparts, plus the whole Workforce
+concept (executors with capabilities/ROI/token cost, built from Act). Founder
+chose agent anyway, with Workforce agents becoming **workers**.
+
+| Concept | Word | Does |
+|---|---|---|
+| Mandate holder | **agent** | Watches a number, raises findings |
+| Executor | **worker** | Runs tasks; built from a finding's Act flow |
+| Assessor | **assessor agent** | Delivers the later verdict |
+
+*The Planning **agent** raised it → you spawn a **worker** to fix it → an
+**assessor agent** says whether it worked.* Nav: rail "Agents" → tabs
+**Agents** | **Workforce**.
+
+**Order mattered**: Workforce (agent→worker) FIRST, then counterpart→agent —
+once counterparts were "agents" the two were mechanically indistinguishable.
+
+**Frozen from the replace** (a blanket find-and-replace over "agent" WILL break
+the app): union literals (`type: 'agent' | 'policy'`), CSS classes
+(`agent-card`, `agent-grid`), route slugs (`/insights/agents`,
+`/build/agent-studio`, `/operate/counterparts`), camelCase identifiers
+(`counterpartName`, `findCounterpart`, `agentType`), and **"Assessor agent"**.
+URLs and internals keep the old names on purpose — same convention as the older
+`shadow` naming — so bookmarks keep working.
+
+**The mechanical pass DID produce damage; all of it was found and fixed:**
+
+- **20 broken articles** — "a counterpart" became "**a** agent" (plus 3 "an
+  worker"). This hit the Landing thesis line.
+- **"counterpart agents" collapsed to "agent agent"** in 4 files, including the
+  Claude authoring system prompt in `authoring.js`.
+- **Landing + Tasks conflated the concepts at the Act stage** — "tasks handed to
+  agents", "new work goes to agents, existing agents are reused" → workers.
+- **Guide taught stale screen names** — "Agent Space lists every agent" when the
+  screen is now Workforce listing workers; breadcrumbs `Agents · Agents` and
+  `Performance · Outcomes · Agents`.
+- One stray `app.js` publish message: "now live in Agent Space" → Workforce.
+
+`CLAUDE.md` now carries the three-concept table and an explicit warning against
+blanket-replacing "agent".
+
+### Verified / not verified
+
+**Verified against the running API**: mid-sweep polling advances one mandate at
+a time; `?industry=healthcare` returns null during an FMCG sweep; 16 agents, 0
+orphaned refs; G&I COO scoped to one entity; live findings carry entity/region
+and appear in the By-entity rollup; 13 "Assessor agent" strings intact, 0
+wrongly renamed; workforce catalog reads "… Worker". Build + lint clean.
+
+**NOT verified**: anything visual. The Chrome extension never connected. The
+strip's pulse/spacing/dark-mode, and whether "Workforce" overflows a nav chip or
+card heading where "Agents" fit, are unchecked. `/`, `/guide`, and
+`/operate/findings` are the three to eyeball.
+
+## Previous session (2026-07-20, earlier): the senior-leadership problem — roll-up, counterpart view, help popup (`814ab8e`, `fbefa56`)
+
+### What prompted it
+
+The founder, looking at the app as a CEO/CFO lens: *"the findings seems to be
+overwhelming for someone to act on ... i can understand for the supply chain
+team, but how to optimize this view for senior leadership"*.
+
+Measured against the running API before touching anything — the diagnosis is
+the whole design:
+
+| Lens | Role scope | + their team |
+|---|---|---|
+| Group CEO | 1 open | **25 open** (42 total) |
+| CFO | 1 open | 6 open |
+| COO — Protein | 2 open | 9 open |
+
+Role scope was fine. With "+ their team" on, `useEffectiveLens` returned
+`[self, ...subtree]` and `Findings/index.tsx` filtered ONE array, so a
+store-level finding rendered identically to the CEO's own call — same red SLA
+pill, same **Disposition** button. The product's model already said escalation
+is what moves a finding up the line; the UI ignored it.
+
+**The principle the session settled on:** *a senior leader does not inherit
+their team's queue, they inherit their team's exceptions.* Everything below
+follows from that one sentence — keep it if this gets reworked.
+
+### `814ab8e` — the senior view
+
+- **`src/screens/Findings/rollup.ts`** (pure, no API): `splitByOwnership`
+  (mine / delegated / dotted), `rollupByReport` (open, breached, at-risk,
+  tightest SLA, severe, watching, closed, impact — one row per direct report),
+  `detectThemes` (same mandate open under 2+ branches), `parseImpact`/
+  `totalImpact`. **Impact deliberately does NOT normalize periods** ("/month"
+  vs "this quarter"); the label reads "impact named", not a comparable total.
+  Don't "fix" this into a sum without deciding the period question first.
+- **`OrgRollup.tsx`** — themes band + report rows. **Nothing in it offers a
+  disposition**, on purpose.
+- **Open tab (hierarchy mode only)** is now: Escalated to you → Your call →
+  Functional line → Patterns → Your organisation is carrying. Roll-up rows
+  drill in via `?owner=` (validated against `PERSONAS` — an unknown value
+  would otherwise crash `roleSubtree`). **With hierarchy off the screen is
+  byte-identical to before.**
+- **Escalation trail**: `escalateFinding` in `mock-server/roles.js` now records
+  `escalatedFrom` + `escalationTrail`, so an inherited finding is
+  distinguishable from a native one and the thread can say why. Verified a
+  finding walking `sales_supervisor → coo → group_ceo`.
+- **Leadership actions** — `POST /findings/:id/leadership`, ask / reassign /
+  raise_priority / take, logged on the finding and in the audit log.
+  `LeadershipBar` replaces `DispositionBar` when the lens sits above the owner.
+  **Authority is enforced server-side, not just hidden in the UI**: actor must
+  sit strictly above the owner (403), reassign targets must be inside the
+  actor's subtree (400), and — the property worth preserving — **Take it
+  transfers ownership and thereby forfeits the leadership actions**, so you
+  cannot push a finding around forever; pulling it up means owing the call.
+  All five cases verified by curl.
+- **Today keeps one honest count**: "Waiting on you" and `UnifiedQueue` are
+  pinned to role scope regardless of lens (a CEO reading 25 there stops
+  believing the number). Team volume gets a separate "Open below you" tile;
+  the extra query reuses the role query's key when hierarchy is off, so it
+  costs no request.
+
+### `fbefa56` — reachability, the counterpart view, help
+
+**Why it was needed: the founder reloaded and said "i dont see any major
+changes ... it feels the same" — and was right.** The roll-up sat behind two
+off-by-default switches, and `Login/index.tsx` called `setHierarchy(false)` on
+EVERY sign-in, so team scope was re-hidden each time. Also `Topbar.tsx` hides
+the "+ their team" checkbox entirely when the lens is "All roles" (the
+default), so there was no toggle on screen to find. Lesson for future work:
+**a feature gated behind an off-by-default switch that is itself invisible in
+the default state does not exist.**
+
+- **Hierarchy defaults on for roles with reports** — `defaultHierarchyFor()`;
+  an explicit choice still wins. Storage is tri-state now (`'1'`/`'0'`/absent);
+  **the old `''` keeps meaning off** so anyone who deliberately turned it off
+  isn't flipped on. Resolved against the *effective* persona, so locked
+  non-admins see a truthful checkbox. Sign-in now clears the choice (`null`)
+  instead of forcing false.
+- **Findings · By counterpart (`AgentView.tsx`) — NOW THE DEFAULT VIEW.** Same
+  lens-scoped findings, grouped by the agent that raised them: sigil + health
+  dot, cadence sparkline, open/breached/temperament/last-sensed, and a **track
+  record — landed vs dismissed-as-noise, since Abandon means the counterpart
+  was wrong**. That metric is the point of the screen; it produces real
+  variance on seed data (Commercial 3/3, Planning 2/3, **Quality 0/1**).
+  Lifecycle is the opt-in (`?view=lifecycle`); an explicit `?tab=` implies
+  lifecycle so guide deep links and "All findings →" still land right.
+  The cadence label only claims the 14d window when something landed in it —
+  **12 of 42 seeded findings predate it**, and a flat line beside "5 raised"
+  would have been a lie.
+- **Screen help is one popup.** `Intro` gained `doThis`; both it and the
+  how-it-works prose now sit behind a single "What to do here" button (the old
+  inline `<details>` disclosure is gone, dead CSS removed). Lens-aware on
+  Today / Findings / a finding's thread — a leader is told the roll-up is
+  visibility and that Take it forfeits the leadership actions.
+- **The guide was lying** and is fixed: it pointed at `/operate/closure`
+  (retired, redirects) and named "Operate · Command Center", "Foundation
+  area", "Insights area" — none of which exist in the current IA. All `where`
+  labels relabelled + a new step on the senior view.
+- **Lens picker trimmed to Group + Protein** (founder ask, for easier working).
+  **Picker-only**, via `PICKER_GROUP_LABELS` in `personas.ts`. `PERSONAS` stays
+  complete ON PURPOSE — narrowing it would break the `?owner=` drill-down,
+  since a Group CEO still rolls up and drills into G&I/F&V/Ambient. Widen by
+  adding labels back to that one array. A held-but-unoffered lens renders as
+  "… (current)" rather than letting the select show "All lenses" while the data
+  stays filtered elsewhere.
+- **`ScopeBanner` removed** from all 8 screens and deleted (founder ask). The
+  roles-in-scope information still lives in the "+ their team" tooltip.
+- Fixed `var(--ink-1)` — **never defined in the paper-ledger palette** (it is
+  `--ink`) — in `OrgRollup` and the help modal.
+
+### Founder decisions taken this session (don't re-litigate)
+
+1. **Protein-only working is a LENS, not a data deletion.** Offered the
+   destructive option (strip G&I/F&V/Ambient/extended/group tier from seeds);
+   founder chose "just use the lens". `COO — Protein` gives 16 findings /
+   8 counterparts with nothing removed. **Note the consequence**: from inside
+   one division "Patterns" is always empty — themes need 2+ divisions. That is
+   correct behaviour, not a bug.
+2. **Ask deliberately does not touch the SLA clock** — asking is not deciding,
+   and it should neither buy the owner time nor take it away. Flagged to the
+   founder as a unilateral call; unchallenged so far.
+3. Help lives in a popup, not inline ("keep it simple").
+
+### Verification status — READ THIS
+
+Everything this session is **type-checked, linted, built, and verified against
+the running mock API** (routes, all authority guards, escalation trail, the
+grouping and track-record maths). **NOTHING WAS VISUALLY VERIFIED** — the
+Chrome extension never connected (`tabs_context_mcp` → "Browser extension is
+not connected") for the whole session, so the roll-up, the counterpart cards,
+the help modal and the segmented control have been reasoned about and never
+seen. **First job next session: look at them.** Sizing, contrast, and the
+19-card density at Group-CEO scope are all unproven.
+
+### Known rough edge
+
+At Group CEO + team scope the counterpart view renders **19 cards**, most
+holding a single finding. Sorting puts breached-then-open first so the useful
+ones lead, but it is a long page. If it reads as bloated, collapse
+single-finding counterparts into a compact "also raised" strip at the bottom.
+The Protein lens (8 cards) is much closer to right.
+
+### Servers / demo state
+
+`npm run dev:all` was running all session. **The mock server is plain `node`
+with no watch — edit `mock-server/` and you MUST restart it** (this bit the
+session once: new routes 404'd until restart, and `concurrently` does not
+revive a killed child). Restarting resets in-memory seed state. `fmcg-f-8` was
+escalated twice by hand so the "Escalated to you" band renders non-empty for
+the Group CEO; that is scaffolding and dies on restart — nothing depends on it.
+
+## This session (2026-07-19/20): the website — static tour, type rebrand, hero loop player, Umani pass (sibling repo, ALL UNCOMMITTED)
+
+All work in `/Users/praveenj/Developer/rewive-front-end_website` (paths
+below relative to it). The Chrome extension was NOT connected this
+session — no screenshots were possible; verification was `open <file>`
+for the founder's eyes plus a python tag-balance check and a node
+`new Function()` parse of the inline script after every structural edit
+(no test suite exists; keep doing this).
+
+### 1. Product CTAs → static tour (`preview.html`, NEW)
+
+- **Decision (founder): the site never links to the running app.** All
+  former `http://localhost:5173/` CTAs across `index/story/demo.html`
+  now land on `preview.html` — "Inside the product", a static tour of
+  four faithful app-frame stills built from the real app's tokens
+  (rail with Business + Foundation, topnav, `#F4F3EE` rail bg, flat
+  paper-ledger, NO gradients — mirrors `src/styles/globals.css`,
+  `areas.ts`, KpiBrain screens):
+  1. `#foundation` — Operating Picture: full shell mockup + node canvas
+     (intent/P&L/mandate/sense tiers in teal/amber/indigo/gray, lit
+     impact path, one blind dashed sense, held-twice strip, industry
+     chips FMCG 26 / Healthcare 22 / Manufacturing 17).
+  2. `#today` — the one queue (3 items, SLA clocks, 4-A buttons).
+  3. `#thread` — a finding's thread (raised → decided → watching w/
+     progress bar → close greyed "when the number is back").
+  4. `#ledger` — 3 ledger rows with worked / didn't / too-early pills.
+  Wide frames scroll horizontally inside `.frame-scroll` on mobile.
+- `story.html` refreshed: missing **Manufacturing card restored** (17
+  mandates), CTAs → `preview.html`. `demo.html` rebuilt as a tour
+  launcher (jump links → preview anchors + index sections; localhost
+  dev-server notes removed). All links made relative (file:// safe).
+  `README.md` documents the no-live-app rule: if a hosted demo ever
+  exists, add a separate CTA — don't repoint the tour.
+
+### 2. Type rebrand — "remove the Claude touch" (`fonts.css`, NEW)
+
+- Founder called the Iowan/Palatino serif + SF Mono pairing "so obvious
+  … that Claude touch". Two comparison rounds (throwaway compare pages,
+  since deleted) led to: **Space Grotesk** for display (all four pages)
+  and **Oxanium** for labels/figures/eyebrows/clocks — picked over
+  Share Tech Mono / Chakra Petch / Michroma / Orbitron ("ok but not
+  distinct") / Syncopate / Zen Dots / etc.
+- Both are embedded as **base64 woff2 in `fonts.css`** (OFL, variable
+  weights, latin subsets, ~46KB total) — site stays fully
+  self-contained, no Google Fonts request. Verified via fontTools that
+  **Oxanium's ten digits are all 578 units wide** (naturally tabular →
+  the ticking SLA clock doesn't jitter). Non-latin glyphs (→ ≥ ✓ ◷)
+  intentionally fall through to system mono.
+- **Var names `--serif`/`--mono` were kept; only values changed** (same
+  trick as the app's paper-ledger rebrand). SVG `font-family`
+  presentation attrs don't resolve CSS vars — the loop-SVG texts and
+  org-tree labels carry literal `'Space Grotesk'`/`'Oxanium'` stacks;
+  keep updating those by hand if faces ever change again.
+
+### 3. Hero loop player (replaces the static finding card)
+
+- The hero vignette is now an auto-playing "screen recording": **five
+  scenes swipe horizontally** (Sense → Find → Decide → Act → Close),
+  3.4s each (`HOLD`), first slide cloned so the wrap swipes forward
+  then snaps home (`.notrans`). The old escalation ladder is now the
+  5-stage rail; a gradient `.loop-progress` bar times each scene.
+- **Agent work made visible** (founder: "no place agent work is
+  evident"): a one-line **counterpart console** (`.agent-log`, indigo,
+  typed per scene from the `LOGS` array, blinking cursor, "counterpart
+  · live" cap) + **AGENT WORK / HUMAN CALL badges** on every scene
+  footer — 4 agent, 1 human (Decide). That asymmetry is the point.
+- **Declutter history (don't re-add)**: orbit stage-chips + dashed ring
+  around the frame, two-line console, per-scene path chips and third
+  sense row were all added then CUT after "somewhat cluttered … make it
+  good for a pitch". Each scene now leads with ONE big statement
+  (`.slide .fc-title` 1.32rem etc.). SLA clock burns ~35 demo-min per
+  real second, resets each cycle.
+
+### 4. Umani Ronchi pass (founder reference: umanironchi.com)
+
+- Founder wants the site "like this" — cinematic editorial. Applied:
+  **full-viewport chapters** (`section.blk{min-height:92vh;
+  display:flex;align-items:center;isolation:isolate}`), hero fills the
+  first screen with a **scroll cue** (`.scrolldn`, dropping pulse);
+  **ghost outline numerals 01–11** per chapter
+  (`.wrap::before`, 13rem, `-webkit-text-stroke` at 8% ink —
+  `isolation:isolate` on sections is REQUIRED: without it the
+  `z-index:-1` numerals vanish behind the tinted section washes, which
+  was a founder-reported bug); verbatim strip → **seamless marquee**
+  (items duplicated once, `translateX(-50%)` loop, 36s); nav links
+  uppercase letterspaced; reveals slowed to 1.1s
+  `cubic-bezier(.16,1,.3,1)`.
+- **Scroll model**: snap went `mandatory` (earlier "each scroll lands
+  on next page" request) → **`proximity`** in the Umani pass (their
+  sites never grab). The **3D depth engine** stays: 12 set-pieces + 3
+  figures carry `data-z` (0.5–1), a rAF `zTick` applies single-axis
+  `rotateX + translateY/Z` around viewport center; ≥861px and
+  non-reduced-motion only.
+- **Removed at founder request — do NOT reintroduce**: the left
+  "journey rail" icon nav (two iterations, then "not to the mark,
+  remove it"), the winding alternate-side rotateY, and the hero
+  camera pull-back.
+- **Three big data-art figures** (`.art`, inline SVG, in the depth
+  pass) carry the imagery role since there's no photography:
+  FIG 01 drift-unanswered chart (#problem), FIG 02 operating-picture
+  cascade (#foundation), FIG 03 the-number-comes-back recovery curve
+  (#example). Style: white panel, dot-grain pattern, Oxanium
+  annotations, brand hues. Founder asked for "big pictures to support
+  the sections" — more figures in this language are the expected next
+  ask (candidates: #held-twice, #industries, #rollout).
+
+### 5. Open threads (website)
+
+1. **Commit the website repo** — everything above is uncommitted.
+2. `og:image` still missing (site-wide); "Book a walkthrough" is still
+   `mailto:hello@rewive.app` — swap for a scheduling link when one
+   exists.
+3. Mobile: nav links hide <880px with no hamburger; ghost numerals and
+   depth engine are desktop-only by design.
+4. Reduced-motion coverage is complete (marquee, scroll cue, player,
+   console cursor, depth engine all guarded) — keep guarding new motion.
+5. The founder iterates visually in fast rounds ("open the html" →
+   react). Keep changes reversible and validate with the
+   tag-balance + `new Function` checks before reopening.
+
+## This session (2026-07-18/19): live mandate tracking — the one real pipeline (`b8e4143`)
+
+The founder asked to "connect the data to the agent to get the mandates
+tracked, production grade." Three decisions were made via question
+(all recommended options accepted): **push-model ingestion** (API key +
+CSV upload) over warehouse-pull or pure simulation; **hybrid agent
+brain** (deterministic rules decide WHEN a finding is raised, Claude
+authors the narrative) over LLM-end-to-end or rules-only; **Postgres**
+(Neon/Supabase, `DATABASE_URL`) over KV-only or a separate worker
+service. CLAUDE.md has a permanent section ("Live mandate tracking");
+the plan survives at `~/.claude/plans/sprightly-herding-pebble.md`.
+
+**Architecture — additive coexistence via hydrate/persist overlay.**
+Seeded demo content is untouched. New real entities (metric points,
+tracking configs, hashed ingest keys, sweep runs) live only in the
+tracking store. Sweep-raised findings/closures carry **`live-` id
+prefixes**: Postgres is their source of truth, `hydrateLiveState()`
+(app.js) upserts them into `findingsState`/`closureKpisState` on every
+request so the ENTIRE existing 4-A/escalation/closure machinery works on
+them unmodified, `persistLiveState()` diffs and writes back after the
+response, and `exportState()` **strips `live-*` from the KV snapshot**
+(split-brain defense — never let KV hold a copy). No `DATABASE_URL` →
+in-memory store with the same interface; `npm run dev:all` needs zero
+setup.
+
+- **Files**: `mock-server/db.js` (lazy pg Pool max=1, memory fallback),
+  `schema.sql` + `migrate.js` (`npm run migrate`, idempotent),
+  `tracking.js` (store + `overlayLiveTracking` + `formatValue`),
+  `tracking-routes.js` (all endpoints), `drift.js` (pure rules),
+  `sweep.js` (orchestration), `authoring.js` (Claude), plus wiring in
+  `app.js`/`api/handler.js`/`server.js`/`vercel.json`. Frontend:
+  `src/api/tracking.ts` hooks, four new Connectors panels, Live
+  pill/sparkline on `BrainNodeCard`, sweep provenance on finding
+  detail/rows.
+- **Drift rules** (`drift.js`): normalized adverse deviation
+  (direction-aware, `up_good`/`down_good`); `threshold_breach`
+  (dev ≥ breachPct), `sustained_deviation` (N consecutive ≥ warnPct),
+  `trend_to_breach` (OLS slope projects breach within 14d). Severity →
+  wall-clock SLA budget (critical 4h / high 8h / medium 24h / low 48h,
+  stored as `sla_deadline_at`; live findings SKIP the demo heartbeat —
+  hydrate recomputes remaining hours and escalates on the first request
+  past the deadline, serverless-safe).
+- **Sweep** (`runSweep`): pg advisory lock (no double-run), per enabled
+  config: (1) acknowledged findings get their re-alert trip-wire
+  enforced NUMERICALLY (reopens one level up via the shared persona
+  walk when dev worsens past `ackDeviationPct + pct` or the window
+  expires), (2) accepted findings' closures advance
+  (`recoveryProgressPct`, direction-aware), (3) rules-triggered nodes
+  with no active finding raise one — counterpart resolved by
+  `watchesNodeIds` → streamKey → chief; impactPath computed by walking
+  brain edges upward on strongest weight; **three dedupe layers**
+  (in-sweep check, partial unique index `live_findings_one_active` +
+  ON CONFLICT, the lock).
+- **Authoring** (`authoring.js`): `claude-opus-4-8`, structured output
+  (strict JSON schema: title/summary/evidence/impactEffects — one per
+  path step/closureTemplate/reAlertCondition), system prompt written in
+  the counterpart's voice with house style rules; 30s timeout, ≤5
+  Claude authorings per sweep; ANY failure (no key, 429, refusal, bad
+  JSON) falls back to a deterministic `templateNarrative` — **a sweep
+  never fails to raise because authoring failed**. `authored_by` column
+  records which path ran. Claude path is UNTESTED live (no
+  `ANTHROPIC_API_KEY` on this machine); template path fully verified.
+- **Endpoints**: `POST /metrics` (X-API-Key vs sha256 `key_hash`, ≤1000
+  pts, per-row rejects), `POST /metrics/import` (browser parses
+  CSV/XLSX via lazy-loaded SheetJS — keeps the main bundle at baseline —
+  posts JSON in 1000-row chunks under Vercel's body limit),
+  `GET/PUT /tracking-configs`, `GET/POST/DELETE /ingest-keys` (plaintext
+  `rwv_…` shown once), `GET /agent-sweep` (Vercel Cron, `Bearer
+  CRON_SECRET`), `POST /agent-sweep` (UI button), `GET /sweep-runs`.
+  Cron: hourly in `vercel.json` + `maxDuration: 60` (**hourly needs
+  Vercel Pro**; Hobby ≈ daily — the button and the dev interval
+  `REWIVE_SWEEP_MS`, default 60s, cover demos).
+- **Verified end-to-end in memory mode** (fmcg `up_good` + healthcare
+  `down_good`): config → key → push declining series → Picture shows
+  Live pill/real values/off_track/spark → sweep raises exactly one
+  finding under the right counterpart persona with a correct impact
+  path → re-sweep no duplicate → accept creates live closure → recovery
+  points advance it (88%) → close writes verdict; acknowledge → worsen →
+  sweep reopens one level up (cfo → group_ceo); 401 bad key; per-row
+  unknown-node rejects. Build + lint clean.
+- **To go production**: set `DATABASE_URL` (POOLED string) +
+  `ANTHROPIC_API_KEY` + `CRON_SECRET` in Vercel, run `npm run migrate`
+  once against the DB, deploy, confirm cron rows in `sweep_runs`.
+  `.env.example` documents all three.
+
+## This session (2026-07-19): Manufacturing at parity + Gulf Precision tenant (UNCOMMITTED)
+
+Manufacturing was seeded-but-hidden ("lighter — proves the template").
+It is now a full third industry and EXPOSED in the picker + login:
+
+- **Brain 17 → 32 nodes / 16 → 41 edges** (`v4data.js`): new 5-line P&L
+  tier in USD (`mfg-pl-rev/material/conversion/maintenance/ebitda`) wired
+  mandates → lines → EBITDA → unit-cost intent; 6 new mandates
+  (Changeover time, Energy per unit, MTTR, Inbound defect PPM, WIP days,
+  Lost-time incidents); 4 new senses (Energy meters, QC inspections,
+  EHS incident log, ERP costing). All counterpart `watchesNodeIds`
+  widened to the new nodes.
+- **Findings 3 → 6**: kept the downtime/OTIF/scrap trio; added
+  `mfg-f-4` inbound casting PPM (ACCEPTED, persona cfo, linked to
+  tracking closure `mfg-c-1` at 45%), `mfg-f-5` energy-per-unit spike
+  (rental compressor left running — open, cfo), `mfg-f-6` near-miss
+  reporting collapse at Dammam (open, coo, 6h SLA — the
+  leading-indicator-went-dark story). Closures 0 → 3 (one tracking, two
+  closed historical). plImpact 3 → 5 rows.
+- **Datasets 1 → 6** (`datasetsdata.js`): five live (MES, CMMS, ERP,
+  QMS, energy submeters) whose `feeds` name node names EXACTLY (the
+  reconcile rule), so 15/17 mandates read connected; EHS stays
+  'expected' → the two safety mandates honestly show needs_data.
+- **Exposure**: `industryOptions` third entry (17 kpis);
+  `tenants.ts` third tenant **Gulf Precision Industries** (GP, steel
+  blue `#1B4B72`, gulfprecision.com, Plant 1 Jebel Ali / Plant 2
+  Dammam); third industry card on `site.html`; CLAUDE.md updated
+  (picker line, tenants line, currency line — mfg is USD).
+- **Verified**: all industry-scoped endpoints on a restarted :4000
+  (picker, brain node/edge counts + zero dangling edges + all finding/
+  watch refs valid, findings sorted open-first, closures, plImpact,
+  shadow-org health rollups, datasets). Build + lint clean. NOTE: a
+  stale user-owned `dev:all` API was holding :4000 with old seeds and
+  was killed/restarted — the port-holding gotcha below remains true.
+
+## This session (2026-07-18): marketing site — 3D pass + four looks (`public/site.html`, UNTRACKED)
+
+The standalone marketing page went through four design iterations, all
+verified with headless Playwright screenshots (chromium via the npx
+cache at `~/.npm/_npx/e41f203b7505f1fb/node_modules/playwright`):
+
+1. **3D depth pass** (kept in all later looks): layered `--shadow-3d`
+   token; hero finding-card is a pointer-tracking 3D object (lerped
+   rotate, floating depth chips riding `--px/--py` custom props at
+   different translateZ); held-twice holders angle INWARD toward the
+   bobbing mandate chip; loop SVG is a tilted disc that rights itself
+   on scroll-in and flattens on hover; ledger/org-tree "lay flat" as
+   they enter; pointer tilt on card grids; nav depth on scroll; dot
+   grain + parallax. All gated on `prefers-reduced-motion` + fine
+   pointer.
+2. **Night-ledger dark** (`#0F1014` ground, brightened accents).
+3. **Dark + gradients** (violet→indigo→teal signature).
+4. **Light + gradients — CURRENT**: paper ground restored, gradient
+   deepened for contrast (`#8B5CF6 → #3B3BC4 → #0D7E74`) on the
+   headline word, CTAs (position-shift hover), vig-frame top edge,
+   avatar, progress bar, loop ring (SVG linearGradient), continuous
+   spectrum colorbar; pastel radial ambient fields behind hero/close.
+   Semantic colors stay flat for legibility.
+
+Theme-swap mechanics (for future re-skins): everything is tokenized
+EXCEPT SVG presentation attrs and a handful of literal rgba borders —
+the working method is a node batch script over exact strings (see this
+session's transcript); the light↔dark maps are symmetric. Two
+comparison artifacts remain in the session scratchpad (`themes.html`
+light duos, `themes-dark.html` dark duos) — regenerate rather than
+reference. **The founder edits this file from other sessions**
+(the color pass appeared mid-session) — always re-read before editing.
+Deliberately breaks the paper-ledger no-gradient rule ON THIS PAGE ONLY;
+the app keeps the flat theme.
+
+## This session (2026-07-18/19, session B): the pitch site — creation, color, gradients, parallax, rollout + FAQ (`public/site.html`, UNTRACKED)
+
+The founder's ask, in sequence: *"give me a state of the art website which
+can pitch this product effectively to the customers"* → *"make it more
+colorfull"* → *"make it light gradient"* → *"can we add a parallex effect
+and some background behind"* → *"continue to build"*. This session created
+`public/site.html` and ran those passes while session A ran its theme
+looks on the SAME file — coordination worked by re-reading before every
+edit and appending override blocks instead of rewriting shared CSS.
+
+- **The site itself**: fully self-contained (no external fonts/scripts/
+  images — system serif/mono stacks), served at `/site.html` in dev and
+  on every Vercel deploy (it's in `public/`). Reads as a ledger: numbered
+  entries (`Entry 01`…) with mono eyebrows + hairline rules, sticky nav
+  with scroll-progress bar. Structure: hero → verbatim strip (the three
+  keep-verbatim lines, each with a colored tick) → 01 problem (reporting
+  era vs accountability layer) → 02 held twice (Layla Nasser + Commercial
+  counterpart flanking a drifting OSA mandate chip) → 03 loop (animated
+  ring) → 04 dispositions → 05 "findings walk YOUR org chart" (SVG org
+  tree incl. the CFO dotted line) → 06 ledger (count-up stat tiles +
+  4 sample rows with worked/didn't/too-early verdicts) → 07 foundation
+  (DuPont P&L / org-as-escalation-path / data honesty / per-org sign-in)
+  → 08 industries (tenant brand accents: Americana terracotta `#8A3B12`,
+  Metro Health teal `#0D6E66`) → 09 scrollytelling worked example →
+  10 rollout → 11 FAQ → close band → footer. Copy obeys the positioning
+  rules (keep-verbatim lines intact; no banned phrasings).
+- **The hero demonstrates the product's sharpest claim**: a finding card
+  whose SLA clock ticks down at demo speed (~35 min of SLA per real
+  second); at zero it visibly escalates up a three-rung ladder
+  (Supply chain → COO — Protein → Group CEO) with an "escalated ↑"
+  flash, then resets and loops. Plain JS state machine at the bottom of
+  the file (`HOLDERS`/`escalate()`), reduced-motion gated.
+- **Color pass** (the block session A saw appear mid-session): one
+  appended CSS block `/* the color pass */` + small HTML edits — per-entry
+  tinted section washes, hue-coded loop (Sense indigo, Find plum, Decide
+  teal, Act amber, Close green — consistent across ring/stage chips/
+  timeline dots), disposition card tints + 3px top rules, colored stat
+  tiles, tenant-brand industry cards, 5-hue colorbar top+bottom,
+  mac-traffic dots on the vignette chrome, tier-colored impact-path chips.
+- **Light-gradient conversion** (after session A restored the light
+  ground): section washes became fade-in/out linear gradients
+  (`ground → wash → ground`), card faces fade white→wash, the held-twice
+  banner is an indigo→teal duotone, the close band deepens paper→indigo,
+  body gets a violet veil fading out by 640px, the headline word is
+  gradient-clipped text. **Gradients are allowed on this page only** —
+  the app keeps the flat paper-ledger rule.
+- **Parallax backdrop** (`.bg-scene`): five soft radial-gradient orbs
+  (violet/teal/amber/terra/indigo) in a fixed layer at `z-index:-1`,
+  each riding the existing `--scrolly` custom prop at its own rate via
+  the **`translate` property** — which composes with the `transform`
+  animation (`orbdrift` idle float), so drift + parallax coexist without
+  a wrapper element. Orbs show on paper sections and duck behind opaque
+  washes (accepted layering). Reduced-motion: both killed.
+- **Entry 10 "How it lands"**: 3 gradient-numbered week cards (load the
+  picture → connect the senses → first finding lands), each ending in a
+  teal "what you have now" line — answers the how-big-is-this-project
+  objection. **Entry 11 FAQ**: five native `<details>` accordions with
+  the honest answers (doesn't replace BI; agents never decide; ignoring
+  = recorded + escalates; read-only feeds, nothing faked; first closed
+  loop within a month). Plus **OG/Twitter meta** for link unfurls and a
+  **scroll-spy** (IntersectionObserver, `rootMargin -30%/-60%`) lighting
+  the active nav link.
+- **Verification recipes + gotchas (worth keeping)**:
+  - Headless Chrome (`--headless=new`) **clamps window width to 500px**
+    — a `--window-size=390,…` screenshot is a 390px CROP of a 500px
+    layout and shows phantom right-edge clipping. True-390 testing:
+    wrap the page in a 390px iframe (`--allow-file-access-from-files`)
+    and read overflow from injected JS via `--dump-dom` — scratchpad
+    `frame390.html`/`debug.html` pattern. Real result: zero horizontal
+    overflow at 390.
+  - `sips --cropOffset` silently center-crops; don't trust it for
+    screenshot crops — capture at the target viewport instead.
+  - Fragment-URL screenshots (`…/site.html#rollout`) come out blank
+    under `--virtual-time-budget` (smooth-scroll never settles); the
+    tall-window full-page shot is the reliable check.
+  - `playwright-core` is NOT installed anywhere anymore (the old npx
+    cache path in session A's notes may also rot) — plain headless
+    Chrome + injected-JS dumps covered everything this session needed.
+- **Placeholders to swap before customers see it**: the CTA mailto
+  `hello@rewive.app` (invented domain) and the demo links pointing at
+  `/` (correct once deployed beside the app). Mobile nav links hide
+  below 880px with no hamburger — open thread.
+
+## This session (2026-07-18): organization sign-in — the SaaS front door (`337b46c`)
+
+The founder's ask: *"as this is the saas product multiple team will login
+so i want to set the background with organization login so want to split
+the tenant kind of view."* Built demo-grade tenancy: each organization is
+a workspace mapped onto an industry pack, with a split-view branded login.
+
+- **`src/tenants.ts`** — the tenant registry + session. Two orgs:
+  `americana` → **Americana Foods** (fmcg, flat terracotta `#8A3B12`,
+  `americanafoods.com`) and `metro-health` → **Metro Health Network**
+  (healthcare, flat teal `#0D6E66`, `metrohealth.org` — named after the
+  hospital entities already in the healthcare seeds). Manufacturing has
+  **no tenant on purpose** (hidden-pack convention). Session =
+  `localStorage['rewive.tenant']`.
+- **`/login`** (`src/screens/Login/index.tsx`, chrome-less route) — split
+  view: left panel is the org's brand (flat accent bg that transitions on
+  org switch, org mark, operating-context eyebrow, tagline, proof lines,
+  "Every mandate, held twice." foot); right is the sign-in card: org
+  picker tiles, work email (prefilled `you@<domain>`, tracks org switch
+  until hand-edited), password (**any value works — no real auth**, the
+  card says so), and **"Sign in as"** role select (Admin · all lenses +
+  the industry's role groups). Submit = `setActiveTenantId` + `setLens` +
+  `setHierarchy(false)` + the existing `useSetIndustry` mutation →
+  `/command`. `?org=<id>` preselects.
+- **Route guard**: all app routes sit behind `RequireTenant` in `App.tsx`
+  (landing, `/guide`, `/login` stay public). **The industry choice stays
+  authoritative**: `getActiveTenant()` re-derives the tenant whenever the
+  active industry disagrees (covers pre-tenancy localStorage sessions AND
+  in-app industry switching on the Operating Picture — the chrome never
+  claims one org while showing another's data).
+- **TopNav** shows the signed-in org chip (accent mark · name · industry,
+  subscribed to `useOrgProfile` so it flips live) + a **"Switch
+  organization"** button → clears the tenant → `/login?org=<current>`.
+  **Landing CTAs now route through the login** (`useEnter` navigates to
+  `/login?org=…` instead of mutating industry directly).
+- **Fix caught by driving it**: the login's role list showed "COO —
+  Protein" for the healthcare org — `personaLabel` read the *active*
+  industry. It now takes an optional industry param
+  (`personaLabel(p, industry?)`, same for `personaGroupsForIndustry`);
+  Login passes the tenant's. All old one-arg call sites unchanged.
+- **CSS**: `.login-*` + `.topnav-tenant-*` blocks appended to
+  `globals.css`, tokens-only, flat colors (the org-picker radio dot uses
+  an inset box-shadow ring, NOT a radial-gradient — paper-ledger rule).
+- CLAUDE.md gained a **"Tenancy (demo-grade)"** paragraph under
+  Architecture.
+- **Verified headless** (playwright-core + system Chrome, scratchpad
+  `drive-login.mjs`): fresh-browser deep link to `/command` bounces to
+  `/login`; org switch swaps panel/email/roles; sign-in as Metro Health
+  store manager lands on `/command` with the MH chip + healthcare data +
+  `lens=store_manager`; Switch organization returns preselected; Americana
+  re-entry shows FMCG grouped roles. Zero console errors. **Remember
+  `rewive.guideSeen='1'`** in drivers — first visit still detours to
+  `/guide` after sign-in (pre-existing onboarding, kept deliberately).
+
+## This session (2026-07-18): agents ↔ mandates, both directions (`98d1324`)
+
+The founder's ask: *"can we connect Agents to Mandates."* The data half
+existed (`ShadowAgent.watchesNodeIds`) but surfaced only as a count;
+workforce agents had no link at all. Now navigable both ways:
+
+- **Counterpart cards** (Agents → Counterparts): new **"holds"** section —
+  each watched mandate as a chip with a health dot (green/amber/red from
+  the node) deep-linking to `/build/picture?focus=<nodeId>` (the focus
+  param already existed). `mandatesOf()` resolves `watchesNodeIds` against
+  the brain; the mandates stat now counts the resolved list.
+- **Workforce agents**: new optional **`mandateIds?: string[]`** on
+  `AgentCatalogEntry` (types.ts), **seeded for all 18 catalog agents**
+  across the three packs in `v4content.js` (e.g. Trade-Spend ROI Agent →
+  `fmcg-k-troi` + `fmcg-k-tradepct`; Readmission Risk Agent → the
+  `hc-t-quality` intent). Grid cards show plain ⌖ pills (card is itself a
+  link — no nested anchors); the detail page gets a **Mandates** row with
+  accent links into the focused picture.
+  **Keep-in-sync convention (same spirit as dataset `feeds`)**:
+  `mandateIds` must exactly match Operating Picture node ids — unmatched
+  ids silently render nothing.
+- **Operating Picture**: selecting a mandate/target now shows a
+  **"Held twice" strip** (bottom of the canvas, reuses `.brain-legend`
+  styling): human owner (name · role) + counterpart (→ Counterparts),
+  "worked by <workforce agents>" (→ their detail), and "Its findings →"
+  (`?stream=`). Counterpart resolved by `watchesNodeIds` first, then
+  `streamKey` fallback; workforce lookup filters the catalog by
+  `mandateIds`. Uses `useShadowOrg()` + `useAgentCatalog()` inside
+  `KpiBrainCanvas` — both cached queries.
+- **Verified headless** (`drive-mandates.mjs`): full round trip —
+  counterpart chip "On-shelf availability" → focused node with strip
+  "Layla Nasser · Commercial director + Commercial counterpart · worked
+  by Shelf Availability Agent" → workforce ⌖ pills → Trade-Spend ROI
+  detail links → back to the picture showing "worked by" that agent.
+  Zero console errors. **Driver gotcha**: `text=` locators collide with
+  the Intro copy (it also says "held twice") — target
+  `.brain-legend:has-text("Held twice")`.
+- Build + lint clean at `98d1324`.
+
+## Previous session (2026-07-17): the half-year review is derived, not seeded
+
+The founder asked to "fix the halfYear stats undercount" (old open thread 3 —
+the hand-seeded block predated ~26 findings; `openNow` summed to 5 against 26
+actual). Chose **derive** over re-bump so it can never rot again:
+
+- **New `mock-server/halfyear.js`** — `deriveHalfYear({findings, closures,
+  ledger, currency})` computes the block over the last **7 calendar months
+  (6 prior + current)**: `raised` from findings' `detectedAt`, `decided` +
+  cumulative win rate from ledger rows (parsing their `'DD Mon'` display
+  dates; `'ongoing'` rows count in totals/breakdowns but not monthly),
+  `closed` from closure KPIs' `closedAt`, `openNow` from live finding status
+  (`open` + `acting`), impact by summing parseable AED/$ amounts from
+  `measuredImpact.text` (direction `up` only). Months before the first
+  assessed verdict backfill the first real win rate instead of showing 0%.
+- **`/decisions/stats` computes it per request** from the mutable in-memory
+  state (`app.js`), so the panel updates live mid-demo — verified: accepting
+  a finding dropped UAE Trading Co.'s "open now" 14 → 13 on the next fetch.
+  The serverless `api/handler.js` reuses the same Express app, so Vercel is
+  covered. The three hand-seeded `halfYear` blocks (`data.js` FMCG,
+  `v4content.js` HC + Mfg) are **deleted**.
+- **Frontend**: `HalfYearReview.tsx` win-rate axis was hardcoded 40–90% and
+  would clip the real derived rates (86–100%) — it now scales to the data;
+  the bar chart got a divide-by-zero guard. Types comment updated.
+- **FMCG now reads**: "42 findings raised across 4 entities and 4 regions
+  over the last 7 months; 24 decisions on the ledger, 8 loops closed. Win
+  rate 86% to date" — every number clickable-true against Findings/Ledger.
+  Label is rolling, e.g. "Jan–Jul 2026 · derived from the ledger".
+- **The four stat tiles are derived too** (`b7db762`, follow-up ask):
+  `deriveStatTiles()` in the same module — decisions tracked = ledger rows
+  (delta counts this quarter's dated rows), win rate over assessed verdicts
+  (FMCG: "87% · 13 of 15 assessed worked"), median detectedAt →
+  dispositionAt across decided findings (FMCG 24.0h over 17), measured
+  impact from the ledger's summable currency amounts (FMCG AED 1.8M over
+  9). Tiles cover the whole ledger/findings window, **not QTD** — so
+  `trackedQtd`/`measuredImpactQtd` were renamed `tracked`/`measuredImpact`
+  in `types.ts` and the captions changed in `StatsRow.tsx` ("Decisions on
+  the ledger", "Measured impact · to date") and `TodayStats.tsx` (the Today
+  screen's third tile shows the same measuredImpact). The panel's
+  cumulative win rate now also counts undated `'ongoing'` verdicts so tile
+  and panel read the same 87%. **No hand-seeded decisionStats blocks exist
+  anymore** — `data.js` no longer exports `decisionStats`, and the HC/Mfg
+  packs in `v4content.js` dropped theirs.
+- **Trade-offs to know**: numbers are smaller than the old fabricated block
+  (42 findings vs 118, 24 decisions vs "142 QTD") but reconcile,
+  on-message for "the system of record"; June shows 0 raised (no seed
+  lands there — one mid-June finding would fill the bar); manufacturing's
+  measured-impact tile is honestly "—" (its ledger has no currency
+  amounts).
+- **Gotcha (re)confirmed while at it**: restarting the mock server resets
+  the in-memory org profile to the seed (`fmcg`), but the *browser's*
+  persisted `rewive.industry` localStorage choice rides every request and
+  can flip the context back — if the founder reports "wrong industry",
+  it's the landing-page picker / localStorage, not the code.
+
+## This session, part 1 (`53257e4`): the founder's org, navigable end-to-end
+
+The founder described their real structure — Group CEO; CFO with FP&A;
+multiple COOs (Protein, G&I, Fruits & Vegetables, Ambient Foods) each with
+Supply chain / Production / Commercial finance / Analysts; extended teams
+(Shared services, Procurement, HR services, Audit) — and asked how it
+navigates the Sense→Decide cycle. Two options were offered; they said
+"build option 1" then "build option 2".
+
+### Option 1 — the org as the role tree
+
+- **Persona union grew 6 → 30** (`src/api/types.ts`): `group_ceo` root; CFO
+  holds `fpa` + group `commercial_finance`; division COOs `coo` (= Protein),
+  `coo_gi`, `coo_fnv`, `coo_ambient`, each with 4 function roles
+  (`<div>_supply_chain` / `_production` / `_commercial_finance` /
+  `_analysts`); horizontals `shared_services`, `procurement`, `hr_services`,
+  `audit` under the CEO.
+- **Legacy roles re-parented into Protein** (operations_head → store_manager,
+  sales_supervisor under `coo`), so all pre-existing seeds stay reachable.
+  `coo` is relabeled **"COO — Protein" in the FMCG context only**:
+  `personas.ts` now exports `personaLabel(p)` (reads
+  `getActiveIndustry()`; `FMCG_LABEL_OVERRIDES`) and **all 12 label call
+  sites use it instead of indexing `PERSONA_LABEL`**. Healthcare/
+  Manufacturing keep the flat six-role lens via `personaGroupsForIndustry()`.
+- **Lens dropdown is grouped by org branch** (optgroups: Group / Protein /
+  G&I / F&V / Ambient / Extended functions — `Topbar.tsx`);
+  `VALID_LENSES` in `personaLens.tsx` is now derived from `PERSONAS`.
+- **Escalation is the stitch between levels**: `POST /findings/:id/escalate`
+  and re-alert now move `finding.persona` up `ROLE_PARENT` (derived from
+  `ROLE_CHILDREN` in `mock-server/roles.js`) — supply chain → division COO →
+  Group CEO. Verified live: the hero finding (`fmcg-f-protein-fill`, frozen
+  chicken fill at 84%, 4h SLA) walked both hops and landed as the only item
+  in the Group CEO's personal Today queue.
+- Both role trees (`mock-server/roles.js` ↔
+  `src/screens/CommandCenter/personas.ts`) updated — **keep-identical
+  convention still applies**, and now also covers `DOTTED_PARENT`.
+
+### Option 2 — the dotted line (the matrix)
+
+- `DOTTED_PARENT` maps the four division commercial-finance roles → `cfo`,
+  in both trees. Ownership/escalation stays on the solid line (division COO);
+  the CFO is the *functional* parent.
+- **CFO team scope rolls up the dotted roles** (server `personaScope`; the
+  frontend `useEffectiveLens()` returns a new `dotted` array; `ScopeBanner`
+  renders them as amber `⋯` pills with an explanatory tooltip).
+- **Escalation forks**: escalate/re-alert on a dotted role sets
+  `finding.dottedPersona` (new optional field on `Finding`) *before* moving
+  `persona` up the solid line; `filterByPersona` counts `dottedPersona` as
+  in-scope, so the finding appears in **both** the COO's and the CFO's own
+  queues. UI: amber "⋯ CFO · functional line" pills in UnifiedQueue, the
+  Findings list, and the thread header.
+- Demo seed: `fmcg-f-protein-tradespend` (Protein trade-spend accruals 2.3x
+  the promo calendar, 5h SLA, raised by the new
+  `fmcg-sa-protein-commfin` counterpart) — escalate it once and flip the
+  lens between COO — Protein and CFO to show the same drift held by two
+  chains.
+
+### Seeds (part 1)
+
+Division supply-chain counterparts (Protein/G&I/F&V/Ambient), FP&A and
+Procurement counterparts; 8 findings across the tree — the escalation hero,
+Ramadan build (G&I), a co-pack conflict routed **directly to `coo_gi`**
+(cross-functional = the COO's call), F&V shrink, Ambient promo OSA, FP&A
+bridge gap, cross-division palm-oil re-price (Procurement, the horizontal
+story), and the trade-spend dotted-line demo; ledger rows for Procurement /
+COO F&V / COO Ambient. Chief-of-staff counterpart re-tagged `coo` →
+`group_ceo`; People counterpart `coo` → `hr_services`.
+
+## This session, part 2 (`cdba393`): Business base-data section
+
+The founder's ask: *"rope more findings and show some base data like Sales
+by SKU, Customer, P&L … also have a page to explain the business so it is
+clear for someone to act on."*
+
+- **New rail item "Business"** (chart icon, between Performance and
+  Foundation), four tabs behind `SectionTabs`
+  (`src/screens/Business/BusinessTabs.tsx`):
+  - **The business** (`/business/overview`; `/business` redirects) — the
+    explainer: narrative paragraphs, stat tiles, division cards (leader,
+    revenue share, brands, "Held twice by: …"), operating entities, revenue
+    by channel, and a 4-step **"How to act on what you see here"** guide.
+  - **Sales by SKU family** (`/business/sku`) — 12 families × revenue YTD /
+    growth / margin / fill rate.
+  - **Sales by customer** (`/business/customers`) — 8 accounts × revenue /
+    growth / trade spend / OSA / DSO.
+  - **P&L** (`/business/pl`) — reuses `Decisions/PlStatement` (same FP&A
+    statement, second mount point; the Decisions tab keeps its own).
+- **The rope**: every off-plan row wears an on-plan/watch/**drifting** pill
+  and a `finding →` link to the thread already watching that number. Base
+  data is deliberately **not persona-partitioned** (documented in the types)
+  — context is company-wide; the loop surfaces stay role-scoped.
+- **Contract**: `BusinessContext` types in `src/api/types.ts`,
+  `useBusinessContext()` in `src/api/business.ts`,
+  `GET /api/v1/business-context` served from **`mock-server/businessdata.js`**
+  (new file) — rich FMCG pack (Americana-style), slim Healthcare pack
+  (service lines / payers, ropes to `hc-f-1`/`hc-f-2`), minimal
+  Manufacturing pack.
+- **Seeds (part 2)**: 7 more findings roped to the base data — Protein
+  breaded-chicken **yield masked by rework**, Ambient **promo ROI 0.6x**
+  (second dotted-line role), **Carrefour DSO** 74d, **Lulu OSA**
+  merchandising gap, **audit** split price overrides, **shared-services** AP
+  backlog, **HR attrition explicitly compounding the fill-rate hero** — plus
+  3 counterparts (Protein production, Audit, Shared services).
+  **20 open FMCG findings now span every branch of the tree.**
+
+### Verified (this session, on the paper-ledger theme)
+
+Browser walkthrough at :5173 + curl probes: grouped dropdown contents; COO —
+G&I + team rollup (scope pills + both G&I findings); hero escalation
+`protein_supply_chain → coo → group_ceo` (UI thread header updated per hop;
+Group CEO role-scope queue = exactly the escalated finding); dotted-line
+before/after (CFO team sees the trade-spend finding pre-escalation, CFO
+*role* scope gains it post-fork with both pills); healthcare lens list stays
+the legacy six with generic "COO"; Business overview/SKU/customers/P&L
+render; Carrefour row → its finding thread. Mock state was reset after the
+escalation tests (restart = reset; escalations are in-memory).
+
+### Judgment calls / gotchas
+
+- Division functions beyond supply chain (+ the three seeded horizontals'
+  neighbours) exist in the tree but are **seeded light** — a lens on, say,
+  `gi_analysts` is honest-empty. The `coo_gi` team rollup covers it for
+  demos.
+- Escalating past a role with no data-bearing parent in
+  healthcare (`coo → group_ceo`) leaves the finding visible only under
+  'all'/team lenses there — acceptable; healthcare demos don't escalate that
+  high.
+- `security`-style fix avoided on purpose: no `http.sslVerify false`, no
+  MITM CA imported into PEM bundles. SSH is the sanctioned path.
+- The browser-pane `scroll` action intermittently times out on this app;
+  `read_page` refs + `scrollIntoView` via the JS tool worked around it
+  (verification-only).
+
+## This session, part 3 (`6d3181f`): the holistic view
+
+The founder's ask: *"i want to have more findings and other facts so it is
+holistic view."* Two moves:
+
+- **Lifecycle depth, not just volume.** 11 more findings chosen so every
+  branch has lived the whole loop: open ones for the empty roles
+  (`gi_commercial_finance` rice-margin erosion, `protein_analysts` /
+  `ambient_analysts` model-insight findings, an Egypt sourcing call routed
+  to `coo_fnv`, a **`group_ceo` portfolio-mix finding only the consolidation
+  can see**), two accepted-and-watching with tracking exit conditions
+  (F&V price overrides 55%, sauce-line changeover 40%), one acknowledged on
+  a trip-wire (pre-pack summer capacity re-alerts at 92% utilization), and
+  three closed with assessor verdicts (Ramadan baseline double-count,
+  noodle-die scrap, packaging-board consolidation — the horizontal-win
+  story). **FMCG now: 42 findings — 25 open / 4 watching / 2 acknowledged /
+  8 closed / 2 abandoned / 1 acting; 12 exit conditions (3 tracking,
+  8 closed, 1 regressed).** Matching ledger rows; finding ↔ closure ↔
+  ledger integrity verified by script (snippet in this session's
+  transcript).
+- **"The facts behind the mandates"** on the Business overview: four fact
+  cards — market position (21.4% share, #1 frozen poultry, named
+  competitors, private label), seasonality calendar (Ramadan build, summer
+  shrink, quarter-close load-in, Q4 tender lock-in), footprint & people
+  (6 plants / 9 DCs / 4,800 heads), cost structure (COGS 62%, trade 14.8%,
+  WC 52 days) — each fact pointing at the live finding watching it.
+  `factSections` is optional on `BusinessOverview`; healthcare has a light
+  version; the rice SKU row now ropes the margin finding.
+
+## This session, part 4 (`ce02dec` + `7885692`): the DuPont Foundation
+
+The founder's ask: *"elaborate the foundation with full P&L list and all the
+relevant mandate and Senses … make it more like a du pont so it clear."*
+
+- **New `pl_line` node kind** (amber) in `BrainNodeKind` — the Operating
+  Picture now reads top-down as a DuPont tree: **intent ← P&L line ←
+  mandate ← sense**. `layout.ts` inserts the P&L tier as a row between the
+  intent row and the stream columns, in statement order; industries without
+  pl_line nodes keep the old spacing (manufacturing untouched).
+- **FMCG**: 9 P&L nodes seeded from `pldata.js` (gross revenue → trade →
+  returns → net revenue → COGS → gross margin → logistics → overheads →
+  EBITDA, actual vs budget + health). Mandate→target edges rewired through
+  their lines (OSA/fill/NPD → gross revenue; trade ROI/trade% → trade;
+  sell-gap → returns; COGS variance/obsolescence → COGS; cost-per-case →
+  logistics; campaign ROI → overheads), and **the statement math is itself
+  edges** (gross − trade − returns → net rev → GM → EBITDA → margin
+  intent). Non-P&L intents (share, cash) keep direct mandate edges.
+- **Healthcare** (`7885692`, seeds only): 5 lines — net patient revenue,
+  denials & write-offs, supply & pharmacy, labor & premium pay, EBITDA —
+  with beds/OR→revenue, denial/clean-claim→denials, drug-spend/generic→
+  supply, agency/labor/ALOS→labor, all → EBITDA → net-margin intent.
+  Edge rationales carry the causal copy ("ALOS drift holds beds and
+  converts to premium pay").
+- Kind-map consumers updated: `BrainNodeCard`, `NodeEditor`, canvas legend,
+  **`Findings/ImpactPath.tsx`** (P&L steps render amber), Add-a-mandate can
+  feed a P&L line. FP&A counterpart watches net revenue/GM/EBITDA (FMCG);
+  revenue-cycle and finance counterparts watch their lines (healthcare).
+  Both verified in the browser; graph + watch-list integrity by script.
+- **Keep-in-sync note**: P&L node values mirror `pldata.js` by hand — if
+  the statement seeds change, update the pl_line nodes (or derive them).
+
+## Previous session (2026-07-16, later): the paper-ledger redesign
+
+The founder's ask: *"can we redesign the entire look and feel of the
+product, it seems having a disconnect in a flow"*. Offered three directions
+(unify-only / system-of-record rebrand / loop-first shell); they chose the
+**"system of record" rebrand** with a **light "paper ledger"** default (both
+choices made explicitly via option pickers).
+
+### The new visual system — `src/styles/globals.css` rewritten in place
+
+- **Every class and CSS-variable NAME kept; only values changed** — that's
+  why 375 existing `var(--…)` references needed no edits. Tokens now: paper
+  bg `#FAF9F6`, surface `#FFFFFF`, ink ramp `#1A1A2E/#5A5D72/#9A9DB0`, ONE
+  flat accent `#3B3BC4` (deep `#2E2EA8`), semantic `#1B7F4D/#9A6700/#B42318/
+  #0D7E74`, hairline borders `rgba(26,26,46,.10/.18)`, radius 16→10px.
+- **New font tokens**: `--font-display` (system serif — Iowan/Palatino/
+  Georgia) on `h1.page`, crumb, KPI values, logo; `--font-mono` on eyebrows,
+  table `th`, nav-label, IDs/durations; `tabular-nums` on figures.
+- **Banned and removed everywhere**: backdrop-filter blur, glow shadows,
+  multi-color gradients, gradient-clipped text, the radial-gradient body
+  backdrop. `--accent-grad` still EXISTS but resolves to flat accent — do
+  not reintroduce real gradients through it.
+- Dead `.topnav-areas` CSS (never rendered) deleted.
+
+### One design system across all four surfaces
+
+- **App**: cascades from globals; plus a sweep of ~145 dark-coupled inline
+  colors/hexes across ~12 screen files onto tokens (ShadowOrg, HalfYearReview,
+  PlStatement, KpiBrain×4, Findings/Lifecycle, SolutionDesign, Connectors,
+  HandoffCard, TourOverlay).
+- **Landing** (`.om` tokens) and **Guide** (`.gd-`) injected stylesheets now
+  **alias the global tokens** (`--om-ink:var(--ink)` etc.) — keep aliasing,
+  don't fork values again. Copy untouched, incl. keep-verbatim lines.
+- **`public/story.html` / `public/demo.html`** are standalone → they
+  **hardcode** the same palette values; update manually if tokens change.
+- **Gotcha discovered**: SVG *presentation attributes* (`fill=`/`stroke=`)
+  don't resolve `var()` — HalfYearReview chart colors moved into `style`
+  objects; Landing's loop SVG uses literal hexes; KpiBrain canvas got
+  `colorMode="light"` (React Flow's own chrome was staying dark otherwise).
+  A pre-existing silently-broken `stroke="var(--surface-solid)"` attribute
+  was fixed in passing.
+
+### Flow-seam fixes (the "disconnect" diagnosis)
+
+- **Act sub-flow no longer exits the loop visually**: `/build/solutions`,
+  `/build/agent-studio`, `/build/studio`, `/build/create` now light
+  **Findings** in the rail (they're reached from a finding's Act), with
+  crumbs "Findings / Act · …". Foundation's rail match narrowed to
+  picture/kpis/connectors (`src/components/layout/areas.ts`).
+- **Sidebar identity is real**: `AreaSidebar` renders `useCurrentUser()`
+  (name/initials/avatarBg/role) instead of the hardcoded "Kumara Vijayan"
+  card. (Don't append "· Admin" — the seed role string already contains it.)
+- **Header convention unified**: People, Signal Studio, Agent Studio, Create
+  Agent, Unified Agent Studio, Connectors moved from bespoke `.sub`
+  paragraphs to the shared `<Intro>`; `.sub` is now reserved for detail-page
+  metadata subtitles (Outcomes, SignalDetail, SolutionDesign, Findings
+  detail keep theirs). CommandCenter's greeting subtitle intentionally kept.
+- SignalDetail's back-link went to `/insights/signals` (a redirect) —
+  now goes straight to `/operate/findings`.
+
+### Verified (Playwright, chromium headless)
+
+- 12 routes screenshotted at 1440×900 under FMCG/all-lenses; probes: bogus
+  finding id → graceful message; industry swap to healthcare → renders;
+  solution-design DOM: rail active = "Findings", crumb = "Findings / Act ·
+  Solution Design". Recipe: scratchpad `shots.mjs` + `probe.mjs` — needs
+  `localStorage` keys `rewive.industry`, `rewive.personaLens`, and
+  **`rewive.guideSeen='1'`** (first visit to `/command` otherwise redirects
+  to `/guide` — intended onboarding, intercepts demo links).
+- Design rules also saved to Claude project memory (`paper-ledger-rebrand`).
+
+### Known rough edges / candidates for the founder's change list
+
+- Queue rows still use boxed **emoji icons** (🤖/🕵️ tiles) — read heavy
+  against the hairline aesthetic.
+- Serif display face is a **system stack** (Iowan/Palatino/Georgia) — a
+  webfont (e.g. a real editorial serif) would sharpen it if network fonts
+  are acceptable for the demo.
+- Two agent-building paradigms still coexist (`/build/studio` canvas vs
+  `/build/agent-studio` altitudes) — visual reconciliation was out of scope.
+- Tour scrim was eased from `rgba(5,5,14,.72)` to `.45` (judgment call —
+  near-black over paper read as a theme break); revert is a 2-value change
+  in `TourOverlay.tsx` if the spotlight needs more contrast.
+
+## Previous session (2026-07-16, earlier)
 
 The founder's ask: *"mimic the full lifecycle and all the alerts like I am in
 Jun 2026, give me half-year stats and relevant tasks; the business dealt in
@@ -34,7 +1906,8 @@ different entities and regions."*
 
 ### Half-year (Jan–Jun 2026) lifecycle backfill — `mock-server/v4data.js`
 
-- **FMCG findings: 6 → 16**, now covering every lifecycle state at once:
+- **FMCG findings: 6 → 16** (now 23+ after this session), covering every
+  lifecycle state at once:
   5 open (two SLA-at-risk ≤8h; `fmcg-f-3` escalated; `fmcg-f-9` is an
   acknowledged-in-May finding whose trip-wire fired and came back escalated),
   1 acting (`fmcg-f-7`, Riyadh DC case fill — has a live solution design),
@@ -48,7 +1921,7 @@ different entities and regions."*
   `hc-f-h1` Lakeside OR utilization); manufacturing only got entity tags.
 - Referential integrity holds both ways (`finding.closureKpiId` ↔
   `closure.findingId`; ledger `findingId` → real finding) — there's a check
-  snippet in this session's transcript if you touch the seeds.
+  snippet in that session's transcript if you touch the seeds.
 
 ### Entities & regions — a new dimension
 
@@ -69,15 +1942,17 @@ different entities and regions."*
 - `DecisionStats.halfYear` (new types `HalfYearReview/-Month/-BreakdownRow`):
   monthly raised/decided/closed + win-rate, plus by-entity and by-region
   rollups. Seeded for all three industries (`data.js` for FMCG,
-  `v4content.js` for HC/Mfg). `openNow` counts match the actual open seeds.
+  `v4content.js` for HC/Mfg). `openNow` counts match the actual open seeds
+  *as of that session* — this session added 15 open findings without
+  touching `halfYear`, so the hand-seeded block undercounts now (see open
+  threads).
 - `src/screens/Decisions/HalfYearReview.tsx` renders it at the top of the
-  Ledger tab: grouped monthly bars + a separate win-rate line (no dual axis),
-  two breakdown tables. Series colors `#7C7CFF/#0D9488/#16A34A` were run
-  through the dataviz palette validator against the dark surface (all checks
-  pass); win-rate line is amber. Hidden entirely if `halfYear` is absent.
-- FMCG ledger: 7 → 15 rows spanning 09 Jan–18 Jun, each new row linked to its
-  finding with an assessor note; includes decisions that *failed* (`led4`
-  terms extension → regressed; `led8` acknowledge whose trip-wire fired).
+  Ledger tab: grouped monthly bars + a separate win-rate line, two breakdown
+  tables. Hidden entirely if `halfYear` is absent.
+- FMCG ledger: 7 → 15 rows (now 18) spanning 09 Jan–18 Jun, each new row
+  linked to its finding with an assessor note; includes decisions that
+  *failed* (`led4` terms extension → regressed; `led8` acknowledge whose
+  trip-wire fired).
 
 ### Tasks
 
@@ -88,117 +1963,69 @@ different entities and regions."*
 ### The demo clock is now self-refreshing (the "breaks" fix)
 
 - The user reported "a lot of breaks". A full-screen sweep found **zero**
-  errors; the real issues were (a) the API having been down overnight (see
-  Processes above) and (b) **seed-date rot**: dates were pinned to
-  2026-06-30, so on 2026-07-16 every counterpart read "last raised 16d ago"
-  next to "14h left on SLA".
-- Fix: **all 87 ISO timestamps in `v4data.js` are now computed from the
-  server clock at boot** — `hoursAgo(n)` / `daysAgo(n)` helpers at the top of
-  the file; live items land hours ago, H1 history lands ~2 weeks–6 months
-  back. Evidence strings that named absolute dates were reworded to relative
-  ("fired this week"). **Convention going forward: never hardcode an ISO
-  date in `v4data.js` seeds — use the helpers.** (Ledger `date` display
-  strings like "12 May" and `data.js`/`v4content.js` relative strings like
-  "2h ago" are still static — acceptable for history, but the same rot risk
-  applies if "now"-adjacent.)
-- Not re-verified by the user yet — they were asked to hard-refresh and
-  report which screen if anything still looks broken.
+  errors; the real issues were (a) the API having been down overnight and
+  (b) **seed-date rot**: dates were pinned to 2026-06-30, so on 2026-07-16
+  every counterpart read "last raised 16d ago" next to "14h left on SLA".
+- Fix: **all ISO timestamps in `v4data.js` are computed from the server
+  clock at boot** — `hoursAgo(n)` / `daysAgo(n)` helpers at the top of the
+  file; live items land hours ago, H1 history lands ~2 weeks–6 months back.
+  **Convention going forward: never hardcode an ISO date in `v4data.js`
+  seeds — use the helpers.** (This session's 15 new findings follow it.)
 
 ## Previous session (2026-07-15, later session)
 
 ### Role-scoped data + hierarchy mode (`57148f8`) — the big one
 
-Every role now owns a **disjoint slice** of the product, and a manager can
-widen the lens to their whole reporting line.
+Every role owns a **disjoint slice** of the product, and a manager can widen
+the lens to their whole reporting line.
 
 - **One role tree, defined twice, kept identical** (`mock-server/roles.js` ↔
-  `src/screens/CommandCenter/personas.ts`):
-  `COO → { Operations head → Store manager, Sales supervisor }` and
-  `CFO → Commercial finance`. Two roots — ops line and finance line.
+  `src/screens/CommandCenter/personas.ts`) — was 6 roles/2 roots then; this
+  session grew it to 30 roles/1 root (see above); the convention holds.
 - **Every collection item carries exactly one `persona`**: findings, pending
   approvals, runs, live runs, tasks, counterparts (ShadowAgent), agent
-  catalog, leaderboard rows, loop-speed rows, decision-ledger rows — seeded
-  across all three industries (~100 items tagged via
-  scratchpad script; ids untouched). **Convention: any new seed item must set
-  `persona`** (now in CLAUDE.md). Types updated accordingly in
-  `src/api/types.ts` (persona on RunListItem, LiveRunSummary, SolutionTask,
-  ShadowAgent, LeaderboardRow, LoopSpeedRow, DecisionLedgerItem; `RoleScope`).
+  catalog, leaderboard rows, loop-speed rows, decision-ledger rows.
+  **Convention: any new seed item must set `persona`** (in CLAUDE.md).
+  (This session's base-data rows are the documented exception — context
+  surfaces are company-wide.)
 - **Server**: `filterByPersona(items, persona, scope)` in `app.js` uses
   `personaScope()` from `roles.js`; `scope=team` expands to the role's
-  subtree. Every list endpoint accepts `persona` + `scope`: findings,
-  decisions/pending, dashboard/summary, runs, runs/live, tasks, shadow-org,
-  agents/catalog, leaderboard, leaderboard/loop-speed, decisions.
+  subtree (now + dotted children). Every list endpoint accepts
+  `persona` + `scope`.
 - **Frontend**: `useEffectiveLens()` (in `personaLens.tsx`) is the single
   resolver — global lens + non-admin lock + hierarchy toggle → `{ persona,
-  scope, rolesInScope, reports }`. All data screens use it (Today, Findings,
-  Runs, Tasks, Counterparts, Workforce, Performance, Decisions). This also
-  fixed a pre-existing bug: Findings ignored the non-admin persona lock.
-- **Chrome**: a persisted **"+ their team"** checkbox next to the lens in the
-  top bar (only rendered when the lens role has reports;
-  `localStorage['rewive.personaLensHierarchy']`). `ScopeBanner`
-  (`components/shared/ScopeBanner.tsx`) sits under each screen header and
-  spells out which roles are in view. Run and task rows wear `→ Role` chips.
+  scope, rolesInScope, reports }` (now also `dotted`). All data screens use
+  it. A persisted **"+ their team"** checkbox next to the lens
+  (`localStorage['rewive.personaLensHierarchy']`); `ScopeBanner` spells out
+  which roles are in view.
 - **The loop stays role-true**: tasks created by a finding's **Act**
-  disposition inherit the finding's persona; quick-solution tasks inherit the
-  signal's; agent specs inherit the task's (the old hardcoded
-  `operations_head` in `POST /agent-specs` is gone).
-- **Verified**: per endpoint, the union of the six role slices equals the full
-  set with zero pairwise overlaps (fmcg); COO+team = COO + Ops head + Store
-  manager + Sales supervisor; CFO+team = CFO + Commercial finance; an
-  Ops-head finding's Act produced Ops-head tasks visible under COO+team,
-  invisible under CFO+team.
-- **Judgment calls to sanity-check with the founder**: assignments follow the
-  routing rules where they existed (trade spend → commercial finance, sales
-  execution → sales supervisor, cross-functional → COO) and best semantic
-  read elsewhere — healthcare revenue cycle sits under CFO, manufacturing
-  quality under Store manager (line-level), People/HR streams under COO.
-  Some slices are thin: Sales supervisor has no healthcare/manufacturing
-  items and no FMCG catalog agent; Store manager is thin in FMCG. Honest
-  empty states, but remap or add seeds if the demo needs them.
+  disposition inherit the finding's persona; quick-solution tasks inherit
+  the signal's; agent specs inherit the task's.
 
 ### Every dead-end section wired end-to-end (`090594b`)
 
-An audit found no unfetched screens — the gaps were dead actions and one
-un-closeable loop. All fixed and exercised via curl:
-
-- **Tracked KPI "needs data" now resolves** (was permanent): the KPI panel's
-  Connect link carries `?forKpi=` to Data Connectors, which shows a banner
-  with the KPI's needed drivers; the created connection stores `forKpiId`;
-  the KPI walks `needs data → connection pending approval → data connected`
-  (reject returns it to needs data). New `TrackedKpiDataStatus`
-  `'pending_approval'`.
-- **Runs pause/resume is real server state** (pause previously returned a fake
-  response and mutated nothing; resume existed but had no UI). `runDetails`
-  moved into per-industry mutable state; the live card shows a **⏸ PAUSED**
-  pill and a working **Resume**; live polling stops/restarts with it. The
-  dead "Watch" button (no onClick) was removed.
-- **Outcomes "Schedule"** posts to a new
-  `POST /outcomes/:runId/actions/:actionId/schedule` and renders ✓ Scheduled
-  (was toast-only).
-- **Agent builder "Refine plan"** (was completely inert) focuses the chat
-  input with a seeded "Refine the plan: " draft — feeding the already-wired
-  message flow.
-- **Tasks channel selector caption was a lie** — it *is* persisted via
-  `PATCH /tasks/:id/channel`; caption reworded to "saved to the task —
-  delivery is simulated in this demo"; `docs/FEATURE_INVENTORY.md` updated.
-- Deliberately left alone: orphaned Signal Studio screen (unroutable since the
-  signals→findings evolution), server-only features with no UI (KPI tickets,
-  signal review committee), FMCG-flavoured global data under other industries
-  (connectors / people directory / audit log — a bigger industry-scoping
-  decision).
+- Tracked KPI "needs data" resolves via Connectors (`?forKpi=`,
+  `'pending_approval'` status); runs pause/resume is real server state
+  (⏸ PAUSED pill + Resume); Outcomes "Schedule" posts and renders
+  ✓ Scheduled; agent-builder "Refine plan" focuses the chat with a seeded
+  draft; Tasks channel caption reworded (it *is* persisted).
+- Deliberately left alone: orphaned Signal Studio screen, server-only
+  features with no UI (KPI tickets, review committee), FMCG-flavoured global
+  data under other industries.
 
 ## Previous sessions (still true)
 
-- **v5.1 comprehension redesign** (`4b7462b`): one flat 7-item loop-ordered
-  rail; Today = one "Waiting on you" queue with the product's only count;
-  findings lifecycle tabs (Closure screen retired → Watching/Closed);
-  the finding thread page; merged Execution and Agents surfaces behind
-  `SectionTabs`; persona lens in global chrome.
+- **v5.1 comprehension redesign** (`4b7462b`): one flat loop-ordered rail
+  (7 items then; 8 now with Business); Today = one "Waiting on you" queue
+  with the product's only count; findings lifecycle tabs; the finding thread
+  page; merged Execution and Agents surfaces behind `SectionTabs`; persona
+  lens in global chrome.
 - **FP&A P&L workspace** (`7964225`): Decisions → "P&L impact · FP&A" tab;
   full P&L Actual/Budget/Forecast drillable by the industry's two dimensions;
-  drift anomalies as a task list; seeds `mock-server/pldata.js` + `v4data.js`.
-- **Landing retold** (`cdd2901`), **spotlight tour** (`51491f0`), **loop speed
-  table** (`f4ac86f`).
+  seeds `mock-server/pldata.js` + `v4data.js`. (Now also mounted at
+  `/business/pl`.)
+- **Landing retold** (`cdd2901`), **spotlight tour** (`51491f0`), **loop
+  speed table** (`f4ac86f`).
 
 ## What v5 is (positioning unchanged)
 
@@ -216,59 +2043,192 @@ Rules live in `CLAUDE.md` → "Positioning"; per-version detail in
 
 ## Open threads / natural next steps
 
-1. ~~Commit + push + PR~~ — **done**: PR #4 is open (`v5` → `master`);
-   review & merge it.
-2. **Confirm the "breaks" report is resolved** — the user's last message said
-   "lot of break are there"; diagnosis + fix are in "New this session", but
-   they haven't confirmed after the hard-refresh yet. If something is still
-   broken, get the screen name / a screenshot first.
-3. **Entity/region breadth** — the dimension exists only on findings,
-   closures and ledger rows. Candidates: runs/tasks/agents tagging, an
-   entity filter on Decisions, a region/entity lens in global chrome
-   (mirroring the persona lens), and P&L dimA/dimB alignment.
-4. **Ledger `date` strings** are static `"DD Mon"` with no year while
-   findings are now clock-relative — fine for H1 history, but consider ISO +
-   client formatting if the ledger should sort or bucket by real dates
-   (the `halfYear` block is hand-seeded, not derived).
-5. **Old-persona leftovers**: the display-dead `dashboardSummary.kpis` block +
-   `personaKpiOverrides` were **dropped** from the contract, seeds and server —
-   `GET /dashboard/summary` now returns only `{ greetingName, summarySentence }`
-   (Today's stats come from findings/approvals/decision-stats, role-scoped).
-   Tour/Guide copy still names only the old three personas
-   (`tour/steps.ts:19`, `Guide/index.tsx:25`).
-6. **Thin role slices** (see judgment calls above) — decide whether Sales
-   supervisor / Store manager need more seeded content per industry.
-7. **`docs/BLUEPRINT.md` is stale** — still describes the pre-v5.1 three-area
-   nav (and `public/story.html`/`demo.html` may reference retired names).
-8. **P&L discoverability** — the FP&A workspace is the second tab on
-   Decisions; candidates: bookmarkable route (`?view=pl`), P&L card on Today
-   under the CFO / Commercial finance lens.
-9. **Manufacturing pack depth** — to re-enable the third industry (also:
-   `closureKpisSeed.manufacturing` is empty → Watching tab empty state).
-10. **"New" anomalies → findings**: P&L anomalies with status `new` are
-    display-only; a "raise as finding" mutation would close that loop.
-11. **Optional internal rename** — shadow → counterpart naming.
+### Next steps — in priority order (as of 2026-07-20, later session)
+
+1. **Look at the five pieces that shipped blind** — `/operate/findings` (the
+   live strip: hit "Run sweep now" and watch the paced walk), `/` and `/guide`
+   (heaviest renamed prose), `/insights/agents` (does "Workforce" fit the
+   chrome where "Agents" did?), and `/operate/decisions` (tiles and By-entity
+   table should now agree with the ledger below them).
+2. **Commit this session.** 71 modified + 2 new files, all uncommitted. Natural
+   split: (a) live strip + seeded tracking, (b) counterpart removal + scoping
+   fixes, (c) the rename.
+3. **Decide the legacy-role entity mapping** (see §4 above) — the Protein COO
+   still sees all four entities because `operations_head` /
+   `sales_supervisor` / `store_manager` sit under `coo` with findings spanning
+   every entity. This is the remaining half of "the Entity view is mixing up".
+4. **Consider renaming the internals** — `ShadowAgent`, `useShadowOrg`,
+   `counterpartName`, `/operate/counterparts` now lag the UI by two
+   generations of naming. Optional, but the gap is wider than it was.
+5. **Fix the two orphaned manufacturing closures** (`mfg-c-h1`, `mfg-c-h2`
+   point at findings that don't exist) so `filterClosuresByPersona` no longer
+   needs its fail-open branch.
+
+### Next steps — in priority order (as of 2026-07-20)
+
+1. **Look at what shipped blind.** Two commits of UI were written without
+   the browser extension ever connecting. Sign in as **Group CEO** (lens
+   picker now offers only Group + Protein), and check: the counterpart
+   cards (default view on Findings), the "What to do here" popup, the
+   segmented control, the roll-up bands, and `LeadershipBar` on a
+   subordinate's finding. Density at 19 cards is the most likely complaint.
+2. **Unblock the push — unchanged, founder-only action.** `v5` is now ~32
+   commits ahead, none pushed. `~/.ssh/config` correctly routes GitHub over
+   :443 and the key `id_ed25519_rewive`
+   (`SHA256:qi700T0YxECL3859MQIEId9q2+/3E09fi/vgYPdR2P8`) has no passphrase
+   — GitHub simply doesn't have it. `ssh -T` returns *Permission denied
+   (publickey)*, i.e. the network path is FINE and the key is unregistered.
+   Paste `~/.ssh/id_ed25519_rewive.pub` at github.com/settings/ssh/new,
+   then `git push origin v5`. (`gh` is unusable — TLS MITM.)
+3. **Finish the help pass.** Only the loop screens (Today, Findings, a
+   finding's thread, Decisions) have `doThis`. Foundation and Execution
+   screens still show doctrine-only popups. Founder scoped it to "loop
+   screens first" — the rest is the natural continuation.
+4. **Decide the counterpart-view density question** (see the rough edge in
+   this session's section) — collapse single-finding counterparts, or leave.
+5. **Consider a materiality floor per role** — the one recommendation from
+   the original senior-leadership analysis that was NOT built (items 1, 2,
+   3, 5, 6, 7 were). Team-scope items below a role's impact threshold would
+   collapse into "+31 below your threshold" instead of rendering.
+
+### Next steps — in priority order (as of 2026-07-19)
+
+1. **Commit the uncommitted work** (founder call on granularity):
+   manufacturing parity (`v4data.js`/`datasetsdata.js`/`tenants.ts`/
+   `CLAUDE.md`) and the marketing site (`public/site.html`, untracked —
+   also decide whether the light-gradient look is the keeper before
+   committing it).
+2. **Unblock the push — status changed 2026-07-18**: BOTH local keys are
+   now rejected by GitHub (`id_ed25519_rewive`
+   `SHA256:qi700T0YxECL3859MQIEId9q2+/3E09fi/vgYPdR2P8` AND the old
+   `id_ed25519`) — the previously-working key appears to have been
+   removed from the account or lost repo access. Same fix as ever: get
+   the `id_ed25519_rewive.pub` line visible at
+   `github.com/<username>.keys`, then `git push origin v5`. `v5` is now
+   ~30 commits ahead including the live-tracking feature.
+3. **Production-ize live tracking**: set `DATABASE_URL` (pooled) +
+   `ANTHROPIC_API_KEY` + `CRON_SECRET` in Vercel, `npm run migrate`,
+   deploy, verify a cron `sweep_runs` row and that the Claude authoring
+   path produces house-style narratives (only the template path has
+   been exercised so far). Hourly cron needs Vercel Pro.
+4. **Point live tracking at Manufacturing for the demo**: the new
+   industry + the real pipeline compose — e.g. enable tracking on
+   `mfg-k-energy`, push a rising kWh series, sweep raises the finding
+   the seeds only narrate. Nothing needs building; it's configuration.
+
+### Next steps — previous priorities (as of 2026-07-18)
+
+1. **Unblock the push** (founder action, sessions can't do it): get the
+   key visible at `github.com/<username>.keys` — full diagnosis and the
+   three unanswered questions are in "Where things stand". Then
+   `git push origin v5` and open the PR via the compare URL
+   `github.com/Kumarv2509/rewive-front-end/compare/master...v5`
+   (**not** `gh` — TLS MITM).
+2. **Decide the sense-coverage story** — the founder was asked
+   (2026-07-18) whether to (a) keep the honest 4/26-mandates-connected
+   view, (b) flip all dataset seeds `expected → live` in
+   `mock-server/datasetsdata.js` for a fully-lit picture, or (c) light
+   one division end-to-end as a middle path. **No answer yet** — don't
+   pre-empt; each is a minutes-level seed edit because Picture statuses
+   derive from the registry. A strong demo beat either way: flip one
+   dataset live on stage and watch its branch of the tree turn on.
+3. **The real sensing pipeline** (the actual product build, when it
+   starts): the placeholders are deliberately its spec — each Dataset
+   slot names source/cadence/mandates fed; queued AnalysisRequests say
+   what to compute; the REST contract (raise finding → disposition →
+   closure) already exists. Build = real feeds landing in the slots +
+   a scheduled agent runtime (model call per mandate over its data
+   slice) that raises findings through the same endpoints. The
+   frontend should need near-zero changes.
+4. **Wire staged CSVs into the loop**: an uploaded dataset registers as
+   'receiving' but feeds nothing — let the founder map its columns to a
+   mandate (set `feeds`) so a staged file lights that node, and run the
+   queued analysis requests against staged data (even canned) so
+   "Queue an analysis" pays off inside the demo.
+5. **Heartbeat truthfulness**: counterpart sense-sweeps currently stamp
+   every agent; consider sweeping only agents whose stream has a live
+   dataset (others read "senses waiting on data") — one condition in
+   `heartbeatTick` step 2, using the same liveStreams logic as
+   `reconcileBrainStatuses`.
+
+### Older threads (still open, lower priority)
+
+6. **Thin new-role slices — mostly resolved in part 3**: every division
+   function *kind* has now lived the loop; still honest-empty leaves:
+   `protein_commercial_finance` history, `fnv_analysts`,
+   `ambient_production`'s siblings in other divisions, and the horizontals
+   beyond procurement/audit/shared/HR. Team scope covers them.
+7. **CLAUDE.md is stale in several spots**: "7 items" rail note (now 8
+   with Business, plus Foundation gained a 4-tab SectionTabs header incl.
+   Datasets), the persona bullet predates the 30-role tree + dotted line
+   + base-data exception, the mock-server file list is missing
+   `halfyear.js`/`businessdata.js`/`datasetsdata.js` and the heartbeat;
+   `docs/BLUEPRINT.md` still describes pre-v5.1 nav. (The tenancy
+   paragraph added 2026-07-18 is current — the staleness is elsewhere.)
+8. **Entity/region breadth** — dimension exists on findings/closures/ledger
+   only; the new Business rows carry entity implicitly in copy, not as the
+   filterable field.
+9. **More dotted lines?** — the mechanism is generic (`DOTTED_PARENT`); the
+   founder may want Analysts → FP&A or division HR → HR services once they
+   see the commercial-finance one.
+10. **Ledger `date` strings** are static `"DD Mon"`; consider ISO + client
+    formatting if the ledger should sort/bucket by real dates. **Heads-up:**
+    `mock-server/halfyear.js` now parses these strings for its monthly
+    buckets (`parseLedgerDate`) — if the format changes, update it too.
+11. **June "raised" bar is 0** in the derived review (no seed lands in
+    June) — one mid-June finding seed fills it if it bothers the founder.
+12. **Manufacturing pack depth**; **"new" P&L anomalies → findings** mutation;
+    **shadow → counterpart internal rename**; **Tour/Guide copy** still names
+    only the old three personas (`tour/steps.ts:19`, `Guide/index.tsx:25`).
+13. **Tenancy follow-ups (if the SaaS story deepens)**: a real user model
+    (named users per org, sign-out separate from org-switch, non-admin
+    lock actually driven by the login role — today the mock
+    `currentUser.isAdmin` is always true so the lens stays changeable);
+    per-tenant data partitions in the mock server (both orgs currently
+    share state, isolation comes from the industry packs); more than one
+    org per industry would force real tenant-scoping and make the demo
+    stronger.
+14. **Mandate-link breadth**: `mandateIds` lives only on the catalog
+    seeds — studio-built agents (`createdAgents`) never get one; the Act
+    flow could stamp the originating finding's mandate onto the agent
+    spec so built agents join the "worked by" strip automatically.
+
+Resolved this cycle: ~~halfYear undercount~~ (`13d63b9`+`b7db762`, fully
+derived), ~~impactPath P&L steps~~ (`a2fb841`), ~~"breaks" report~~ (the
+clock-rot fix held; founder has been demoing live without issues).
 
 ## Context that isn't in the code
 
 - The founder demos to FMCG stakeholders (Americana context; seed org
   "Americana Foods (demo)", AED). FMCG is the beachhead, Healthcare second.
-- The role hierarchy + "no overlap or skip" partition + hierarchy mode was the
-  founder's direct ask this session (their words: "every role will have their
-  own set of findings, execution, Agents, Performance etc, so the roles
-  doesn't overlap or skip … on the hierarchy mode it should work to see what
-  is impacted based on the role they perform").
-- Good demo path for the 2026-07-16 work: Findings → Open (two red SLAs, two
-  escalations, entities/regions on every row) → Watching (a regressed exit
-  condition next to a tracking one, a solution in motion, a trip-wire) →
-  Closed (five loops at 100%) → open `fmcg-f-h2`'s thread (raised → decided →
-  watched → closed → assessor verdict) → Decisions (H1 2026 panel, win rate
-  61%→78%, by-entity/by-region) → Execution → Tasks (the Riyadh DC Act's four
-  tasks). The two `not_worked` rows in the ledger are the honesty beat.
-- Good demo path for the role work (2026-07-15): lens = COO → Today shows only COO items →
-  tick "+ their team" → the queue, Findings, Execution, Agents, Performance
-  and the Ledger all widen to the ops line, with role chips showing whose
-  each item is; switch lens to CFO to show the finance line never bleeds in.
+  The org they described (Protein / G&I / F&V / Ambient + extended teams) is
+  their real structure — the tree is not hypothetical.
+- **Good demo path for the 2026-07-18 work**: start logged out at `/` →
+  pick a context → land on `/login` with the org preselected → toggle the
+  two orgs to show the brand panel swap → sign in to Americana as a store
+  manager (any password) → the org chip + role-scoped Today make the
+  "multiple teams log in" point → Switch organization → Metro Health as
+  admin for the healthcare pack. Then the mandate loop: Agents →
+  Counterparts → a "holds" chip (e.g. On-shelf availability) → the
+  focused Operating Picture node shows the "Held twice" strip (owner +
+  counterpart + Shelf Availability Agent) → through "worked by" into the
+  agent detail → its Mandates row leads back to the picture. One circle,
+  no dead ends.
+- **Good demo path for the 2026-07-16/17 work**: Business → The business (read
+  the narrative + act guide) → Sales by SKU family → Frozen chicken
+  "drifting" → finding → thread shows 4h SLA → "Not mine — escalate ↑" twice
+  → lens Group CEO (role scope) shows it landed at the top → lens CFO + team
+  (amber ⋯ pills in the banner) → open the Protein trade-spend finding →
+  escalate → flip lens COO — Protein ↔ CFO to show one drift held by two
+  chains. The palm-oil finding (Procurement) is the horizontal-function
+  beat; HR attrition ties the people number to the fill-rate hero.
+- **DuPont beat (part 4)**: Foundation → the P&L tier reads left-to-right
+  like the statement; click Trade spend & discounts (off track) to light
+  trade-ledger sense → trade ROI/trade % mandates → the line → net revenue
+  → EBITDA → margin intent. The group_ceo portfolio-mix finding and the
+  Business "facts" cards (each fact naming its live finding) are the
+  "holistic" beats from part 3.
+- Earlier demo paths (H1 lifecycle, role lens) are in the 2026-07-16-earlier
+  and 2026-07-15 sections' original write-ups if needed.
 - Repositioning rationale in merged PR #2; the v5.1 UX advisory diagnosis in
-  the 2026-07-15 morning session (13 nav destinations → 7, one count, one
-  thread per finding).
+  the 2026-07-15 morning session.

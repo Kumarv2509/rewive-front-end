@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useLiveRuns } from '../../api/dashboard';
 import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Intro } from '../../components/shared/Intro';
-import { ScopeBanner } from '../../components/shared/ScopeBanner';
 import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { LiveRunCard } from './LiveRunCard';
 import { RunsTable } from './RunsTable';
@@ -38,7 +37,6 @@ export function RunsScreen() {
         }
       />
       <SectionTabs tabs={EXECUTION_TABS} />
-      <ScopeBanner />
 
       <div className="filters">
         {filters.map((f) => (

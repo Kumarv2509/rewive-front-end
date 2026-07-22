@@ -20,7 +20,38 @@ export type Persona =
   | 'operations_head'
   | 'sales_supervisor'
   | 'coo'
-  | 'commercial_finance';
+  | 'commercial_finance'
+  // Group leadership + FP&A (reports to the CFO).
+  | 'group_ceo'
+  | 'fpa'
+  // Division COOs. The legacy 'coo' persona is the Protein division's COO in
+  // the FMCG context (see FMCG_LABEL_OVERRIDES in personas.ts).
+  | 'coo_gi'
+  | 'coo_fnv'
+  | 'coo_ambient'
+  // Division functions — every division holds the same four.
+  | 'protein_supply_chain'
+  | 'protein_production'
+  | 'protein_commercial_finance'
+  | 'protein_analysts'
+  | 'gi_supply_chain'
+  | 'gi_production'
+  | 'gi_commercial_finance'
+  | 'gi_analysts'
+  | 'fnv_supply_chain'
+  | 'fnv_production'
+  | 'fnv_commercial_finance'
+  | 'fnv_analysts'
+  | 'ambient_supply_chain'
+  | 'ambient_production'
+  | 'ambient_commercial_finance'
+  | 'ambient_analysts'
+  // Extended functions — horizontal, serving every division, so they hang off
+  // the Group CEO rather than any one COO.
+  | 'shared_services'
+  | 'procurement'
+  | 'hr_services'
+  | 'audit';
 
 // The lens looks at one role ('role') or the role plus everyone who reports
 // into it ('team' — hierarchy mode, for seeing what's impacted below you).
@@ -130,18 +161,59 @@ export interface ChaseEscalation {
   createdAt: string;
 }
 
+// Not seeded: the mock derives every field from the live findings/closures/
+// ledger state at request time (mock-server/halfyear.js), so the tiles, the
+// review panel and the data screens always agree. Tiles cover the whole
+// ledger/findings window, not QTD.
 export interface DecisionStats {
-  trackedQtd: { value: number; delta: Delta };
+  tracked: { value: number; delta: Delta };
   winRate: { value: string; delta: Delta };
   medianTimeToDecision: { value: string; delta: Delta };
-  measuredImpactQtd: { value: string; delta: Delta };
+  measuredImpact: { value: string; delta: Delta };
   /** Half-year review — the loop's history bucketed by month, entity and region. */
   halfYear?: HalfYearReview;
 }
 
+// ---------- Datasets (Foundation · placeholder registry for data to come) ----------
+// The registry of the data the loop will run on: most entries are 'expected'
+// slots declared ahead of the actual feeds; 'live' ones ride the connector
+// heartbeat. Company-wide like the business context — the lens does not
+// partition it. Analysis requests queue against a dataset and run when it lands.
+export type DatasetStatus = 'expected' | 'receiving' | 'live';
+
+export interface Dataset {
+  id: string;
+  name: string;
+  description: string;
+  source: string; // the system or team the data comes from
+  cadence: string; // 'daily', 'weekly', 'monthly', 'on close', …
+  status: DatasetStatus;
+  rows: number | null;
+  columns: string[]; // header names once known (staged uploads fill these)
+  lastLoadAt: string | null; // ISO; 'live' datasets get refreshed by the heartbeat
+  feeds: string[]; // Operating Picture nodes (senses/mandates) this will feed
+  analysisIdeas: string[]; // what we intend to analyze once it lands
+}
+
+export interface RegisterDatasetInput {
+  name: string;
+  rows: number;
+  columns: string[];
+}
+
+export interface AnalysisRequest {
+  id: string;
+  datasetId: string | null;
+  datasetName: string | null;
+  question: string;
+  status: 'queued';
+  createdAt: string; // ISO
+}
+
 // ---------- Half-year review (Decisions screen) ----------
-// Monthly loop counts plus rollups by business entity and region. Seeded per
-// industry in the mock; a real backend would bucket the ledger by date.
+// Monthly loop counts plus rollups by business entity and region. Not seeded:
+// the mock derives it from the live findings/closures/ledger state at request
+// time (mock-server/halfyear.js), so it always reconciles with those screens.
 export interface HalfYearMonth {
   month: string; // 'Jan' … 'Jun'
   raised: number; // findings raised
@@ -237,7 +309,7 @@ export type PlAnomalyStatus = 'raised' | 'watching' | 'cleared' | 'new';
 // A drift anomaly is a task: what drifted, against which base (budget /
 // forecast), on which P&L cell (line × dimA × dimB), whose call it is, and
 // where it stands in the loop. findingId links it to the thread when the
-// counterpart has raised it.
+// agent has raised it.
 export interface PlAnomalyTask {
   id: string;
   title: string;
@@ -294,7 +366,7 @@ export interface LoopSpeedRow {
   mandate: string;
   stream: string;
   owner: { name: string; initials: string; avatarBg: string };
-  counterpart: string;
+  agent: string;
   findings90d: number;
   medianTimeToDecide: string;
   medianTimeToClose: string;
@@ -488,6 +560,8 @@ export interface AgentCatalogEntry extends AgentPreview {
   runsCount: number;
   lastRunAt: string | null;
   costBudget?: AgentCostBudget;
+  /** Operating Picture node ids (mandates/intents) this agent works — the Workforce↔Picture link. */
+  mandateIds?: string[];
 }
 
 export interface AgentCatalogFilters {
@@ -924,7 +998,11 @@ export interface IndustryOption {
 }
 
 // ---------- KPI brain (graph: targets ← stream KPIs ← drivers) ----------
-export type BrainNodeKind = 'target' | 'stream_kpi' | 'driver';
+// The DuPont cascade, top to bottom: intent (target) ← P&L line ← mandate
+// (stream KPI) ← sense (driver). P&L lines are the financial tier that makes
+// the decomposition legible — every mandate rolls into a line, every line
+// into an intent.
+export type BrainNodeKind = 'target' | 'pl_line' | 'stream_kpi' | 'driver';
 export type BrainNodeStatus = 'connected' | 'proposed' | 'needs_data' | 'declined';
 export type BrainHealth = 'on_track' | 'at_risk' | 'off_track';
 export type BrainEdgeWeight = 'strong' | 'moderate' | 'weak';
@@ -942,6 +1020,14 @@ export interface BrainNode {
   status: BrainNodeStatus;
   proposedBy?: string; // shadow agent name, when status === 'proposed'
   dataSources: string[];
+  /** Live tracking overlay — present only when the mandate has a tracking
+      config and real metric points. Display strings stay derived from these. */
+  liveTracked?: boolean;
+  currentNumeric?: number;
+  targetNumeric?: number;
+  unit?: string;
+  lastIngestAt?: string | null;
+  spark?: number[]; // last ~12 values, oldest → newest
 }
 
 export interface BrainEdge {
@@ -984,7 +1070,7 @@ export interface UpdateBrainNodeInput {
   dataSources?: string[];
 }
 
-// ---------- Shadow org (agent counterparts per function stream) ----------
+// ---------- Shadow org (agents per function stream) ----------
 export type ShadowAgentHealth = 'healthy' | 'attention' | 'critical';
 
 export interface ShadowAgent {
@@ -999,6 +1085,8 @@ export interface ShadowAgent {
   temperament: number; // 0 quiet … 100 hair-trigger
   health: ShadowAgentHealth;
   lastFindingAt: string | null;
+  /** Set by the mock server's heartbeat — when this agent last re-checked its senses. */
+  lastSenseSweepAt?: string | null;
   reportsToAgentId: string | null;
 }
 
@@ -1022,6 +1110,33 @@ export interface ImpactPathStep {
 export interface FindingEvidenceItem {
   label: string;
   value: string;
+}
+
+/** What a senior role can do to a finding owned below them — deliberately not
+ *  the four A's, which belong to the owner. */
+export type LeadershipAction = 'ask' | 'reassign' | 'raise_priority' | 'take';
+
+export interface LeadershipLogEntry {
+  action: LeadershipAction;
+  byPersona: Persona;
+  toPersona: Persona | null;
+  note: string | null;
+  summary: string;
+  at: string;
+}
+
+export interface EscalationTrailEntry {
+  from: Persona;
+  to: Persona;
+  at: string;
+}
+
+export interface LeadershipActionInput {
+  action: LeadershipAction;
+  /** The role acting — the lens role, which must sit above the owner. */
+  byPersona: Persona;
+  toPersona?: Persona; // required for reassign
+  note?: string;
 }
 
 export interface Finding {
@@ -1050,9 +1165,29 @@ export interface Finding {
   assessorVerdict?: { verdict: Verdict; note: string; at: string } | null; // set when the loop closes
   detectedAt: string;
   persona: Persona;
+  /** Set when an escalation forks along the dotted line: the functional
+      parent (e.g. the CFO for division commercial finance) sees this finding
+      in their queue too, while ownership moves up the solid line. */
+  dottedPersona?: Persona | null;
+  /** The role this escalated away from, set the moment ownership moved up.
+      Present means "this is your call because the level below let the clock
+      lapse" — the difference between an inherited finding and a native one. */
+  escalatedFrom?: Persona | null;
+  escalationTrail?: EscalationTrailEntry[];
+  /** Leadership pressure applied from above — ask / reassign / raise / take. */
+  leadershipLog?: LeadershipLogEntry[];
+  /** Set by "ask": the senior role waiting on a status from the owner. */
+  awaitingResponseTo?: Persona | null;
+  /** Set by "take": ownership was pulled up from this role. */
+  takenFrom?: Persona | null;
   /** Business entity and region the drift sits in (multi-entity orgs). */
   entity?: string;
   region?: string;
+  /** Provenance: seeded demo content vs raised by the live drift sweep. */
+  origin?: 'seed' | 'sweep';
+  sweepRunId?: string;
+  /** Which drift rule fired, when origin === 'sweep'. */
+  rule?: DriftRule;
 }
 
 export interface DispositionInput {
@@ -1079,4 +1214,177 @@ export interface ClosureKpi {
   closedAt: string | null;
   entity?: string;
   region?: string;
+  /** Provenance: seeded demo content vs created from a sweep-raised finding. */
+  origin?: 'seed' | 'sweep';
+}
+
+// ---------- Live mandate tracking (real metrics → drift → findings) ----------
+// A mandate is "live-tracked" when it has a MandateTrackingConfig. Real metric
+// points arrive via the ingest API (POST /metrics, API-key auth) or CSV upload;
+// the agent sweep evaluates drift rules and raises findings into the same
+// findings pipeline the seeded content uses.
+export type DriftRule = 'threshold_breach' | 'sustained_deviation' | 'trend_to_breach';
+export type TrackingDirection = 'up_good' | 'down_good';
+
+export interface MetricPoint {
+  nodeId: string;
+  ts: string;
+  value: number;
+  source: string; // 'api' | 'csv:<filename>'
+}
+
+export interface MandateTrackingConfig {
+  nodeId: string;
+  industry: IndustryKey;
+  unit: string; // 'pct' | 'currency_m' | 'days' | 'ratio' | 'count'
+  format?: string | null; // display template, e.g. '{v}%' or 'AED {v}M'
+  direction: TrackingDirection;
+  targetNumeric: number;
+  warnPct: number; // % deviation from target that counts as drift
+  breachPct: number; // % deviation that counts as a breach
+  sustainedPoints: number; // consecutive drifting points before a finding
+  minPoints: number; // minimum points before the rules run at all
+  enabled: boolean;
+  /** Legal entity / region these numbers belong to — inherited by any finding
+   *  the sweep raises, so live activity appears in the entity/region rollups. */
+  entity?: string | null;
+  region?: string | null;
+  updatedAt: string;
+  // Read-side extras (joined by the server)
+  latestValue?: number | null;
+  latestTs?: string | null;
+  pointCount?: number;
+}
+
+export interface IngestKey {
+  id: string;
+  label: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
+
+/** Returned once, on creation — the plaintext key is never shown again. */
+export interface CreatedIngestKey extends IngestKey {
+  key: string;
+}
+
+export interface SweepRun {
+  id: string;
+  trigger: 'cron' | 'manual' | 'dev-interval';
+  startedAt: string;
+  finishedAt: string | null;
+  nodesEvaluated: number;
+  findingsRaised: number;
+  reAlertsFired: number;
+  closuresProgressed: number;
+  authoredByClaude: number;
+}
+
+/**
+ * One mandate in a sweep's analysis trail. `queued` → `analyzing` →
+ * (`authoring` →) an outcome. Written mid-run, so a poll mid-sweep shows the
+ * agents partway through their walk.
+ */
+export type SweepStepStatus =
+  | 'queued'
+  | 'analyzing'
+  | 'authoring'
+  | 'clear'
+  | 'drift'
+  | 'raised'
+  | 're-alert'
+  | 'recovered'
+  | 'skipped';
+
+export interface SweepStep {
+  nodeId: string;
+  nodeName: string;
+  industry: string;
+  streamKey: string | null;
+  counterpartName: string;
+  persona: Persona | null;
+  status: SweepStepStatus;
+  detail: string | null;
+  /** Set once the step produces or touches a finding — the row deep-links to it. */
+  findingId: string | null;
+  severity: FindingSeverity | null;
+}
+
+/** The newest sweep, live or last-finished, with its per-mandate trail. */
+export interface SweepProgress extends SweepRun {
+  steps: SweepStep[];
+}
+
+export interface MetricImportResult {
+  accepted: number;
+  rejected: { index: number; reason: string }[];
+}
+
+// ---------- Business context (the base data the mandates stand on) ----------
+// Company-wide context surfaces: not persona-partitioned — every lens sees
+// the same business. Rows that an agent has raised drift on carry the
+// findingId of their thread.
+export type BaseDataHealth = 'ok' | 'watch' | 'drifting';
+
+export interface BusinessDivision {
+  key: string;
+  name: string;
+  leader: string;
+  role: string; // display label, e.g. "COO — Protein"
+  revenueShare: string;
+  brands: string[];
+  note: string;
+  /** Which agents hold this division's mandates. */
+  watchedBy?: string;
+}
+
+export interface BusinessOverview {
+  orgName: string;
+  tagline: string;
+  narrative: string[];
+  stats: { label: string; value: string; note?: string }[];
+  divisions: BusinessDivision[];
+  entities: { name: string; region: string; role: string }[];
+  channels: { name: string; share: string; note: string }[];
+  /** Grouped facts — market position, seasonality, footprint, cost structure. */
+  factSections?: { title: string; items: { label: string; value: string; note?: string }[] }[];
+  /** How to read this section and act on it — the loop, in the business's own words. */
+  actGuide: { title: string; body: string }[];
+}
+
+export interface SkuSalesRow {
+  id: string;
+  family: string;
+  division: string;
+  revenueYtd: string;
+  growthYoyPct: number;
+  grossMarginPct: number;
+  fillRatePct: number;
+  health: BaseDataHealth;
+  note: string;
+  findingId?: string | null;
+}
+
+export interface CustomerSalesRow {
+  id: string;
+  customer: string;
+  channel: string;
+  region: string;
+  revenueYtd: string;
+  growthYoyPct: number;
+  tradeSpendPct: number;
+  osaPct: number;
+  dsoDays: number;
+  health: BaseDataHealth;
+  note: string;
+  findingId?: string | null;
+}
+
+export interface BusinessContext {
+  overview: BusinessOverview;
+  skuDimension: string; // "SKU family" / "Service line"
+  customerDimension: string; // "Customer" / "Payer"
+  skus: SkuSalesRow[];
+  customers: CustomerSalesRow[];
 }

@@ -5,7 +5,7 @@ import { useToast } from '../../components/shared/Toast';
 import type { Finding, FindingDisposition } from '../../api/types';
 
 const OPTIONS: { key: FindingDisposition; title: string; consequence: string }[] = [
-  { key: 'accept', title: 'Accept', consequence: 'Real — an exit condition is set and the counterpart watches it until met' },
+  { key: 'accept', title: 'Accept', consequence: 'Real — an exit condition is set and the agent watches it until met' },
   { key: 'act', title: 'Act', consequence: 'Open a solution design with tasks, straight into the build loop' },
   { key: 'acknowledge', title: 'Acknowledge', consequence: 'Known issue — watched, and it comes back harder if it worsens' },
   { key: 'abandon', title: 'Abandon', consequence: 'Not real — requires a reason, and the reason tunes the agent' },
@@ -35,14 +35,20 @@ export function DispositionBar({ finding }: { finding: Finding }) {
             showToast('Solution design opened from this finding');
             navigate(`/build/solutions/${updated.solutionDesignId}`);
           } else if (disposition === 'accept') {
-            showToast('Accepted — exit condition set, the counterpart keeps watching');
+            showToast('Accepted — exit condition set, the agent keeps watching');
           } else if (disposition === 'acknowledge') {
             showToast('Acknowledged — it will re-alert if it worsens');
           } else {
             showToast('Abandoned — the reason was fed back to tune the agent');
           }
         },
-        onError: () => showToast('Could not record the disposition — abandon needs a reason'),
+        // The server's own message is the truthful one — a stale tab whose
+        // finding was already dispositioned elsewhere used to be told
+        // "abandon needs a reason", which is about a different failure entirely.
+        onError: (err: unknown) => {
+          const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+          showToast(message ?? 'Could not record the disposition — please try again.');
+        },
       },
     );
   };
@@ -54,7 +60,7 @@ export function DispositionBar({ finding }: { finding: Finding }) {
         <button
           className="btn ghost sm"
           disabled={escalate.isPending}
-          onClick={() => escalate.mutate(undefined, { onSuccess: () => showToast('Escalated up the chain of counterparts') })}
+          onClick={() => escalate.mutate(undefined, { onSuccess: () => showToast('Escalated up the chain of agents') })}
         >
           Not mine — escalate ↑
         </button>

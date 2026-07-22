@@ -26,30 +26,30 @@ interface Rect {
 
 const css = `
 .tr-block{position:fixed;inset:0;z-index:80}
-.tr-dim{position:fixed;inset:0;z-index:80;background:rgba(5,5,14,.72)}
-.tr-hl{position:fixed;z-index:81;pointer-events:none;border-radius:14px;border:1.5px solid rgba(139,92,246,.95);
-  box-shadow:0 0 0 200vmax rgba(5,5,14,.72),0 0 26px rgba(139,92,246,.5);
+.tr-dim{position:fixed;inset:0;z-index:80;background:rgba(5,5,14,.45)}
+.tr-hl{position:fixed;z-index:81;pointer-events:none;border-radius:14px;border:1.5px solid var(--accent);
+  box-shadow:0 0 0 200vmax rgba(5,5,14,.45);
   transition:top .25s ease,left .25s ease,width .25s ease,height .25s ease}
-.tr-card{position:fixed;z-index:82;width:min(400px,calc(100vw - 32px));background:#12121F;color:#F1F1F7;
-  border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:18px 20px 16px;
-  box-shadow:0 18px 50px rgba(0,0,0,.55);
+.tr-card{position:fixed;z-index:82;width:min(400px,calc(100vw - 32px));background:var(--surface);color:var(--ink);
+  border:1px solid var(--border-strong);border-radius:16px;padding:18px 20px 16px;
+  box-shadow:var(--shadow-lg);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
 .tr-eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.66rem;letter-spacing:.16em;
-  text-transform:uppercase;color:#63678B;margin-bottom:8px;padding-right:24px}
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:8px;padding-right:24px}
 .tr-title{font-size:16px;font-weight:700;letter-spacing:-.2px;margin:0 0 8px}
-.tr-body{font-size:13px;line-height:1.6;color:#A6A9C8;margin:0 0 14px}
-.tr-note{font-size:11.5px;color:#63678B;font-style:italic;margin:-6px 0 14px}
+.tr-body{font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 14px}
+.tr-note{font-size:11.5px;color:var(--ink-3);font-style:italic;margin:-6px 0 14px}
 .tr-foot{display:flex;align-items:center;gap:8px}
-.tr-count{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.72rem;color:#63678B;margin-right:auto}
+.tr-count{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.72rem;color:var(--ink-3);margin-right:auto}
 .tr-btn{font-size:12.5px;font-weight:600;border-radius:10px;padding:8px 16px;cursor:pointer;font-family:inherit;
-  color:#F1F1F7;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.045);transition:background .2s}
-.tr-btn:hover{background:rgba(255,255,255,.1)}
-.tr-btn.primary{border:none;background:linear-gradient(120deg,#6366F1,#8B5CF6,#A855F7);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 20px rgba(124,99,255,.35)}
-.tr-btn.primary:hover{filter:brightness(1.1);background:linear-gradient(120deg,#6366F1,#8B5CF6,#A855F7)}
+  color:var(--ink);border:1px solid var(--border-strong);background:var(--glass);transition:background .2s}
+.tr-btn:hover{background:var(--glass-hover)}
+.tr-btn.primary{border:none;background:var(--accent);color:#fff;
+  box-shadow:var(--shadow)}
+.tr-btn.primary:hover{filter:none;background:var(--accent-deep)}
 .tr-x{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;border:none;cursor:pointer;
-  background:transparent;color:#63678B;font-size:15px;line-height:1;transition:all .2s}
-.tr-x:hover{background:rgba(255,255,255,.08);color:#F1F1F7}
+  background:transparent;color:var(--ink-3);font-size:15px;line-height:1;transition:all .2s}
+.tr-x:hover{background:var(--glass-hover);color:var(--ink)}
 `;
 
 function sameRect(a: Rect | null, b: Rect): boolean {

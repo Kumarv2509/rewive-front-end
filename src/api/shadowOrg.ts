@@ -8,6 +8,7 @@ import type {
   FindingStatus,
   IndustryOption,
   KpiBrain,
+  LeadershipActionInput,
   OrgProfile,
   Persona,
   RoleScope,
@@ -143,6 +144,22 @@ export function useEscalateFinding(findingId: string) {
   });
 }
 
+// Pushing on a finding owned below you: ask, reassign, raise priority, take.
+// Distinct from useDisposeFinding — a leader does not get the four A's on
+// someone else's call.
+export function useLeadershipAction(findingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: LeadershipActionInput) =>
+      (await apiClient.post<Finding>(`/findings/${findingId}/leadership`, input)).data,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['findings', findingId], updated);
+      queryClient.invalidateQueries({ queryKey: ['findings'] });
+      queryClient.invalidateQueries({ queryKey: ['shadow-org'] });
+    },
+  });
+}
+
 export function useReAlertFinding(findingId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -156,10 +173,14 @@ export function useReAlertFinding(findingId: string) {
 }
 
 // ---------- Exit conditions (closure) ----------
-export function useClosureKpis() {
+// Exit conditions inherit the scope of the finding they came from, so the lens
+// has to travel with the request — otherwise Watching/Closed showed every
+// division's exit conditions under every role.
+export function useClosureKpis(persona?: Persona | 'all', scope?: RoleScope) {
   return useQuery({
-    queryKey: ['closure-kpis'],
-    queryFn: async () => (await apiClient.get<ClosureKpi[]>('/closure-kpis')).data,
+    queryKey: ['closure-kpis', persona ?? 'all', scope ?? 'self'],
+    queryFn: async () =>
+      (await apiClient.get<ClosureKpi[]>('/closure-kpis', { params: { persona, scope } })).data,
     refetchInterval: 30_000,
   });
 }

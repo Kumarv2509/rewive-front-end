@@ -9,6 +9,7 @@ import {
   useHandbackAgentSpec,
   usePublishAgentSpec,
 } from '../../api/agentSpec';
+import { Intro } from '../../components/shared/Intro';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { HandoffCard } from '../../components/shared/HandoffCard';
@@ -28,9 +29,9 @@ export function UnifiedAgentStudioScreen() {
   const { data: spec, isLoading, isError } = useAgentSpec(agentSpecId);
 
   if (isLoading) return <section className="screen"><Loading /></section>;
-  if (isError || !spec) return <section className="screen"><ErrorMessage message="Couldn't load this agent." /></section>;
+  if (isError || !spec) return <section className="screen"><ErrorMessage message="Couldn't load this worker." /></section>;
 
-  // key={spec.id} resets the draft fields below whenever the underlying agent changes.
+  // key={spec.id} resets the draft fields below whenever the underlying worker changes.
   return <AgentStudioBody key={spec.id} spec={spec} />;
 }
 
@@ -62,7 +63,7 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
         <Pill tone={statusTone[spec.status]}>{spec.status.replace(/_/g, ' ')}</Pill>
         <Pill tone="gray">v{spec.version}</Pill>
       </div>
-      <div className="sub">One spec, two altitudes &mdash; business and developer edit the same agent, not separate copies.</div>
+      <Intro line="One spec, two altitudes — business and developer edit the same worker, not separate copies." />
 
       <div className="filters" style={{ marginBottom: 16 }}>
         <button className={`fchip${altitude === 'business' ? ' on' : ''}`} onClick={() => setAltitude('business')}>Business</button>
@@ -70,14 +71,14 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
       </div>
 
       {spec.needsTechnicalWork && spec.status === 'drafting' && (
-        <div className="concept-note">The validation agent flagged this may need a new data connector &mdash; consider escalating to a developer below.</div>
+        <div className="concept-note">The validation worker flagged this may need a new data connector &mdash; consider escalating to a developer below.</div>
       )}
 
       <DelegateIdentityPanel spec={spec} />
 
       {altitude === 'business' && (
         <div className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>
-          <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 10 }}>What this agent does</div>
+          <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 10 }}>What this worker does</div>
           <textarea
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
@@ -185,16 +186,16 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
 
       {spec.status === 'published' ? (
         <div className="card" style={{ padding: '16px 20px', background: 'var(--green-soft)', border: 'none', color: 'var(--green)', fontWeight: 600, fontSize: 13 }}>
-          Published &mdash; now live in Agent Space.
+          Published &mdash; now live in Worker Space.
         </div>
       ) : (
         canPublish && (
           <button
             className="btn primary"
             disabled={publish.isPending}
-            onClick={() => publish.mutate(undefined, { onSuccess: () => { showToast('Agent published'); navigate(`/build/solutions/${spec.solutionDesignId}`); } })}
+            onClick={() => publish.mutate(undefined, { onSuccess: () => { showToast('Worker published'); navigate(`/build/solutions/${spec.solutionDesignId}`); } })}
           >
-            Publish agent
+            Publish worker
           </button>
         )
       )}

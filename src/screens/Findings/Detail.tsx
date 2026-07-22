@@ -1,10 +1,13 @@
 import { Link, useParams } from 'react-router-dom';
 import { useClosureKpis, useFinding, useKpiBrain } from '../../api/shadowOrg';
 import { Pill } from '../../components/shared/Pill';
+import { Intro } from '../../components/shared/Intro';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { ImpactPath } from './ImpactPath';
 import { DispositionBar } from './DispositionBar';
-import { PERSONA_LABEL } from '../CommandCenter/personas';
+import { LeadershipBar } from './LeadershipBar';
+import { useEffectiveLens } from '../../components/layout/personaLens';
+import { personaLabel, roleSubtree } from '../CommandCenter/personas';
 import { severityTone, slaTone, statusLabel, statusTone } from './meta';
 import type { ReactNode } from 'react';
 
@@ -39,6 +42,7 @@ export function FindingDetailScreen() {
   const { data: finding, isLoading, isError } = useFinding(findingId);
   const { data: brain } = useKpiBrain();
   const { data: closures } = useClosureKpis();
+  const { persona: lensRole } = useEffectiveLens();
 
   if (isLoading) return <section className="screen"><Loading /></section>;
   if (isError || !finding) {
@@ -49,6 +53,11 @@ export function FindingDetailScreen() {
   const closure = finding.closureKpiId ? closures?.find((c) => c.id === finding.closureKpiId) : undefined;
 
   const isOpen = finding.status === 'open';
+  // Whose call is this from where the viewer is standing? The owner gets the
+  // four A's; a role above the owner gets leadership actions instead.
+  const isOwner = lensRole !== 'all' && finding.persona === lensRole;
+  const leadsOwner =
+    lensRole !== 'all' && !isOwner && roleSubtree(lensRole).includes(finding.persona);
   const isAbandoned = finding.status === 'abandoned';
   const watchState: StepState = isOpen ? 'todo' : isAbandoned ? 'done' : closure?.status === 'closed' ? 'done' : 'now';
   const closedState: StepState = finding.assessorVerdict || isAbandoned || closure?.status === 'closed' ? 'done' : 'todo';
@@ -65,15 +74,41 @@ export function FindingDetailScreen() {
         {finding.entity && <>{finding.entity}{finding.region ? ` (${finding.region})` : ''} · </>}
         {finding.impactEstimate}
         {finding.escalationLevel > 0 && <> {' '}<Pill tone="red">escalated ×{finding.escalationLevel}</Pill></>}
+        {finding.awaitingResponseTo && <> {' '}<Pill tone="amber">status asked by {personaLabel(finding.awaitingResponseTo)}</Pill></>}
+        {finding.dottedPersona && <> {' '}<Pill tone="amber">⋯ flagged to {personaLabel(finding.dottedPersona)} · functional line</Pill></>}
         {isOpen
           ? <> {' '}<Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h left on SLA</Pill></>
           : <> {' '}<Pill tone={statusTone[finding.status]}>{statusLabel[finding.status]}</Pill></>}
       </div>
 
+      {isOpen && (
+        <Intro
+          line="This is the thread — one finding's whole life on a single spine: raised → decided → watching → closed."
+          doThis={
+            leadsOwner
+              ? [
+                  <>This is <b>{personaLabel(finding.persona)}'s</b> call. Read it, but do not decide it — the ledger records the decision against whoever makes it.</>,
+                  <>To push: <b>Ask</b> for a status, <b>Reassign</b> it, or <b>Raise priority</b>. None of these move the decision to you.</>,
+                  <><b>Take it</b> only if the call really is yours — ownership transfers and you then owe the disposition.</>,
+                ]
+              : [
+                  <>Read the <b>evidence</b> and follow the <b>impact path</b> before deciding — the agent shows its working.</>,
+                  <>Give it one of four answers. Accept sets an exit condition; Act opens a solution; Acknowledge sets a trip-wire; Abandon needs a reason, which tunes the agent.</>,
+                  <>Not yours? <b>Escalate</b> rather than leaving it — the clock escalates it anyway, just later and with your name on the delay.</>,
+                ]
+          }
+        />
+      )}
+
       <div className="card" style={{ padding: '22px 24px' }}>
         <div className="thread">
           {/* 1 — SENSED & RAISED */}
           <ThreadStep n={1} state="done" title={`Sensed & raised · ${finding.raisedByAgentName}`} when={new Date(finding.detectedAt).toLocaleString()}>
+            {finding.origin === 'sweep' && (
+              <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 8 }}>
+                Raised by the live sweep · {finding.rule?.replace(/_/g, ' ') ?? 'drift rule'} on real data
+              </div>
+            )}
             <div style={{ fontSize: 13, marginBottom: 12 }}>{finding.summary}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 10, flexWrap: 'wrap' }}>
               <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--ink-2)' }}>
@@ -95,8 +130,22 @@ export function FindingDetailScreen() {
 
           {/* 2 — DECIDED */}
           {isOpen ? (
-            <ThreadStep n={2} state="now" title={`Decide — ${PERSONA_LABEL[finding.persona]}'s call`} when={`${finding.slaHoursRemaining}h before this escalates`}>
-              <DispositionBar finding={finding} />
+            <ThreadStep n={2} state="now" title={`Decide — ${personaLabel(finding.persona)}'s call`} when={`${finding.slaHoursRemaining}h before this escalates`}>
+              {finding.escalatedFrom && (
+                <div style={{ fontSize: 12.5, color: 'var(--ink-2)', marginBottom: 10 }}>
+                  ↑ This became {personaLabel(finding.persona)}'s call because {personaLabel(finding.escalatedFrom)} let
+                  the SLA lapse
+                  {finding.escalationTrail && finding.escalationTrail.length > 1
+                    ? ` (${finding.escalationTrail.length} levels so far)`
+                    : ''}
+                  .
+                </div>
+              )}
+              {leadsOwner ? (
+                <LeadershipBar finding={finding} lensRole={lensRole} />
+              ) : (
+                <DispositionBar finding={finding} />
+              )}
             </ThreadStep>
           ) : (
             <ThreadStep
@@ -114,6 +163,21 @@ export function FindingDetailScreen() {
                 </Link>
               </div>
             </ThreadStep>
+          )}
+
+          {/* Pressure from above — kept on the spine so the thread records who
+              leaned on this finding, not just who decided it. */}
+          {finding.leadershipLog && finding.leadershipLog.length > 0 && (
+            <div style={{ margin: '0 0 14px 34px', borderLeft: '2px solid var(--border-strong)', paddingLeft: 14 }}>
+              <div className="eyebrow" style={{ padding: '0 0 6px' }}>From above</div>
+              {finding.leadershipLog.map((e, i) => (
+                <div key={i} style={{ fontSize: 12.5, color: 'var(--ink-2)', padding: '3px 0' }}>
+                  {e.summary}
+                  <span style={{ color: 'var(--ink-3)' }}> · {new Date(e.at).toLocaleString()}</span>
+                  {e.note && <div style={{ color: 'var(--ink-3)', fontSize: 12 }}>“{e.note}”</div>}
+                </div>
+              ))}
+            </div>
           )}
 
           {/* 3 — WATCHING */}
@@ -161,7 +225,7 @@ export function FindingDetailScreen() {
           <ThreadStep
             n={4}
             state={closedState}
-            title={finding.assessorVerdict ? `Closed — assessor verdict: ${finding.assessorVerdict.verdict.replace('_', ' ')}` : isAbandoned ? 'Closed — dismissed, counterpart tuned' : 'Close + verdict'}
+            title={finding.assessorVerdict ? `Closed — assessor verdict: ${finding.assessorVerdict.verdict.replace('_', ' ')}` : isAbandoned ? 'Closed — dismissed, agent tuned' : 'Close + verdict'}
             when={finding.assessorVerdict ? new Date(finding.assessorVerdict.at).toLocaleString() : undefined}
           >
             {finding.assessorVerdict ? (
@@ -171,7 +235,7 @@ export function FindingDetailScreen() {
             ) : (
               <div style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>
                 {isAbandoned
-                  ? 'The dismissal reason was fed back to the counterpart so it learns what not to raise.'
+                  ? 'The dismissal reason was fed back to the agent so it learns what not to raise.'
                   : 'Nothing is "done" until the number is back — when the exit condition holds, the finding retires itself and the assessor returns a verdict: worked, didn\'t, or too early.'}
               </div>
             )}

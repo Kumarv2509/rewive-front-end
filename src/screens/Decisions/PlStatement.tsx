@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { usePlStatement } from '../../api/decisions';
-import { PERSONA_LABEL } from '../CommandCenter/personas';
+import { personaLabel } from '../CommandCenter/personas';
 import { severityTone } from '../Findings/meta';
 import type { PlAnomalyStatus, PlStatementLine } from '../../api/types';
 
@@ -27,7 +27,7 @@ const statusMeta: Record<PlAnomalyStatus, { tone: 'red' | 'amber' | 'green' | 'g
   raised: { tone: 'red', label: 'raised · awaiting disposition' },
   watching: { tone: 'amber', label: 'watching · exit condition / trip-wire' },
   cleared: { tone: 'green', label: 'cleared · number is back' },
-  new: { tone: 'gray', label: 'new · queued for counterpart review' },
+  new: { tone: 'gray', label: 'new · queued for agent review' },
 };
 
 // The full P&L with Budget and Forecast as the base of drift, drillable by
@@ -90,7 +90,7 @@ export function PlStatement() {
                     className={breakdown?.length ? 'row-h' : undefined}
                     style={{
                       cursor: breakdown?.length ? 'pointer' : undefined,
-                      background: sub ? 'rgba(255,255,255,.035)' : undefined,
+                      background: sub ? 'var(--glass)' : undefined,
                       scrollMarginTop: 80,
                     }}
                     onClick={breakdown?.length ? () => toggle(line.key) : undefined}
@@ -111,7 +111,7 @@ export function PlStatement() {
                     </td>
                   </tr>
                   {isOpen && breakdown?.map((row) => (
-                    <tr key={row.key} style={{ background: 'rgba(255,255,255,.02)' }}>
+                    <tr key={row.key} style={{ background: 'rgba(26,26,46,.02)' }}>
                       <td style={{ paddingLeft: 42, color: 'var(--ink-2)' }}>{row.label}</td>
                       <Num v={row.actual} />
                       <Num v={row.budget} />
@@ -146,7 +146,7 @@ export function PlStatement() {
               <div className="t1">
                 {a.findingId ? <Link to={`/operate/findings/${a.findingId}`}>{a.title}</Link> : a.title}{' '}
                 <Pill tone={severityTone[a.severity]}>{a.severity}</Pill>
-                {' '}<Pill tone="gray">→ {PERSONA_LABEL[a.routedTo]}</Pill>
+                {' '}<Pill tone="gray">→ {personaLabel(a.routedTo)}</Pill>
               </div>
               <div className="t2">
                 <a href={`#pl-line-${a.plLineKey}`} style={{ color: 'var(--accent-deep)', textDecoration: 'none' }}>
@@ -165,9 +165,9 @@ export function PlStatement() {
         ))}
       </div>
       <div style={{ marginBottom: 24, fontSize: 12, color: 'var(--ink-3)' }}>
-        Budget is the promise, forecast is the latest expectation — drift is measured against both. Anomalies a counterpart
+        Budget is the promise, forecast is the latest expectation — drift is measured against both. Anomalies an agent
         has raised link to their finding thread; <b style={{ color: 'var(--ink-2)' }}>new</b> ones are queued for the
-        counterpart watching that mandate.
+        agent watching that mandate.
       </div>
     </>
   );
