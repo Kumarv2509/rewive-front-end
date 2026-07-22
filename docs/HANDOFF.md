@@ -1,6 +1,18 @@
-# Handoff — the live analysis strip never went live; fixed (2026-07-21, latest session)
+# Handoff — the live analysis strip never went live; fixed + all pushed (2026-07-22)
 
 ## Where things stand
+
+- **PUSHED (2026-07-22) — `v5` is fully in sync with `origin/v5` at
+  `98c52e9`; working tree clean.** The 4 commits the previous handoff
+  left unpushed (`a8c19fc` disposition fixes, `17c505b` FortiGate doc,
+  `550a72d` live-sweep fix, `98c52e9` server-flags doc) went up in one
+  clean fast-forward (`76c710d..98c52e9`). **PR #5** (`v5` → `master`)
+  now carries them too. Confirming the file's own lesson: the FortiGate
+  block **was live on the office network at the start of the session**
+  (`curl https://github.com` → self-signed Fortinet cert, HTTP 000) and
+  cleared the moment the founder moved off it (→ HTTP 200), after which
+  plain `git push` just worked. Zero unpushed at handoff.
+
 
 - **THE LIVE SWEEP IS NOW EXERCISED, AND IT WAS BROKEN IN THE UI.** The
   last unexercised piece of the loop turned out to hide a real defect:
