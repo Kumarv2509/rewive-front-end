@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useBusinessContext } from '../../api/business';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { BusinessTabs } from './BusinessTabs';
 import type { BaseDataHealth } from '../../api/types';
@@ -19,12 +19,11 @@ export function CustomerSalesScreen() {
   const showTradeSpend = data.customers.some((c) => c.tradeSpendPct > 0);
   return (
     <section className="screen">
-      <h1 className="page">Sales by {data.customerDimension.toLowerCase() === 'customer' ? 'customer' : data.customerDimension}</h1>
-      <Intro
-        line={`Revenue, terms and service level per ${data.customerDimension} — where the commercial drift shows up first.`}
-        more={<>Trade spend, on-shelf availability and receivable days are the three numbers that quietly decide account profitability. Rows where an agent has raised drift link to the finding's thread.</>}
+      <PageHeader
+        title={`Sales by ${data.customerDimension.toLowerCase() === 'customer' ? 'customer' : data.customerDimension}`}
+        subtitle={`Revenue, terms and service level per ${data.customerDimension} — where the commercial drift shows up first.`}
+        tabs={<BusinessTabs />}
       />
-      <BusinessTabs />
 
       <div className="card">
         <table className="t">

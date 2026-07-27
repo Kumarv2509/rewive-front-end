@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAddBrainNode, useIndustries, useKpiBrain, useOrgProfile, useSetIndustry } from '../../api/shadowOrg';
 import { usePersonaLens } from '../../components/layout/personaLens';
 import { lensOfferedForIndustry } from '../CommandCenter/personas';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { SectionTabs, FOUNDATION_TABS } from '../../components/shared/SectionTabs';
 import { useToast } from '../../components/shared/Toast';
@@ -113,18 +113,10 @@ export function KpiBrainScreen() {
 
   return (
     <section className="screen" style={{ maxWidth: 1280 }}>
-      <SectionTabs tabs={FOUNDATION_TABS} />
-      <h1 className="page">Operating Picture</h1>
-      <Intro
-        line="The DuPont cascade: intents at the top, the P&L line by line beneath them, the mandates that move each line, and the senses that verify each mandate."
-        more={
-          <>
-            Read it top-down like a DuPont tree: every intent decomposes into P&amp;L lines, every line into the
-            mandates that move it, every mandate into the senses that watch it. Every mandate is held twice — once
-            by a person, once by its agent — and a finding on any node traces its impact up the same path:
-            sense → mandate → P&amp;L line → intent. A mandate without a sense is blind, and the picture says so.
-          </>
-        }
+      <PageHeader
+        title="Operating Picture"
+        subtitle="The DuPont cascade: intents at the top, the P&L beneath them, the mandates that move each line, and the signals that verify each mandate."
+        tabs={<SectionTabs tabs={FOUNDATION_TABS} />}
       />
 
       <IndustrySwitcher />

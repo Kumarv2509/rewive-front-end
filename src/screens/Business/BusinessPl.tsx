@@ -1,4 +1,4 @@
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { PlStatement } from '../Decisions/PlStatement';
 import { BusinessTabs } from './BusinessTabs';
 
@@ -8,12 +8,11 @@ import { BusinessTabs } from './BusinessTabs';
 export function BusinessPlScreen() {
   return (
     <section className="screen">
-      <h1 className="page">P&amp;L</h1>
-      <Intro
-        line="Actual vs budget vs forecast, drillable by two dimensions — drift anomalies route to the role whose call they are."
-        more={<>This is the same statement FP&amp;A works from in Decisions → P&amp;L impact. Every anomaly chip is a drift an agent has translated onto a P&amp;L line; the ones with a thread link to their finding.</>}
+      <PageHeader
+        title="P&L"
+        subtitle="Actual vs budget vs forecast, drillable by two dimensions — drift anomalies route to the role whose call they are."
+        tabs={<BusinessTabs />}
       />
-      <BusinessTabs />
       <PlStatement />
     </section>
   );

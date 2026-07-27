@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useEffectiveLens } from '../../components/layout/personaLens';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { StatsRow } from './StatsRow';
 import { HalfYearReview } from './HalfYearReview';
 import { DecisionsTable } from './DecisionsTable';
@@ -27,22 +27,9 @@ export function DecisionsScreen() {
 
   return (
     <section className="screen">
-      <h1 className="page">Decision Ledger</h1>
-      <Intro
-        line="The company's memory of judgment — every decision, who made it, what it cost or earned, and whether it worked."
-        more={
-          <>
-            Every disposition lands here the moment it's made: who made the call (human or agent), the finding that
-            prompted it, and what it was expected to cost or earn. 30–90 days later an assessor returns a verdict —
-            worked, didn't, or too early — with the measured impact next to the estimate that justified the call.
-            Rows link back to the finding they answered, so the whole thread is one click away.
-          </>
-        }
-        doThis={[
-          <>Click any row to jump back to the finding it answered — the decision and its cause stay attached.</>,
-          <>Compare the <b>verdict</b> against the estimate that justified the call; that gap is the thing worth learning from.</>,
-          <>Nothing to action here — this is the record. Use it to check whether the calls you made actually worked.</>,
-        ]}
+      <PageHeader
+        title="Decision Ledger"
+        subtitle="Every decision, who made it, what it cost or earned — and, 30–90 days later, whether it worked. Rows link back to the finding they answered."
       />
 
       <StatsRow persona={persona} scope={scope} />

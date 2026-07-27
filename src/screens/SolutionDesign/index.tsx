@@ -8,6 +8,7 @@ import {
   useApproveSolution,
 } from '../../api/solutionDesign';
 import { useCreateAgentSpec } from '../../api/agentSpec';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { Avatar } from '../../components/shared/Avatar';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
@@ -59,10 +60,10 @@ export function SolutionDesignScreen() {
         &larr; {fromFinding ? 'Finding' : 'Signal detail'}
       </Link>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <h1 className="page" style={{ marginBottom: 0 }}>Solution design &mdash; {solution.signalName}</h1>
-      </div>
-      <div className="sub">Owner {solution.owner.name} &middot; status {solution.status.replace(/_/g, ' ')}</div>
+      <PageHeader
+        title={<>Solution design &mdash; {solution.signalName}</>}
+        subtitle={<>Owner {solution.owner.name} &middot; status {solution.status.replace(/_/g, ' ')}</>}
+      />
 
       <div className="concept-note">
         {approved

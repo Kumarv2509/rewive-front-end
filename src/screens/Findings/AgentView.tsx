@@ -101,12 +101,12 @@ function groupByAgent(findings: Finding[], agents: ShadowAgent[]): AgentGroup[] 
 function TrackRecord({ landed, dismissed }: { landed: number; dismissed: number }) {
   const judged = landed + dismissed;
   if (judged === 0) {
-    return <div className="ag-trust-none">No verdicts yet — nothing it raised has been dispositioned.</div>;
+    return <div className="ag-trust-none">No verdicts yet — nothing it raised has been decided yet.</div>;
   }
   const pct = Math.round((landed / judged) * 100);
   return (
     <>
-      <div className="ag-meter" title={`${landed} of ${judged} dispositioned findings were treated as real`}>
+      <div className="ag-meter" title={`${landed} of ${judged} decided findings were treated as real`}>
         <span style={{ width: `${pct}%` }} />
       </div>
       <div className="ag-trust-label">

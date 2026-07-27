@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useBusinessContext } from '../../api/business';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { BusinessTabs } from './BusinessTabs';
 import type { BaseDataHealth } from '../../api/types';
@@ -16,15 +16,13 @@ export function SkuSalesScreen() {
   if (isLoading) return <section className="screen"><div className="state-msg">Loading sales…</div></section>;
   if (isError || !data) return <section className="screen"><div className="state-msg">Could not load sales data.</div></section>;
 
-  const drifting = data.skus.filter((s) => s.health !== 'ok').length;
   return (
     <section className="screen">
-      <h1 className="page">Sales by {data.skuDimension}</h1>
-      <Intro
-        line={`Year-to-date sales, margin and service level per ${data.skuDimension} — the base data the mandates watch.`}
-        more={<>Each row is a number someone owns and an agent watches. {drifting} of {data.skus.length} rows are off plan right now — where an agent has already raised the drift, the row links to the finding's thread, and that thread is where the call gets made.</>}
+      <PageHeader
+        title={`Sales by ${data.skuDimension}`}
+        subtitle={`Year-to-date sales, margin and service level per ${data.skuDimension} — the base data the mandates watch.`}
+        tabs={<BusinessTabs />}
       />
-      <BusinessTabs />
 
       <div className="card">
         <table className="t">

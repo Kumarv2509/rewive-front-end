@@ -22,7 +22,7 @@ const VERB: Record<SweepStepStatus, string> = {
   clear: 'on mandate',
   drift: 'drifting',
   raised: 'raised a finding',
-  're-alert': 'trip-wire fired',
+  're-alert': 're-alert fired',
   recovered: 'recovering',
   skipped: 'skipped',
 };

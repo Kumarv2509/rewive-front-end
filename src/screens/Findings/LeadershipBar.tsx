@@ -13,7 +13,7 @@ const OPTIONS: { key: LeadershipAction; title: string; consequence: string }[] =
   { key: 'ask', title: 'Ask', consequence: 'Request a status — ownership and the clock stay where they are' },
   { key: 'reassign', title: 'Reassign', consequence: 'Move it to another role below you; the new owner gets a fresh 24h clock' },
   { key: 'raise_priority', title: 'Raise priority', consequence: 'Bump severity one notch and halve the remaining SLA' },
-  { key: 'take', title: 'Take it', consequence: 'Pull ownership up to you — then it is your disposition to make' },
+  { key: 'take', title: 'Take it', consequence: 'Pull ownership up to you — then it is your decision to make' },
 ];
 
 export function LeadershipBar({ finding, lensRole }: { finding: Finding; lensRole: Persona }) {
@@ -53,7 +53,7 @@ export function LeadershipBar({ finding, lensRole }: { finding: Finding; lensRol
         This is {personaLabel(finding.persona)}'s call, not yours
       </div>
       <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 12 }}>
-        The disposition stays with the owner — that is what makes the ledger mean anything. You can still push on it.
+        The decision stays with the owner — that is what makes the ledger mean anything. You can still push on it.
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>

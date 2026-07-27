@@ -5,7 +5,7 @@ import { StudioToolbar } from './StudioToolbar';
 import { SimulationPanel } from './SimulationPanel';
 import { useWorkflow, useCreateWorkflow, useSaveWorkflow, useSimulateWorkflow, usePublishWorkflow } from '../../api/agentStudio';
 import { useToast } from '../../components/shared/Toast';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import type { SimulationResult, StudioEdge, StudioNode } from '../../api/types';
 
@@ -24,8 +24,10 @@ export function AgentStudioScreen() {
   if (!workflowId) {
     return (
       <section className="screen">
-        <h1 className="page">Worker Studio</h1>
-        <Intro line="Build workers visually — drag, connect, and simulate before publishing." />
+        <PageHeader
+          title="Worker Studio"
+          subtitle="Build workers visually — drag, connect, and simulate before publishing."
+        />
         <div className="card" style={{ padding: 40, textAlign: 'center' }}>
           <button
             className="btn primary"

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useBusinessContext } from '../../api/business';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { BusinessTabs } from './BusinessTabs';
 
 // The business, explained: what the company is, how it's organized, where
@@ -15,12 +15,7 @@ export function BusinessOverviewScreen() {
   const { overview } = data;
   return (
     <section className="screen">
-      <h1 className="page">{overview.orgName}</h1>
-      <Intro
-        line={overview.tagline}
-        more={<>This section is the ground the loop stands on: the company, its divisions and channels, and the base data — sales by {data.skuDimension}, by {data.customerDimension}, and the P&amp;L. Every number here is a mandate held twice; when one drifts, the row links to the finding that is already waiting on someone's call.</>}
-      />
-      <BusinessTabs />
+      <PageHeader title={overview.orgName} subtitle={overview.tagline} tabs={<BusinessTabs />} />
 
       {/* Narrative */}
       <div className="card" style={{ padding: '20px 24px', marginBottom: 16 }}>

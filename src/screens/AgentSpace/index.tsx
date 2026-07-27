@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffectiveLens } from '../../components/layout/personaLens';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { SectionTabs, AGENTS_TABS } from '../../components/shared/SectionTabs';
 import { FilterBar } from './FilterBar';
 import { AgentGrid } from './AgentGrid';
@@ -16,16 +16,16 @@ export function AgentSpaceScreen() {
 
   return (
     <section className="screen">
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <div>
-          <h1 className="page">Workforce</h1>
-          <Intro line="Every worker running for your operating context — with ROI and token cost tracked alongside execution." />
-        </div>
-        <button className="btn primary sm" style={{ flexShrink: 0 }} onClick={() => navigate('/build/create')}>
-          + New worker
-        </button>
-      </div>
-      <SectionTabs tabs={AGENTS_TABS} />
+      <PageHeader
+        title="Workforce"
+        subtitle="Every worker running for your operating context — with ROI and token cost tracked alongside execution."
+        actions={
+          <button className="btn primary sm" style={{ flexShrink: 0 }} onClick={() => navigate('/build/create')}>
+            + New worker
+          </button>
+        }
+        tabs={<SectionTabs tabs={AGENTS_TABS} />}
+      />
 
       <FilterBar filters={filters} onChange={setFilters} />
       <AgentGrid filters={{ ...filters, persona, scope }} />

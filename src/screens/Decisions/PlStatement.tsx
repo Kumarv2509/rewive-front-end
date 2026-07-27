@@ -24,8 +24,8 @@ function Num({ v }: { v: string }) {
 }
 
 const statusMeta: Record<PlAnomalyStatus, { tone: 'red' | 'amber' | 'green' | 'gray'; label: string }> = {
-  raised: { tone: 'red', label: 'raised · awaiting disposition' },
-  watching: { tone: 'amber', label: 'watching · exit condition / trip-wire' },
+  raised: { tone: 'red', label: 'raised · needs a decision' },
+  watching: { tone: 'amber', label: 'watching · recovery target / re-alert' },
   cleared: { tone: 'green', label: 'cleared · number is back' },
   new: { tone: 'gray', label: 'new · queued for agent review' },
 };
@@ -111,7 +111,7 @@ export function PlStatement() {
                     </td>
                   </tr>
                   {isOpen && breakdown?.map((row) => (
-                    <tr key={row.key} style={{ background: 'rgba(26,26,46,.02)' }}>
+                    <tr key={row.key} style={{ background: 'rgba(24,24,27,.02)' }}>
                       <td style={{ paddingLeft: 42, color: 'var(--ink-2)' }}>{row.label}</td>
                       <Num v={row.actual} />
                       <Num v={row.budget} />

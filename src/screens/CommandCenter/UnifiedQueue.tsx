@@ -5,9 +5,11 @@ import { useToast } from '../../components/shared/Toast';
 import { usePendingDecisions } from '../../api/dashboard';
 import { useApproveDecision } from '../../api/decisions';
 import { useFindings } from '../../api/shadowOrg';
-import { severityTone, slaTone } from '../Findings/meta';
+import { slaTone } from '../Findings/meta';
 import { personaLabel } from './personas';
 import type { Finding, PendingDecision, Persona, RoleScope } from '../../api/types';
+
+const SLA_AT_RISK_HOURS = 8;
 
 const actionLabelDefaults: Record<PendingDecision['actionVerb'], string> = {
   approve: 'Approve',
@@ -55,10 +57,11 @@ function SectionHead({ label, hint, count }: { label: string; hint?: string | nu
   );
 }
 
-// THE queue. Findings waiting on a disposition and decisions waiting on an
-// approval, in one ranked list with one count — the only "waiting on you"
-// number anywhere in the product. Findings first (they carry an SLA clock),
-// sectioned by the mandate that drifted, most urgent mandate on top.
+// THE queue. Findings waiting on a decision and approvals waiting on a click,
+// in one ranked list with one count — the only "waiting on you" number
+// anywhere in the product. The header is the hero stat for the whole Today
+// screen. Findings first (they carry an SLA clock), sectioned by the mandate
+// that drifted, most urgent mandate on top.
 //
 // Always role-scoped, even when the lens is widened to "+ their team" — this
 // queue means "your call", and a subordinate's finding is not. What the team
@@ -75,22 +78,28 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
   const findings = [...(findingsQ.data ?? [])].sort((a, b) => a.slaHoursRemaining - b.slaHoursRemaining);
   const decisions = decisionsQ.data ?? [];
   const total = findings.length + decisions.length;
+  const atRisk = findings.filter((f) => f.slaHoursRemaining <= SLA_AT_RISK_HOURS).length;
   const sections = mandateSections(findings);
 
   return (
     <div className="card" style={{ marginBottom: 16 }} data-tour="cc-findings">
-      <div className="sec-head">
-        <h3>Waiting on you</h3>
-        <Pill tone={total > 0 ? 'red' : 'green'}>{total}</Pill>
-        <span style={{ flex: 1 }} />
-        <Link className="all" to="/operate/findings">All findings →</Link>
+      <div className="q-hero">
+        <div className="q-count" style={{ color: total > 0 ? 'var(--ink)' : 'var(--green)' }}>{total}</div>
+        <div style={{ minWidth: 0 }}>
+          <h3>Waiting on you</h3>
+          <div className="q-sub">Findings that need your decision, approvals that need a click.</div>
+        </div>
+        <div className="q-meta">
+          {atRisk > 0 && <Pill tone="amber">{atRisk} near escalation</Pill>}
+          <Link className="all" to="/operate/findings">All findings →</Link>
+        </div>
       </div>
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
       {!isLoading && !isError && total === 0 && (
         <div className="state-msg">
           {teamScope
-            ? 'Nothing waiting on your disposition. What your organisation is carrying is rolled up on Findings.'
+            ? 'Nothing waiting on your decision. What your organisation is carrying is rolled up on Findings.'
             : 'Nothing waiting on you — your agents are watching, and the queue is clear.'}
         </div>
       )}
@@ -100,19 +109,20 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
           <SectionHead label={s.name} hint={s.plLine} count={s.items.length} />
           {s.items.map((f) => (
             <div className="dec-item" key={f.id}>
-              <div className="dec-ico" style={{ background: 'var(--accent-soft)' }}>🕵️</div>
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div className="t1">
-                  <Link to={`/operate/findings/${f.id}`}>{f.title}</Link>{' '}
-                  <Pill tone={severityTone[f.severity]}>{f.severity}</Pill>
-                  {' '}<Pill tone="gray">→ {personaLabel(f.persona)}</Pill>
-                  {f.dottedPersona && <> <Pill tone="amber">⋯ {personaLabel(f.dottedPersona)} · functional line</Pill></>}
+                  <Link to={`/operate/findings/${f.id}`}>{f.title}</Link>
                 </div>
-                <div className="t2">Finding · {f.raisedByAgentName} · {f.impactEstimate}</div>
+                <div className="t2">
+                  {f.raisedByAgentName} · {f.impactEstimate}
+                  {f.persona !== persona && <> · {personaLabel(f.persona)}</>}
+                  {f.dottedPersona && <> · visible to {personaLabel(f.dottedPersona)}</>}
+                </div>
               </div>
               <div className="acts" style={{ alignItems: 'center' }}>
+                <span className={`ag-dot sev-${f.severity}`} title={`Severity: ${f.severity}`} />
                 <Pill tone={slaTone(f.slaHoursRemaining)}>{f.slaHoursRemaining}h</Pill>
-                <Link className="btn primary sm" to={`/operate/findings/${f.id}`}>Disposition</Link>
+                <Link className="btn primary sm" to={`/operate/findings/${f.id}`}>Decide</Link>
               </div>
             </div>
           ))}

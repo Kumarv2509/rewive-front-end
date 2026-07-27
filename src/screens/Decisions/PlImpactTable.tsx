@@ -68,8 +68,8 @@ export function PlImpactTable() {
       </div>
       <div style={{ marginTop: 14, fontSize: 12, color: 'var(--ink-3)' }}>
         Tracked by FP&amp;A. <b style={{ color: 'var(--ink-2)' }}>Identified</b> — findings the agents raised against this line ·{' '}
-        <b style={{ color: 'var(--ink-2)' }}>Accepted / Acting</b> — dispositioned by the role each finding was routed to ·{' '}
-        <b style={{ color: 'var(--ink-2)' }}>Cleared</b> — exit condition met, the number is back. Impact is measured against the
+        <b style={{ color: 'var(--ink-2)' }}>Accepted / Acting</b> — decided by the role each finding was routed to ·{' '}
+        <b style={{ color: 'var(--ink-2)' }}>Cleared</b> — recovery target met, the number is back. Impact is measured against the
         same feeds that raised the findings — <Link to="/operate/findings">the open ones are here</Link>.
       </div>
     </>

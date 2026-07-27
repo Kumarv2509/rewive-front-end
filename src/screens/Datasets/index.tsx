@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { SectionTabs, FOUNDATION_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
@@ -73,19 +73,10 @@ export function DatasetsScreen() {
 
   return (
     <section className="screen">
-      <SectionTabs tabs={FOUNDATION_TABS} />
-      <h1 className="page">Datasets</h1>
-      <Intro
-        line="The data the loop will run on — declared before it arrives, so every mandate already knows its source."
-        more={
-          <>
-            Each entry is a slot for a feed: <b>expected</b> ones are placeholders awaiting their first load,
-            <b> receiving</b> ones were staged by hand, <b>live</b> ones refresh on the connector cadence. When the
-            pipeline lands, every load is profiled, reconciled against the Operating Picture, and anything off-mandate
-            becomes a finding — the same loop, fed by real data. Queue the analyses you want below; they run when the
-            data does.
-          </>
-        }
+      <PageHeader
+        title="Datasets"
+        subtitle="The data the loop will run on — declared before it arrives, so every mandate already knows its source."
+        tabs={<SectionTabs tabs={FOUNDATION_TABS} />}
       />
 
       {isLoading && <Loading />}

@@ -23,7 +23,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'cc-findings',
     where: 'Today',
     title: 'One queue — everything waiting on you',
-    body: 'Findings that need a disposition and decisions that need an approval, ranked most urgent first. The number on this queue is the only "waiting on you" count in the product. The pill is the SLA clock.',
+    body: 'Findings that need your decision and approvals that need a click, ranked most urgent first. The number on this queue is the only "waiting on you" count in the product. The pill is the SLA clock.',
   },
   {
     route: '/operate/findings',
@@ -31,7 +31,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'findings-open',
     where: 'Findings · Open',
     title: 'Every finding demands one answer',
-    body: 'Unanswered findings escalate up the chain of agents when the SLA runs out. Open one and make the call: Accept (set an exit condition), Act (opens a solution design), Acknowledge (park it on a trip-wire), or Abandon (your reason tunes the agent).',
+    body: 'Unanswered findings escalate up the chain of agents when the SLA runs out. Open one and make the call: Accept (set a recovery target), Act (open a fix), Park (re-alerts if it worsens), or Dismiss (your reason tunes the agent).',
   },
   {
     route: '/operate/findings',
@@ -39,7 +39,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'closure-exit',
     where: 'Findings · Watching',
     title: 'Nothing is "done" until the number is back',
-    body: 'Accepted findings live here as exit conditions with progress toward target. The agent keeps watching either way — regressed conditions and tripped wires resurface on their own.',
+    body: 'Accepted findings live here as recovery targets with progress toward target. The agent keeps watching either way — regressed targets and re-alerts resurface on their own.',
   },
   {
     route: '/operate/decisions',
@@ -52,7 +52,7 @@ export const TOUR_STEPS: TourStep[] = [
     route: '/operate/counterparts',
     target: 'agent-grid',
     where: 'Agents · Agents',
-    title: 'Every mandate, held twice',
+    title: 'Every number has two owners',
     body: 'One agent per function, plus an org-level chief watching the intents. Each card shows its human, open findings, SLA breaches, and a temperament dial from quiet to hair-trigger. A "needs you" pill means someone is not answering.',
   },
   {
@@ -60,14 +60,14 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'picture-map',
     where: 'Foundation · Operating Picture',
     title: 'The map it all runs on',
-    body: 'Intents at the top, the mandates that carry them, the senses that verify them. This is what the agents reason over — a finding on any node traces its impact up to the intent it threatens.',
+    body: 'Intents at the top, the mandates that carry them, the live signals that verify them. This is what the agents reason over — a finding on any node traces its impact up to the intent it threatens.',
   },
   {
     route: '/insights/people',
     target: 'loop-speed',
     where: 'Performance',
     title: 'Where the loop closes fastest',
-    body: 'Every mandate, its owner, its agent, and how quickly drift comes back to target — time to decide, time to close, and the share of loops closed inside the exit condition\'s window.',
+    body: 'Every mandate, its owner, its agent, and how quickly drift comes back to target — time to decide, time to close, and the share of loops closed inside the recovery target\'s window.',
   },
   {
     route: '/command',

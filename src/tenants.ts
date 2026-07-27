@@ -31,7 +31,7 @@ export const TENANTS: Tenant[] = [
     domain: 'americanafoods.com',
     tagline: 'Manufacturing, distribution and trade across modern and traditional channels.',
     proofPoints: [
-      '26 mandates held twice across 4 divisions',
+      '26 numbers watched by paired agents across 4 divisions',
       'Protein, G&I, Fruits & Vegetables, Ambient Foods',
       'Currency AED · Group CEO to store manager',
     ],
@@ -46,7 +46,7 @@ export const TENANTS: Tenant[] = [
     domain: 'medcare.ae',
     tagline: 'Clinical operations, revenue cycle, patient experience, pharmacy, finance and people across Dubai, Sharjah and Abu Dhabi.',
     proofPoints: [
-      '22 mandates held twice across 6 streams',
+      '22 numbers watched by paired agents across 6 streams',
       'Al Safa · Sharjah medical centres · JLT day surgery',
       'Currency AED · CFO to clinic manager',
     ],
@@ -61,7 +61,7 @@ export const TENANTS: Tenant[] = [
     domain: 'gulfprecision.com',
     tagline: 'Discrete manufacturing: production, maintenance, supplier network, quality and safety across two plants.',
     proofPoints: [
-      '17 mandates held twice across 6 streams',
+      '17 numbers watched by paired agents across 6 streams',
       'Plant 1 — Jebel Ali · Plant 2 — Dammam',
       'Currency USD · COO to quality manager',
     ],

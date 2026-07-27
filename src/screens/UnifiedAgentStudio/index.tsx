@@ -11,7 +11,7 @@ import {
   useSetReportsTo,
 } from '../../api/agentSpec';
 import { useShadowOrg } from '../../api/shadowOrg';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { HandoffCard } from '../../components/shared/HandoffCard';
@@ -103,12 +103,16 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
     <section className="screen">
       <Link to={`/build/solutions/${spec.solutionDesignId}`} className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Solution design</Link>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <h1 className="page" style={{ marginBottom: 0 }}>{spec.name}</h1>
-        <Pill tone={statusTone[spec.status]}>{spec.status.replace(/_/g, ' ')}</Pill>
-        <Pill tone="gray">v{spec.version}</Pill>
-      </div>
-      <Intro line="One spec, two altitudes — business and developer edit the same worker, not separate copies." />
+      <PageHeader
+        title={spec.name}
+        subtitle="One spec, two altitudes — business and developer edit the same worker, not separate copies."
+        actions={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Pill tone={statusTone[spec.status]}>{spec.status.replace(/_/g, ' ')}</Pill>
+            <Pill tone="gray">v{spec.version}</Pill>
+          </div>
+        }
+      />
 
       <div className="filters" style={{ marginBottom: 16 }}>
         <button className={`fchip${altitude === 'business' ? ' on' : ''}`} onClick={() => setAltitude('business')}>Business</button>

@@ -65,7 +65,7 @@ export function toFlowEdges(edges: BrainEdge[], litEdgeIds: Set<string> | null):
     const proposed = e.status === 'proposed';
     const lit = litEdgeIds?.has(e.id) ?? false;
     const dim = litEdgeIds !== null && !lit;
-    const color = proposed ? 'var(--accent)' : lit ? 'var(--accent-deep)' : 'rgba(26,26,46,.28)';
+    const color = proposed ? 'var(--accent)' : lit ? 'var(--accent-deep)' : 'rgba(24,24,27,.28)';
     return {
       id: e.id,
       source: e.source,

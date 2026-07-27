@@ -43,7 +43,7 @@ const css = `
 .om .brand .mk{width:30px;height:30px;border-radius:8px;background:var(--om-ink);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--ground);font-family:var(--om-serif)}
 .om .brand .nm{font-weight:700;letter-spacing:-.3px;font-size:16px;font-family:var(--om-serif)}
 .om .enter{font-family:var(--om-mono);font-size:.78rem;letter-spacing:.08em;text-decoration:none;color:var(--om-ink-2);border:1px solid var(--om-line-2);background:var(--om-card);border-radius:99px;padding:9px 18px;transition:all .2s;box-shadow:var(--shadow)}
-.om .enter:hover{color:var(--om-ink);border-color:rgba(26,26,46,.3)}
+.om .enter:hover{color:var(--om-ink);border-color:#C9C9D0}
 
 .om .eyebrow{font-family:var(--om-mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--om-ink-3)}
 .om h1,.om h2,.om h3{text-wrap:balance;font-weight:700;letter-spacing:-.02em;line-height:1.12;margin:0}
@@ -88,7 +88,7 @@ const css = `
 .om .viz .node{position:absolute;display:flex;flex-direction:column;align-items:center;gap:8px;width:88px}
 .om .viz .node .bx{width:44px;height:44px;border-radius:12px;border:1.5px dashed var(--om-line-2);display:flex;align-items:center;justify-content:center;font-family:var(--om-mono);font-size:.78rem;color:var(--om-ink-2);background:var(--om-card)}
 .om .viz .node .lb{font-size:.8rem;color:var(--om-ink-2);font-weight:600}
-.om .viz .node.you .bx{border-color:rgba(13,126,116,.55);color:var(--om-teal)}
+.om .viz .node.you .bx{border-color:rgba(14,116,144,.55);color:var(--om-teal)}
 .om .viz .node.you .lb{color:var(--om-teal)}
 .om .n-sense{top:0;left:0}
 .om .n-find{top:0;right:0}
@@ -104,8 +104,8 @@ const css = `
 .om .fcard .fc-body b{color:var(--om-ink);font-weight:600}
 .om .fcard .fc-chips{display:flex;gap:7px;margin-bottom:12px}
 .om .chip{font-family:var(--om-mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:3px 9px;font-weight:600}
-.om .chip.crit{color:var(--om-crit);background:var(--red-soft);border:1px solid rgba(180,35,24,.25)}
-.om .chip.sla{color:var(--om-warn);background:var(--amber-soft);border:1px solid rgba(154,103,0,.25)}
+.om .chip.crit{color:var(--om-crit);background:var(--red-soft);border:1px solid rgba(185,28,28,.25)}
+.om .chip.sla{color:var(--om-warn);background:var(--amber-soft);border:1px solid rgba(180,83,9,.25)}
 .om .fcard .fc-btns{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
 .om .fbtn{font-family:inherit;font-size:.76rem;font-weight:600;border-radius:8px;padding:7px 13px;border:1px solid var(--om-line-2);background:var(--om-card);color:var(--om-ink-2);cursor:default}
 .om .fbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -127,7 +127,7 @@ const css = `
 .om .shift{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
 .om .col{border:1px solid var(--om-line);border-radius:var(--radius);background:var(--om-card);box-shadow:var(--shadow);padding:26px 26px 12px}
 .om .col.old{background:transparent;box-shadow:none}
-.om .col.new{border-color:rgba(59,59,196,.35)}
+.om .col.new{border-color:rgba(79,70,229,.35)}
 .om .col .col-tag{font-family:var(--om-mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:18px}
 .om .col.old .col-tag{color:var(--om-ink-3)}
 .om .col.new .col-tag{color:var(--i3)}
@@ -145,7 +145,7 @@ const css = `
 .om .tier .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .om .tier .t-def{color:var(--om-ink-2);font-size:.98rem}
 .om .tier .t-def b{color:var(--om-ink);font-weight:500}
-.om .tier.intent{border-color:rgba(13,126,116,.35)}
+.om .tier.intent{border-color:rgba(14,116,144,.35)}
 .om .tier.intent .dot{background:var(--om-teal)}
 .om .tier.intent .t-label{color:var(--om-teal)}
 .om .tier.mandate .dot{background:var(--accent)}
@@ -153,7 +153,7 @@ const css = `
 .om .tier.sense .dot{background:var(--om-ink-3)}
 .om .tier.sense .t-label{color:var(--om-ink-2)}
 .om .tier-arrow{text-align:center;color:var(--om-ink-3);font-family:var(--om-mono);font-size:.7rem;letter-spacing:.14em}
-.om .held{margin-top:30px;border:1px solid rgba(59,59,196,.3);border-radius:var(--radius);background:var(--accent-soft);padding:22px 26px;font-family:var(--om-serif);font-size:clamp(1.05rem,1.8vw,1.4rem);font-weight:500;text-wrap:balance}
+.om .held{margin-top:30px;border:1px solid rgba(79,70,229,.3);border-radius:var(--radius);background:var(--accent-soft);padding:22px 26px;font-family:var(--om-serif);font-size:clamp(1.05rem,1.8vw,1.4rem);font-weight:500;text-wrap:balance}
 
 .om .loop{display:grid;grid-template-columns:minmax(0,440px) 1fr;gap:clamp(28px,5vw,68px);align-items:center;margin-top:20px}
 .om .loop-svg-wrap{position:relative}
@@ -172,9 +172,9 @@ const css = `
 .om .dcard .verb{font-size:1.2rem;font-weight:700;letter-spacing:-.01em;font-family:var(--om-serif)}
 .om .dcard .tag{font-family:var(--om-mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;align-self:flex-start;border-radius:99px;padding:4px 10px;border:1px solid transparent}
 .om .dcard p{font-size:.9rem;color:var(--om-ink-2);line-height:1.55}
-.om .dcard.accept .verb{color:var(--om-teal)}.om .dcard.accept .tag{color:var(--om-teal);background:var(--teal-soft);border-color:rgba(13,126,116,.3)}
-.om .dcard.act .verb{color:var(--accent-deep)}.om .dcard.act .tag{color:var(--accent-deep);background:var(--accent-soft);border-color:rgba(59,59,196,.3)}
-.om .dcard.ack .verb{color:var(--om-warn)}.om .dcard.ack .tag{color:var(--om-warn);background:var(--amber-soft);border-color:rgba(154,103,0,.28)}
+.om .dcard.accept .verb{color:var(--om-teal)}.om .dcard.accept .tag{color:var(--om-teal);background:var(--teal-soft);border-color:rgba(14,116,144,.3)}
+.om .dcard.act .verb{color:var(--accent-deep)}.om .dcard.act .tag{color:var(--accent-deep);background:var(--accent-soft);border-color:rgba(79,70,229,.3)}
+.om .dcard.ack .verb{color:var(--om-warn)}.om .dcard.ack .tag{color:var(--om-warn);background:var(--amber-soft);border-color:rgba(180,83,9,.28)}
 .om .dcard.abandon .verb{color:var(--om-ink-2)}.om .dcard.abandon .tag{color:var(--om-ink-2);background:var(--glass);border-color:var(--om-line)}
 .om .dispo-foot{margin-top:20px;font-family:var(--om-mono);font-size:.82rem;color:var(--om-ink-3);letter-spacing:.02em}
 .om .dispo-foot b{color:var(--om-crit);font-weight:500}
@@ -268,7 +268,7 @@ function HeroViz() {
   return (
     <div className="viz" aria-hidden="true">
       <svg className="wires" viewBox="0 0 560 500" fill="none" preserveAspectRatio="none">
-        <g stroke="rgba(26,26,46,.30)" strokeWidth="1.5" strokeDasharray="4 6">
+        <g stroke="rgba(24,24,27,.30)" strokeWidth="1.5" strokeDasharray="4 6">
           <path d="M 92 22 H 468" markerEnd="url(#omArr)" />
           <path d="M 514 48 V 430" markerEnd="url(#omArr)" />
           <path d="M 468 478 H 92" markerEnd="url(#omArr)" />
@@ -276,7 +276,7 @@ function HeroViz() {
         </g>
         <defs>
           <marker id="omArr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-            <path d="M0,0 L8,4 L0,8" fill="none" stroke="rgba(26,26,46,.45)" strokeWidth="1.5" />
+            <path d="M0,0 L8,4 L0,8" fill="none" stroke="rgba(24,24,27,.45)" strokeWidth="1.5" />
           </marker>
         </defs>
       </svg>
@@ -300,12 +300,12 @@ function HeroViz() {
         <div className="fc-btns">
           <span className="fbtn primary">Accept</span>
           <span className="fbtn">Act</span>
-          <span className="fbtn">Acknowledge</span>
-          <span className="fbtn">Abandon</span>
+          <span className="fbtn">Park</span>
+          <span className="fbtn">Dismiss</span>
         </div>
         <div className="fc-foot">3 · Decide — yours. The agents run the rest.</div>
       </div>
-      <div className="viz-cap">A finding, waiting — decide, or it escalates on its SLA</div>
+      <div className="viz-cap">A finding, waiting — decide, or it escalates upward</div>
     </div>
   );
 }
@@ -329,7 +329,7 @@ export function LandingScreen() {
           <div>
             <span className="kicker"><span className="live" /> The Decision Accountability Layer</span>
             <h1>Nothing drifts <span className="grad-text">unanswered</span>.</h1>
-            <p className="lede">Every number has an owner and an agent. When it drifts, a finding demands a decision — and silence escalates until someone owns the call.</p>
+            <p className="lede">Rewive watches your numbers alongside the people who own them. When one drifts, it raises a finding, gets it decided, and keeps watching until the number is back.</p>
             <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by its agent.</p>
             <IndustryPicker />
           </div>
@@ -347,7 +347,7 @@ export function LandingScreen() {
             <span className="a-where">Foundation</span>
             <h3>Operating Picture</h3>
             <span className="a-what">The map</span>
-            <p>What the company is trying to make true: <b>intents</b>, carried by <b>mandates</b>, verified by <b>senses</b> — one live structure, not a dashboard.</p>
+            <p>What the company is trying to make true: <b>intents</b>, carried by <b>mandates</b>, verified by live <b>signals</b> — one live structure, not a dashboard.</p>
           </div>
           <div className="acard">
             <span className="a-where">Operate</span>
@@ -364,14 +364,14 @@ export function LandingScreen() {
           <div className="acard">
             <span className="a-where">Operate</span>
             <h3>Closure</h3>
-            <span className="a-what">The exit condition</span>
-            <p>Accepted findings become measurable exit conditions, watched until met. <b>Nothing is "done" until the number is back.</b></p>
+            <span className="a-what">The recovery target</span>
+            <p>Accepted findings become measurable recovery targets, watched until met. <b>Nothing is "done" until the number is back.</b></p>
           </div>
           <div className="acard">
             <span className="a-where">Operate</span>
             <h3>Decision Ledger</h3>
             <span className="a-what">The memory</span>
-            <p>Every disposition is recorded with its expected impact — and an assessor returns later with the verdict: <b>worked, didn't, too early</b>.</p>
+            <p>Every decision is recorded with its expected impact — and an assessor returns later with the verdict: <b>worked, didn't, too early</b>.</p>
           </div>
         </div>
         <p className="anatomy-foot">Everything is industry-parameterized — the same five primitives, seeded for <b>FMCG</b> and <b>Healthcare</b> operating contexts.</p>
@@ -422,8 +422,8 @@ export function LandingScreen() {
           </div>
           <div className="tier-arrow">▲ verified by</div>
           <div className="tier sense">
-            <div className="t-label"><span className="dot" />Senses</div>
-            <div className="t-def"><b>What the agents perceive through.</b> The data feeds behind every mandate — POS, plant telemetry, the planning system. A mandate without a sense is blind, and the picture says so.</div>
+            <div className="t-label"><span className="dot" />Signals</div>
+            <div className="t-def"><b>What the agents perceive through.</b> The data feeds behind every mandate — POS, plant telemetry, the planning system. A mandate without a signal is blind, and the picture says so.</div>
           </div>
         </div>
         <p className="held">Every mandate is held twice — once by a person, once by its agent. The person decides. The agent never looks away.</p>
@@ -436,51 +436,51 @@ export function LandingScreen() {
         <div className="loop">
           <div className="loop-svg-wrap">
             <svg viewBox="0 0 600 600" role="img" aria-label="The five-stage operating loop: sense, find, decide, act, close, repeating.">
-              <circle cx="300" cy="300" r="240" fill="none" stroke="rgba(26,26,46,.12)" strokeWidth="1.5" />
-              <circle className="om-pulse" cx="300" cy="300" r="240" fill="none" stroke="#3B3BC4" strokeWidth="3" strokeLinecap="round" strokeDasharray="90 1418" strokeDashoffset="0" />
-              <text x="300" y="290" textAnchor="middle" fontFamily="ui-monospace,SF Mono,Menlo,monospace" fontSize="13" letterSpacing="3" fill="#9A9DB0">CONTINUOUS</text>
-              <text x="300" y="318" textAnchor="middle" fontFamily="Iowan Old Style,Palatino,Georgia,serif" fontSize="22" fontWeight="600" fill="#1A1A2E">The loop</text>
+              <circle cx="300" cy="300" r="240" fill="none" stroke="rgba(24,24,27,.12)" strokeWidth="1.5" />
+              <circle className="om-pulse" cx="300" cy="300" r="240" fill="none" stroke="#4F46E5" strokeWidth="3" strokeLinecap="round" strokeDasharray="90 1418" strokeDashoffset="0" />
+              <text x="300" y="290" textAnchor="middle" fontFamily="ui-monospace,SF Mono,Menlo,monospace" fontSize="13" letterSpacing="3" fill="#9C9CA6">CONTINUOUS</text>
+              <text x="300" y="318" textAnchor="middle" fontFamily="Inter Variable,Inter,sans-serif" fontSize="21" fontWeight="600" letterSpacing="-0.3" fill="#18181B">The loop</text>
               <g fontFamily="ui-monospace,SF Mono,Menlo,monospace" fontSize="15" fontWeight="600">
-                <circle cx="300" cy="60" r="27" fill="#FFFFFF" stroke="#3B3BC4" strokeWidth="1.6" />
-                <text x="300" y="66" textAnchor="middle" fill="#2E2EA8">1</text>
-                <text x="300" y="24" textAnchor="middle" fontSize="14" fill="#1A1A2E">Sense</text>
-                <circle cx="528" cy="226" r="27" fill="#FFFFFF" stroke="#3B3BC4" strokeWidth="1.6" />
-                <text x="528" y="232" textAnchor="middle" fill="#2E2EA8">2</text>
-                <text x="528" y="277" textAnchor="middle" fontSize="14" fill="#1A1A2E">Find</text>
-                <circle cx="441" cy="494" r="27" fill="#FFFFFF" stroke="#0D7E74" strokeWidth="1.8" />
-                <text x="441" y="500" textAnchor="middle" fill="#0D7E74">3</text>
-                <text x="441" y="545" textAnchor="middle" fontSize="14" fill="#1A1A2E">Decide</text>
-                <circle cx="159" cy="494" r="27" fill="#FFFFFF" stroke="#3B3BC4" strokeWidth="1.6" />
-                <text x="159" y="500" textAnchor="middle" fill="#2E2EA8">4</text>
-                <text x="159" y="545" textAnchor="middle" fontSize="14" fill="#1A1A2E">Act</text>
-                <circle cx="72" cy="226" r="27" fill="#FFFFFF" stroke="#3B3BC4" strokeWidth="1.6" />
-                <text x="72" y="232" textAnchor="middle" fill="#2E2EA8">5</text>
-                <text x="72" y="277" textAnchor="middle" fontSize="14" fill="#1A1A2E">Close</text>
+                <circle cx="300" cy="60" r="27" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.6" />
+                <text x="300" y="66" textAnchor="middle" fill="#4338CA">1</text>
+                <text x="300" y="24" textAnchor="middle" fontSize="14" fill="#18181B">Sense</text>
+                <circle cx="528" cy="226" r="27" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.6" />
+                <text x="528" y="232" textAnchor="middle" fill="#4338CA">2</text>
+                <text x="528" y="277" textAnchor="middle" fontSize="14" fill="#18181B">Find</text>
+                <circle cx="441" cy="494" r="27" fill="#FFFFFF" stroke="#0E7490" strokeWidth="1.8" />
+                <text x="441" y="500" textAnchor="middle" fill="#0E7490">3</text>
+                <text x="441" y="545" textAnchor="middle" fontSize="14" fill="#18181B">Decide</text>
+                <circle cx="159" cy="494" r="27" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.6" />
+                <text x="159" y="500" textAnchor="middle" fill="#4338CA">4</text>
+                <text x="159" y="545" textAnchor="middle" fontSize="14" fill="#18181B">Act</text>
+                <circle cx="72" cy="226" r="27" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.6" />
+                <text x="72" y="232" textAnchor="middle" fill="#4338CA">5</text>
+                <text x="72" y="277" textAnchor="middle" fontSize="14" fill="#18181B">Close</text>
               </g>
             </svg>
           </div>
           <ol className="stages">
             <li className="stage"><span className="n">1</span><div><h3>Sense</h3><p>Each agent watches the data feeds behind its mandates — <b>continuously</b>, not on a reporting cadence.</p></div></li>
             <li className="stage"><span className="n">2</span><div><h3>Find</h3><p>When reality drifts from a mandate, the agent raises a <b>finding</b> and traces its impact path up to the intent it threatens.</p></div></li>
-            <li className="stage"><span className="n">3</span><div><h3>Decide</h3><p>The finding demands a human call — one of <b>four dispositions</b>. Nothing proceeds without it; unanswered findings escalate up the chain of agents.</p></div></li>
-            <li className="stage"><span className="n">4</span><div><h3>Act</h3><p>The decision sets the machine in motion: a watched exit condition, a solution with tasks handed to workers, or a deliberate pause.</p></div></li>
-            <li className="stage"><span className="n">5</span><div><h3>Close</h3><p>Nothing is "done" until the number is back — met exit conditions retire the finding, a dismissal <b>tunes the agent</b>, and every decision lands in the ledger with a verdict. Then back to sensing.</p></div></li>
+            <li className="stage"><span className="n">3</span><div><h3>Decide</h3><p>The finding demands a human call — one of <b>four answers</b> — Accept, Act, Park, or Dismiss. Nothing proceeds without it; unanswered findings escalate up the chain of agents.</p></div></li>
+            <li className="stage"><span className="n">4</span><div><h3>Act</h3><p>The decision sets the machine in motion: a watched recovery target, a fix with tasks handed to workers, or a deliberate pause.</p></div></li>
+            <li className="stage"><span className="n">5</span><div><h3>Close</h3><p>Nothing is "done" until the number is back — met recovery targets retire the finding, a dismissal <b>tunes the agent</b>, and every decision lands in the ledger with a verdict. Then back to sensing.</p></div></li>
           </ol>
         </div>
       </section>
 
       {/* FOUR DISPOSITIONS */}
       <section className="wrap">
-        <div className="sec-eyebrow"><span className="eyebrow">The decision — four dispositions</span><span className="tick" /></div>
+        <div className="sec-eyebrow"><span className="eyebrow">The decision — four answers</span><span className="tick" /></div>
         <h2>The agent brings the finding. The human owns the call.</h2>
         <p className="lede" style={{ marginTop: 18 }}>Every finding forces a choice — and each choice is a different instruction to the organization, not a status you set and forget.</p>
         <div className="dispo">
-          <div className="dcard accept"><span className="tag">it's real</span><div className="verb">Accept</div><p>Set a measurable exit condition. The agent keeps watching until the number is truly back — then closes the loop itself.</p></div>
-          <div className="dcard act"><span className="tag">fix it now</span><div className="verb">Act</div><p>Open a solution, broken into tasks. New work goes to new workers, existing workers are reused, humans own the rest.</p></div>
-          <div className="dcard ack"><span className="tag">not yet</span><div className="verb">Acknowledge</div><p>A known issue, parked with a trip-wire. It comes back — louder — the moment it crosses the line you set.</p></div>
-          <div className="dcard abandon"><span className="tag">not real</span><div className="verb">Abandon</div><p>Dismiss it with a reason. The reason isn't paperwork — it's the signal that <b>tunes the agent</b> so it learns what not to raise.</p></div>
+          <div className="dcard accept"><span className="tag">it's real</span><div className="verb">Accept</div><p>Set a measurable recovery target. The agent keeps watching until the number is truly back — then closes the loop itself.</p></div>
+          <div className="dcard act"><span className="tag">fix it now</span><div className="verb">Act</div><p>Open a fix, broken into tasks. New work goes to new workers, existing workers are reused, humans own the rest.</p></div>
+          <div className="dcard ack"><span className="tag">not yet</span><div className="verb">Park</div><p>A known issue, parked behind a re-alert line. It comes back — louder — the moment it crosses the line you set.</p></div>
+          <div className="dcard abandon"><span className="tag">not real</span><div className="verb">Dismiss</div><p>Dismiss it with a reason. The reason isn't paperwork — it's the signal that <b>tunes the agent</b> so it learns what not to raise.</p></div>
         </div>
-        <p className="dispo-foot">No disposition is a decision too — <b>ignored findings escalate automatically</b> up the chain of agents until someone owns them.</p>
+        <p className="dispo-foot">Not deciding is a decision too — <b>ignored findings escalate automatically</b> up the chain of agents until someone owns them.</p>
       </section>
 
       {/* THE PROOF — NUMBERS + DECISION LEDGER */}
@@ -491,7 +491,7 @@ export function LandingScreen() {
         <div className="stats">
           <div className="stat"><div className="sv">142</div><div className="sk">Decisions tracked this quarter — each with an owner and a prompt</div></div>
           <div className="stat"><div className="sv">78<em>%</em></div><div className="sk">Decision win rate, judged by the assessor after the fact — up from 61%</div></div>
-          <div className="stat"><div className="sv">4.0<em>h</em></div><div className="sk">Median time from finding to disposition — was 2.1 days</div></div>
+          <div className="stat"><div className="sv">4.0<em>h</em></div><div className="sk">Median time from finding to decision — was 2.1 days</div></div>
           <div className="stat"><div className="sv">AED 1.2<em>M</em></div><div className="sk">Measured impact this quarter, across 31 assessed decisions</div></div>
         </div>
         <p className="stats-cap">From the FMCG demo organization's current quarter.</p>
@@ -506,7 +506,7 @@ export function LandingScreen() {
           </div>
           <div className="tier sense">
             <div className="t-label"><span className="dot" />Closed</div>
-            <div className="t-def"><b>Nothing is "done" until the number is back.</b> Accepted findings become exit conditions the agent watches; acknowledged ones sit on a trip-wire.</div>
+            <div className="t-def"><b>Nothing is "done" until the number is back.</b> Accepted findings become recovery targets the agent watches; parked ones sit behind a re-alert line.</div>
           </div>
         </div>
         <p className="held">Auditable by a CFO, not just admired in a review meeting — the ledger is what the accountability layer produces.</p>
@@ -520,8 +520,8 @@ export function LandingScreen() {
           <div className="seat">
             <span className="s-role">Rewive for the store manager</span>
             <h3>Your mandates, your findings, one tap to answer.</h3>
-            <p>The Command Center filters to the mandates you hold. A finding arrives sized to your store — <b>what drifted, what it costs, what the agent suggests</b> — and your disposition is one tap, with the SLA clock visible.</p>
-            <span className="s-screen">Command Center · persona: store manager</span>
+            <p>Today filters to the mandates you hold. A finding arrives sized to your store — <b>what drifted, what it costs, what the agent suggests</b> — and your decision is one tap, with the SLA clock visible.</p>
+            <span className="s-screen">Today · persona: store manager</span>
           </div>
           <div className="seat">
             <span className="s-role">Rewive for the operations head</span>
@@ -551,7 +551,7 @@ export function LandingScreen() {
             <div className="ex-step"><span className="s-tag">1 · Sense</span><span className="s-body">Watches the <b>POS and forecast feeds</b> behind the frozen-category fill mandate.</span></div>
             <div className="ex-step"><span className="s-tag">2 · Find</span><span className="s-body">"Frozen forecast bias is starving modern trade." Traced up to the <b>Revenue growth</b> intent.</span></div>
             <div className="ex-step pivot"><span className="s-tag">3 · Decide</span><span className="s-body">The planning owner reviews the impact path and clicks <b>Accept</b>.</span></div>
-            <div className="ex-step"><span className="s-tag">4 · Act</span><span className="s-body">Exit condition set: <b>frozen fill ≥ 96% for four straight weeks</b>, watched automatically.</span></div>
+            <div className="ex-step"><span className="s-tag">4 · Act</span><span className="s-body">Recovery target set: <b>frozen fill ≥ 96% for four straight weeks</b>, watched automatically.</span></div>
             <div className="ex-step"><span className="s-tag">5 · Close</span><span className="s-body">Fill recovers, the condition is met, the finding <b>closes itself</b> — and the decision lands in the ledger with its verdict.</span></div>
           </div>
         </div>

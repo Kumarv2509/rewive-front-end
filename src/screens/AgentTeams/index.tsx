@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useKpiBrain, useShadowOrg, useFindings } from '../../api/shadowOrg';
 import { useAgentCatalog } from '../../api/agentSpace';
 import { useEffectiveLens } from '../../components/layout/personaLens';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { SectionTabs, AGENTS_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
@@ -281,20 +281,11 @@ export function AgentTeamsScreen() {
 
   return (
     <section className="screen" style={{ maxWidth: 1080 }}>
-      <h1 className="page">Agents</h1>
-      <Intro
-        line="Each agent commands a workforce — the mandate it holds is the thread that connects the two."
-        more={
-          <>
-            A holder <b>agent</b> watches its function’s mandates and raises findings when they drift. When you
-            <b> Act</b> on a finding, you spawn a <b>worker</b> to fix it — and that worker executes runs against the
-            same mandate. This view stacks that top to bottom: the org’s agents, and under each, the workforce
-            running on its mandates. Every worker belongs to exactly one team — the agent that holds the mandate it
-            works. Agents still building a workforce sit in the strip at the bottom.
-          </>
-        }
+      <PageHeader
+        title="Agents"
+        subtitle="Each agent commands a workforce — the mandate it holds is the thread that connects the two."
+        tabs={<SectionTabs tabs={AGENTS_TABS} />}
       />
-      <SectionTabs tabs={AGENTS_TABS} />
 
       {chief && (
         <div className="card" style={{ padding: '16px 22px', marginBottom: 18, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 18, borderColor: 'var(--accent)' }}>

@@ -1,8 +1,8 @@
 import { Link, useParams } from 'react-router-dom';
 import { useClosureKpis, useFinding, useKpiBrain } from '../../api/shadowOrg';
 import { Pill } from '../../components/shared/Pill';
-import { Intro } from '../../components/shared/Intro';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
+import { LoopStrip, type LoopStage } from '../../components/shared/LoopStrip';
 import { ImpactPath } from './ImpactPath';
 import { DispositionBar } from './DispositionBar';
 import { LeadershipBar } from './LeadershipBar';
@@ -35,8 +35,9 @@ function ThreadStep({ n, state, title, when, children }: {
 }
 
 // The thread: one finding's whole journey on a single spine —
-// raised → decided → watching → closed + verdict. Every list links here;
-// this page is where the loop is *seen* rather than explained.
+// Detected → Decided → Watching → Closed. Every list links here; this page is
+// where the loop is *seen* rather than explained, so the LoopStrip on top and
+// the step titles use the same five words as everywhere else.
 export function FindingDetailScreen() {
   const { findingId } = useParams();
   const { data: finding, isLoading, isError } = useFinding(findingId);
@@ -52,7 +53,7 @@ export function FindingDetailScreen() {
   const stream = brain?.streams.find((s) => s.key === finding.streamKey);
   const closure = finding.closureKpiId ? closures?.find((c) => c.id === finding.closureKpiId) : undefined;
 
-  // The agent connects the drift back to a sense: when the impact path leads
+  // The agent connects the drift back to a signal: when the impact path leads
   // with one (kind 'driver'), surface it as the suspected cause. The fuller
   // "why" comes from the upstream-signal evidence row the sweep writes.
   const causeStep = finding.impactPath[0]?.kind === 'driver' ? finding.impactPath[0] : null;
@@ -65,12 +66,17 @@ export function FindingDetailScreen() {
   const leadsOwner =
     lensRole !== 'all' && !isOwner && roleSubtree(lensRole).includes(finding.persona);
   const isAbandoned = finding.status === 'abandoned';
+  const isClosed = !!finding.assessorVerdict || isAbandoned || closure?.status === 'closed';
   const watchState: StepState = isOpen ? 'todo' : isAbandoned ? 'done' : closure?.status === 'closed' ? 'done' : 'now';
-  const closedState: StepState = finding.assessorVerdict || isAbandoned || closure?.status === 'closed' ? 'done' : 'todo';
+  const closedState: StepState = isClosed ? 'done' : 'todo';
+  const loopStage: LoopStage = isOpen ? 'Decide' : isClosed ? 'Close' : 'Act';
 
   return (
     <section className="screen" style={{ maxWidth: 940 }}>
-      <Link to="/operate/findings" className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Findings</Link>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+        <Link to="/operate/findings" className="btn ghost sm" style={{ display: 'inline-flex' }}>&larr; Findings</Link>
+        <LoopStrip stage={loopStage} />
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
         <Pill tone={severityTone[finding.severity]}>{finding.severity}</Pill>
@@ -79,37 +85,18 @@ export function FindingDetailScreen() {
       <div className="sub" style={{ marginBottom: 20 }}>
         {finding.entity && <>{finding.entity}{finding.region ? ` (${finding.region})` : ''} · </>}
         {finding.impactEstimate}
-        {finding.escalationLevel > 0 && <> {' '}<Pill tone="red">escalated ×{finding.escalationLevel}</Pill></>}
-        {finding.awaitingResponseTo && <> {' '}<Pill tone="amber">status asked by {personaLabel(finding.awaitingResponseTo)}</Pill></>}
-        {finding.dottedPersona && <> {' '}<Pill tone="amber">⋯ flagged to {personaLabel(finding.dottedPersona)} · functional line</Pill></>}
+        {finding.escalationLevel > 0 && <> · <span style={{ color: 'var(--red)' }}>escalated ×{finding.escalationLevel}</span></>}
+        {finding.awaitingResponseTo && <> · status asked by {personaLabel(finding.awaitingResponseTo)}</>}
+        {finding.dottedPersona && <> · visible to {personaLabel(finding.dottedPersona)}</>}
         {isOpen
-          ? <> {' '}<Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h left on SLA</Pill></>
+          ? <> {' '}<Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h left</Pill></>
           : <> {' '}<Pill tone={statusTone[finding.status]}>{statusLabel[finding.status]}</Pill></>}
       </div>
 
-      {isOpen && (
-        <Intro
-          line="This is the thread — one finding's whole life on a single spine: raised → decided → watching → closed."
-          doThis={
-            leadsOwner
-              ? [
-                  <>This is <b>{personaLabel(finding.persona)}'s</b> call. Read it, but do not decide it — the ledger records the decision against whoever makes it.</>,
-                  <>To push: <b>Ask</b> for a status, <b>Reassign</b> it, or <b>Raise priority</b>. None of these move the decision to you.</>,
-                  <><b>Take it</b> only if the call really is yours — ownership transfers and you then owe the disposition.</>,
-                ]
-              : [
-                  <>Read the <b>evidence</b> and follow the <b>impact path</b> before deciding — the agent shows its working.</>,
-                  <>Give it one of four answers. Accept sets an exit condition; Act opens a solution; Acknowledge sets a trip-wire; Abandon needs a reason, which tunes the agent.</>,
-                  <>Not yours? <b>Escalate</b> rather than leaving it — the clock escalates it anyway, just later and with your name on the delay.</>,
-                ]
-          }
-        />
-      )}
-
       <div className="card" style={{ padding: '22px 24px' }}>
         <div className="thread">
-          {/* 1 — SENSED & RAISED */}
-          <ThreadStep n={1} state="done" title={`Sensed & raised · ${finding.raisedByAgentName}`} when={new Date(finding.detectedAt).toLocaleString()}>
+          {/* 1 — DETECTED */}
+          <ThreadStep n={1} state="done" title={`Detected · ${finding.raisedByAgentName}`} when={new Date(finding.detectedAt).toLocaleString()}>
             {finding.origin === 'sweep' && (
               <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 8 }}>
                 Raised by the live sweep · {finding.rule?.replace(/_/g, ' ') ?? 'drift rule'} on real data
@@ -117,23 +104,23 @@ export function FindingDetailScreen() {
             )}
             <div style={{ fontSize: 13, marginBottom: 12 }}>{finding.summary}</div>
             {causeStep && (
-              <div style={{ marginBottom: 14, padding: '11px 14px', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 10, background: 'var(--accent-soft)' }}>
-                <div style={{ fontWeight: 700, fontSize: 10.5, color: 'var(--accent-deep)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 3 }}>
+              <div style={{ marginBottom: 14, padding: '11px 14px', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 'var(--radius)', background: 'var(--accent-soft)' }}>
+                <div style={{ fontWeight: 600, fontSize: 10.5, color: 'var(--accent-deep)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 3 }}>
                   Suspected cause · what the agent looked at first
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 13 }}>{causeStep.nodeName}</div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{causeStep.nodeName}</div>
                 {causeWhy && <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 2 }}>{causeWhy}</div>}
               </div>
             )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 10, flexWrap: 'wrap' }}>
-              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--ink-2)' }}>
+              <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--ink-2)' }}>
                 Impact path{stream ? <> · {stream.name}</> : null} — how this reaches an intent
               </div>
               <Link className="btn ghost sm" to={`/build/picture?focus=${finding.linkedKpiNodeId}`}>View in the Operating Picture →</Link>
             </div>
             <ImpactPath steps={finding.impactPath} />
-            <div style={{ marginTop: 12, border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px' }}>
-              <div style={{ fontWeight: 700, fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.4px' }}>Evidence</div>
+            <div style={{ marginTop: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
+              <div className="eyebrow" style={{ marginBottom: 4 }}>Evidence</div>
               {finding.evidence.map((e, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '6px 0', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>{e.label}</div>
@@ -149,7 +136,7 @@ export function FindingDetailScreen() {
               {finding.escalatedFrom && (
                 <div style={{ fontSize: 12.5, color: 'var(--ink-2)', marginBottom: 10 }}>
                   ↑ This became {personaLabel(finding.persona)}'s call because {personaLabel(finding.escalatedFrom)} let
-                  the SLA lapse
+                  the clock run out
                   {finding.escalationTrail && finding.escalationTrail.length > 1
                     ? ` (${finding.escalationTrail.length} levels so far)`
                     : ''}
@@ -201,14 +188,14 @@ export function FindingDetailScreen() {
             state={watchState}
             title={
               isAbandoned ? 'Watching — not needed, dismissed with a reason'
-                : closure ? `Watching — exit condition, held by ${closure.watchedByAgentName}`
-                  : finding.status === 'acting' ? 'Acting — solution in motion'
-                    : finding.status === 'acknowledged' ? 'Watching — parked on a trip-wire'
-                      : 'Watching — set by your disposition'
+                : closure ? `Watching — recovery target, held by ${closure.watchedByAgentName}`
+                  : finding.status === 'acting' ? 'Acting — fix in motion'
+                    : finding.status === 'acknowledged' ? 'Watching — parked, will re-alert'
+                      : 'Watching — set by your decision'
           }
           >
             {closure && (
-              <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px' }}>
+              <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
                   <div style={{ fontWeight: 600, fontSize: 12.5 }}>{closure.name}</div>
                   <Pill tone={closure.status === 'closed' ? 'green' : closure.status === 'regressed' ? 'red' : 'teal'}>{closure.status}</Pill>
@@ -231,7 +218,7 @@ export function FindingDetailScreen() {
             )}
             {isOpen && (
               <div style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>
-                Accept sets a measurable exit condition here; Acknowledge sets a trip-wire; Act opens a solution.
+                Accept sets a recovery target here; Park sets a re-alert rule; Act opens a fix.
               </div>
             )}
           </ThreadStep>
@@ -240,18 +227,18 @@ export function FindingDetailScreen() {
           <ThreadStep
             n={4}
             state={closedState}
-            title={finding.assessorVerdict ? `Closed — assessor verdict: ${finding.assessorVerdict.verdict.replace('_', ' ')}` : isAbandoned ? 'Closed — dismissed, agent tuned' : 'Close + verdict'}
+            title={finding.assessorVerdict ? `Closed — verdict: ${finding.assessorVerdict.verdict.replace('_', ' ')}` : isAbandoned ? 'Closed — dismissed, agent tuned' : 'Close + verdict'}
             when={finding.assessorVerdict ? new Date(finding.assessorVerdict.at).toLocaleString() : undefined}
           >
             {finding.assessorVerdict ? (
-              <div style={{ border: '1px solid rgba(74,222,128,.3)', borderRadius: 10, padding: '10px 14px', background: 'var(--green-soft)', fontSize: 12.5, color: 'var(--ink-2)' }}>
+              <div style={{ border: '1px solid rgba(21,128,61,.25)', borderRadius: 'var(--radius)', padding: '10px 14px', background: 'var(--green-soft)', fontSize: 12.5, color: 'var(--ink-2)' }}>
                 {finding.assessorVerdict.note}
               </div>
             ) : (
               <div style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>
                 {isAbandoned
                   ? 'The dismissal reason was fed back to the agent so it learns what not to raise.'
-                  : 'Nothing is "done" until the number is back — when the exit condition holds, the finding retires itself and the assessor returns a verdict: worked, didn\'t, or too early.'}
+                  : 'Nothing is "done" until the number is back — when the recovery target holds, the finding retires itself and the assessor agent returns a verdict: worked, didn\'t, or too early.'}
               </div>
             )}
           </ThreadStep>

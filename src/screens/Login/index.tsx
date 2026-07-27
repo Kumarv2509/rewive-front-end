@@ -58,7 +58,7 @@ export function LoginScreen() {
             {tenant.proofPoints.map((p) => <li key={p}>{p}</li>)}
           </ul>
         </div>
-        <div className="login-brand-foot">“Every mandate, held twice.”</div>
+        <div className="login-brand-foot">“Nothing drifts unanswered.”</div>
       </div>
 
       <div className="login-auth">

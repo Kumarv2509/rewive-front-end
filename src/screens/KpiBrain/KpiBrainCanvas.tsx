@@ -176,7 +176,7 @@ export function KpiBrainCanvas({ brain, focusNodeId }: { brain: KpiBrain; focusN
         fitViewOptions={{ padding: 0.15, maxZoom: 0.85 }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={22} color="rgba(26,26,46,.10)" />
+        <Background gap={22} color="rgba(24,24,27,.08)" />
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>

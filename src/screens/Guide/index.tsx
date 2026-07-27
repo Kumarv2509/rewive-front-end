@@ -6,6 +6,7 @@ import { startTour } from '../../components/tour/store';
 // Static help content — a new user's first loop as a full-screen intro scroller
 // (mobile-onboarding style: one step per screen, snap scrolling, dots, skip).
 // Every step deep-links into the live screen it describes.
+// Five steps = the five loop words. Each deep-links into the live screen.
 const STEPS: {
   title: string;
   where: string;
@@ -15,118 +16,58 @@ const STEPS: {
   doThis: string[];
 }[] = [
   {
-    title: 'Start your day on Today',
-    where: 'Today',
-    to: '/command',
-    cta: 'Open Today',
-    what: 'The greeting tells you what Rewive executed since yesterday and how many calls are waiting on you. Below it: one queue of findings and approvals, the live pulse, and runs in flight.',
+    title: 'Sense — your agents watch every number',
+    where: 'Agents · Foundation',
+    to: '/operate/counterparts',
+    cta: 'Meet your agents',
+    what: 'Every number that matters has two owners: a person, and an agent that never looks away. The agents read the live data feeds behind each mandate continuously — not on a reporting cadence.',
     doThis: [
-      'Read the summary sentence — it is your morning briefing.',
-      '"Waiting on you" is always your own call — even with the lens widened to your team.',
-      'Anything in that queue is your first job. Click one.',
+      'Each agent card shows what it watches and what it has raised.',
+      'The Operating Picture (Foundation) is the map they all reason over.',
     ],
   },
   {
-    title: 'Open a finding and read the case',
+    title: 'Find — drift becomes a finding',
     where: 'Findings',
     to: '/operate/findings',
     cta: 'See the findings',
-    what: 'A finding is what an agent raises when a number drifts from its mandate — with severity, evidence, an impact estimate, and an impact path tracing the drift up to the intent it threatens.',
+    what: 'When a number drifts, its agent raises a finding: what drifted, what it costs, the evidence, and the path from the drift up to the company goal it threatens.',
     doThis: [
-      'Check the SLA pill — unanswered findings escalate up the chain of agents.',
-      'Follow the impact path to the intent at risk; view it on the Operating Picture.',
-      'Read the evidence before you decide — the agent shows its working.',
+      'Findings sort by their clock — an unanswered finding escalates to the manager above.',
+      'Open one and read the evidence — the agent shows its working.',
     ],
   },
   {
-    title: 'Make the call — four dispositions',
+    title: 'Decide — the one stage that is yours',
     where: 'On the finding',
     to: '/operate/findings',
     cta: 'Try it on a finding',
-    what: 'Every finding demands exactly one answer. Accept: it\'s real — set an exit condition the agent watches until met. Act: fix it now — opens a solution design with tasks. Acknowledge: known — parked on a trip-wire. Abandon: not real — the reason you give tunes the agent.',
+    what: 'Every finding gets one of four answers. Accept: it\'s real — set a recovery target the agent watches until the number is back. Act: fix it now — opens a plan with tasks. Park: known issue — it re-alerts if it worsens. Dismiss: not real — your reason tunes the agent.',
     doThis: [
-      'Real but no project needed? Accept and set the exit condition.',
-      'Needs work? Act — you land in a solution design.',
-      'Not yours? "Not mine — escalate" sends it up the chain instead of letting it sit.',
+      'Not your call? Escalate it rather than letting it sit — silence escalates it anyway.',
+      'Every decision is recorded in the Decision Ledger, with a verdict later: worked, didn\'t, or too early.',
     ],
   },
   {
-    title: 'Watch the loop stay open — the Watching tab',
+    title: 'Act — the decision sets work in motion',
+    where: 'Execution',
+    to: '/operate/tasks',
+    cta: 'See the work',
+    what: 'Choosing Act opens a plan broken into tasks — some for workers (agents that execute), some for people. You never browse to the build screens; they come to you when a finding needs them.',
+    doThis: [
+      'Everything assigned to you or your team lands in Execution · Tasks.',
+      'Runs and Outcomes show what the workers did and what it returned.',
+    ],
+  },
+  {
+    title: 'Close — watched until the number is back',
     where: 'Findings · Watching',
     to: '/operate/findings?tab=watching',
     cta: 'Open Watching',
-    what: 'Nothing is "done" until the number is back. Accepted findings live on the Watching tab as exit conditions with progress bars; acknowledged ones sit on their trip-wires. The agent keeps watching either way.',
+    what: 'Nothing is "done" until the number is back. Accepted findings sit on the Watching tab as recovery targets with progress bars; parked ones wait behind their re-alert line. When the target holds, the loop closes itself — and the ledger gets the verdict.',
     doThis: [
-      'Track each exit condition\'s progress toward target.',
       'Only "Mark met · close loop" when the number is truly back.',
-      'Regressed conditions and tripped wires resurface on their own.',
-    ],
-  },
-  {
-    title: 'Leading a team? You get exceptions, not a queue',
-    where: 'Findings · with "+ their team" on',
-    to: '/operate/findings',
-    cta: 'See the roll-up',
-    what: 'A senior lens does not inherit its team\'s queue. Findings owned below you appear as a roll-up — one row per direct report — plus the patterns worth your attention. Only escalations reach you as items you must answer.',
-    doThis: [
-      '"Escalated to you" first — an SLA lapsed below and ownership moved up to you.',
-      'Read "Patterns" as one decision: the same mandate drifting under several divisions.',
-      'On a report\'s finding you get Ask, Reassign, Raise priority or Take it — not the four A\'s. The decision stays theirs unless you take it.',
-    ],
-  },
-  {
-    title: 'The Decision Ledger — the memory of judgment',
-    where: 'Decisions',
-    to: '/operate/decisions',
-    cta: 'Open the ledger',
-    what: 'Every decision is recorded: who made it (human or agent), what finding prompted it, what it cost or earned. Later an assessor returns a verdict — worked, didn\'t, or too early — next to the estimate that justified the call.',
-    doThis: [
-      'Filter by verdict to see which calls actually paid off.',
-      'Each entry links back to its originating finding — the trail is auditable.',
-    ],
-  },
-  {
-    title: 'When you chose Act: the solution design',
-    where: 'Reached from a finding\'s Act disposition',
-    to: '/operate/tasks',
-    cta: 'See your tasks',
-    what: 'Act opens a solution design: approach, data needed, guardrails, and a task list — new workers to build, existing workers to reuse, human tasks. A validation worker reviews the plan before approval; agent builds continue in the studio.',
-    doThis: [
-      'You never browse to the build screens — they come to you when a finding needs them.',
-      'Everything assigned to you or your team lands in Execution · Tasks.',
-    ],
-  },
-  {
-    title: 'Meet your agents',
-    where: 'Agents',
-    to: '/operate/counterparts',
-    cta: 'Meet them',
-    what: 'One agent per function, plus an org-level chief of staff watching the intents. Every mandate is held twice — once by a person, once by its agent. Each card shows open findings, SLA breaches, and a temperament dial from quiet to hair-trigger.',
-    doThis: [
-      'Expand "What it\'s flagging" to jump straight to an agent\'s open findings.',
-      'A "needs you" pill means findings are breaching SLA — someone is not answering.',
-    ],
-  },
-  {
-    title: 'The Foundation: what everything runs on',
-    where: 'Foundation',
-    to: '/build/picture',
-    cta: 'Open the Operating Picture',
-    what: 'The Operating Picture is the map the agents reason over: intents, the mandates that carry them, the senses that verify them. The Mandate Library is where a new company starts; Data Connectors wire up the senses — a mandate without a sense is blind.',
-    doThis: [
-      'Switch industry from the Operating Picture header to see another context.',
-      'Agents petition for new nodes and edges — approve or decline their proposals.',
-    ],
-  },
-  {
-    title: 'Measure what is actually working',
-    where: 'Performance · Outcomes · Workforce',
-    to: '/insights/outcomes',
-    cta: 'Open Outcomes',
-    what: 'Outcomes turns runs into scorecards and recommended actions. Performance shows where the loop closes fastest. Workforce lists every worker running for your context, ROI and token cost side by side.',
-    doThis: [
-      'Assign or schedule the recommended actions on an outcome report.',
-      'Use Workforce to weigh what each worker costs against what it returns.',
+      'Regressed targets and re-alerts resurface on their own.',
     ],
   },
 ];
@@ -244,7 +185,7 @@ export function GuideScreen() {
               ))}
               <span className="gd-loopnote">You own one stage: <b style={{ color: 'var(--teal)' }}>Decide</b>. The agents run the rest.</span>
             </div>
-            <p className="gd-what">Nine screens, one loop. Scroll through — each step links straight into the live screen it describes.</p>
+            <p className="gd-what">Five stages, one loop. Scroll through — each stage links straight into the live screen it runs on.</p>
             <button className="gd-cta" onClick={() => { startTour(); navigate('/command'); }}>
               Show me on screen →
             </button>
@@ -278,7 +219,7 @@ export function GuideScreen() {
               Your agents are already watching. Answer what they bring you, and let the loop close.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link to="/command" className="gd-cta">Start in the Command Center →</Link>
+              <Link to="/command" className="gd-cta">Start on Today →</Link>
               <button className="gd-ghost" onClick={() => { startTour(); navigate('/command'); }}>Show me on screen</button>
               <Link to="/" className="gd-ghost">Read the story</Link>
             </div>

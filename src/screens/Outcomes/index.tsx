@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useOutcomeReport, useExportOutcome, useShareOutcome } from '../../api/outcomes';
 import { useToast } from '../../components/shared/Toast';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { SectionTabs, EXECUTION_TABS } from '../../components/shared/SectionTabs';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { ScoreCards } from './ScoreCards';
@@ -19,36 +20,33 @@ export function OutcomesScreen() {
 
   return (
     <section className="screen">
-      <SectionTabs tabs={EXECUTION_TABS} />
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-        <div>
-          <h1 className="page">{data.title}</h1>
-          <div className="sub" style={{ marginBottom: 0 }}>
-            {data.runMeta} · <span className="pill green">{data.published ? '✓ Published' : 'Draft'}</span>
+      <PageHeader
+        title={data.title}
+        subtitle={<>{data.runMeta} · <span className="pill green">{data.published ? '✓ Published' : 'Draft'}</span></>}
+        actions={
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <button
+              className="btn ghost"
+              onClick={() => exportReport.mutate('pptx', { onSuccess: () => showToast('Exported board-ready deck — 9 slides') })}
+            >
+              Export PPT
+            </button>
+            <button
+              className="btn ghost"
+              onClick={() => exportReport.mutate('pdf', { onSuccess: () => showToast('PDF exported') })}
+            >
+              PDF
+            </button>
+            <button
+              className="btn primary"
+              onClick={() => share.mutate(undefined, { onSuccess: (res) => showToast(`Share link copied — view-only, expires in ${res.expiresInDays} days`) })}
+            >
+              Share
+            </button>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button
-            className="btn ghost"
-            onClick={() => exportReport.mutate('pptx', { onSuccess: () => showToast('Exported board-ready deck — 9 slides') })}
-          >
-            Export PPT
-          </button>
-          <button
-            className="btn ghost"
-            onClick={() => exportReport.mutate('pdf', { onSuccess: () => showToast('PDF exported') })}
-          >
-            PDF
-          </button>
-          <button
-            className="btn primary"
-            onClick={() => share.mutate(undefined, { onSuccess: (res) => showToast(`Share link copied — view-only, expires in ${res.expiresInDays} days`) })}
-          >
-            Share
-          </button>
-        </div>
-      </div>
-      <div style={{ height: 18 }}></div>
+        }
+        tabs={<SectionTabs tabs={EXECUTION_TABS} />}
+      />
 
       <ScoreCards cards={data.scoreCards} />
 

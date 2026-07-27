@@ -34,7 +34,7 @@ A sweep writes its per-mandate analysis trail to `sweep_runs.progress` as it wal
 
 ## Architecture
 
-**Information architecture** (`src/components/layout/areas.ts`, routes in `src/App.tsx`): a public landing page at `/`, then one flat loop-ordered rail of 7 items under `AppLayout` (the old Operate/Insights/Foundation top-nav areas are retired):
+**Information architecture** (`src/components/layout/areas.ts`, routes in `src/App.tsx`): a public landing page at `/`, then a grouped rail (`NAV_GROUPS`: Today · **The loop** · The org · Setup) under `AppLayout` (the old Operate/Insights/Foundation top-nav areas are retired):
 
 - **Today** (`/command`) — the single "waiting on you" queue (findings + approvals, one count — the only such number in the product).
 - **Findings** (`/operate/findings`) — lifecycle tabs `?tab=open|watching|closed`; the old Closure screen is the Watching/Closed tabs now (`/operate/closure` redirects). A finding's detail page is its **thread**: raised → decided → watching → closed + verdict.
@@ -47,7 +47,7 @@ A sweep writes its per-mandate analysis trail to `sweep_runs.progress` as it wal
 
 **Tenancy (demo-grade):** the SaaS front door is `/login` — a split-view organization sign-in (org-branded panel left, sign-in card right). `src/tenants.ts` registers the tenants (Americana Foods → fmcg, Medcare UAE → healthcare, Gulf Precision Industries → manufacturing) with flat brand accents, demo email domains, and session helpers (`rewive.tenant` in localStorage). Signing in sets tenant + industry + persona lens ("Sign in as" role → each team lands in its own view); all app routes sit behind `RequireTenant` in `App.tsx`. The industry choice stays authoritative: `getActiveTenant()` re-derives the tenant if the industry is switched in-app (Operating Picture) or the session predates tenancy. The top nav shows the signed-in org chip + "Switch organization"; landing CTAs deep-link `/login?org=<tenantId>`. There is no real auth — any password works.
 
-The persona lens is global chrome (top bar, `personaLens.tsx`, persisted). Screen intros use the shared `Intro` component (one line + "How this works" disclosure) instead of paragraph subtitles. There is no global "+ New worker" CTA — worker creation lives in Agents → Workforce and a finding's Act flow.
+The persona lens is global chrome (top bar `LensMenu` popover, `personaLens.tsx`, persisted). Screen headers use the shared `PageHeader` component (title + one-line subtitle + actions + tabs; the old `Intro` modal-help component is deprecated). There is no global "+ New worker" CTA — worker creation lives in Agents → Workforce and a finding's Act flow.
 
 Agent-building screens (Create an Agent `/build/create`, Agent Studio `/build/studio`, Unified Agent Studio `/build/agent-studio/:id`, Solution Design `/build/solutions/:id`) are **routable but off the nav** — they're reached through a finding's **Act** disposition (finding → solution design → agent spec), not browsed to. Old v1/v3/v4/v5 URLs (`/runs`, `/insights/findings`, `/operate/shadow`, `/operate/closure`, …) redirect; keep that convention when moving routes.
 
@@ -69,11 +69,34 @@ Healthcare and Manufacturing offer the seven `LEGACY_PERSONAS` (the original six
 
 **Mock API (`mock-server/`):** Express app (`app.js`) with seed data split across `data.js` (original v1/FMCG operational data), `v4data.js` (Operating Picture, counterparts, findings, closure per industry), and `v4content.js` (per-industry operational packs: dashboard, decisions, runs, leaderboard, outcomes, agent catalog). Industry-scoped endpoints pick a pack via the org profile or `?industry=`. When adding a data point: type in `src/api/types.ts` → hook in `src/api/<domain>.ts` → seed + route in `mock-server/`, per industry.
 
-**Styling:** one global stylesheet, `src/styles/globals.css` (CSS variables + utility classes like `.card`, `.pill`, `.btn`). No Tailwind/CSS-in-JS — reuse the existing classes. Shared atoms in `src/components/shared/`. The landing page and `public/story.html`/`public/demo.html` carry their own inline styles.
+**Styling (v6 "clean modern SaaS"):** one global stylesheet, `src/styles/globals.css` (CSS variables + utility classes like `.card`, `.pill`, `.btn`). No Tailwind/CSS-in-JS — reuse the existing classes. Shared atoms in `src/components/shared/`. The landing page and `public/story.html`/`public/demo.html` carry their own inline styles. Conventions of the July-2026 redesign:
+
+- **Tokens:** zinc neutrals (`--bg #FAFAFA`, `--ink #18181B`, solid hairline `--border #E9E9EC`), one indigo accent (`--accent #4F46E5`), spacing scale `--sp-1…7`, type scale `--text-xs…2xl` (body stays 14px). Legacy var *names* are all preserved — retinting is a globals.css-only change. `--font-display` is an alias of `--font-body` (serif retired; the var stays defined for `.om`/legacy rules). Inter is bundled via `@fontsource-variable/inter` imported in `src/main.tsx` — never a Google Fonts link (demos run offline).
+- **Eyebrow labels are sans** (`.eyebrow`: 11px/600/uppercase); mono is only for figures, SLA clocks, timestamps and IDs.
+- **One top bar** (`TopNav.tsx`: logo · org chip w/ switch-org popover · ⌘K bar · `LensMenu` popover · help · bell · avatar). The old second `Topbar`/crumb row is gone. The rail (`AreaSidebar` + `NAV_GROUPS` in `areas.ts`) is grouped: Today / **The loop** (Findings·Find, Decisions·Decide, Execution·Act) / The org / Setup.
+- **`PageHeader`** (`src/components/shared/PageHeader.tsx`) is the standard screen header: title → one plain-language subtitle → actions right → tabs below (SectionTabs go in its `tabs` prop). `Intro` is deprecated — its modal help was removed; doctrine lives in subtitles and the Guide.
+- **`LoopStrip`** (`src/components/shared/LoopStrip.tsx`) renders Sense → Find → Decide → Act → Close with the current stage lit — mounted on Today and the finding thread. Use the same five words anywhere the loop is named.
+- **One tab system:** underline `.tabs` for navigation; `.seg` only as a view toggle; ≤2 pills per row — everything else goes in the plain meta line.
 
 ## Positioning (keep copy consistent with this)
 
-Category: the decision accountability layer — "the system of record for operational decisions." Hero: "Nothing drifts unanswered." (statement form — avoid "makes someone answer for it", which reads as blame). The loop is **Sense → Find → Decide → Act → Close**. Keep-verbatim lines: "Every mandate, held twice." · "The company's memory of judgment." · "Nothing is 'done' until the number is back." Avoid: "shadow organization", "agentic operating model" (the latter survives only as the story-page essay framing), and any humans-vs-agents ranking framing.
+Category: the decision accountability layer — "the system of record for operational decisions." Hero: "Nothing drifts unanswered." (statement form — avoid "makes someone answer for it", which reads as blame). The loop is **Sense → Find → Decide → Act → Close**. Keep-verbatim lines: "The company's memory of judgment." · "Nothing is 'done' until the number is back." "Every mandate, held twice." survives **only on the Landing page and Guide finale** — in-app copy says "every number has two owners — a person and an agent." Avoid: "shadow organization", "agentic operating model" (the latter survives only as the story-page essay framing), and any humans-vs-agents ranking framing.
+
+**Vocabulary (July-2026 plain-language pass — UI copy only; types, routes, API fields unchanged):**
+
+| Internal / API | UI copy says |
+|---|---|
+| disposition (verb/noun in UI) | **Decide** / "needs a decision" / "decided" |
+| `accept` | Accept — "set a recovery target, watched until the number is back" |
+| `act` | Act — "open a fix (tasks + a worker)" |
+| `acknowledge` | **Park** — "known issue; re-alerts if it gets worse" |
+| `abandon` | **Dismiss** — "not real; your reason tunes the agent" |
+| exit condition (`ClosureKpi`) | **recovery target** |
+| trip-wire / `reAlertCondition` | **re-alert rule** / "parked — will re-alert" |
+| sense(s) (data-feed meaning) | **signal(s)** |
+| Mandate Library | **Mandates** |
+
+Findings, Decision Ledger, Operating Picture, mandate, worker, agent, Open/Watching/Closed stay as-is. Never rename identifiers for these (`useDisposeFinding`, `FindingDisposition`, `ExitConditionCard`, `TripWireRow` etc. deliberately lag the UI words). Findings' default view is now **Lifecycle**; "By agent" sits behind `?view=agents`.
 
 ## Conventions
 
