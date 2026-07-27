@@ -1161,6 +1161,10 @@ app.post('/api/v1/agent-specs', (req, res) => {
     status: 'drafting',
     needsTechnicalWork: solution.validation?.recommendation === 'dev_handoff',
     owner: solution.owner,
+    // Default the holder agent from the finding this solution came from; the
+    // builder can retarget it in Agent Studio before publishing.
+    reportsToAgentId: solution.holderAgentId ?? null,
+    reportsToAgentName: solution.holderAgentName ?? null,
     version: 1,
     versionTrail: [{ version: 1, summary: 'Drafted from the approved solution design', actorName: currentUser.name, altitude: 'business', timestamp: new Date().toISOString() }],
     intent: solution.approach,
@@ -1205,6 +1209,16 @@ app.patch('/api/v1/agent-specs/:id/business', (req, res) => {
   if (intent !== undefined) spec.intent = intent;
   if (capabilities !== undefined) spec.capabilities = capabilities;
   pushVersion(spec, 'Updated the business plan', 'business');
+  res.json(spec);
+});
+
+app.patch('/api/v1/agent-specs/:id/reports-to', (req, res) => {
+  const spec = agentSpecs.get(req.params.id);
+  if (!spec) return res.status(404).json({ message: 'Agent spec not found' });
+  const { reportsToAgentId, reportsToAgentName } = req.body;
+  spec.reportsToAgentId = reportsToAgentId ?? null;
+  spec.reportsToAgentName = reportsToAgentName ?? null;
+  pushVersion(spec, `Reports to ${spec.reportsToAgentName ?? 'no agent'}`, 'business');
   res.json(spec);
 });
 
@@ -1292,6 +1306,8 @@ app.post('/api/v1/agent-specs/:id/publish', (req, res) => {
     roiToDate: { label: 'Measured impact', value: '—', direction: 'flat' },
     tokenCostToDate: { tokens: 0, estCost: '$0.00' },
     runsCount: 0, lastRunAt: null,
+    reportsToAgentId: spec.reportsToAgentId ?? null,
+    reportsToAgentName: spec.reportsToAgentName ?? null,
   };
   createdAgents.set(agentId, { sessionId: null, preview, catalogMeta });
   spec.linkedAgentId = agentId;
@@ -1653,6 +1669,10 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
       id: solutionId,
       industry,
       signalId: finding.id,
+      // The holder agent this finding was raised by — flows to the agent spec
+      // as the default "reports to" when a worker is built (editable in Studio).
+      holderAgentId: finding.raisedByAgentId,
+      holderAgentName: finding.raisedByAgentName,
       signalName: finding.title,
       signalCategory: categoryByStream[finding.streamKey] ?? (finding.severity === 'critical' ? 'derailer' : 'laggard'),
       status: 'drafting',

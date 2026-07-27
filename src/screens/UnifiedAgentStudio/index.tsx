@@ -8,7 +8,9 @@ import {
   useTestRunAgentSpec,
   useHandbackAgentSpec,
   usePublishAgentSpec,
+  useSetReportsTo,
 } from '../../api/agentSpec';
+import { useShadowOrg } from '../../api/shadowOrg';
 import { Intro } from '../../components/shared/Intro';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
@@ -23,6 +25,49 @@ const statusTone: Record<AgentSpecStatus, 'gray' | 'amber' | 'teal' | 'green'> =
   ready_to_publish: 'teal',
   published: 'green',
 };
+
+// Which holder agent this worker reports to. Defaulted server-side from the
+// finding that spawned it (its raising agent); editable here until published.
+function ReportsToPanel({ spec }: { spec: AgentSpec }) {
+  const { showToast } = useToast();
+  const { data: org } = useShadowOrg('all', 'team');
+  const setReportsTo = useSetReportsTo(spec.id);
+  const agents = org?.agents ?? [];
+  const locked = spec.status === 'published';
+  const hasHolder = !!spec.reportsToAgentId;
+
+  return (
+    <div className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>
+      <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>Reports to</div>
+      <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10 }}>
+        The holder agent this worker answers to — its place in the org. Defaulted from the finding that raised it; change it if this worker belongs to another team.
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <select
+          value={spec.reportsToAgentId ?? ''}
+          disabled={locked || setReportsTo.isPending || agents.length === 0}
+          onChange={(e) => {
+            const id = e.target.value || null;
+            const name = agents.find((a) => a.id === id)?.name ?? null;
+            setReportsTo.mutate({ reportsToAgentId: id, reportsToAgentName: name }, { onSuccess: () => showToast('Reporting line updated') });
+          }}
+          style={{ border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit', minWidth: 240, background: 'var(--surface)' }}
+        >
+          <option value="">— No holder agent —</option>
+          {agents.map((a) => (
+            <option key={a.id} value={a.id}>{a.name}{a.humanOwner?.role ? ` · ${a.humanOwner.role}` : ''}</option>
+          ))}
+        </select>
+        {hasHolder && !locked && (
+          <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>defaulted from the finding</span>
+        )}
+        {locked && (
+          <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>locked — published</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function UnifiedAgentStudioScreen() {
   const { agentSpecId } = useParams();
@@ -75,6 +120,8 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
       )}
 
       <DelegateIdentityPanel spec={spec} />
+
+      <ReportsToPanel spec={spec} />
 
       {altitude === 'business' && (
         <div className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>

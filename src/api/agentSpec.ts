@@ -39,6 +39,18 @@ export function useUpdateBusinessAltitude(id: string) {
   });
 }
 
+export function useSetReportsTo(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: { reportsToAgentId: string | null; reportsToAgentName: string | null }) =>
+      (await apiClient.patch<AgentSpec>(`/agent-specs/${id}/reports-to`, vars)).data,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['agent-specs', id], updated);
+      queryClient.invalidateQueries({ queryKey: ['agents', 'catalog'] });
+    },
+  });
+}
+
 export function useUpdateDelegateIdentity(id: string) {
   const queryClient = useQueryClient();
   return useMutation({

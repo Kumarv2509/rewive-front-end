@@ -562,6 +562,10 @@ export interface AgentCatalogEntry extends AgentPreview {
   costBudget?: AgentCostBudget;
   /** Operating Picture node ids (mandates/intents) this agent works — the Workforce↔Picture link. */
   mandateIds?: string[];
+  /** The holder agent this worker reports to (set at build time in Agent Studio,
+      defaulted from the finding's raising agent). The explicit team link. */
+  reportsToAgentId?: string | null;
+  reportsToAgentName?: string | null;
 }
 
 export interface AgentCatalogFilters {
@@ -929,6 +933,11 @@ export interface AgentSpec {
   escalation: HandoffCardData | null;
   handback: HandoffCardData | null;
   linkedAgentId?: string;
+  /** The holder agent this worker reports to — defaulted from the finding that
+      spawned it (its raising agent), editable in Agent Studio. Carries the name
+      so the Workforce/Teams views need no extra lookup. */
+  reportsToAgentId?: string | null;
+  reportsToAgentName?: string | null;
 }
 
 // ---------- KPI Library (onboarding: pick KPIs, or import drivers and budget) ----------
