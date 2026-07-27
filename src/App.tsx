@@ -26,6 +26,7 @@ import { KpiBrainScreen } from './screens/KpiBrain';
 import { LandingScreen } from './screens/Landing';
 import { GuideScreen } from './screens/Guide';
 import { ShadowOrgScreen } from './screens/ShadowOrg';
+import { AgentTeamsScreen } from './screens/AgentTeams';
 import { BusinessOverviewScreen } from './screens/Business';
 import { DatasetsScreen } from './screens/Datasets';
 import { SkuSalesScreen } from './screens/Business/SkuSales';
@@ -58,6 +59,7 @@ function App() {
               <Route path="operate" element={<Navigate to="/command" replace />} />
 
               <Route path="operate/counterparts" element={<ShadowOrgScreen />} />
+              <Route path="operate/agent-teams" element={<AgentTeamsScreen />} />
               <Route path="operate/findings" element={<FindingsScreen />} />
               <Route path="operate/findings/:findingId" element={<FindingDetailScreen />} />
               {/* v5.1: Closure folded into Findings as the Watching/Closed lifecycle tabs */}

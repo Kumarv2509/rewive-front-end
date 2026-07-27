@@ -37,6 +37,7 @@ export const EXECUTION_TABS: SectionTab[] = [
 
 // eslint-disable-next-line react-refresh/only-export-components -- tab presets co-located with the component intentionally
 export const AGENTS_TABS: SectionTab[] = [
+  { to: '/operate/agent-teams', label: 'Teams', match: '/operate/agent-teams' },
   { to: '/operate/counterparts', label: 'Agents', match: '/operate/counterparts' },
   { to: '/insights/agents', label: 'Workforce', match: '/insights/agents' },
 ];
