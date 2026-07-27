@@ -49,29 +49,48 @@ const SYSTEM_PROMPT = `You are an agent in Rewive, the decision accountability l
 House style:
 - Drift is stated as fact, with the numbers in it ("Case fill collapsed to 84% against a 97% target"), never as blame.
 - Business language, not statistics jargon. Quantify impact in the org's currency where you can reasonably estimate it from the context given; if you cannot, describe the exposure concretely instead of inventing figures.
+- Your drift rules read only the mandate's own number. The upstreamSignals name the senses and leading indicators that feed it — the plausible CAUSES. Name the single most plausible cause drawn ONLY from upstreamSignals, using its rationale where given; add exactly one evidence row citing it. Never invent a cause that is not in upstreamSignals; if the list is empty, describe the drift without asserting a cause.
+- The first impact-path node IS that suspected upstream cause (a sense or leading indicator), so its impactEffect phrase should read as the cause, and the mandate's own reading belongs on the mandate node's phrase.
 - The closure template names a number and a duration ("back above 96% for 4 straight weeks").
 - The re-alert condition is a concrete trip-wire ("re-alert if it worsens a further 5% or after 14 days").
 - impactEffects must contain exactly one short phrase per impact-path node, in the order given.
 - Evidence rows are label/value pairs drawn only from the data provided — never fabricate sources.`;
 
 export function templateNarrative(ctx) {
-  const { node, config, result, series, industry, impactPathNames } = ctx;
+  const { node, config, result, series, industry, impactPathNames, upstreamSignals = [] } = ctx;
   const fmt = (v) => formatValue(config.unit, config.format, v, industry);
   const latest = series[series.length - 1];
   const first = series[0];
   const devStr = `${result.dev.toFixed(1)}%`;
+  // The mandate's own reading belongs on the mandate node, wherever it sits in
+  // the path (the leaf is now the suspected cause, not the mandate).
+  const mandateIdx = Math.max(0, impactPathNames.indexOf(node.name));
+  // Strongest upstream contributor — a sense or leading indicator — is the
+  // plausible cause. Its rationale (when the edge carries one) is the mechanism.
+  const lead = upstreamSignals[0] ?? null;
+  const causeLine = lead
+    ? ` Upstream, ${lead.name.toLowerCase()} is the signal most likely behind it${lead.rationale ? ` — ${lead.rationale}` : ''}`
+    : '';
+
+  const evidence = [
+    { label: `${node.name}, latest reading`, value: `${fmt(latest.value)} vs ${fmt(config.targetNumeric)} target` },
+    { label: 'Adverse deviation', value: devStr },
+    { label: `Trend over last ${series.length} readings`, value: `${fmt(first.value)} → ${fmt(latest.value)}` },
+  ];
+  if (lead) {
+    evidence.push({ label: `Upstream signal · ${lead.name}`, value: lead.rationale ?? lead.definition ?? 'feeds this mandate' });
+  }
+
   return {
     title: `${node.name} at ${fmt(latest.value)} vs ${fmt(config.targetNumeric)} target`,
-    summary: `${node.name} ${RULE_LABEL[result.triggered[0]] ?? 'has drifted'}: latest reading ${fmt(latest.value)} against a ${fmt(config.targetNumeric)} target (${devStr} adverse). The series moved from ${fmt(first.value)} to ${fmt(latest.value)} over the last ${series.length} readings.`,
+    summary: `${node.name} ${RULE_LABEL[result.triggered[0]] ?? 'has drifted'}: latest reading ${fmt(latest.value)} against a ${fmt(config.targetNumeric)} target (${devStr} adverse). The series moved from ${fmt(first.value)} to ${fmt(latest.value)} over the last ${series.length} readings.${causeLine}.`,
     severityRationale: `Deviation of ${devStr} against warn ${config.warnPct}% / breach ${config.breachPct}% thresholds.`,
-    evidence: [
-      { label: `${node.name}, latest reading`, value: `${fmt(latest.value)} vs ${fmt(config.targetNumeric)} target` },
-      { label: 'Adverse deviation', value: devStr },
-      { label: `Trend over last ${series.length} readings`, value: `${fmt(first.value)} → ${fmt(latest.value)}` },
-    ],
-    impactEffects: impactPathNames.map((name, i) => (i === 0
-      ? `${node.name.toLowerCase()} at ${fmt(latest.value)} vs ${fmt(config.targetNumeric)} target`
-      : `pressure flowing through to ${name.toLowerCase()}`)),
+    evidence,
+    impactEffects: impactPathNames.map((name, i) => {
+      if (i === mandateIdx) return `${node.name.toLowerCase()} at ${fmt(latest.value)} vs ${fmt(config.targetNumeric)} target`;
+      if (lead && i < mandateIdx) return `${lead.name.toLowerCase()} — likely upstream cause`;
+      return `pressure flowing through to ${name.toLowerCase()}`;
+    }),
     impactEstimate: `Adverse drift of ${devStr} on ${node.name} against target`,
     closureTemplate: {
       name: `${node.name} back within ${config.warnPct}% of ${fmt(config.targetNumeric)} for ${config.sustainedPoints} consecutive readings`,
@@ -99,7 +118,8 @@ function validateNarrative(candidate, ctx) {
 
 /**
  * Author a finding narrative. ctx: { node, config, series, result, industry,
- * currency, orgName, counterpartName, persona, impactPathNames, exampleFinding }
+ * currency, orgName, counterpartName, persona, impactPathNames, upstreamSignals,
+ * exampleFinding }
  * Returns { narrative, authoredBy: 'claude' | 'template' }.
  */
 export async function authorFinding(ctx) {
@@ -132,6 +152,9 @@ export async function authorFinding(ctx) {
           projectedDeviationIn14dPct: Number(ctx.result.projectedDev14d.toFixed(2)),
           recentReadings: ctx.series.map((p) => ({ ts: p.ts, value: p.value })),
           impactPathNodeNames: ctx.impactPathNames,
+          // The senses / leading indicators feeding this mandate — the plausible
+          // causes. The first impactPath node is the strongest of these.
+          upstreamSignals: ctx.upstreamSignals ?? [],
           toneExample: ctx.exampleFinding ?? null,
         }),
       }],

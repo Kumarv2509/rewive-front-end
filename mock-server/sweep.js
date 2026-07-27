@@ -30,30 +30,70 @@ function findCounterpart(shadowOrg, node) {
     ?? null;
 }
 
-/** Walk the brain edges upward from the drifted node toward a target node. */
-function computeImpactPathNodes(brain, startNode) {
+/**
+ * The reasoning chain for a drifted mandate, leaf → intent:
+ *   [suspected cause (a sense / leading indicator), mandate, …, target]
+ *
+ * The downstream half (mandate → P&L → intent) is the CONSEQUENCE — what the
+ * drift costs. The prepended upstream node is the CAUSE — the sense an owner
+ * would look at first. Detection only ever reads the mandate's own number, so
+ * this is where the agent connects the drift back to a plausible driver.
+ * `upstreamSignals` carries every connected contributor (with its edge
+ * rationale) for the narrative author to reason over — never invent a cause.
+ */
+export function computeImpactPath(brain, startNode) {
+  // Downstream: walk contribution edges up toward a target.
   const path = [startNode];
   let current = startNode;
   const seen = new Set([startNode.id]);
   while (path.length < 4) {
     const out = brain.edges
       .filter((e) => e.source === current.id && e.status !== 'proposed')
-      .sort((a, b) => (WEIGHT_RANK[a.weight] ?? 3) - (WEIGHT_RANK[b.weight] ?? 3));
-    const next = out.map((e) => brain.nodes.find((n) => n.id === e.target)).find((n) => n && !seen.has(n.id));
+      .map((e) => ({ e, n: brain.nodes.find((x) => x.id === e.target) }))
+      .filter((x) => x.n && !seen.has(x.n.id))
+      // Reaching the intent (target) is the payoff — prefer a hop that lands on
+      // one, then fall back to the strongest contribution edge.
+      .sort((a, b) => {
+        const at = a.n.kind === 'target' ? 0 : 1;
+        const bt = b.n.kind === 'target' ? 0 : 1;
+        if (at !== bt) return at - bt;
+        return (WEIGHT_RANK[a.e.weight] ?? 3) - (WEIGHT_RANK[b.e.weight] ?? 3);
+      });
+    const next = out[0]?.n;
     if (!next) break;
     path.push(next);
     seen.add(next.id);
     current = next;
     if (next.kind === 'target') break;
   }
-  return path;
+
+  // Upstream: the contributors feeding the mandate — the candidate causes.
+  const upstream = brain.edges
+    .filter((e) => e.target === startNode.id && e.status === 'connected')
+    .map((e) => ({ edge: e, node: brain.nodes.find((n) => n.id === e.source) }))
+    .filter((x) => x.node)
+    .sort((a, b) => (WEIGHT_RANK[a.edge.weight] ?? 3) - (WEIGHT_RANK[b.edge.weight] ?? 3));
+
+  const upstreamSignals = upstream.slice(0, 3).map(({ edge, node }) => ({
+    name: node.name,
+    kind: node.kind,
+    definition: node.definition,
+    rationale: edge.rationale ?? null,
+    weight: edge.weight,
+  }));
+
+  // Prepend the strongest SENSE (a driver) as the leaf; fall back to the
+  // strongest leading indicator when no sense feeds this mandate directly.
+  const lead = upstream.find((x) => x.node.kind === 'driver') ?? upstream[0];
+  const nodes = lead && !seen.has(lead.node.id) ? [lead.node, ...path] : path;
+
+  return { nodes, upstreamSignals };
 }
 
-function assembleFinding({ config, node, brain, agent, result, narrative, sweepRunId, latest, industry }) {
+function assembleFinding({ config, node, pathNodes, agent, result, narrative, sweepRunId, latest, industry }) {
   const now = new Date();
   const severity = result.severity;
   const slaHours = SLA_HOURS_BY_SEVERITY[severity] ?? 24;
-  const pathNodes = computeImpactPathNodes(brain, node);
   const finding = {
     id: `live-f-${node.id}-${now.getTime()}`,
     title: narrative.title.slice(0, 140),
@@ -253,7 +293,7 @@ export async function runSweep(trigger, ctx) {
             await flush();
             continue;
           }
-          const pathNodes = computeImpactPathNodes(brain, node);
+          const { nodes: pathNodes, upstreamSignals } = computeImpactPath(brain, node);
           const authoringCtx = {
             node,
             config,
@@ -265,6 +305,9 @@ export async function runSweep(trigger, ctx) {
             counterpartName: agent.name,
             persona: agent.persona,
             impactPathNames: pathNodes.map((n) => n.name),
+            // Every impact-path step that is not the mandate itself — the leaf
+            // is the suspected cause, so the author can name it and cite it.
+            upstreamSignals,
             exampleFinding: ctx.exampleFindingFor(config.industry),
           };
           step.status = 'authoring';
@@ -280,7 +323,7 @@ export async function runSweep(trigger, ctx) {
             run.authoredByClaude += 1;
           }
           const row = assembleFinding({
-            config, node, brain, agent, result, narrative,
+            config, node, pathNodes, agent, result, narrative,
             sweepRunId: run.id, latest, industry: config.industry,
           });
           row.authoredBy = authoredBy;

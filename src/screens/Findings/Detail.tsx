@@ -52,6 +52,12 @@ export function FindingDetailScreen() {
   const stream = brain?.streams.find((s) => s.key === finding.streamKey);
   const closure = finding.closureKpiId ? closures?.find((c) => c.id === finding.closureKpiId) : undefined;
 
+  // The agent connects the drift back to a sense: when the impact path leads
+  // with one (kind 'driver'), surface it as the suspected cause. The fuller
+  // "why" comes from the upstream-signal evidence row the sweep writes.
+  const causeStep = finding.impactPath[0]?.kind === 'driver' ? finding.impactPath[0] : null;
+  const causeWhy = finding.evidence.find((e) => e.label.toLowerCase().startsWith('upstream signal'))?.value;
+
   const isOpen = finding.status === 'open';
   // Whose call is this from where the viewer is standing? The owner gets the
   // four A's; a role above the owner gets leadership actions instead.
@@ -110,6 +116,15 @@ export function FindingDetailScreen() {
               </div>
             )}
             <div style={{ fontSize: 13, marginBottom: 12 }}>{finding.summary}</div>
+            {causeStep && (
+              <div style={{ marginBottom: 14, padding: '11px 14px', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 10, background: 'var(--accent-soft)' }}>
+                <div style={{ fontWeight: 700, fontSize: 10.5, color: 'var(--accent-deep)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 3 }}>
+                  Suspected cause · what the agent looked at first
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{causeStep.nodeName}</div>
+                {causeWhy && <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 2 }}>{causeWhy}</div>}
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 10, flexWrap: 'wrap' }}>
               <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--ink-2)' }}>
                 Impact path{stream ? <> · {stream.name}</> : null} — how this reaches an intent
