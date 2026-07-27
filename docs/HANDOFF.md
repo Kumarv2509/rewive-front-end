@@ -1,22 +1,111 @@
-# Handoff — the 2026-07-23 work is now committed (2026-07-27)
+# Handoff — the worker→agent reporting link, bound in Agent Studio (2026-07-27)
 
 ## Where things stand
 
-- **COMMITTED (2026-07-27) — the two 2026-07-23 bodies of work went in as
-  two clean commits, build + lint re-verified first.** Working tree is
-  clean except this handoff. `v5` is now **2 commits ahead of
-  `origin/v5`** — NOT yet pushed (check the FortiGate/network bullets
-  before pushing). The commits:
-  1. `ee0e286` **feat(v5): live findings name a suspected cause, not
-     just a cost** — the sense→mandate reasoning fix (`mock-server/sweep.js`,
-     `mock-server/authoring.js`, `src/screens/Findings/Detail.tsx`).
+- **PUSHED (2026-07-27) — everything this session is committed AND up;
+  `v5` is fully in sync with `origin/v5` at `df6caa8`, working tree clean
+  (except this handoff).** Network was clear both pushes (`curl
+  https://github.com` → 200, Sectigo cert — no FortiGate block). **PR #5**
+  (`v5` → `master`) carries all of it. Three commits went up, in order:
+  1. `ee0e286` **feat(v5): live findings name a suspected cause, not just
+     a cost** — the 2026-07-23 sense→mandate reasoning fix
+     (`mock-server/sweep.js`, `mock-server/authoring.js`,
+     `src/screens/Findings/Detail.tsx`).
   2. `92a95d8` **feat(v5): Agent Teams view — the loop as a team
-     hierarchy** (`src/screens/AgentTeams/index.tsx` NEW, `src/App.tsx`,
+     hierarchy** — the 2026-07-23 Teams tab
+     (`src/screens/AgentTeams/index.tsx`, `src/App.tsx`,
      `src/components/shared/SectionTabs.tsx`).
-  Detail on what each does is in "This session (2026-07-23)" below (the
-  work is unchanged from that description — only its commit status is).
-  **The paused Agents detail-page work from that session stays reverted**
-  — do not go looking for it; the founder pivoted to Teams.
+  3. `df6caa8` **feat(v5): a worker reports to one holder agent, bound in
+     Agent Studio** — THIS session's work. Detail in "This session
+     (2026-07-27)" directly below.
+  Commits 1–2 were the 2026-07-23 work carried in uncommitted; commit 3
+  answered the founder's "something is not connecting" on the Teams view.
+  **The paused Agents detail-page work stays reverted** — the founder
+  pivoted to Teams; don't go looking for it.
+
+## This session (2026-07-27): the worker→agent reporting link
+
+The founder opened the just-committed Agent Teams view and hit the real
+problem: *"why [are] agent and workers … not able to link … both are
+getting the findings … something is not connecting."* The diagnosis, then
+the fix the founder chose.
+
+### The diagnosis — no stored link, so the view was guessing
+
+A worker (`AgentCatalogEntry`) had **no field pointing to its holder
+agent or origin finding** — only `mandateIds`. The Teams view inferred
+the link two ways, and **both are many-to-many**, which is why it looked
+broken:
+- **worker ↔ agent = shared mandate node.** Several agents watch the same
+  node, so one worker was claimed by many: **Trade-Spend ROI Worker
+  (troi, tradepct) → 3 agents** (Commercial · Finance · Commercial
+  finance·Protein); **OTIF (fill) → 2** (Planning · Supply chain·Protein).
+- **agent ↔ finding = same `streamKey`.** `streamKey` is NOT unique:
+  **6 agents share `finance`**, 2 share `planning`, 2 share
+  `manufacturing`. So the *same findings* rendered under every agent
+  sharing the key — the founder's "both are getting the findings."
+
+Proof lives in the data: `(streamKey, persona)` IS unique across all 16
+fmcg agents, and `finding.raisedByAgentId` already names the exact
+raising agent — the causal material for a real link was one field away.
+
+### The fix the founder chose — "do a blend on Agent Studio when we build"
+
+Not a hierarchy inference — an **explicit stored link, set at build
+time**, defaulted from the finding and editable. Chose **"Auto from
+finding, editable."** Shipped as `df6caa8`:
+
+- **`types.ts`** — `reportsToAgentId` + `reportsToAgentName` on both
+  `AgentSpec` and `AgentCatalogEntry`.
+- **`mock-server/app.js`** — the Act disposition writes the finding's
+  `raisedByAgentId`/`Name` onto the solution as `holderAgentId`; `POST
+  /agent-specs` defaults `reportsToAgent*` from it; **new `PATCH
+  /agent-specs/:id/reports-to`** edits it; publish copies it onto the
+  catalog worker's `catalogMeta`. (Note: publish already dropped
+  `mandateIds`, so new workers had NO join at all before this — the
+  explicit link is the only thing that places a freshly-built worker.)
+- **`src/api/agentSpec.ts`** — `useSetReportsTo` mutation.
+- **`UnifiedAgentStudio`** — a **"Reports to"** card (after the delegate
+  panel): a `<select>` of all agents via `useShadowOrg('all','team')`,
+  defaulted from the finding, **locked once `status === 'published'`**.
+- **`AgentTeams/index.tsx`** — full rebuild: prefers the stored
+  `reportsToAgentId` (falls back to shared-mandate inference only for
+  pre-existing/seeded workers), so **each worker lands under exactly ONE
+  team**; findings de-duped by `streamKey` **AND** `persona`; a
+  **per-function colour + icon** (📦 planning, 💳 finance, 🏭
+  manufacturing, 🚚 logistics, 🔬 quality, 📈 commercial, 📣 marketing,
+  👥 people — muted paper-ledger hues, colored left stripe + icon badge);
+  workforce-less agents fold into a **"Watching · no workforce yet"**
+  strip instead of 10 empty blocks; every worker row states **"reports to
+  «agent»"**. The single-owner tie-break, when no explicit link:
+  exact-persona claimant → greatest mandate overlap → most-specific agent
+  (fewest watched) → id.
+
+**Verified end to end against the running mock server** (curl chain): Act
+on `fmcg-f-protein-fill` → spec defaulted `reportsToAgentId =
+fmcg-sa-protein-supply` → PATCH retargeted to `fmcg-sa-planning` →
+publish → catalog worker carried `fmcg-sa-planning / Planning agent`.
+Build (`tsc -b && vite build`) + `eslint .` clean.
+
+### Still open / next
+
+- **Seeded workers still resolve their team by INFERENCE**, not the
+  stored link (they predate the field). It renders identically, so no
+  visual difference — but if you want the seeds to carry an honest
+  `reportsToAgentId`, add it per-industry in `v4content.js` (map each of
+  the 6 fmcg workers + the healthcare/manufacturing sets to their agent
+  id). Deferred — the fallback covers them.
+- The founder was mid-review of the rebuilt view when this handoff was
+  written; no styling asks landed yet.
+
+### Servers / state at handoff (2026-07-27)
+
+`npm run dev:all` running (task `bpg7g4zy3`): vite `:5173` + mock API
+`:4000`, **freshly restarted so in-memory state is clean** (the
+end-to-end test worker was cleared by the restart). Reset ports with
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`. Note:
+killing `:4000` alone takes down the `concurrently` vite child too —
+relaunch the whole `dev:all`, don't patch one port.
 
 - **PUSHED (2026-07-22) — `v5` is fully in sync with `origin/v5` at
   `98c52e9`; working tree clean.** The 4 commits the previous handoff
