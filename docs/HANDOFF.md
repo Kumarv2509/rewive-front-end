@@ -1,6 +1,22 @@
-# Handoff — the live analysis strip never went live; fixed + all pushed (2026-07-22)
+# Handoff — the 2026-07-23 work is now committed (2026-07-27)
 
 ## Where things stand
+
+- **COMMITTED (2026-07-27) — the two 2026-07-23 bodies of work went in as
+  two clean commits, build + lint re-verified first.** Working tree is
+  clean except this handoff. `v5` is now **2 commits ahead of
+  `origin/v5`** — NOT yet pushed (check the FortiGate/network bullets
+  before pushing). The commits:
+  1. `ee0e286` **feat(v5): live findings name a suspected cause, not
+     just a cost** — the sense→mandate reasoning fix (`mock-server/sweep.js`,
+     `mock-server/authoring.js`, `src/screens/Findings/Detail.tsx`).
+  2. `92a95d8` **feat(v5): Agent Teams view — the loop as a team
+     hierarchy** (`src/screens/AgentTeams/index.tsx` NEW, `src/App.tsx`,
+     `src/components/shared/SectionTabs.tsx`).
+  Detail on what each does is in "This session (2026-07-23)" below (the
+  work is unchanged from that description — only its commit status is).
+  **The paused Agents detail-page work from that session stays reverted**
+  — do not go looking for it; the founder pivoted to Teams.
 
 - **PUSHED (2026-07-22) — `v5` is fully in sync with `origin/v5` at
   `98c52e9`; working tree clean.** The 4 commits the previous handoff
@@ -369,6 +385,133 @@
   uncommitted manufacturing work (re-verified 2026-07-19). Bundle note:
   SheetJS is lazy-loaded (own chunk) — main bundle stays ~790KB.
 - PR #4 merged to `master` earlier on 2026-07-16 (`4eb7320`).
+
+## This session (2026-07-23): agent reasoning names a cause + the Agent Teams view
+
+Two asks in sequence, each after seeing the last in the running product:
+*"i have a disconnect between the Senses and mandate on how the Agents
+will interpret the reasoning"* → (built + shown) → *"can we build a clear
+Agent vs Agent workforce team hierarchy which interconnects to run …
+that was the initial concept."* Verified visually with **headless
+Playwright** again — the Chrome extension failed a **7th** time
+(`tabs_context_mcp` → "not connected"); stop trying it. Scripts live in
+the session scratchpad (`test-cause.mjs` a pure-function harness for the
+reasoning, `shot-reasoning.mjs` / `shot-strip.mjs` / `shot-teams.mjs`
+screenshotters). Seed localStorage the usual four keys (`rewive.tenant`
+='americana', `rewive.industry`='fmcg', `rewive.personaLens`='all',
+`rewive.guideSeen`='1').
+
+### 1. The reasoning gap — the agent reasoned to a COST but never a CAUSE
+
+**The diagnosis is the valuable part.** The Operating Picture is a graph
+`sense (driver) → mandate (stream_kpi) → P&L line → intent (target)`,
+and 24 edges even carry a written `rationale`. But the LIVE finding
+pipeline only ever walked *downstream*:
+
+- **Detection** (`drift.js`) reads only the mandate's own metric — no sense.
+- **Impact path** (`sweep.js` `computeImpactPathNodes`) walked edges *up*
+  from the mandate to the intent; it never descended to the sense, and
+  threw the edge `rationale` away.
+- **Narrative** (`authoring.js`) was handed `[mandate, P&L, intent]` names
+  only — so even the prose author could not name a cause.
+
+The tell: SEEDED findings look complete only because a human hand-wrote
+the cause into their `evidence` rows; LIVE findings' evidence just
+restated the mandate's own number three ways. **The agent quantified
+consequence and was blind to cause, with the causal material one hop
+away, unused.** (The founder chose the cheapest of three fix layers —
+narrative + impact path — over touching detection.)
+
+**The fix (view-pipeline only, no schema change):**
+- `sweep.js` — renamed `computeImpactPathNodes` → `computeImpactPath`,
+  now returns `{ nodes, upstreamSignals }`. It **prepends the strongest
+  SENSE (a `driver`) feeding the mandate as the leaf step** (falls back
+  to the strongest leading indicator; if the mandate has no upstream edge
+  at all, no prepend — graceful) and collects up to 3 upstream
+  contributors + their edge rationales as `upstreamSignals`. Also fixed a
+  latent bug found on the way: the downstream walk now **prefers a hop
+  that lands on the intent** (target-kind), so the chain actually reaches
+  the org target instead of wandering into P&L lines and stopping short.
+  `assembleFinding` now takes `pathNodes` as a param instead of
+  recomputing. `computeImpactPath` is `export`ed for the test harness.
+- `authoring.js` — `upstreamSignals` go into both the Claude payload and
+  the template; system prompt instructs "step 0 is the suspected cause,
+  cite ONLY provided signals, never invent one." The template weaves the
+  cause into the summary and adds an `Upstream signal · …` evidence row,
+  keyed off `impactPathNames.indexOf(node.name)` so the mandate's reading
+  lands on the mandate step (no longer index 0).
+- `src/screens/Findings/Detail.tsx` — a **Suspected cause** callout
+  (accent left-border box, paper-ledger tokens) renders under the summary
+  **only when `impactPath[0].kind === 'driver'`**. It names the sense and
+  its "why" (from the upstream-signal evidence row). This is the visible
+  marker that the reasoning fired.
+
+**The renderer was already ready:** `ImpactPath.tsx` has always had
+`kindLabel = { driver: 'sense', … }` — no finding, seeded or live, had
+ever populated a `driver` step. This is the first thing that does.
+
+**Verified in a real sweep** (template path — no `ANTHROPIC_API_KEY`):
+`fmcg-k-fill` → path `[sense] DC stock snapshots → [mandate] Case fill →
+[mandate] On-shelf availability → [intent] Market share`; summary ends
+"Upstream, dc stock snapshots is the signal most likely behind it";
+evidence has the upstream row; the callout renders.
+**The honest gap:** it can only cite a cause where the graph HAS a
+sense→mandate edge. `fmcg-k-cpc` (cost per case) has none, so it shows
+cost-only — no fabricated cause. Wiring senses into those mandates is a
+**seed-data** task (add `driver → mandate` edges in `v4data.js`), not
+pipeline; flag it if every live finding must name a cause.
+
+### 2. The Agent Teams view — the loop as a team hierarchy
+
+The founder's "initial concept": holder **agents** each command a
+**workforce** of workers, interconnected to **run**. Ground truth found
+in the data model: the three roles are narratively described but only
+half-wired — a worker (`AgentCatalogEntry`) has **no** link to its holder
+agent or origin finding, and a run links to a worker only by a loose
+`agentName` **string**. BUT the **mandate node is already the pivot**: a
+holder agent `watchesNodeIds` a mandate, and a worker `mandateIds` the
+same node. Founder chose **spine = holder-agent org tree** and **depth =
+view-only (infer joins, no schema change).**
+
+`src/screens/AgentTeams/index.tsx` (NEW, self-contained — deliberately
+does not re-extract from ShadowOrg) assembles from `useShadowOrg` +
+`useAgentCatalog` + `useKpiBrain` + `useFindings`, all lens-scoped:
+- chief banner (org level) → each function agent as a team block → its
+  workforce nested under it. The join is **`worker.mandateIds ∩
+  agent.watchesNodeIds`** — persona is NOT the key (Planning /
+  Manufacturing / Logistics / Quality all share `operations_head`; only
+  the mandate overlap disambiguates). Each worker row shows the **shared
+  mandate chip** (the visible thread), its ROI, and runs + last-run.
+- Route `operate/agent-teams`; **Teams** added as the FIRST tab in
+  `AGENTS_TABS` (so order is Teams · Agents · Workforce). The rail item
+  still lands on `/operate/counterparts` — flip the rail target in
+  `areas.ts` if Teams should be the default landing (not done — founder
+  call).
+- Workers whose mandate no agent watches fall into an "Unaffiliated
+  workers" bucket (empty in fmcg seed — all 6 workers join cleanly).
+- Gotcha fixed: `AgentCatalogEntry.lastRunAt` is **already a display
+  string** ("1h ago"), NOT an ISO date — do not run it through a relTime
+  helper (that printed "NaNd ago"). Rendered directly.
+
+**Open judgment calls (left for the founder):** (a) it lists all 15
+function agents, so it's a long page — many have 0–1 workers; could
+collapse empty agents into a strip. (b) runs are a count only; deeper
+run→worker linking was the "harden the joins" option deliberately
+deferred.
+
+### Servers / state at handoff (2026-07-23)
+
+**LEFT RUNNING, non-default config** — `npm run dev` (vite :5173) plus a
+separate mock server on :4000 started as
+`REWIVE_SWEEP_MS=0 REWIVE_SLA_HOURS_PER_TICK=0 REWIVE_SWEEP_PACE_MS=0
+node mock-server/server.js` (frozen SLA, no auto-sweep, zero pace). **A
+sweep was run manually**, so live findings exist in memory (no
+`DATABASE_URL` — all in-memory); the demoed one is
+`live-f-fmcg-k-fill-<ts>` (id is timestamped — re-fetch from
+`/findings?persona=all` if you need it, or re-run a sweep). Restart with
+plain `npm run dev:all` for normal demo behaviour. Reset ports with
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`. Build
+(`tsc -b && vite build`) and `eslint .` both clean at handoff.
 
 ## This session (2026-07-21, latest): the live sweep — the strip never went live
 
