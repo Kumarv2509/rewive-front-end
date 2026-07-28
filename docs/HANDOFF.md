@@ -1,6 +1,116 @@
-# Handoff — the worker→agent reporting link, bound in Agent Studio (2026-07-27)
+# Handoff — the v6 "clean modern SaaS" redesign (2026-07-28)
 
 ## Where things stand
+
+- **COMMITTED, NOT PUSHED.** `v5` is **ahead of `origin/v5` by 2**,
+  working tree clean (except this handoff):
+  1. `54c9bb5` **docs(v5): handoff** — the previous session's handoff
+     write-up (the worker→agent link section below).
+  2. `12fe8e9` **feat(v6): clean modern SaaS redesign — the product
+     explains itself** — THIS session's work, detail directly below.
+  Before pushing, remember the FortiGate lesson further down this file:
+  the office network intermittently MITMs github.com (`curl
+  https://github.com` → self-signed Fortinet cert / HTTP 000) and `gh
+  auth status` lies about it — test the network first.
+
+## This session (2026-07-27→28): the full UI redesign
+
+The founder: *"the product seems to be very hard to understand and i
+want to change the UI to best in class SAAS easy to understand"* —
+clarified to: **all four pain points at once** (invented vocabulary,
+navigation, density, invisible loop), **full redesign**, **clean modern
+SaaS** (Linear/Stripe caliber, "modern and minimalistic for a CEO
+navigation"), and — the big call — **"keep it unique but easy to
+understand, i am ok to change the product identity."** One commit,
+55 files, +1031/−1077 (net −211 lines), `mock-server/` untouched.
+
+### What changed (the four phases)
+
+1. **Design system** (`globals.css` rewritten in place): zinc neutrals
+   (`--bg #FAFAFA`, `--ink #18181B`, solid hairline `--border #E9E9EC`),
+   one indigo accent `#4F46E5`, spacing scale `--sp-1…7`, type scale
+   `--text-xs…2xl`. **Every legacy CSS var NAME kept** — the ~785 inline
+   `style={{}}` objects reference vars, so the retint was CSS-only.
+   Serif retired: `--font-display` now aliases `--font-body`. Inter is
+   REALLY loaded now — `@fontsource-variable/inter` imported in
+   `src/main.tsx` (bundled same-origin; never swap for a Google Fonts
+   link, demos run offline). Eyebrows are sans; mono only for
+   figures/clocks/IDs. New primitives: `.menu`/`.menu-item` popovers,
+   `.select`, `.page-header`/`.subtitle`, `.seg` as a gray-track/white-
+   thumb view toggle, `.q-hero`, `.loop-strip`.
+2. **Chrome**: `Topbar.tsx` DELETED — one 56px `TopNav` now carries
+   logo · org chip (popover holds "Switch organization") · ⌘K bar ·
+   **`LensMenu`** (`src/components/layout/LensMenu.tsx`, custom popover
+   that ports the native-select lens logic verbatim: locked non-admins,
+   held-lens-not-in-list fallback, "+ their team" via `ROLE_CHILDREN`) ·
+   help · bell · avatar (moved up from the rail foot). The rail
+   (`NAV_GROUPS` in `areas.ts`) is grouped **Today / "The loop"
+   (Findings·Find, Decisions·Decide, Execution·Act) / The org / Setup**
+   with quiet right-aligned stage words. `crumbTitle`/`SPECIAL_TITLES`
+   deleted with the crumb. New `LoopStrip` atom
+   (`src/components/shared/LoopStrip.tsx`): Sense → Find → Decide → Act
+   → Close, current stage lit — mounted on Today's header and the
+   finding thread (`stage` = Decide/Act/Close by finding status).
+3. **Vocabulary + core screens** (UI copy ONLY — identifiers, routes,
+   API values untouched; the four API dispositions are still
+   `accept/act/acknowledge/abandon`): Disposition→**Decide**,
+   Acknowledge→**Park**, Abandon→**Dismiss**, exit condition→**recovery
+   target**, trip-wire→**re-alert**, senses→**signals**, "held twice"
+   in-app→"every number has two owners" (the verbatim line survives
+   ONLY on Landing + Guide finale). Today: `TodayStats.tsx` DELETED —
+   its numbers folded into the `UnifiedQueue` header as one hero count
+   (`q-hero`), rows carry ≤2 badges + a **Decide** CTA. Findings:
+   **default view flipped to Lifecycle** — `byAgent` is now
+   `?view=agents` only (audited: nothing linked `?view=`; `?tab=` links
+   unchanged). Thread steps renamed Detected / Decided / Watching /
+   Closed. `PageHeader` (`src/components/shared/PageHeader.tsx`)
+   replaced `h1.page + Intro` on EVERY routed screen; the Intro help
+   modals are gone (doctrine lives in subtitles + Guide); `Intro.tsx`
+   survives as a deprecated shim used only by unrouted `SignalStudio`.
+   Landing hero pitches plainly first; its SVG hexes updated to the new
+   palette. Guide cut from 10 steps to **5 slides = the 5 loop words**.
+4. **Consistency sweep**: ShadowOrg agent cards simplified
+   (TemperamentDial + per-card stat grid REMOVED — `agent.temperament`
+   is now unused by the UI); Connectors split into a `.seg` toggle
+   **Live tracking / Connections** (deep links `?forKpi`/`?status` land
+   on Connections; every live-tracking surface kept working);
+   "Mandate Library" label → **"Mandates"** (route `/build/kpis`
+   unchanged). CLAUDE.md rewritten: new Styling section + the
+   vocabulary table under Positioning — **CLAUDE.md is the source of
+   truth for the new conventions.**
+
+### Verified
+
+`npm run build` (tsc) + `eslint .` clean after every phase. Vocabulary
+sweep grepped to zero in UI strings. Tour `data-tour` anchors all live
+on screens (none were on the deleted chrome) — checked. Mock server
+`git diff --stat` empty. NOT visually walked — the Chrome extension
+was not connected this session, so nobody has SEEN the new UI yet.
+
+### Still open / next
+
+- **Founder has not reviewed the redesign visually.** The dev server
+  was stopped right after the commit. First move next session:
+  `npm run dev:all`, clear `rewive.*` localStorage for the fresh
+  5-slide Guide, walk all three tenants + a locked non-admin persona +
+  the LensMenu popover. Expect styling asks.
+- `public/story.html` / `public/demo.html` still hardcode the OLD paper
+  palette — update manually if they feature in a demo.
+- `SignalStudio` is unrouted dead code on the deprecated `Intro` shim —
+  delete or leave.
+- Push the 2 commits when the network allows.
+
+### Servers / state at handoff (2026-07-28)
+
+**Nothing running** — the `dev:all` task from the previous session was
+stopped. Start with `npm run dev:all`. In-memory mock state resets on
+boot (seeded tracking re-seeds itself).
+
+---
+
+# Previous handoff — the worker→agent reporting link, bound in Agent Studio (2026-07-27)
+
+## Where things stood
 
 - **PUSHED (2026-07-27) — everything this session is committed AND up;
   `v5` is fully in sync with `origin/v5` at `df6caa8`, working tree clean
