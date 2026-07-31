@@ -1205,6 +1205,40 @@ export interface DispositionInput {
   reAlertCondition?: string; // optional override for acknowledge
 }
 
+// ---------- Finding actions (the tracker on a finding's thread) ----------
+// Small tracked work items that live INSIDE a finding's lifecycle — the fix in
+// motion between Decide and Close. Deliberately not a standalone ticket system:
+// completing every action never closes the finding; the recovery target does.
+export type FindingActionStatus = 'open' | 'in_progress' | 'blocked' | 'done';
+
+export interface FindingAction {
+  id: string;
+  findingId: string;
+  title: string;
+  /** Display name — a person, or a worker when source === 'worker'. */
+  owner: string;
+  /** Added by a person, or proposed by a worker run. */
+  source: 'human' | 'worker';
+  status: FindingActionStatus;
+  note: string | null;
+  dueAt: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface FindingActionInput {
+  title: string;
+  owner: string;
+  dueAt?: string | null;
+}
+
+export interface FindingActionUpdate {
+  status?: FindingActionStatus;
+  note?: string | null;
+  owner?: string;
+  dueAt?: string | null;
+}
+
 // ---------- Closure KPIs (measurable exit condition per accepted finding) ----------
 export type ClosureStatus = 'tracking' | 'closed' | 'regressed';
 

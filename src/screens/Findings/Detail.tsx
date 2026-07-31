@@ -4,6 +4,7 @@ import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { LoopStrip, type LoopStage } from '../../components/shared/LoopStrip';
 import { ImpactPath } from './ImpactPath';
+import { ActionsBlock } from './ActionsBlock';
 import { DispositionBar } from './DispositionBar';
 import { LeadershipBar } from './LeadershipBar';
 import { useEffectiveLens } from '../../components/layout/personaLens';
@@ -181,6 +182,10 @@ export function FindingDetailScreen() {
               ))}
             </div>
           )}
+
+          {/* The tracker: the fix in motion between Decide and Close. A child
+              of the finding — completing every action never closes it. */}
+          <ActionsBlock findingId={finding.id} findingOpen={isOpen} dismissed={isAbandoned} />
 
           {/* 3 — WATCHING */}
           <ThreadStep

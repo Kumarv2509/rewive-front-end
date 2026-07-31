@@ -2598,6 +2598,33 @@ export const closureKpisSeed = {
   ],
 };
 
+// ---------- Finding actions (the tracker on a finding's thread) ----------
+// The fix in motion between Decide and Close. Deliberately a child of the
+// finding, not a standalone ticket system: completing every action never
+// closes the finding — the recovery target does. Seeded richly for the
+// hypermarket pack (where the tracker is demoed); other industries start
+// empty and grow rows at runtime.
+const inDays = (d) => new Date(NOW + d * 86400e3).toISOString();
+
+export const findingActionsSeed = {
+  fmcg: [],
+  healthcare: [],
+  manufacturing: [],
+  hypermarket: [
+    // hm-f-4 — accepted shrink finding. Most of the fix is DONE while the
+    // recovery target sits at 45%: the demo beat is "work finished ≠ number
+    // back", which is the whole reason the tracker lives inside the thread.
+    { id: 'hm-fa-1', findingId: 'hm-f-4', title: 'Retag the three high-loss categories with EAS tags', owner: 'Ahmed Mansour', source: 'human', status: 'done', note: null, dueAt: null, createdAt: hoursAgo(26), updatedAt: hoursAgo(9) },
+    { id: 'hm-fa-2', findingId: 'hm-f-4', title: 'Move mobile accessories to locked case displays', owner: 'Saeed Al Falasi', source: 'human', status: 'done', note: null, dueAt: null, createdAt: hoursAgo(26), updatedAt: hoursAgo(14) },
+    { id: 'hm-fa-3', findingId: 'hm-f-4', title: 'Double exit coverage on evening shifts at Al Wahda', owner: 'Ahmed Mansour', source: 'human', status: 'in_progress', note: 'Roster change lands with next week’s publish.', dueAt: inDays(5), createdAt: hoursAgo(25), updatedAt: hoursAgo(6) },
+    { id: 'hm-fa-4', findingId: 'hm-f-4', title: 'Re-run the category loss report after the next cycle count', owner: 'Loss prevention agent', source: 'worker', status: 'open', note: 'Proposed by the agent — confirms whether loss moved category instead of stopping.', dueAt: inDays(12), createdAt: hoursAgo(20), updatedAt: null },
+    // hm-f-5 — parked online-fill finding: the tracker holds what the park is
+    // waiting on, so the re-alert rule has something to point at.
+    { id: 'hm-fa-5', findingId: 'hm-f-5', title: 'Stand up the dark-store aisle pilot at Ibn Battuta', owner: 'Lina Haddad', source: 'human', status: 'in_progress', note: null, dueAt: inDays(21), createdAt: hoursAgo(18), updatedAt: hoursAgo(3) },
+    { id: 'hm-fa-6', findingId: 'hm-f-5', title: 'Tune Friday substitution rules per category', owner: 'Substitution Quality Worker', source: 'worker', status: 'blocked', note: 'Ratings export returned empty — the worker run failed; the export needs fixing first.', dueAt: null, createdAt: hoursAgo(18), updatedAt: hoursAgo(4) },
+  ],
+};
+
 // ---------- FP&A P&L impact rollup (findings translated onto the P&L) ----------
 // One row per P&L line item: how many findings the agents identified
 // against it, what happened to them, and the measured impact so far.

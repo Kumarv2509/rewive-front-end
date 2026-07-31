@@ -39,6 +39,7 @@ import {
   findingsSeed,
   closureKpisSeed,
   plImpactSeed,
+  findingActionsSeed,
 } from './v4data.js';
 import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
@@ -1335,6 +1336,7 @@ let orgProfileState = { ...orgProfileSeed };
 let brainsState = JSON.parse(JSON.stringify(brains));
 let findingsState = JSON.parse(JSON.stringify(findingsSeed));
 let closureKpisState = JSON.parse(JSON.stringify(closureKpisSeed));
+let findingActionsState = JSON.parse(JSON.stringify(findingActionsSeed));
 const shadowOrgsSeed = JSON.parse(JSON.stringify(shadowOrgs));
 
 function v4Industry(req) {
@@ -1550,6 +1552,66 @@ app.get('/api/v1/findings/:id', (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
   res.json(stripServerFields(hit.finding));
+});
+
+// ---------- Finding actions (the tracker on a finding's thread) ----------
+// Work items that live inside a finding's lifecycle — not a standalone ticket
+// system. Completing every action never closes the finding; the recovery
+// target does. Live (sweep-raised) findings can carry actions too: the rows
+// sit in the same in-memory store, keyed under the finding's industry.
+const ACTION_STATUSES = ['open', 'in_progress', 'blocked', 'done'];
+
+function actionsForFinding(findingId, industry) {
+  const list = findingActionsState[industry] ?? (findingActionsState[industry] = []);
+  const doneLast = (a) => (a.status === 'done' ? 1 : 0);
+  return list
+    .filter((a) => a.findingId === findingId)
+    .sort((a, b) => doneLast(a) - doneLast(b) || a.createdAt.localeCompare(b.createdAt));
+}
+
+app.get('/api/v1/findings/:id/actions', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  res.json(actionsForFinding(req.params.id, hit.industry));
+});
+
+app.post('/api/v1/findings/:id/actions', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  const { title, owner, dueAt } = req.body ?? {};
+  if (!title || !String(title).trim()) return res.status(400).json({ message: 'title is required' });
+  const action = {
+    id: `fa-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    findingId: req.params.id,
+    title: String(title).trim(),
+    owner: String(owner ?? '').trim() || 'Unassigned',
+    source: 'human',
+    status: 'open',
+    note: null,
+    dueAt: dueAt ?? null,
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
+  };
+  (findingActionsState[hit.industry] ?? (findingActionsState[hit.industry] = [])).push(action);
+  res.status(201).json(action);
+});
+
+app.patch('/api/v1/finding-actions/:actionId', (req, res) => {
+  for (const list of Object.values(findingActionsState)) {
+    const action = list.find((a) => a.id === req.params.actionId);
+    if (!action) continue;
+    const { status, note, owner, dueAt } = req.body ?? {};
+    if (status !== undefined) {
+      if (!ACTION_STATUSES.includes(status)) return res.status(400).json({ message: `status must be one of ${ACTION_STATUSES.join(', ')}` });
+      action.status = status;
+    }
+    if (note !== undefined) action.note = note;
+    if (owner !== undefined) action.owner = String(owner).trim() || action.owner;
+    if (dueAt !== undefined) action.dueAt = dueAt;
+    action.updatedAt = new Date().toISOString();
+    return res.json(action);
+  }
+  return res.status(404).json({ message: 'Action not found' });
 });
 
 // FP&A rollup: findings translated onto the P&L, per line item.
@@ -2128,6 +2190,11 @@ export function exportState() {
     closureKpisState: Object.fromEntries(
       Object.entries(closureKpisState).map(([k, list]) => [k, list.filter((c) => !c.id.startsWith('live-'))]),
     ),
+    // Actions on live-* findings are dropped with their parent: the finding is
+    // re-raised from Postgres with a fresh id, so a KV copy would orphan them.
+    findingActionsState: Object.fromEntries(
+      Object.entries(findingActionsState).map(([k, list]) => [k, list.filter((a) => !a.findingId.startsWith('live-'))]),
+    ),
     datasetsState,
     analysisRequestsState,
   };
@@ -2153,6 +2220,7 @@ export function importState(snapshot) {
   if (snapshot.brainsState) brainsState = snapshot.brainsState;
   if (snapshot.findingsState) findingsState = snapshot.findingsState;
   if (snapshot.closureKpisState) closureKpisState = snapshot.closureKpisState;
+  if (snapshot.findingActionsState) findingActionsState = snapshot.findingActionsState;
   if (snapshot.datasetsState) datasetsState = snapshot.datasetsState;
   if (snapshot.analysisRequestsState) analysisRequestsState = snapshot.analysisRequestsState;
 }

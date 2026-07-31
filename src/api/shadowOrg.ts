@@ -5,6 +5,9 @@ import type {
   CustomBrainNodeInput,
   DispositionInput,
   Finding,
+  FindingAction,
+  FindingActionInput,
+  FindingActionUpdate,
   FindingStatus,
   IndustryOption,
   KpiBrain,
@@ -168,6 +171,37 @@ export function useReAlertFinding(findingId: string) {
       queryClient.setQueryData(['findings', findingId], updated);
       queryClient.invalidateQueries({ queryKey: ['findings'] });
       queryClient.invalidateQueries({ queryKey: ['shadow-org'] });
+    },
+  });
+}
+
+// ---------- Finding actions (the tracker on a finding's thread) ----------
+export function useFindingActions(findingId: string | undefined) {
+  return useQuery({
+    queryKey: ['finding-actions', findingId],
+    queryFn: async () => (await apiClient.get<FindingAction[]>(`/findings/${findingId}/actions`)).data,
+    enabled: !!findingId,
+  });
+}
+
+export function useAddFindingAction(findingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: FindingActionInput) =>
+      (await apiClient.post<FindingAction>(`/findings/${findingId}/actions`, input)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finding-actions', findingId] });
+    },
+  });
+}
+
+export function useUpdateFindingAction(findingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ actionId, ...input }: FindingActionUpdate & { actionId: string }) =>
+      (await apiClient.patch<FindingAction>(`/finding-actions/${actionId}`, input)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finding-actions', findingId] });
     },
   });
 }
