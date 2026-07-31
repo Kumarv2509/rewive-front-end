@@ -1,6 +1,162 @@
-# Handoff — the v6 "clean modern SaaS" redesign (2026-07-28)
+# Handoff — the Hypermarket industry pack + the finding action tracker (2026-07-28)
 
 ## Where things stand
+
+- **ALL UNCOMMITTED.** `v5` is still ahead of `origin/v5` by 2 (the v6
+  redesign + its handoff, see the previous handoff below); on top of
+  that this session's work sits in the working tree, uncommitted:
+  the full **hypermarket industry pack** and the **finding action
+  tracker**. Two natural commits: `feat(v5): hypermarket industry pack
+  — GulfMart demo` and `feat(v5): finding action tracker — the fix in
+  motion on the thread`. Before pushing, the FortiGate warning further
+  down still applies (office network MITMs github.com; `gh auth status`
+  lies — test the network first).
+- `npm run build` and `npm run lint` both pass. Everything below was
+  smoke-tested against a running mock server (endpoints, sweep,
+  actions CRUD, KV snapshot shape) — not just type-checked.
+
+## This session (2026-07-28, part 1): the fourth industry — Hypermarket retail
+
+The founder: *"i want to build one for a hypermarket chain the same
+solution."* A fourth fully-seeded industry, `hypermarket`, wired
+through every screen exactly like FMCG/Healthcare/Manufacturing. The
+tenant is **GulfMart Hypermarkets (demo)** (`gulfmart`, `gulfmart.ae`,
+accent `#1D6F42`, currency **AED**): three UAE sites + online —
+entities `GulfMart Ibn Battuta` (Dubai), `GulfMart Al Wahda — Sharjah`,
+`GulfMart Yas Mall — Abu Dhabi`, `GulfMart Online — UAE`.
+
+### The extension checklist (what "add an industry" actually touches)
+
+An Explore pass mapped every branch point first; the full list, all now
+carrying a `hypermarket` key (id prefix `hm-`):
+
+- `src/api/types.ts` — `IndustryKey` union (line ~994). NOTE: nothing
+  in the type system forces the seed maps to gain the key — they are
+  all `Record<string,…>` with silent fallbacks, so omissions fail at
+  runtime, not build time.
+- `src/tenants.ts` — GulfMart tenant (login screen + landing CTA pick
+  it up automatically; `tenantForIndustry` assumes one tenant per
+  industry).
+- **The two mirrored legacy-industry gates — the biggest trap:**
+  `isLegacyIndustry()` in `src/screens/CommandCenter/personas.ts` AND
+  `LEGACY_INDUSTRIES` in `mock-server/roles.js` both now include
+  `'hypermarket'`. An industry missing from these silently inherits the
+  FMCG division tree (Protein/G&I/F&V lens picker). Labels via new
+  `HYPERMARKET_LABEL_OVERRIDES`: operations_head → "Store operations
+  head", sales_supervisor → "E-commerce supervisor", commercial_finance
+  → "Merchandising finance" (store_manager's base label already fits).
+- **The two disagreeing currency maps:** `app.js` ~line 271 (hypermarket
+  falls to the AED default — comment updated) and
+  `tracking.js` `CURRENCY_BY_INDUSTRY` (explicit `hypermarket: 'AED'`).
+- `mock-server/v4data.js` — `industryOptions` entry; brain (6 streams:
+  store_ops / merch / supply / ecom / customer / finance; 33 nodes = 3
+  intents + 5-line AED P&L cascade + 19 mandates + 6 signals; 40 edges
+  with causal rationales like DC fill → shelf gaps, overstock →
+  markdowns); `shadowOrgs.hypermarket` (8 agents incl. the
+  healthcare-style CFO split: FP&A `hm-sa-finance` holds the plan,
+  Loss prevention `hm-sa-lossprev` (persona `cfo`) holds shrink);
+  `findingsSeed.hypermarket` (7 findings covering ALL seven legacy
+  personas and the 4-A states — hero is `hm-f-1` fresh waste / late
+  markdown sweep; `hm-f-4` shrink is accepted → closure `hm-c-1`;
+  `hm-f-5` Friday online fill is parked with a re-alert rule);
+  `closureKpisSeed` (1 tracking + 2 closed-history); `plImpactSeed`.
+- `mock-server/v4content.js` — full `opContent.hypermarket` pack
+  (dashboard, 3 pending decisions, pulse, runs + one live runDetail,
+  exceptions, chases, 6-row decision ledger with assessor notes incl. a
+  **Dismiss that retuned the agent**, leaderboard, loopSpeed, outcome
+  report, 6-worker `agentCatalog` with `industry: 'retail'` — that's
+  the *AgentIndustry* union, a different type that already had
+  'retail').
+- `mock-server/businessdata.js` / `pldata.js` / `datasetsdata.js` —
+  business context (Category × Store dims), P&L statement (3 anomalies
+  deep-linking findings `hm-f-1`, `hm-f-2`, `hm-f-3`), 6 datasets.
+- `mock-server/seed-tracking.js` — 4 live-tracked mandates. **Gotcha
+  learned the hard way:** the "improving" (reads-clear) mandates must
+  have their *current* gap to target inside the warn band, or the
+  threshold rule raises regardless of the improving slope. First picks
+  (ecoshare 18% gap, loyalty 6.7%) raised; swapped to `hm-k-dcfill`
+  (3.6% gap, warn 5) and `hm-k-basket` (6.3% gap, warn 8). Verified on
+  a real sweep: dcfill + basket → `clear`, osa + freshwaste → `raised`
+  with correct entity/persona/counterpart.
+- `src/screens/Landing/index.tsx` — third card, grid to
+  `repeat(3,1fr)`/max-width 880, copy line "seeded for FMCG, Healthcare
+  and Hypermarket retail".
+- `src/screens/KpiLibrary/SelectKpisTab.tsx` — hypermarket **reuses**
+  the existing `retail_trade`/`distribution` catalog segments (labeled
+  "Stores & trade" / "Supply chain") rather than minting new
+  `KpiSegment` members — new segment keys would have empty catalogs.
+
+Left alone deliberately: `public/story.html` / `demo.html` (static
+marketing prototypes, still say "FMCG · Healthcare"), and the
+`AgentTeams` `FN_STYLE` map (new stream keys fall to `DEFAULT_STYLE`).
+
+## This session (2026-07-28, part 2): the finding action tracker
+
+The founder wanted "an action tracker like a ticketing system to track
+findings on top of Agent Findings", asked for a view first. The agreed
+shape (this is doctrine, keep it): **a child of the finding's thread,
+not a standalone ticket system** — a ticket closes when the *work* is
+done, a finding closes when the *number* is back, and collapsing that
+distinction would dissolve the product's differentiator. Built
+**generic, seeded only for hypermarket** (industries swap content,
+never features). Completing every action never closes the finding.
+
+- **Type** (`src/api/types.ts`): `FindingAction` — `findingId`, title,
+  `owner` (display name), `source: 'human' | 'worker'`, `status:
+  'open' | 'in_progress' | 'blocked' | 'done'`, nullable note/dueAt,
+  createdAt/updatedAt. Plus `FindingActionInput`/`FindingActionUpdate`.
+- **Server** (`mock-server/app.js`): `findingActionsState` (per-industry,
+  seeded from `findingActionsSeed` in `v4data.js`); routes
+  `GET/POST /api/v1/findings/:id/actions` (industry resolved via
+  `findFinding`, so **live sweep-raised findings carry actions too** —
+  verified), `PATCH /api/v1/finding-actions/:actionId` (status
+  validated against the four values). List sorted done-last. In
+  `exportState`/`importState`, and rows whose `findingId` starts with
+  `live-` are **stripped from the KV snapshot** — same convention as
+  live findings (the parent is re-raised from Postgres with a fresh id;
+  a KV copy would orphan them). NOT in `LIVE_LOCK_EXEMPT` — the routes
+  touch shared in-memory state. No save call needed in routes:
+  `api/handler.js` persists per request (there is no
+  `scheduleStateSave()`; a first draft invented one and it broke).
+- **Hooks** (`src/api/shadowOrg.ts`): `useFindingActions`,
+  `useAddFindingAction`, `useUpdateFindingAction` (query key
+  `['finding-actions', findingId]`).
+- **UI** (`src/screens/Findings/ActionsBlock.tsx`, mounted in
+  `Detail.tsx` on the thread spine between **Decided** and
+  **Watching**, styled like the "From above" block): eyebrow "Actions —
+  the fix in motion", per-row inline status `<select>`, owner,
+  "proposed by a worker" tag, due date with overdue-in-red, notes, an
+  add form (title/owner/date), "n of m done" counter, and the footer
+  doctrine line **"Done here ≠ closed — the finding closes when the
+  number is back."** Hidden on undecided/dismissed findings with no
+  rows; dismissed findings are read-only (status shown as a Pill).
+  Lint gotcha: the react-compiler rule bars `Date.now()` in render —
+  captured once via `useState(() => Date.now())` for overdue checks.
+- **Seeds** (6 rows, hypermarket only): `hm-f-4` (accepted shrink)
+  carries the demo beat — retagging + locked displays **done**, evening
+  exit coverage **in progress** (due in 5 days), an agent-proposed loss
+  re-check **open**, while the recovery target sits at 45%: *work
+  finished ≠ number back*. `hm-f-5` (parked) holds the dark-store pilot
+  (**in progress**, due ~3 weeks) and a **blocked** worker action
+  citing the failed ratings export.
+
+### Natural next steps
+
+- Commit the two features (see "Where things stand").
+- Optional: a compact board view behind `?view=actions` on Findings
+  (columns by status) — deliberately NOT a nav item, and overdue
+  actions must not grow a second badge (Today is the only "waiting on
+  you" count in the product).
+- Optional: seed a light action set for the FMCG/Healthcare hero
+  findings so the block isn't hypermarket-only on screen.
+- Optional cleanup: the closed-history closures reference
+  `hm-f-h1`/`hm-f-h2` findings that don't exist in the seed — same
+  pre-existing pattern as `mfg-f-h1/h2` (persona filter fails open),
+  fine for the demo.
+
+# Previous handoff — the v6 "clean modern SaaS" redesign (2026-07-28)
+
+## Where things stood
 
 - **COMMITTED, NOT PUSHED.** `v5` is **ahead of `origin/v5` by 2**,
   working tree clean (except this handoff):
