@@ -25,7 +25,7 @@ const nowIso = () => new Date().toISOString();
 // ---------------------------------------------------------------------------
 // Display formatting — display strings stay derived from numbers.
 // ---------------------------------------------------------------------------
-export const CURRENCY_BY_INDUSTRY = { fmcg: 'AED', healthcare: 'USD', manufacturing: 'USD' };
+export const CURRENCY_BY_INDUSTRY = { fmcg: 'AED', healthcare: 'USD', manufacturing: 'USD', hypermarket: 'AED' };
 
 export function formatValue(unit, format, value, industry) {
   if (value === null || value === undefined || Number.isNaN(value)) return '—';

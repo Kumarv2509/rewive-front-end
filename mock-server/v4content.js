@@ -361,4 +361,120 @@ const manufacturing = {
   },
 };
 
-export const opContent = { fmcg, healthcare, manufacturing };
+// ---------------------------------------------------------------------------
+// Hypermarket
+// ---------------------------------------------------------------------------
+const hmAgents = [
+  { agentId: 'hm-a-freshmarkdown', state: 'live', name: 'Fresh Markdown Worker', function: 'Supply chain & replenishment', capabilitiesCount: 4, dataInputs: 'POS · waste log · shelf life', reviewGate: 'Store-manager release · sweep list', owner: { name: 'Vikram Pillai', initials: 'VP', avatarBg: '#0E7490' }, guardrails: 'Markdown depth capped at −50% · no price below cost', estRuntime: '3–5 min', description: 'Builds the evening markdown sweep list per store from sell-through and remaining shelf life, so fresh sells before it is binned.', industry: 'retail', function2: 'procurement', persona: 'operations_head', catalogStatus: 'live', creationPath: 'chat', inputsSummary: ['Store POS feed', 'Store waste log'], outputsSummary: ['Sweep list by store', 'Markdown depth per line'], roiToDate: { label: 'Waste avoided', value: '+AED 210k/mo', direction: 'up' }, tokenCostToDate: { tokens: 310000, estCost: '$28.70' }, runsCount: 188, lastRunAt: '1h ago', mandateIds: ['hm-k-freshwaste'] },
+  { agentId: 'hm-a-gapscan', state: 'live', name: 'Shelf Gap Worker', function: 'Store operations', capabilitiesCount: 3, dataInputs: 'Gap scans · POS · back-room stock', reviewGate: 'Human approval · task dispatch', owner: { name: 'Saeed Al Falasi', initials: 'SF', avatarBg: '#B45309' }, guardrails: 'Dispatches tasks · never changes planograms', estRuntime: '2–4 min', description: 'Matches shelf gaps against back-room stock and dispatches targeted replenishment tasks before the footfall peak.', industry: 'retail', function2: 'sales', persona: 'store_manager', catalogStatus: 'live', creationPath: 'chat', inputsSummary: ['Shelf gap scans', 'DC stock & replenishment'], outputsSummary: ['Gap heatmap', 'Replenishment task list'], roiToDate: { label: 'Recovered sales', value: '+AED 180k/mo', direction: 'up' }, tokenCostToDate: { tokens: 240000, estCost: '$22.10' }, runsCount: 231, lastRunAt: '35m ago', mandateIds: ['hm-k-osa'] },
+  { agentId: 'hm-a-roster', state: 'live', name: 'Roster Shape Worker', function: 'Store operations', capabilitiesCount: 3, dataInputs: 'Footfall · till log · rosters', reviewGate: 'Human approval · roster change', owner: { name: 'Saeed Al Falasi', initials: 'SF', avatarBg: '#B45309' }, guardrails: 'Proposes shapes · store manager publishes the roster', estRuntime: '4–6 min', description: 'Re-shapes store rosters against the live footfall curve so checkout hours land where the queues actually form.', industry: 'retail', function2: 'hr', persona: 'operations_head', catalogStatus: 'live', creationPath: 'studio', inputsSummary: ['Queue cameras', 'Workforce management system'], outputsSummary: ['Roster shape proposal', 'Queue forecast'], roiToDate: { label: 'Queue time cut', value: '−1.8 min', direction: 'up' }, tokenCostToDate: { tokens: 190000, estCost: '$17.60' }, runsCount: 96, lastRunAt: '3h ago', mandateIds: ['hm-k-queue', 'hm-k-labourvar'] },
+  { agentId: 'hm-a-markdown', state: 'live', name: 'Markdown Effectiveness Worker', function: 'Merchandising & category', capabilitiesCount: 4, dataInputs: 'Margin ledger · POS · stock age', reviewGate: 'Human approval · price file', owner: { name: 'Huda Al Suwaidi', initials: 'HS', avatarBg: '#BE185D' }, guardrails: 'No price change without merch sign-off', estRuntime: '5–7 min', description: 'Separates markdowns that clear stock from markdowns that just re-price it, and proposes depth and exit routes per range.', industry: 'retail', function2: 'finance', persona: 'commercial_finance', catalogStatus: 'live', creationPath: 'chat', inputsSummary: ['Merch margin ledger', 'Store POS feed'], outputsSummary: ['Working vs non-working split', 'Clearance plan per range'], roiToDate: { label: 'Margin protected', value: '+AED 640k', direction: 'up' }, tokenCostToDate: { tokens: 280000, estCost: '$25.90' }, runsCount: 71, lastRunAt: '4h ago', mandateIds: ['hm-k-markdown', 'hm-k-marginrate'] },
+  { agentId: 'hm-a-rebate', state: 'live', name: 'Rebate Claims Worker', function: 'Finance', capabilitiesCount: 3, dataInputs: 'Supplier agreements · claims', reviewGate: 'Human approval · claim batch', owner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8' }, guardrails: 'Drafts claims · finance signs each batch', estRuntime: '5–7 min', description: 'Matches purchase volumes against supplier agreements, finds unbilled rebate and promo-funding claims, and drafts the claim batch.', industry: 'retail', function2: 'finance', persona: 'fpa', catalogStatus: 'live', creationPath: 'chat', inputsSummary: ['Merch margin ledger', 'Supplier agreements'], outputsSummary: ['Unbilled claim list', 'Draft claim batch'], roiToDate: { label: 'Income recovered', value: '+AED 1.1M', direction: 'up' }, tokenCostToDate: { tokens: 260000, estCost: '$24.00' }, runsCount: 58, lastRunAt: '6h ago', mandateIds: ['hm-k-supincome'] },
+  { agentId: 'hm-a-subs', state: 'paused', name: 'Substitution Quality Worker', function: 'E-commerce & last mile', capabilitiesCount: 3, dataInputs: 'Orders · picks · ratings', reviewGate: 'Human approval · rule change', owner: { name: 'Lina Haddad', initials: 'LH', avatarBg: '#9333EA' }, guardrails: 'Suggests substitution rules · never auto-substitutes', estRuntime: '3–5 min', description: 'Learns which substitutions customers accept and which trigger refunds, and tunes the picker substitution rules per category.', industry: 'retail', function2: 'customer_success', persona: 'sales_supervisor', catalogStatus: 'paused', creationPath: 'studio', inputsSummary: ['E-commerce order feed', 'Post-delivery ratings'], outputsSummary: ['Substitution rule set', 'Refund-risk flags'], roiToDate: { label: 'Refunds cut', value: '−28%', direction: 'up' }, tokenCostToDate: { tokens: 140000, estCost: '$12.90' }, runsCount: 49, lastRunAt: '2d ago', mandateIds: ['hm-k-orderfill'] },
+];
+
+const hypermarket = {
+  agentCatalog: hmAgents,
+  dashboardSummary: {
+    greetingName: 'Kumara',
+    summarySentence:
+      'Since yesterday, Rewive executed <b style="color:var(--ink)">58 actions</b> across stores, supply chain and e-commerce. Your queue is below.',
+  },
+  pendingDecisions: [
+    { id: 'hm-dec1', icon: '🥬', iconBg: 'var(--red-soft)', title: 'Fresh waste at Ibn Battuta hit 6.1% · markdown sweep slipping', subtitle: 'Fresh Markdown Worker has the on-time sweep list ready · ≈ AED 340k/mo at stake', actionLabel: 'Act', actionVerb: 'act', persona: 'operations_head' },
+    { id: 'hm-dec2', icon: '🛒', iconBg: 'var(--amber-soft)', title: 'Weekend shelf gaps at Al Wahda · stock is in the back room', subtitle: 'Shelf Gap Worker proposes a pre-peak replenishment run · ≈ AED 190k/weekend', actionLabel: 'Approve', actionVerb: 'approve', persona: 'store_manager' },
+    { id: 'hm-dec3', icon: '🧾', iconBg: 'var(--teal-soft)', title: 'AED 1.6M of supplier rebates unbilled since the range reset', subtitle: 'Rebate Claims Worker · claim batch drafted for 400 re-coded SKUs', actionLabel: 'Review', actionVerb: 'act', persona: 'fpa' },
+  ],
+  pulse: [
+    { id: 'hm-p1', dotColor: 'var(--green)', html: '<b>Last-mile on-time</b> is holding at <b>96%</b> six weeks after the delivery-zone fix — loop closed.' },
+    { id: 'hm-p2', dotColor: 'var(--accent)', html: '<b>Supply chain</b> is the fastest stream: median time from finding to decision is down to <b>5 hours</b>.' },
+    { id: 'hm-p3', dotColor: 'var(--amber)', html: '<b>Evening queues</b> at Yas Mall are past 6 minutes while labour runs over plan. <span style="color:var(--accent);font-weight:600;cursor:pointer">Review roster shape →</span>' },
+  ],
+  liveRuns: [
+    { id: 'hm-run-sweep', persona: 'operations_head', name: 'Evening markdown sweep · fresh, all stores', eta: '~2 min left', percent: 74, stepDescription: 'Step 4 of 5 — pricing 612 lines by remaining shelf life' },
+    { id: 'hm-run-gaps', persona: 'store_manager', name: 'Pre-peak gap scan · Al Wahda', eta: '~3 min left', percent: 58, stepDescription: 'Step 3 of 5 — matching gaps to back-room stock' },
+    { id: 'hm-run-rebates', persona: 'fpa', name: 'Rebate claim match · post-reset SKUs', eta: 'finishing', percent: 90, barColor: 'var(--teal)', stepDescription: 'Step 5 of 5 — drafting the claim batch' },
+  ],
+  topPerformer: { id: 'hm-vikram', name: 'Vikram Pillai', avatarBg: '#0E7490', initials: 'VP', badge: '92% on-time', statLine: 'Closed 24 findings · paired with Fresh Markdown Worker · AED 210k/mo waste avoided' },
+  runs: [
+    { id: 'hm-run-sweep', persona: 'operations_head', name: 'Evening markdown sweep · fresh, all stores', owner: { name: 'Vikram', initials: 'VP', avatarBg: '#0E7490' }, agentName: 'Fresh Markdown Worker', status: 'running', duration: '3m 40s', outcome: '—' },
+    { id: 'hm-run-gaps', persona: 'store_manager', name: 'Pre-peak gap scan · Al Wahda', owner: { name: 'Saeed', initials: 'SF', avatarBg: '#B45309' }, agentName: 'Shelf Gap Worker', status: 'running', duration: '2m 55s', outcome: '—' },
+    { id: 'hm-run-rebates', persona: 'fpa', name: 'Rebate claim match · post-reset SKUs', owner: { name: 'Daniel', initials: 'DC', avatarBg: '#1D4ED8' }, agentName: 'Rebate Claims Worker', status: 'needs_decision', duration: 'paused 3h', outcome: 'AED 1.6M claim batch drafted' },
+    { id: 'hm-run-roster', persona: 'operations_head', name: 'Roster shape vs footfall · Yas Mall', owner: { name: 'Saeed', initials: 'SF', avatarBg: '#B45309' }, agentName: 'Roster Shape Worker', status: 'needs_decision', duration: 'paused 5h', outcome: 'Evening-weighted roster proposed' },
+    { id: 'hm-run-markdown', persona: 'commercial_finance', name: 'Markdown effectiveness · general merchandise', owner: { name: 'Huda', initials: 'HS', avatarBg: '#BE185D' }, agentName: 'Markdown Effectiveness Worker', status: 'completed', duration: '6m 12s', outcome: '60% of GM markdown flagged non-working' },
+    { id: 'hm-run-subs', persona: 'sales_supervisor', name: 'Substitution rule tuning · Friday cohort', owner: { name: 'Lina', initials: 'LH', avatarBg: '#9333EA' }, agentName: 'Substitution Quality Worker', status: 'failed', duration: '0m 51s', outcome: 'Ratings export empty · retried ✓' },
+  ],
+  runDetails: {
+    'hm-run-sweep': {
+      id: 'hm-run-sweep', persona: 'operations_head', name: 'Evening markdown sweep — fresh, all stores', meta: 'Fresh Markdown Worker · started 17:35 by Vikram · est. finish 17:41', isLive: true,
+      steps: [
+        { id: 's1', status: 'done', label: 'Pull sell-through and shelf life', description: 'POS + waste log · 3 stores · 2,140 fresh lines', duration: '0m 48s' },
+        { id: 's2', status: 'done', label: 'Forecast waste at close', description: '612 lines projected to expire unsold at current rate', duration: '1m 10s' },
+        { id: 's3', status: 'done', label: 'Set markdown depth per line', description: '−30% default, deeper where sell-through is slowest, floor at cost', duration: '0m 57s' },
+        { id: 's4', status: 'live', label: 'Build the sweep list by aisle', description: 'Sequencing so the sweep starts at 18:00, before the footfall peak…', duration: 'running' },
+        { id: 's5', status: 'gate', label: 'Review gate — store manager release', description: 'Each store manager releases their own list', duration: 'waiting' },
+      ],
+    },
+  },
+  runExceptions: [
+    { id: 'hm-exc1', runId: 'hm-run-subs', runName: 'Substitution rule tuning · Friday cohort', severity: 'error', message: 'Post-delivery ratings export returned empty for the Friday cohort — run failed rather than tuning rules on no data.', status: 'open', createdAt: '4h ago' },
+    { id: 'hm-exc2', runId: 'hm-run-rebates', runName: 'Rebate claim match · post-reset SKUs', severity: 'warning', message: 'Worker is unsure which agreement covers 12 SKUs re-coded across supplier boundaries — needs your input before the batch goes out.', status: 'open', createdAt: '3h ago' },
+  ],
+  runChases: [
+    { id: 'hm-chase1', runId: 'hm-run-roster', runName: 'Roster shape vs footfall · Yas Mall', trigger: 'sla', note: 'Roster proposal has waited 5h — next week\'s roster publishes tomorrow morning.', escalatedTo: 'Store operations director', createdAt: '1h ago' },
+  ],
+  // decisionStats derived server-side — see mock-server/halfyear.js.
+  decisionLedger: [
+    { id: 'hm-led1', persona: 'cfo', title: 'Accept — tag-and-case fix at Al Wahda, watch shrink', subtitle: 'Shrink at 2.4% of sales, concentrated in three categories', madeBy: { type: 'human', name: 'Ahmed', initials: 'AM', avatarBg: '#B91C1C' }, informedBy: { type: 'agent', name: 'Loss prevention agent' }, date: '24 Jul', verdict: 'too_early', measuredImpact: { text: 'measuring… 1.9% of a 1.4% exit condition', direction: 'flat' }, function: 'finance', findingId: 'hm-f-4', assessorNote: 'Assessor agent: shrink at the pilot store is down from 2.4% to 1.9% two weeks after the tagging and case-display change — the right direction, but the exit condition wants eight consecutive weeks under 1.4% and the next full stock count is the only number that settles it. Too early.', entity: 'GulfMart Al Wahda — Sharjah', region: 'Sharjah & Northern Emirates' },
+    { id: 'hm-led2', persona: 'operations_head', title: 'Act — move the fresh markdown sweep to 18:00, worker-built lists', subtitle: 'Fresh waste climbing as the sweep started after the footfall peak', madeBy: { type: 'human', name: 'Vikram', initials: 'VP', avatarBg: '#0E7490' }, informedBy: { type: 'agent', name: 'Supply chain agent' }, date: '02 Jun', verdict: 'worked', measuredImpact: { text: 'fresh waste 5.2% → 3.4% at pilot stores', direction: 'up' }, function: 'operations', assessorNote: 'Assessor agent: at the two pilot stores the on-time sweep held fresh waste under 3.5% for six consecutive weeks, against 5%+ at control stores — confirmed on the same waste-log feed that raised the finding. The Ibn Battuta drift now open is the rollout gap, not a relapse at the pilots.', entity: 'GulfMart Yas Mall — Abu Dhabi', region: 'Abu Dhabi' },
+    { id: 'hm-led3', persona: 'sales_supervisor', title: 'Act — redraw delivery zones around actual drive times', subtitle: 'Last-mile on-time fell to 82% after the network grew', madeBy: { type: 'human', name: 'Lina', initials: 'LH', avatarBg: '#9333EA' }, informedBy: { type: 'agent', name: 'E-commerce agent' }, date: '28 Apr', verdict: 'worked', measuredImpact: { text: 'on-time 82% → 96%', direction: 'up' }, function: 'operations', findingId: 'hm-f-h2', assessorNote: 'Assessor agent: on-time delivery held at or above 95% for six consecutive weeks after the zone redraw, with no increase in cost per drop — loop closed 20 Jun.', entity: 'GulfMart Online — UAE', region: 'UAE' },
+    { id: 'hm-led4', persona: 'commercial_finance', title: 'Dismiss — beverage margin dip was the agreed Ramadan investment', subtitle: 'Margin rate on beverages fell 1.8pts in the season', madeBy: { type: 'human', name: 'Huda', initials: 'HS', avatarBg: '#BE185D' }, informedBy: { type: 'agent', name: 'Merchandising agent' }, date: '20 Mar', verdict: 'worked', measuredImpact: { text: 'agent tuned — seasonal funding now netted', direction: 'flat' }, function: 'finance', assessorNote: 'Assessor agent: the dip matched the pre-agreed seasonal price investment, fully covered by supplier funding booked a month later. Dismissing was right, and the reason retuned the agent to net promo funding before raising margin drift in a season window.', entity: 'GulfMart Ibn Battuta', region: 'Dubai' },
+    { id: 'hm-led5', persona: 'store_manager', title: 'Act — pre-peak replenishment run for weekend top-20 categories', subtitle: 'Ramadan week-one beverage availability collapse', madeBy: { type: 'human', name: 'Mariam', initials: 'MZ', avatarBg: '#0F766E' }, informedBy: { type: 'agent', name: 'Store operations agent' }, date: '10 Mar', verdict: 'worked', measuredImpact: { text: 'beverage OSA 84% → 97% for the season', direction: 'up' }, function: 'operations', findingId: 'hm-f-h1', assessorNote: 'Assessor agent: beverage OSA held above 96% for the remaining seven weeks of the season after the pre-peak run was added — confirmed on gap-scan data. Loop closed 12 Apr.', entity: 'GulfMart Ibn Battuta', region: 'Dubai' },
+    { id: 'hm-led6', persona: 'fpa', title: 'Auto-file rebate claims under AED 5k on matched agreements', subtitle: 'Process decision · worker autonomous', madeBy: { type: 'agent', name: 'Rebate Claims Worker' }, informedBy: { type: 'policy', name: 'policy' }, date: 'ongoing', verdict: 'worked', measuredImpact: { text: '11h / month saved', direction: 'up' }, function: 'finance', entity: 'GulfMart Ibn Battuta', region: 'Dubai' },
+  ],
+  leaderboardHighlights: [
+    { id: 'hm-h1', medal: '🥇', tag: 'Most effective · people', name: 'Vikram Pillai', avatarBg: '#0E7490', initials: 'VP', statLine: '24 findings closed · 92% on-time · AED 210k/mo waste avoided' },
+    { id: 'hm-h2', medal: '🤖', tag: 'Top worker', name: 'Fresh Markdown Worker', avatarBg: '#4F46E5', initials: 'FM', statLine: '188 runs · 98.4% success · AED 630k waste avoided' },
+    { id: 'hm-h3', medal: '⚡', tag: 'Best human + worker pair', name: 'Lina + Substitution Worker', avatarBg: '#9333EA', initials: 'LH', statLine: 'Refund rate on substituted orders −28%' },
+  ],
+  leaderboard: [
+    { id: 'hm-l1', persona: 'operations_head', type: 'human', name: 'Vikram Pillai', initials: 'VP', avatarBg: '#0E7490', actionsClosed: 24, onTimePct: 92, decisionWinRatePct: 81, timeSaved: '12h', trend: [15, 12, 13, 9, 6, 3], trendColor: '#16A34A' },
+    { id: 'hm-l2', persona: 'operations_head', type: 'agent', name: 'Fresh Markdown Worker', initials: 'FM', avatarBg: '#4F46E5', actionsClosed: 188, onTimePct: 98.4, decisionWinRatePct: 77, timeSaved: '64h', trend: [16, 13, 11, 10, 7, 4], trendColor: '#16A34A' },
+    { id: 'hm-l3', persona: 'operations_head', type: 'human', name: 'Saeed Al Falasi', initials: 'SF', avatarBg: '#B45309', actionsClosed: 21, onTimePct: 89, decisionWinRatePct: 79, timeSaved: '9h', trend: [13, 11, 12, 8, 8, 5], trendColor: '#16A34A' },
+    { id: 'hm-l4', persona: 'sales_supervisor', type: 'human', name: 'Lina Haddad', initials: 'LH', avatarBg: '#9333EA', actionsClosed: 17, onTimePct: 90, decisionWinRatePct: 75, timeSaved: '7h', trend: [12, 11, 10, 9, 8, 7], trendColor: '#16A34A' },
+    { id: 'hm-l5', persona: 'commercial_finance', type: 'human', name: 'Huda Al Suwaidi', initials: 'HS', avatarBg: '#BE185D', actionsClosed: 14, onTimePct: 82, decisionWinRatePct: 68, timeSaved: '5h', trend: [11, 12, 12, 13, 12, 13], trendColor: '#D97706' },
+    { id: 'hm-l6', persona: 'store_manager', type: 'human', name: 'Mariam Al Zaabi', initials: 'MZ', avatarBg: '#0F766E', actionsClosed: 13, onTimePct: 87, decisionWinRatePct: 74, timeSaved: '5h', trend: [12, 10, 13, 10, 9, 9], trendColor: '#A8A29E' },
+  ],
+  loopSpeed: [
+    { id: 'hm-ls-freshwaste', persona: 'operations_head', mandate: 'Fresh waste', stream: 'Supply chain & replenishment', owner: { name: 'Vikram Pillai', initials: 'VP', avatarBg: '#0E7490' }, agent: 'Supply chain agent', findings90d: 4, medianTimeToDecide: '5h', medianTimeToClose: '9 days', closedInWindowPct: 83, trend: [21, 18, 15, 12, 10, 9], trendColor: '#16A34A' },
+    { id: 'hm-ls-osa', persona: 'store_manager', mandate: 'On-shelf availability', stream: 'Store operations', owner: { name: 'Saeed Al Falasi', initials: 'SF', avatarBg: '#B45309' }, agent: 'Store operations agent', findings90d: 4, medianTimeToDecide: '7h', medianTimeToClose: '12 days', closedInWindowPct: 76, trend: [19, 18, 16, 14, 13, 12], trendColor: '#16A34A' },
+    { id: 'hm-ls-ontime', persona: 'sales_supervisor', mandate: 'On-time delivery (last mile)', stream: 'E-commerce & last mile', owner: { name: 'Lina Haddad', initials: 'LH', avatarBg: '#9333EA' }, agent: 'E-commerce agent', findings90d: 2, medianTimeToDecide: '10h', medianTimeToClose: '18 days', closedInWindowPct: 68, trend: [24, 23, 21, 20, 19, 18], trendColor: '#16A34A' },
+    { id: 'hm-ls-shrink', persona: 'cfo', mandate: 'Shrink % of sales', stream: 'Finance', owner: { name: 'Ahmed Mansour', initials: 'AM', avatarBg: '#B91C1C' }, agent: 'Loss prevention agent', findings90d: 2, medianTimeToDecide: '18h', medianTimeToClose: '41 days', closedInWindowPct: 52, trend: [36, 37, 38, 39, 40, 41], trendColor: '#D97706' },
+    { id: 'hm-ls-markdown', persona: 'commercial_finance', mandate: 'Markdown % of sales', stream: 'Merchandising & category', owner: { name: 'Huda Al Suwaidi', initials: 'HS', avatarBg: '#BE185D' }, agent: 'Merchandising agent', findings90d: 3, medianTimeToDecide: '27h', medianTimeToClose: '36 days', closedInWindowPct: 44, trend: [30, 31, 32, 34, 35, 36], trendColor: '#D97706' },
+    { id: 'hm-ls-supincome', persona: 'fpa', mandate: 'Supplier income vs plan', stream: 'Finance', owner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8' }, agent: 'Finance agent', findings90d: 2, medianTimeToDecide: '33h', medianTimeToClose: '46 days', closedInWindowPct: 37, trend: [38, 40, 41, 43, 45, 46], trendColor: '#DC2626' },
+  ],
+  outcomeReports: {
+    latest: {
+      runId: 'latest', title: 'Store Operations Outcome — June 2026', runMeta: 'Fresh Markdown Worker · run completed in 5m 58s · approved by Vikram', published: true,
+      scoreCards: [
+        { id: 'sc1', label: 'Fresh waste', value: '4.6%', deltaLabel: '▲ 1.6 pts vs target', deltaTone: 'red', sparkline: [9, 10, 12, 14, 16, 18, 20, 22], sparklineColor: '#DC2626' },
+        { id: 'sc2', label: 'On-shelf availability', value: '92.4%', deltaLabel: '▼ 3.6 pts vs target', deltaTone: 'red', sparkline: [20, 19, 18, 17, 16, 15, 14, 13], sparklineColor: '#DC2626' },
+        { id: 'sc3', label: 'Last-mile on-time', value: '96%', deltaLabel: '▲ held 6 weeks', deltaTone: 'green', sparkline: [8, 10, 12, 15, 17, 19, 21, 22], sparklineColor: '#16A34A' },
+        { id: 'sc4', label: 'Shrink (pilot store)', value: '1.9%', deltaLabel: '◷ watch', deltaTone: 'amber', sparkline: [22, 21, 20, 19, 18, 17, 17, 16], sparklineColor: '#D97706' },
+      ],
+      insights: [
+        { id: 'i1', icon: '🥬', iconBg: 'var(--red-soft)', title: 'Fresh waste is a timing problem, not a forecasting one', text: 'Where the evening sweep starts on time, waste at close on marked-down lines is under 1%. The Ibn Battuta drift is the sweep starting after the footfall peak.' },
+        { id: 'i2', icon: '🛒', iconBg: 'var(--amber-soft)', title: 'Weekend gaps are back-room gaps', text: '71% of weekend shelf gaps at Al Wahda had stock in the back room — the last replenishment run ends two hours before the peak.' },
+        { id: 'i3', icon: '💡', iconBg: 'var(--green-soft)', title: 'The zone redraw is holding', text: 'Six weeks above 95% on-time with no increase in cost per drop — the delivery-zone decision is confirmed and the loop is closed.' },
+        { id: 'i4', icon: '🔁', iconBg: 'var(--teal-soft)', title: 'The markdown-sweep decision is confirmed at the pilots', text: 'Pilot stores held fresh waste under 3.5% for six weeks (Decision Ledger, 02 Jun) — verdict updated to "Worked". The open question is rollout, not the method.' },
+      ],
+      actions: [
+        { id: 'a1', title: 'Roll the 18:00 markdown sweep to Ibn Battuta', subtitle: 'Est. −AED 340k/mo waste · owner suggested: Vikram', assigned: false, assignedTo: 'Vikram', actionType: 'assign' },
+        { id: 'a2', title: 'Add a pre-peak replenishment run for weekend top-20', subtitle: 'Est. +AED 190k/weekend recovered · owner: Saeed', assigned: false, assignedTo: 'Saeed', actionType: 'assign' },
+        { id: 'a3', title: 'Re-run the waste forecast with July POS data', subtitle: 'Scheduled run · 1 Aug 06:00', assigned: false, actionType: 'schedule' },
+      ],
+    },
+  },
+};
+
+export const opContent = { fmcg, healthcare, manufacturing, hypermarket };

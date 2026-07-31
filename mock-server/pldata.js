@@ -192,4 +192,23 @@ export const plStatementSeed = {
       { id: 'mpl-a-3', title: 'Unplanned downtime tripled as PM compliance slid', plLineKey: 'maintenance', plLineLabel: 'Maintenance & downtime', dimA: 'Press line', driftVsBudgetPct: 19.2, driftVsForecastPct: 6.9, impact: '22 h/wk downtime vs 8 budgeted', severity: 'high', routedTo: 'operations_head', status: 'raised', findingId: 'mfg-f-1' },
     ],
   },
+
+  hypermarket: {
+    period: 'Q3 FY26 · quarter to date',
+    unit: 'AED M',
+    dimALabel: 'Category',
+    dimBLabel: 'Store',
+    lines: [
+      { key: 'net-sales', label: 'Net sales', kind: 'line', isCost: false, actual: '438.2', budget: '452.0', forecast: '444.5', varBudgetPct: -3.1, varForecastPct: -1.4, anomalyIds: ['hpl-a-1'] },
+      { key: 'gross-margin', label: 'Gross margin', kind: 'line', isCost: false, actual: '96.4', budget: '104.0', forecast: '99.8', varBudgetPct: -7.3, varForecastPct: -3.4, anomalyIds: ['hpl-a-2'] },
+      { key: 'shrink-waste', label: 'Shrink & known waste', kind: 'line', isCost: true, actual: '8.3', budget: '5.6', forecast: '7.1', varBudgetPct: 48.2, varForecastPct: 16.9, anomalyIds: ['hpl-a-3'] },
+      { key: 'store-labour', label: 'Store labour cost', kind: 'line', isCost: true, actual: '34.6', budget: '33.8', forecast: '34.2', varBudgetPct: 2.4, varForecastPct: 1.2, anomalyIds: [] },
+      { key: 'ebitda', label: 'EBITDA', kind: 'subtotal', isCost: false, actual: '18.1', budget: '22.6', forecast: '20.0', varBudgetPct: -19.9, varForecastPct: -9.5, anomalyIds: [] },
+    ],
+    anomalies: [
+      { id: 'hpl-a-1', title: 'Weekend availability gap at Al Wahda walking sales', plLineKey: 'net-sales', plLineLabel: 'Net sales', dimB: 'Al Wahda — Sharjah', driftVsBudgetPct: -3.1, driftVsForecastPct: -1.4, impact: '≈ AED 190k/weekend of walked sales', severity: 'high', routedTo: 'store_manager', status: 'raised', findingId: 'hm-f-2' },
+      { id: 'hpl-a-2', title: 'GM markdowns doubled with no sell-through lift', plLineKey: 'gross-margin', plLineLabel: 'Gross margin', dimA: 'General merchandise', driftVsBudgetPct: -7.3, driftVsForecastPct: -3.4, impact: '≈ AED 2.1M of non-working markdown', severity: 'high', routedTo: 'commercial_finance', status: 'raised', findingId: 'hm-f-3' },
+      { id: 'hpl-a-3', title: 'Fresh waste and Al Wahda shrink drive the overshoot', plLineKey: 'shrink-waste', plLineLabel: 'Shrink & known waste', dimA: 'Fresh', driftVsBudgetPct: 48.2, driftVsForecastPct: 16.9, impact: 'AED 340k/mo fresh + AED 420k/qtr shrink', severity: 'high', routedTo: 'operations_head', status: 'watching', findingId: 'hm-f-1' },
+    ],
+  },
 };

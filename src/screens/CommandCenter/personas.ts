@@ -60,6 +60,15 @@ const HEALTHCARE_LABEL_OVERRIDES: Partial<Record<Persona, string>> = {
   commercial_finance: 'Payer contracting',
 };
 
+// A hypermarket chain sells from stores, not cases into trade: the generic
+// labels are re-worded for a multi-site retail network. Words only — the
+// tree, escalation line and data partition stay the shared legacy roles.
+const HYPERMARKET_LABEL_OVERRIDES: Partial<Record<Persona, string>> = {
+  operations_head: 'Store operations head',
+  sales_supervisor: 'E-commerce supervisor',
+  commercial_finance: 'Merchandising finance',
+};
+
 // Healthcare and Manufacturing packs only seed the original roles; the full
 // org tree (divisions, the group tier) is an FMCG-context feature. Both packs
 // have a CFO, so both offer the CFO's two reports — FP&A and the commercial
@@ -76,12 +85,13 @@ export const LEGACY_PERSONAS: Persona[] = [
 ];
 
 function isLegacyIndustry(industry: string | null = getActiveIndustry()): boolean {
-  return industry === 'healthcare' || industry === 'manufacturing';
+  return industry === 'healthcare' || industry === 'manufacturing' || industry === 'hypermarket';
 }
 
 export function personaLabel(p: Persona, industry?: string): string {
   const ind = industry ?? getActiveIndustry();
   if (ind === 'healthcare') return HEALTHCARE_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
+  if (ind === 'hypermarket') return HYPERMARKET_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
   if (!isLegacyIndustry(ind)) return FMCG_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
   return PERSONA_LABEL[p];
 }

@@ -62,7 +62,7 @@ export function roleSubtree(role) {
 // tree (the group tier, divisions) is an FMCG-context feature. Mirrored in
 // src/screens/CommandCenter/personas.ts (LEGACY_PERSONAS) — keep the two in sync.
 export const LEGACY_PERSONAS = ['coo', 'operations_head', 'store_manager', 'sales_supervisor', 'cfo', 'fpa', 'commercial_finance'];
-const LEGACY_INDUSTRIES = new Set(['healthcare', 'manufacturing']);
+const LEGACY_INDUSTRIES = new Set(['healthcare', 'manufacturing', 'hypermarket']);
 
 // The roles an industry actually offers in its lens picker. null = "all roles"
 // (FMCG); a Set of the legacy six otherwise.

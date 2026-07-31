@@ -991,7 +991,7 @@ export interface PlanningImportResult {
 // ============ v4 — shadow organization ============
 
 // ---------- Org profile & industry templates ----------
-export type IndustryKey = 'fmcg' | 'healthcare' | 'manufacturing';
+export type IndustryKey = 'fmcg' | 'healthcare' | 'manufacturing' | 'hypermarket';
 
 export interface OrgProfile {
   orgName: string;

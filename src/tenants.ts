@@ -52,6 +52,21 @@ export const TENANTS: Tenant[] = [
     ],
   },
   {
+    id: 'gulfmart',
+    name: 'GulfMart Hypermarkets (demo)',
+    mark: 'GM',
+    industry: 'hypermarket',
+    industryLabel: 'Hypermarket retail',
+    accent: '#1D6F42',
+    domain: 'gulfmart.ae',
+    tagline: 'Store operations, merchandising, supply chain, e-commerce and customer across a multi-site UAE network.',
+    proofPoints: [
+      '21 numbers watched by paired agents across 6 streams',
+      'Ibn Battuta · Al Wahda — Sharjah · Yas Mall — Abu Dhabi · GulfMart Online',
+      'Currency AED · COO to store manager',
+    ],
+  },
+  {
     id: 'gulf-precision',
     name: 'Gulf Precision Industries',
     mark: 'GP',

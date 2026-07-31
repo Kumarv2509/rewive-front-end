@@ -7,6 +7,7 @@ import { tenantForIndustry } from '../../tenants';
 const INDUSTRIES: { id: IndustryKey; name: string; blurb: string; mandates: number }[] = [
   { id: 'fmcg', name: 'FMCG / food & beverage', blurb: 'Manufacturing, distribution and trade across modern and traditional channels.', mandates: 26 },
   { id: 'healthcare', name: 'Healthcare', blurb: 'Clinical operations, revenue cycle, patient experience, pharmacy, finance and people.', mandates: 22 },
+  { id: 'hypermarket', name: 'Hypermarket retail', blurb: 'Store operations, merchandising, supply chain, e-commerce and customer across a multi-site network.', mandates: 21 },
 ];
 
 function useEnter() {
@@ -71,7 +72,7 @@ const css = `
 .om .hero .thesis-line b{color:var(--om-ink);font-weight:500}
 .om .ind-picker{scroll-margin-top:24px}
 .om .ind-picker-label{font-family:var(--om-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--om-ink-3);margin-bottom:14px}
-.om .ind-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:600px}
+.om .ind-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:880px}
 .om .ind-card{text-align:left;cursor:pointer;font-family:inherit;color:var(--om-ink);background:var(--om-card);border:1px solid var(--om-line-2);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:8px;transition:border-color .18s,box-shadow .18s;box-shadow:var(--shadow)}
 .om .ind-card:hover:not(:disabled){border-color:var(--accent);box-shadow:var(--shadow-lg)}
 .om .ind-card:disabled{opacity:.5;cursor:default}
@@ -374,7 +375,7 @@ export function LandingScreen() {
             <p>Every decision is recorded with its expected impact — and an assessor returns later with the verdict: <b>worked, didn't, too early</b>.</p>
           </div>
         </div>
-        <p className="anatomy-foot">Everything is industry-parameterized — the same five primitives, seeded for <b>FMCG</b> and <b>Healthcare</b> operating contexts.</p>
+        <p className="anatomy-foot">Everything is industry-parameterized — the same five primitives, seeded for <b>FMCG</b>, <b>Healthcare</b> and <b>Hypermarket retail</b> operating contexts.</p>
       </section>
 
       {/* THE SHIFT */}

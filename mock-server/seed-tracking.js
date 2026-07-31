@@ -43,6 +43,11 @@ const MANDATES = [
   { nodeId: 'mfg-k-fpy', entity: 'Plant 1 — Jebel Ali', region: 'UAE',        direction: 'up_good',   unit: 'pct', warnPct: 3, breachPct: 5, shape: 'improving' },
   { nodeId: 'mfg-k-supotd', entity: 'Plant 2 — Dammam', region: 'KSA',     direction: 'up_good',   unit: 'pct', warnPct: 3, breachPct: 6, shape: 'worsening' },
   { nodeId: 'mfg-k-unplanned', entity: 'Plant 2 — Dammam', region: 'KSA',  direction: 'down_good', unit: 'count', format: '{v} h/wk', warnPct: 5, breachPct: 10, shape: 'worsening' },
+  // ---- Hypermarket ----
+  { nodeId: 'hm-k-dcfill', entity: 'GulfMart Yas Mall — Abu Dhabi', region: 'Abu Dhabi',           direction: 'up_good',   unit: 'pct', warnPct: 5, breachPct: 8, shape: 'improving' },
+  { nodeId: 'hm-k-basket', entity: 'GulfMart Ibn Battuta', region: 'Dubai',                        direction: 'up_good',   unit: 'currency', format: 'AED {v}', warnPct: 8, breachPct: 12, shape: 'improving' },
+  { nodeId: 'hm-k-osa', entity: 'GulfMart Al Wahda — Sharjah', region: 'Sharjah & Northern Emirates', direction: 'up_good', unit: 'pct', warnPct: 2, breachPct: 4, shape: 'worsening' },
+  { nodeId: 'hm-k-freshwaste', entity: 'GulfMart Ibn Battuta', region: 'Dubai',                    direction: 'down_good', unit: 'pct', warnPct: 15, breachPct: 30, shape: 'worsening' },
 ];
 
 /** "AED 3.90" → 3.9, "< 1.0" → 1, "$1,240" → 1240, "22 h/wk" → 22. */

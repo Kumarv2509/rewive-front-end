@@ -265,9 +265,9 @@ app.get('/api/v1/decisions/stats', (req, res) => {
   // disagreed about the same period.
   const findings = filterByPersona(findingsState[industry] ?? [], persona, scope);
   const ledger = filterByPersona(op(req).decisionLedger ?? [], persona, scope);
-  // FMCG and Healthcare are both UAE orgs and seed their impact figures in AED;
-  // Manufacturing is the only USD pack. Keep this in step with the seeds, or
-  // the tiles re-badge a sum of AED figures with a dollar sign.
+  // FMCG, Healthcare and Hypermarket are all UAE orgs and seed their impact
+  // figures in AED; Manufacturing is the only USD pack. Keep this in step with
+  // the seeds, or the tiles re-badge a sum of AED figures with a dollar sign.
   const currency = industry === 'manufacturing' ? '$' : 'AED';
   const closures = filterClosuresByPersona(closureKpisState[industry] ?? [], findingsState[industry] ?? [], persona, scope);
   const halfYear = deriveHalfYear({ findings, closures, ledger, currency });

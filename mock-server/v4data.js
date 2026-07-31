@@ -17,6 +17,7 @@ export const industryOptions = [
   { id: 'fmcg', name: 'FMCG / food & beverage', description: 'Consumer packaged food: manufacturing, distribution and trade across modern and traditional channels.', streamCount: 8, kpiCount: 26 },
   { id: 'healthcare', name: 'Healthcare', description: 'Hospital and clinic network: clinical operations, revenue cycle, patient experience, pharmacy, finance and people.', streamCount: 6, kpiCount: 22 },
   { id: 'manufacturing', name: 'Manufacturing', description: 'Discrete manufacturing: production, maintenance, supplier network, quality, safety and plant finance across multi-plant operations.', streamCount: 6, kpiCount: 17 },
+  { id: 'hypermarket', name: 'Hypermarket retail', description: 'Hypermarket chain: store operations, merchandising, supply chain & replenishment, e-commerce, customer & loyalty and finance across a multi-site network.', streamCount: 6, kpiCount: 21 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -395,10 +396,123 @@ const mfgEdges = [
   { id: 'mfg-e-41', source: 'mfg-k-custppm', target: 'mfg-pl-rev', weight: 'weak', status: 'connected', rationale: 'Customer PPM above contract thresholds triggers chargebacks.' },
 ];
 
+// ---------------------------------------------------------------------------
+// Hypermarket brain (multi-site retail chain — GulfMart demo)
+// ---------------------------------------------------------------------------
+const hmStreams = [
+  { key: 'store_ops', name: 'Store operations', answersTo: 'Availability and sales per square metre' },
+  { key: 'merch', name: 'Merchandising & category', answersTo: 'Gross margin and private label share' },
+  { key: 'supply', name: 'Supply chain & replenishment', answersTo: 'Availability and inventory days' },
+  { key: 'ecom', name: 'E-commerce & last mile', answersTo: 'Online growth and order economics' },
+  { key: 'customer', name: 'Customer & loyalty', answersTo: 'Basket growth and retention' },
+  { key: 'finance', name: 'Finance', answersTo: 'EBITDA and shrink' },
+];
+
+const hmNodes = [
+  // Targets (org level)
+  { id: 'hm-t-lfl', kind: 'target', name: 'Like-for-like sales growth', streamKey: null, definition: 'Year-over-year sales growth for stores open more than 12 months.', currentValue: '+2.1% YoY', targetValue: '+5% YoY', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['Store POS feed'] },
+  { id: 'hm-t-ebitda', kind: 'target', name: 'EBITDA margin', streamKey: null, definition: 'Earnings before interest, tax, depreciation and amortization as a share of net sales.', currentValue: '4.1%', targetValue: '5.0%', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['ERP P&L'] },
+  { id: 'hm-t-shrink', kind: 'target', name: 'Shrink % of sales', streamKey: null, definition: 'Unknown loss — theft, damage, admin error — as a share of net sales.', currentValue: '1.9%', targetValue: '1.2%', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Stock-count reconciliation'] },
+
+  // P&L tier — the retail cascade the store mandates roll into (AED M, Q3 QTD).
+  { id: 'hm-pl-sales', kind: 'pl_line', name: 'Net sales', streamKey: null, definition: 'Till and online sales net of returns. Availability, queue and e-commerce mandates fill this line.', currentValue: 'AED 438.2M', targetValue: 'AED 452.0M budget', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['Store POS feed', 'E-commerce order feed'] },
+  { id: 'hm-pl-margin', kind: 'pl_line', name: 'Gross margin (AED)', streamKey: null, definition: 'Sales minus cost of goods, after markdowns and supplier income. The merchandising mandates carry this line.', currentValue: 'AED 96.4M', targetValue: 'AED 104.0M budget', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['Merch margin ledger'] },
+  { id: 'hm-pl-shrinkwaste', kind: 'pl_line', name: 'Shrink & known waste', streamKey: null, definition: 'Unknown loss plus recorded fresh waste and damage. Loss-prevention and fresh mandates keep this line down.', currentValue: 'AED 8.3M', targetValue: 'AED 5.6M budget', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Stock-count reconciliation'] },
+  { id: 'hm-pl-labour', kind: 'pl_line', name: 'Store labour cost', streamKey: null, definition: 'Store payroll including overtime and agency cover. Rostering-to-footfall mandates carry this line.', currentValue: 'AED 34.6M', targetValue: 'AED 33.8M budget', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['Workforce management system'] },
+  { id: 'hm-pl-ebitda', kind: 'pl_line', name: 'EBITDA (AED)', streamKey: null, definition: 'Gross margin minus shrink, labour and occupancy — the line the margin intent stands on.', currentValue: 'AED 18.1M', targetValue: 'AED 22.6M budget', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['ERP P&L'] },
+
+  // Store operations
+  { id: 'hm-k-osa', kind: 'stream_kpi', name: 'On-shelf availability', streamKey: 'store_ops', definition: 'Share of audited SKU-store combinations in stock and on shelf, gap-scan weighted by sales.', currentValue: '92.4%', targetValue: '96%', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['Shelf gap scans', 'Store POS feed'] },
+  { id: 'hm-k-queue', kind: 'stream_kpi', name: 'Checkout queue time', streamKey: 'store_ops', definition: 'Average minutes from joining the queue to first scan, peak hours.', currentValue: '4.8 min', targetValue: '3.0 min', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['Queue cameras', 'Till transaction log'] },
+  { id: 'hm-k-salespsm', kind: 'stream_kpi', name: 'Sales per square metre', streamKey: 'store_ops', definition: 'Net sales per trading square metre, rolling 4 weeks.', currentValue: 'AED 2,840', targetValue: 'AED 3,100', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['Store POS feed'] },
+  { id: 'hm-k-labourvar', kind: 'stream_kpi', name: 'Labour hours vs plan', streamKey: 'store_ops', definition: 'Rostered store hours against the footfall-based plan.', currentValue: '+6%', targetValue: '0%', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['Workforce management system'] },
+
+  // Merchandising & category
+  { id: 'hm-k-marginrate', kind: 'stream_kpi', name: 'Gross margin rate', streamKey: 'merch', definition: 'Gross margin after markdowns and supplier income as a share of sales.', currentValue: '22.0%', targetValue: '23.5%', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['Merch margin ledger'] },
+  { id: 'hm-k-plshare', kind: 'stream_kpi', name: 'Private label share', streamKey: 'merch', definition: 'Own-brand sales as a share of total sales.', currentValue: '14.2%', targetValue: '18%', trend: 'up', health: 'at_risk', status: 'connected', dataSources: ['Store POS feed'] },
+  { id: 'hm-k-promo', kind: 'stream_kpi', name: 'Promo effectiveness', streamKey: 'merch', definition: 'Incremental sales per dirham of promo investment.', currentValue: '1.4x', targetValue: '1.8x', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['Merch margin ledger', 'Store POS feed'] },
+  { id: 'hm-k-markdown', kind: 'stream_kpi', name: 'Markdown % of sales', streamKey: 'merch', definition: 'Price reductions taken to clear stock as a share of sales.', currentValue: '2.9%', targetValue: '2.0%', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Merch margin ledger'] },
+
+  // Supply chain & replenishment
+  { id: 'hm-k-freshwaste', kind: 'stream_kpi', name: 'Fresh waste', streamKey: 'supply', definition: 'Fresh food written off at end of code as a share of fresh sales.', currentValue: '4.6%', targetValue: '3.0%', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Store waste log', 'DC stock & replenishment'] },
+  { id: 'hm-k-invdays', kind: 'stream_kpi', name: 'Inventory days', streamKey: 'supply', definition: 'Days of saleable stock on hand across DC and stores at current run rate.', currentValue: '38', targetValue: '30', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['DC stock & replenishment'] },
+  { id: 'hm-k-dcfill', kind: 'stream_kpi', name: 'DC-to-store fill rate', streamKey: 'supply', definition: 'Store order lines delivered complete from the DC, next available run.', currentValue: '93.5%', targetValue: '97%', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['DC stock & replenishment'] },
+
+  // E-commerce & last mile
+  { id: 'hm-k-orderfill', kind: 'stream_kpi', name: 'Online order fill rate', streamKey: 'ecom', definition: 'Online order lines picked complete without substitution or shortage.', currentValue: '94.1%', targetValue: '98%', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['E-commerce order feed'] },
+  { id: 'hm-k-ontime', kind: 'stream_kpi', name: 'On-time delivery (last mile)', streamKey: 'ecom', definition: 'Online orders delivered inside the promised slot.', currentValue: '88%', targetValue: '95%', trend: 'down', health: 'off_track', status: 'connected', dataSources: ['E-commerce order feed', 'Delivery telematics'] },
+  { id: 'hm-k-ecoshare', kind: 'stream_kpi', name: 'Online share of sales', streamKey: 'ecom', definition: 'E-commerce sales as a share of total net sales.', currentValue: '9.8%', targetValue: '12%', trend: 'up', health: 'on_track', status: 'connected', dataSources: ['E-commerce order feed'] },
+
+  // Customer & loyalty
+  { id: 'hm-k-nps', kind: 'stream_kpi', name: 'Customer NPS', streamKey: 'customer', definition: 'Net promoter score from post-visit and post-delivery surveys.', currentValue: '41', targetValue: '50', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['Customer surveys'] },
+  { id: 'hm-k-loyalty', kind: 'stream_kpi', name: 'Loyalty share of sales', streamKey: 'customer', definition: 'Sales attached to an identified loyalty member.', currentValue: '56%', targetValue: '60%', trend: 'up', health: 'on_track', status: 'connected', dataSources: ['Loyalty transactions'] },
+  { id: 'hm-k-basket', kind: 'stream_kpi', name: 'Average basket', streamKey: 'customer', definition: 'Average transaction value across stores and online.', currentValue: 'AED 118', targetValue: 'AED 126', trend: 'flat', health: 'at_risk', status: 'connected', dataSources: ['Store POS feed', 'Loyalty transactions'] },
+
+  // Finance
+  { id: 'hm-k-shrink', kind: 'stream_kpi', name: 'Shrink % of sales', streamKey: 'finance', definition: 'Unknown loss confirmed at stock count, by store and category.', currentValue: '1.9%', targetValue: '1.2%', trend: 'up', health: 'off_track', status: 'connected', dataSources: ['Stock-count reconciliation'] },
+  { id: 'hm-k-supincome', kind: 'stream_kpi', name: 'Supplier income vs plan', streamKey: 'finance', definition: 'Rebates, listing fees and promo funding collected against the negotiated plan.', currentValue: '−8%', targetValue: '0%', trend: 'down', health: 'at_risk', status: 'connected', dataSources: ['Merch margin ledger'] },
+
+  // Drivers (data feeds the KPIs compute from)
+  { id: 'hm-d-pos', kind: 'driver', name: 'Store POS feed', streamKey: 'store_ops', definition: 'Till-level sales by store, SKU and hour.', status: 'connected', dataSources: ['POS API'] },
+  { id: 'hm-d-shelf', kind: 'driver', name: 'Shelf gap scans', streamKey: 'store_ops', definition: 'Twice-daily aisle gap scans, sales-weighted by planogram position.', status: 'connected', dataSources: ['Gap-scan app'] },
+  { id: 'hm-d-wms', kind: 'driver', name: 'DC stock & replenishment', streamKey: 'supply', definition: 'DC stock positions, store orders and fill confirmations.', status: 'connected', dataSources: ['WMS export'] },
+  { id: 'hm-d-ecom', kind: 'driver', name: 'E-commerce order feed', streamKey: 'ecom', definition: 'Online orders, pick results, substitutions and delivery slots.', status: 'connected', dataSources: ['E-commerce platform API'] },
+  { id: 'hm-d-loyalty', kind: 'driver', name: 'Loyalty transactions', streamKey: 'customer', definition: 'Member-matched baskets across stores and online.', status: 'connected', dataSources: ['Loyalty platform'] },
+  { id: 'hm-d-ledger', kind: 'driver', name: 'Merch margin ledger', streamKey: 'merch', definition: 'Cost, markdown, promo funding and supplier income by category.', status: 'connected', dataSources: ['ERP extract'] },
+];
+
+const hmEdges = [
+  // drivers → stream KPIs
+  { id: 'hm-e-1', source: 'hm-d-shelf', target: 'hm-k-osa', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-2', source: 'hm-d-pos', target: 'hm-k-salespsm', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-3', source: 'hm-d-pos', target: 'hm-k-queue', weight: 'moderate', status: 'connected' },
+  { id: 'hm-e-4', source: 'hm-d-pos', target: 'hm-k-plshare', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-5', source: 'hm-d-wms', target: 'hm-k-dcfill', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-6', source: 'hm-d-wms', target: 'hm-k-invdays', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-7', source: 'hm-d-wms', target: 'hm-k-freshwaste', weight: 'moderate', status: 'connected' },
+  { id: 'hm-e-8', source: 'hm-d-ecom', target: 'hm-k-orderfill', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-9', source: 'hm-d-ecom', target: 'hm-k-ontime', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-10', source: 'hm-d-ecom', target: 'hm-k-ecoshare', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-11', source: 'hm-d-loyalty', target: 'hm-k-loyalty', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-12', source: 'hm-d-loyalty', target: 'hm-k-basket', weight: 'moderate', status: 'connected' },
+  { id: 'hm-e-13', source: 'hm-d-ledger', target: 'hm-k-marginrate', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-14', source: 'hm-d-ledger', target: 'hm-k-markdown', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-15', source: 'hm-d-ledger', target: 'hm-k-promo', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-16', source: 'hm-d-ledger', target: 'hm-k-supincome', weight: 'strong', status: 'connected' },
+  // KPI → KPI causal wiring
+  { id: 'hm-e-17', source: 'hm-k-dcfill', target: 'hm-k-osa', weight: 'strong', status: 'connected', rationale: 'A store cannot shelve what the DC did not deliver — fill misses show up as gaps within 48 hours.' },
+  { id: 'hm-e-18', source: 'hm-k-osa', target: 'hm-k-salespsm', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-19', source: 'hm-k-invdays', target: 'hm-k-markdown', weight: 'moderate', status: 'connected', rationale: 'Overstock ages into clearance — inventory days lead markdowns by 6–8 weeks.' },
+  { id: 'hm-e-20', source: 'hm-k-markdown', target: 'hm-k-marginrate', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-21', source: 'hm-k-queue', target: 'hm-k-nps', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-22', source: 'hm-k-ontime', target: 'hm-k-nps', weight: 'moderate', status: 'connected' },
+  { id: 'hm-e-23', source: 'hm-k-orderfill', target: 'hm-k-ontime', weight: 'moderate', status: 'connected', rationale: 'Short picks force re-picks and second runs that blow the delivery slot.' },
+  // KPIs → P&L lines
+  { id: 'hm-e-24', source: 'hm-k-osa', target: 'hm-pl-sales', weight: 'strong', status: 'connected', rationale: 'A gap on the shelf is a sale that walks to the competitor across the road.' },
+  { id: 'hm-e-25', source: 'hm-k-salespsm', target: 'hm-pl-sales', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-26', source: 'hm-k-ecoshare', target: 'hm-pl-sales', weight: 'moderate', status: 'connected' },
+  { id: 'hm-e-27', source: 'hm-k-marginrate', target: 'hm-pl-margin', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-28', source: 'hm-k-supincome', target: 'hm-pl-margin', weight: 'moderate', status: 'connected', rationale: 'Uncollected rebates are margin already given to the supplier.' },
+  { id: 'hm-e-29', source: 'hm-k-freshwaste', target: 'hm-pl-shrinkwaste', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-30', source: 'hm-k-shrink', target: 'hm-pl-shrinkwaste', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-31', source: 'hm-k-labourvar', target: 'hm-pl-labour', weight: 'strong', status: 'connected' },
+  // P&L cascade → intents
+  { id: 'hm-e-32', source: 'hm-pl-sales', target: 'hm-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-33', source: 'hm-pl-margin', target: 'hm-pl-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-34', source: 'hm-pl-shrinkwaste', target: 'hm-pl-ebitda', weight: 'moderate', status: 'connected' },
+  { id: 'hm-e-35', source: 'hm-pl-labour', target: 'hm-pl-ebitda', weight: 'moderate', status: 'connected' },
+  { id: 'hm-e-36', source: 'hm-pl-ebitda', target: 'hm-t-ebitda', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-37', source: 'hm-pl-sales', target: 'hm-t-lfl', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-38', source: 'hm-k-shrink', target: 'hm-t-shrink', weight: 'strong', status: 'connected' },
+  { id: 'hm-e-39', source: 'hm-k-basket', target: 'hm-t-lfl', weight: 'moderate', status: 'connected' },
+  { id: 'hm-e-40', source: 'hm-k-loyalty', target: 'hm-k-basket', weight: 'moderate', status: 'connected', rationale: 'Identified members respond to personal offers — loyalty share leads basket growth.' },
+];
+
 export const brains = {
   fmcg: { industry: 'fmcg', streams: fmcgStreams, nodes: fmcgNodes, edges: fmcgEdges },
   healthcare: { industry: 'healthcare', streams: hcStreams, nodes: hcNodes, edges: hcEdges },
   manufacturing: { industry: 'manufacturing', streams: mfgStreams, nodes: mfgNodes, edges: mfgEdges },
+  hypermarket: { industry: 'hypermarket', streams: hmStreams, nodes: hmNodes, edges: hmEdges },
 };
 
 // ---------------------------------------------------------------------------
@@ -462,6 +576,21 @@ export const shadowOrgs = {
       { id: 'mfg-sa-quality', persona: 'store_manager', name: 'Quality agent', streamKey: 'quality', humanOwner: { name: 'Amira Hassan', initials: 'AH', avatarBg: '#BE185D', role: 'Quality manager' }, watchesNodeIds: ['mfg-k-fpy', 'mfg-k-custppm', 'mfg-d-qms'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: hoursAgo(121), reportsToAgentId: 'mfg-sa-chief' },
       { id: 'mfg-sa-safety', persona: 'coo', name: 'Safety agent', streamKey: 'safety', humanOwner: { name: 'Noura Khalid', initials: 'NK', avatarBg: '#C2410C', role: 'EHS lead' }, watchesNodeIds: ['mfg-k-nearmiss', 'mfg-k-lti', 'mfg-d-ehs'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: hoursAgo(1), reportsToAgentId: 'mfg-sa-chief' },
       { id: 'mfg-sa-finance', persona: 'cfo', name: 'Finance agent', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'Plant controller' }, watchesNodeIds: ['mfg-k-costvar', 'mfg-k-wip', 'mfg-pl-rev', 'mfg-pl-material', 'mfg-pl-ebitda', 'mfg-d-costing'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: hoursAgo(74), reportsToAgentId: 'mfg-sa-chief' },
+    ],
+  },
+  hypermarket: {
+    industry: 'hypermarket',
+    agents: [
+      { id: 'hm-sa-chief', persona: 'coo', name: 'Chief of staff agent', streamKey: null, humanOwner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5', role: 'Co-founder · Admin' }, watchesNodeIds: ['hm-t-lfl', 'hm-t-ebitda', 'hm-t-shrink', 'hm-pl-ebitda'], openFindings: 0, slaBreaches: 0, temperament: 35, health: 'attention', lastFindingAt: hoursAgo(20), reportsToAgentId: null },
+      { id: 'hm-sa-storeops', persona: 'operations_head', name: 'Store operations agent', streamKey: 'store_ops', humanOwner: { name: 'Saeed Al Falasi', initials: 'SF', avatarBg: '#B45309', role: 'Store operations director' }, watchesNodeIds: ['hm-k-osa', 'hm-k-queue', 'hm-k-salespsm', 'hm-k-labourvar', 'hm-d-pos', 'hm-d-shelf'], openFindings: 0, slaBreaches: 1, temperament: 55, health: 'critical', lastFindingAt: hoursAgo(5), reportsToAgentId: 'hm-sa-chief' },
+      { id: 'hm-sa-merch', persona: 'commercial_finance', name: 'Merchandising agent', streamKey: 'merch', humanOwner: { name: 'Huda Al Suwaidi', initials: 'HS', avatarBg: '#BE185D', role: 'Merchandising director' }, watchesNodeIds: ['hm-k-marginrate', 'hm-k-plshare', 'hm-k-promo', 'hm-k-markdown', 'hm-d-ledger'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(11), reportsToAgentId: 'hm-sa-chief' },
+      { id: 'hm-sa-supply', persona: 'operations_head', name: 'Supply chain agent', streamKey: 'supply', humanOwner: { name: 'Vikram Pillai', initials: 'VP', avatarBg: '#0E7490', role: 'Supply chain head' }, watchesNodeIds: ['hm-k-freshwaste', 'hm-k-invdays', 'hm-k-dcfill', 'hm-d-wms'], openFindings: 0, slaBreaches: 1, temperament: 60, health: 'critical', lastFindingAt: hoursAgo(4), reportsToAgentId: 'hm-sa-chief' },
+      { id: 'hm-sa-ecom', persona: 'sales_supervisor', name: 'E-commerce agent', streamKey: 'ecom', humanOwner: { name: 'Lina Haddad', initials: 'LH', avatarBg: '#9333EA', role: 'E-commerce head' }, watchesNodeIds: ['hm-k-orderfill', 'hm-k-ontime', 'hm-k-ecoshare', 'hm-d-ecom'], openFindings: 0, slaBreaches: 0, temperament: 45, health: 'attention', lastFindingAt: hoursAgo(15), reportsToAgentId: 'hm-sa-chief' },
+      { id: 'hm-sa-customer', persona: 'store_manager', name: 'Customer & loyalty agent', streamKey: 'customer', humanOwner: { name: 'Mariam Al Zaabi', initials: 'MZ', avatarBg: '#0F766E', role: 'Customer & loyalty lead' }, watchesNodeIds: ['hm-k-nps', 'hm-k-loyalty', 'hm-k-basket', 'hm-d-loyalty'], openFindings: 0, slaBreaches: 0, temperament: 30, health: 'healthy', lastFindingAt: hoursAgo(52), reportsToAgentId: 'hm-sa-chief' },
+      // The CFO's two lines, same shape as healthcare: FP&A holds the plan;
+      // loss prevention holds the number that quietly eats it.
+      { id: 'hm-sa-finance', persona: 'fpa', name: 'Finance agent', streamKey: 'finance', humanOwner: { name: 'Daniel Chen', initials: 'DC', avatarBg: '#1D4ED8', role: 'FP&A lead' }, watchesNodeIds: ['hm-pl-sales', 'hm-pl-margin', 'hm-pl-labour', 'hm-pl-ebitda', 'hm-k-supincome'], openFindings: 0, slaBreaches: 0, temperament: 40, health: 'attention', lastFindingAt: hoursAgo(27), reportsToAgentId: 'hm-sa-chief' },
+      { id: 'hm-sa-lossprev', persona: 'cfo', name: 'Loss prevention agent', streamKey: 'finance', humanOwner: { name: 'Ahmed Mansour', initials: 'AM', avatarBg: '#B91C1C', role: 'Loss prevention head' }, watchesNodeIds: ['hm-k-shrink', 'hm-pl-shrinkwaste', 'hm-t-shrink'], openFindings: 0, slaBreaches: 0, temperament: 50, health: 'attention', lastFindingAt: hoursAgo(8), reportsToAgentId: 'hm-sa-chief' },
     ],
   },
 };
@@ -2259,6 +2388,163 @@ export const findingsSeed = {
       closureTemplate: { name: 'Near-miss reporting back above 4.0 per 100 employees for 6 weeks', baseline: '2.1', target: '≥ 4.0' },
     },
   ],
+  hypermarket: [
+    {
+      id: 'hm-f-1',
+      title: 'Fresh waste at Ibn Battuta hit 6.1% as the markdown window slipped',
+      summary: 'Fresh waste at the flagship climbed from 3.9% to 6.1% of fresh sales over five weeks. The evening markdown sweep is starting after the footfall peak — stock that would have sold at −30% is being binned at close instead.',
+      raisedByAgentId: 'hm-sa-supply', raisedByAgentName: 'Supply chain agent', streamKey: 'supply', linkedKpiNodeId: 'hm-k-freshwaste', severity: 'critical',
+      impactPath: [
+        { nodeId: 'hm-k-freshwaste', nodeName: 'Fresh waste', kind: 'stream_kpi', effect: '3.9% → 6.1% of fresh sales in 5 weeks' },
+        { nodeId: 'hm-pl-shrinkwaste', nodeName: 'Shrink & known waste', kind: 'pl_line', effect: '≈ AED 340k/month of avoidable write-off' },
+        { nodeId: 'hm-pl-ebitda', nodeName: 'EBITDA (AED)', kind: 'pl_line', effect: 'dragging the line further off budget' },
+      ],
+      impactEstimate: '≈ AED 340k/month of avoidable fresh write-off',
+      evidence: [
+        { label: 'Fresh waste, Ibn Battuta', value: '6.1% vs 3.0% target' },
+        { label: 'Markdown sweep start time', value: '20:40 median vs 18:00 standard' },
+        { label: 'Waste at close, marked-down lines', value: 'under 1% when the sweep runs on time' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 6, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(4), persona: 'operations_head', entity: 'GulfMart Ibn Battuta', region: 'Dubai',
+      closureTemplate: { name: 'Ibn Battuta fresh waste back under 3.5% for 6 consecutive weeks', baseline: '6.1%', target: '< 3.5%' },
+    },
+    {
+      id: 'hm-f-2',
+      title: 'Weekend on-shelf availability slid below 90% in the top-20 categories at Al Wahda',
+      summary: 'Sales-weighted OSA at Al Wahda drops to 89.6% on Friday–Saturday peaks while weekday OSA holds at 95%. The gap-scan trace shows stock is in the back room, not missing — replenishment runs stop two hours before peak.',
+      raisedByAgentId: 'hm-sa-storeops', raisedByAgentName: 'Store operations agent', streamKey: 'store_ops', linkedKpiNodeId: 'hm-k-osa', severity: 'high',
+      impactPath: [
+        { nodeId: 'hm-k-osa', nodeName: 'On-shelf availability', kind: 'stream_kpi', effect: '89.6% weekend vs 95% weekday' },
+        { nodeId: 'hm-k-salespsm', nodeName: 'Sales per square metre', kind: 'stream_kpi', effect: 'peak-hour conversion is where the LFL gap sits' },
+        { nodeId: 'hm-pl-sales', nodeName: 'Net sales', kind: 'pl_line', effect: '≈ AED 190k/weekend of walked sales' },
+      ],
+      impactEstimate: '≈ AED 190k per weekend of walked sales at one site',
+      evidence: [
+        { label: 'Weekend OSA, top-20 categories', value: '89.6% vs 96% target' },
+        { label: 'Back-room stock for gapped SKUs', value: 'present for 71% of gaps' },
+        { label: 'Last replenishment run', value: '16:00 — two hours before footfall peak' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 22, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(9), persona: 'store_manager', entity: 'GulfMart Al Wahda — Sharjah', region: 'Sharjah & Northern Emirates',
+      closureTemplate: { name: 'Weekend OSA within 1pt of weekday at Al Wahda for 4 weeks', baseline: '89.6%', target: '≥ 94%' },
+    },
+    {
+      id: 'hm-f-3',
+      title: 'General-merchandise markdowns doubled with no sell-through lift',
+      summary: 'Markdown spend in general merchandise ran at 2× plan for six weeks, but units sold per markdown dirham fell 40% — the reductions are clearing nothing, just re-pricing stock that is too deep. The overstock traces to the spring range buy.',
+      raisedByAgentId: 'hm-sa-merch', raisedByAgentName: 'Merchandising agent', streamKey: 'merch', linkedKpiNodeId: 'hm-k-markdown', severity: 'high',
+      impactPath: [
+        { nodeId: 'hm-k-invdays', nodeName: 'Inventory days', kind: 'stream_kpi', effect: 'GM stock at 54 days vs 30 target' },
+        { nodeId: 'hm-k-markdown', nodeName: 'Markdown % of sales', kind: 'stream_kpi', effect: '2.9% vs 2.0% plan, concentrated in GM' },
+        { nodeId: 'hm-k-marginrate', nodeName: 'Gross margin rate', kind: 'stream_kpi', effect: '−0.9pt of the 1.5pt margin-rate gap' },
+        { nodeId: 'hm-pl-margin', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: '≈ AED 2.1M of the budget miss' },
+      ],
+      impactEstimate: '≈ AED 2.1M of margin lost to non-working markdowns',
+      evidence: [
+        { label: 'Markdown spend, GM', value: '2× plan for 6 weeks' },
+        { label: 'Units per markdown dirham', value: '−40% vs last season' },
+        { label: 'Spring range buy depth', value: '9.4 weeks cover bought vs 6 planned' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 30, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(13), persona: 'commercial_finance', entity: 'GulfMart Ibn Battuta', region: 'Dubai',
+      closureTemplate: { name: 'GM markdown back to plan with sell-through above 80% of season build', baseline: '2× plan', target: 'plan' },
+    },
+    {
+      id: 'hm-f-4',
+      title: 'Shrink at Al Wahda climbed to 2.4% of sales, concentrated in three categories',
+      summary: 'Stock-count reconciliation puts Al Wahda shrink at 2.4% against the 1.2% target — razor blades, infant formula and mobile accessories account for 70% of the loss. Accepted: the exit condition tracks the store back under 1.4% while the tagging and case-display fix lands.',
+      raisedByAgentId: 'hm-sa-lossprev', raisedByAgentName: 'Loss prevention agent', streamKey: 'finance', linkedKpiNodeId: 'hm-k-shrink', severity: 'high',
+      impactPath: [
+        { nodeId: 'hm-k-shrink', nodeName: 'Shrink % of sales', kind: 'stream_kpi', effect: '2.4% at Al Wahda vs 1.2% target' },
+        { nodeId: 'hm-pl-shrinkwaste', nodeName: 'Shrink & known waste', kind: 'pl_line', effect: '≈ AED 420k/quarter at one site' },
+        { nodeId: 'hm-t-shrink', nodeName: 'Shrink % of sales', kind: 'target', effect: 'half the network-level overshoot is this store' },
+      ],
+      impactEstimate: '≈ AED 420k/quarter of loss at one site',
+      evidence: [
+        { label: 'Shrink, Al Wahda', value: '2.4% vs 1.2% target' },
+        { label: 'Category concentration', value: '3 categories = 70% of loss' },
+        { label: 'Pattern', value: 'loss tracks evening shifts, not delivery days' },
+      ],
+      status: 'accepted', disposition: 'accept', dispositionBy: 'Ahmed Mansour', dispositionAt: hoursAgo(28), dispositionReason: null,
+      slaHoursRemaining: 0, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: 'hm-c-1', solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(34), persona: 'cfo', entity: 'GulfMart Al Wahda — Sharjah', region: 'Sharjah & Northern Emirates',
+      closureTemplate: { name: 'Al Wahda shrink under 1.4% of sales for 8 consecutive weeks', baseline: '2.4%', target: '< 1.4%' },
+    },
+    {
+      id: 'hm-f-5',
+      title: 'Online order fill dips to 89% on Friday peaks and substitutions double',
+      summary: 'Weekday online fill holds at 96%, but Friday orders fill at 89% with twice the substitution rate — pickers hit shelves the store peak already emptied. Parked pending the dark-store aisle pilot; re-alerts if Friday fill drops further.',
+      raisedByAgentId: 'hm-sa-ecom', raisedByAgentName: 'E-commerce agent', streamKey: 'ecom', linkedKpiNodeId: 'hm-k-orderfill', severity: 'medium',
+      impactPath: [
+        { nodeId: 'hm-k-orderfill', nodeName: 'Online order fill rate', kind: 'stream_kpi', effect: '89% Friday vs 96% weekday' },
+        { nodeId: 'hm-k-nps', nodeName: 'Customer NPS', kind: 'stream_kpi', effect: 'substituted orders score 22 points lower' },
+      ],
+      impactEstimate: 'Friday online cohort churns at 2× the weekday rate',
+      evidence: [
+        { label: 'Friday fill rate', value: '89% vs 96% weekday' },
+        { label: 'Substitution rate, Friday', value: '2× weekday' },
+        { label: 'Pilot status', value: 'dark-store aisle at Ibn Battuta due next month' },
+      ],
+      status: 'acknowledged', disposition: 'acknowledge', dispositionBy: 'Lina Haddad', dispositionAt: hoursAgo(19), dispositionReason: null,
+      slaHoursRemaining: 0, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null,
+      reAlertCondition: 'Re-alert if Friday fill drops below 87% or the dark-store pilot slips past next month',
+      detectedAt: hoursAgo(21), persona: 'sales_supervisor', entity: 'GulfMart Online — UAE', region: 'UAE',
+      closureTemplate: { name: 'Friday online fill within 2pts of weekday for 4 weeks', baseline: '89%', target: '≥ 94%' },
+    },
+    {
+      id: 'hm-f-6',
+      title: 'Checkout queues passed 6 minutes at Yas Mall while rostered hours ran 6% over plan',
+      summary: 'Evening queue time at Yas Mall hit 6.2 minutes at the same time labour hours ran ahead of plan — the hours are rostered against last year\'s footfall curve, which the new cinema wing has shifted two hours later. It is a rostering-shape problem, not a headcount one, and the same template drives every store.',
+      raisedByAgentId: 'hm-sa-storeops', raisedByAgentName: 'Store operations agent', streamKey: 'store_ops', linkedKpiNodeId: 'hm-k-queue', severity: 'high',
+      impactPath: [
+        { nodeId: 'hm-k-queue', nodeName: 'Checkout queue time', kind: 'stream_kpi', effect: '6.2 min evening peak vs 3.0 target' },
+        { nodeId: 'hm-k-labourvar', nodeName: 'Labour hours vs plan', kind: 'stream_kpi', effect: '+6% hours, mis-shaped not missing' },
+        { nodeId: 'hm-k-nps', nodeName: 'Customer NPS', kind: 'stream_kpi', effect: 'queue time is the top detractor theme' },
+        { nodeId: 'hm-pl-labour', nodeName: 'Store labour cost', kind: 'pl_line', effect: 'paying for hours in the wrong part of the day' },
+      ],
+      impactEstimate: 'Overspending labour and still queuing — both lines drifting',
+      evidence: [
+        { label: 'Evening queue, Yas Mall', value: '6.2 min vs 3.0 target' },
+        { label: 'Labour hours vs plan', value: '+6%, concentrated 10:00–16:00' },
+        { label: 'Footfall curve shift', value: 'peak moved ~2h later since the cinema wing opened' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 10, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(6), persona: 'coo', entity: 'GulfMart Yas Mall — Abu Dhabi', region: 'Abu Dhabi',
+      closureTemplate: { name: 'Evening queue under 3.5 min at Yas Mall with labour hours on plan for 4 weeks', baseline: '6.2 min / +6%', target: '3.5 min / 0%' },
+    },
+    {
+      id: 'hm-f-7',
+      title: 'Supplier income is 8% behind plan — rebate claims unbilled since the range reset',
+      summary: 'Collected supplier income is running 8% behind the negotiated plan. The gap is not renegotiation — it is unbilled claims: the March range reset re-coded 400 SKUs and the rebate claims engine is still matching them against the old supplier agreements.',
+      raisedByAgentId: 'hm-sa-finance', raisedByAgentName: 'Finance agent', streamKey: 'finance', linkedKpiNodeId: 'hm-k-supincome', severity: 'medium',
+      impactPath: [
+        { nodeId: 'hm-k-supincome', nodeName: 'Supplier income vs plan', kind: 'stream_kpi', effect: '−8% vs plan, all post-reset SKUs' },
+        { nodeId: 'hm-pl-margin', nodeName: 'Gross margin (AED)', kind: 'pl_line', effect: '≈ AED 1.6M of collectable income unbilled' },
+      ],
+      impactEstimate: '≈ AED 1.6M of collectable rebates unbilled',
+      evidence: [
+        { label: 'Supplier income vs plan', value: '−8% since March' },
+        { label: 'Unmatched claims', value: '400 re-coded SKUs against old agreements' },
+        { label: 'Pre-reset SKUs, same period', value: 'on plan' },
+      ],
+      status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
+      slaHoursRemaining: 28, escalationLevel: 0, escalatedToAgentId: null,
+      closureKpiId: null, solutionDesignId: null, reAlertCondition: null,
+      detectedAt: hoursAgo(16), persona: 'fpa', entity: 'GulfMart Ibn Battuta', region: 'Dubai',
+      closureTemplate: { name: 'Supplier income within 1% of plan for 2 consecutive months', baseline: '−8%', target: 'within 1%' },
+    },
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -2303,6 +2589,13 @@ export const closureKpisSeed = {
     { id: 'mfg-c-h1', findingId: 'mfg-f-h1', findingTitle: 'Changeover time crept from 35 to 61 minutes after the SKU count doubled', name: 'Changeover back under 40 minutes on constrained lines for a month', baseline: '61 min', target: '40 min', current: '38 min', progressPct: 100, status: 'closed', watchedByAgentName: 'Production agent', createdAt: daysAgo(112), closedAt: daysAgo(41), entity: 'Plant 1 — Jebel Ali', region: 'UAE' },
     { id: 'mfg-c-h2', findingId: 'mfg-f-h2', findingTitle: 'Raw material days ballooned to 26 on safety-stock overrides', name: 'Raw material days back to 14 with no line stoppages for 6 weeks', baseline: '26 days', target: '14 days', current: '14 days', progressPct: 100, status: 'closed', watchedByAgentName: 'Supplier network agent', createdAt: daysAgo(98), closedAt: daysAgo(33), entity: 'Plant 2 — Dammam', region: 'KSA' },
   ],
+  hypermarket: [
+    // In flight
+    { id: 'hm-c-1', findingId: 'hm-f-4', findingTitle: 'Shrink at Al Wahda climbed to 2.4% of sales, concentrated in three categories', name: 'Al Wahda shrink under 1.4% of sales for 8 consecutive weeks', baseline: '2.4%', target: '< 1.4%', current: '1.9%', progressPct: 45, status: 'tracking', watchedByAgentName: 'Loss prevention agent', createdAt: hoursAgo(28), closedAt: null, entity: 'GulfMart Al Wahda — Sharjah', region: 'Sharjah & Northern Emirates' },
+    // Closed H1 loops — the number came back
+    { id: 'hm-c-h1', findingId: 'hm-f-h1', findingTitle: 'Ramadan beverage availability collapsed in week one of the season', name: 'Beverage OSA above 96% for the rest of the season', baseline: '84%', target: '≥ 96%', current: '97%', progressPct: 100, status: 'closed', watchedByAgentName: 'Supply chain agent', createdAt: daysAgo(135), closedAt: daysAgo(96), entity: 'GulfMart Ibn Battuta', region: 'Dubai' },
+    { id: 'hm-c-h2', findingId: 'hm-f-h2', findingTitle: 'Last-mile on-time fell to 82% after the delivery zone redraw', name: 'On-time delivery above 95% for 6 consecutive weeks', baseline: '82%', target: '≥ 95%', current: '96%', progressPct: 100, status: 'closed', watchedByAgentName: 'E-commerce agent', createdAt: daysAgo(102), closedAt: daysAgo(38), entity: 'GulfMart Online — UAE', region: 'UAE' },
+  ],
 };
 
 // ---------- FP&A P&L impact rollup (findings translated onto the P&L) ----------
@@ -2330,5 +2623,12 @@ export const plImpactSeed = {
     { key: 'maintenance', plLine: 'Maintenance & downtime', topDrivers: 'PM compliance slide on the press line', identified: 3, accepted: 2, acting: 0, cleared: 1, openNow: 1, translatedImpact: { text: '−14 h/wk downtime', direction: 'up' } },
     { key: 'conversion', plLine: 'Conversion cost', topDrivers: 'Rental compressor left running · changeover creep', identified: 3, accepted: 1, acting: 1, cleared: 1, openNow: 1, translatedImpact: { text: '+$22k/mo identified', direction: 'up' } },
     { key: 'working-capital', plLine: 'Working capital', topDrivers: 'Safety-stock overrides · WIP between constrained cells', identified: 2, accepted: 1, acting: 0, cleared: 1, openNow: 0, translatedImpact: { text: '−12 raw material days', direction: 'up' } },
+  ],
+  hypermarket: [
+    { key: 'net-sales', plLine: 'Net sales', topDrivers: 'Weekend OSA at Al Wahda · Friday online fill', identified: 6, accepted: 2, acting: 1, cleared: 2, openNow: 2, translatedImpact: { text: '+AED 1.1M protected / qtr', direction: 'up' } },
+    { key: 'gross-margin', plLine: 'Gross margin', topDrivers: 'Non-working GM markdowns · unbilled supplier rebates', identified: 5, accepted: 1, acting: 1, cleared: 1, openNow: 2, translatedImpact: { text: 'AED 1.6M rebates identified', direction: 'up' } },
+    { key: 'shrink-waste', plLine: 'Shrink & known waste', topDrivers: 'Al Wahda shrink concentration · Ibn Battuta fresh markdown window', identified: 4, accepted: 2, acting: 1, cleared: 1, openNow: 1, translatedImpact: { text: '−0.5 pt shrink at pilot site', direction: 'up' } },
+    { key: 'store-labour', plLine: 'Store labour cost', topDrivers: 'Roster shape vs shifted footfall curve at Yas Mall', identified: 2, accepted: 0, acting: 1, cleared: 0, openNow: 1, translatedImpact: { text: 'measuring…', direction: 'flat' } },
+    { key: 'working-capital', plLine: 'Working capital', topDrivers: 'GM overstock from the spring range buy', identified: 2, accepted: 1, acting: 0, cleared: 1, openNow: 1, translatedImpact: { text: '−6 inventory days on cleared lines', direction: 'up' } },
   ],
 };

@@ -225,4 +225,54 @@ export const businessContextSeed = {
       { id: 'mfg-cust-oem2', customer: 'Saudi Industrial Group', channel: 'OEM', region: 'KSA', revenueYtd: '$71M', growthYoyPct: 3.1, tradeSpendPct: 0, osaPct: 95, dsoDays: 46, health: 'ok', note: 'On plan' },
     ],
   },
+
+  hypermarket: {
+    skuDimension: 'Category',
+    customerDimension: 'Store',
+    overview: {
+      orgName: 'GulfMart Hypermarkets (demo)',
+      tagline: 'Three hypermarkets and an online store — every number held twice.',
+      narrative: [
+        'GulfMart runs three UAE hypermarkets (Ibn Battuta, Al Wahda — Sharjah, Yas Mall — Abu Dhabi) plus GulfMart Online, selling fresh, grocery, general merchandise and electronics.',
+        'In Rewive, every store and category number is a mandate held twice; drift becomes a finding routed to whoever\'s call it is.',
+      ],
+      stats: [
+        { label: 'Revenue (TTM)', value: 'AED 1.72B', note: '+3.1% YoY' },
+        { label: 'Like-for-like growth', value: '+2.1%', note: 'target +5%' },
+        { label: 'Sites', value: '3 + online', note: 'Dubai · Sharjah · Abu Dhabi' },
+      ],
+      divisions: [
+        { key: 'ibnbattuta', name: 'GulfMart Ibn Battuta', leader: 'Saeed Al Falasi', role: 'Store operations director', revenueShare: '38%', brands: ['Flagship hypermarket'], note: 'Fresh waste and the markdown window are the standing risks.', watchedBy: 'Supply chain agent' },
+        { key: 'alwahda', name: 'GulfMart Al Wahda — Sharjah', leader: 'Mariam Al Zaabi', role: 'Customer & loyalty lead', revenueShare: '27%', brands: ['Hypermarket'], note: 'Weekend availability and shrink concentration.', watchedBy: 'Store operations agent' },
+        { key: 'yasmall', name: 'GulfMart Yas Mall — Abu Dhabi', leader: 'Ahmed Mansour', role: 'Loss prevention head', revenueShare: '25%', brands: ['Hypermarket'], note: 'Queue times vs a footfall curve the cinema wing shifted.', watchedBy: 'Store operations agent' },
+        { key: 'online', name: 'GulfMart Online — UAE', leader: 'Lina Haddad', role: 'E-commerce head', revenueShare: '10%', brands: ['E-commerce & last mile'], note: 'Friday fill and substitution quality.', watchedBy: 'E-commerce agent' },
+      ],
+      entities: [
+        { name: 'GulfMart Ibn Battuta', region: 'Dubai', role: 'Flagship hypermarket' },
+        { name: 'GulfMart Al Wahda — Sharjah', region: 'Sharjah & Northern Emirates', role: 'Hypermarket' },
+        { name: 'GulfMart Yas Mall — Abu Dhabi', region: 'Abu Dhabi', role: 'Hypermarket' },
+        { name: 'GulfMart Online — UAE', region: 'UAE', role: 'E-commerce and last mile' },
+      ],
+      channels: [
+        { name: 'In-store', share: '90%', note: 'Fresh drives trips; GM drives margin' },
+        { name: 'Online', share: '10%', note: 'Growing; Friday peaks strain store picking' },
+      ],
+      actGuide: [
+        { title: 'Start from the number', body: 'Category rows marked “drifting” already have a finding — the link opens its thread.' },
+        { title: 'Make the four-A call', body: 'Accept, Act, Acknowledge or Abandon — silence escalates on the SLA.' },
+      ],
+    },
+    skus: [
+      { id: 'hm-cat-fresh', family: 'Fresh (produce, butchery, bakery)', division: 'All stores', revenueYtd: 'AED 512M', growthYoyPct: 2.4, grossMarginPct: 24.1, fillRatePct: 93, health: 'watch', note: 'Waste at 4.6% vs 3.0% target — markdown window slipping' },
+      { id: 'hm-cat-grocery', family: 'Grocery & household', division: 'All stores', revenueYtd: 'AED 688M', growthYoyPct: 3.5, grossMarginPct: 19.6, fillRatePct: 94, health: 'ok', note: 'On plan; private label share climbing' },
+      { id: 'hm-cat-gm', family: 'General merchandise', division: 'All stores', revenueYtd: 'AED 344M', growthYoyPct: 0.8, grossMarginPct: 26.3, fillRatePct: 95, health: 'drifting', note: 'Markdowns at 2× plan with no sell-through lift' },
+      { id: 'hm-cat-electronics', family: 'Electronics & appliances', division: 'All stores', revenueYtd: 'AED 176M', growthYoyPct: 4.9, grossMarginPct: 14.8, fillRatePct: 96, health: 'ok', note: 'On plan; shrink watch on mobile accessories' },
+    ],
+    customers: [
+      { id: 'hm-store-ibnbattuta', customer: 'GulfMart Ibn Battuta', channel: 'Hypermarket', region: 'Dubai', revenueYtd: 'AED 654M', growthYoyPct: 2.8, tradeSpendPct: 0, osaPct: 94, dsoDays: 0, health: 'watch', note: 'Fresh waste at 6.1% — markdown sweep starting late' },
+      { id: 'hm-store-alwahda', customer: 'GulfMart Al Wahda — Sharjah', channel: 'Hypermarket', region: 'Sharjah & Northern Emirates', revenueYtd: 'AED 464M', growthYoyPct: 1.9, tradeSpendPct: 0, osaPct: 92, dsoDays: 0, health: 'drifting', note: 'Weekend OSA 89.6% · shrink 2.4% of sales' },
+      { id: 'hm-store-yasmall', customer: 'GulfMart Yas Mall — Abu Dhabi', channel: 'Hypermarket', region: 'Abu Dhabi', revenueYtd: 'AED 430M', growthYoyPct: 3.6, tradeSpendPct: 0, osaPct: 95, dsoDays: 0, health: 'watch', note: 'Evening queues past 6 min; roster shape under review' },
+      { id: 'hm-store-online', customer: 'GulfMart Online — UAE', channel: 'Online', region: 'UAE', revenueYtd: 'AED 172M', growthYoyPct: 18.2, tradeSpendPct: 0, osaPct: 94, dsoDays: 0, health: 'ok', note: 'Friday fill parked with a re-alert rule' },
+    ],
+  },
 };
