@@ -25,3 +25,6 @@ dist-ssr
 *.sw?
 .claude/
 .vercel
+
+# Obsidian vault workspace state (docs/ opens as a vault)
+.obsidian/
