@@ -1239,6 +1239,23 @@ export interface FindingActionUpdate {
   dueAt?: string | null;
 }
 
+// ---------- Notifications (the escalation outbox) ----------
+// Written by the escalation engine (SLA heartbeat, manual escalate, re-alert
+// trip-wires) — what an email/Slack delivery would carry, surfaced at the bell.
+export type NotificationType = 'escalation' | 'dotted_flag';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  /** Recipient role — the persona whose call the finding now is. */
+  persona: Persona;
+  findingId?: string;
+  title: string;
+  body: string;
+  createdAt: string;
+  readAt: string | null;
+}
+
 // ---------- Closure KPIs (measurable exit condition per accepted finding) ----------
 export type ClosureStatus = 'tracking' | 'closed' | 'regressed';
 

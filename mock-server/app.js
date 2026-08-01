@@ -1347,6 +1347,30 @@ let decisionLedgerState = Object.fromEntries(
 );
 const shadowOrgsSeed = JSON.parse(JSON.stringify(shadowOrgs));
 
+// ---------- Notifications (the escalation outbox) ----------
+// "Silence escalates" only means something if the escalation reaches its new
+// owner — these rows are what an email/Slack delivery would carry, surfaced at
+// the bell until a real channel exists. Written by the engine (manual
+// escalate, SLA heartbeat, re-alert trip-wires), never seeded.
+let notificationsState = Object.fromEntries(Object.keys(findingsSeed).map((k) => [k, []]));
+
+function pushNotification(industry, { type, persona, findingId, title, body }) {
+  if (!persona) return;
+  const list = notificationsState[industry] ?? (notificationsState[industry] = []);
+  list.unshift({
+    id: `ntf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type,
+    persona,
+    findingId,
+    title,
+    body,
+    createdAt: new Date().toISOString(),
+    readAt: null,
+  });
+  // Ring buffer — the bell is recent history, not an archive.
+  if (list.length > 100) list.length = 100;
+}
+
 // ---------- The assessor agent ----------
 // Delivers the later verdict on a decision by reading what its recovery target
 // did: closed → worked, regressed → didn't, still tracking → keep measuring.
@@ -1858,8 +1882,27 @@ function chiefIdFor(industry) {
 // dotted-line flag, level, SLA, chief routing) lives once in roles.js
 // escalateFinding; this binds it to the industry's chief. Shared by the escalate
 // route and the SLA heartbeat.
-function escalateFindingUp(finding, industry) {
-  return escalateFinding(finding, { industry, chiefId: chiefIdFor(industry) });
+function escalateFindingUp(finding, industry, deliveryNote) {
+  const result = escalateFinding(finding, { industry, chiefId: chiefIdFor(industry) });
+  // The delivery moment: the finding is now the parent role's call, and the
+  // parent must hear about it without having the product open.
+  pushNotification(industry, {
+    type: 'escalation',
+    persona: finding.persona,
+    findingId: finding.id,
+    title: finding.title,
+    body: deliveryNote ?? `Unanswered on the level below — now your call. SLA reset to ${finding.slaHoursRemaining}h.`,
+  });
+  if (result.dottedRole) {
+    pushNotification(industry, {
+      type: 'dotted_flag',
+      persona: result.dottedRole,
+      findingId: finding.id,
+      title: finding.title,
+      body: 'Flagged to you on the functional line as it escalated.',
+    });
+  }
+  return result;
 }
 
 // A manual escalate/re-alert resets slaHoursRemaining, but for live findings the
@@ -1881,6 +1924,21 @@ app.post('/api/v1/findings/:id/escalate', (req, res) => {
   syncLiveDeadline(finding);
   logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} — now ${parentRole ? `${parentRole}'s` : 'the top role’s'} call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`);
   res.json(stripServerFields(finding));
+});
+
+// ---------- Notifications (the escalation outbox) ----------
+app.get('/api/v1/notifications', (req, res) => {
+  const { persona, scope } = req.query;
+  res.json(filterByPersona(notificationsState[v4Industry(req)] ?? [], persona, scope));
+});
+
+app.post('/api/v1/notifications/read', (req, res) => {
+  const ids = new Set(req.body?.ids ?? []);
+  const now = new Date().toISOString();
+  for (const n of notificationsState[v4Industry(req)] ?? []) {
+    if (ids.has(n.id) && !n.readAt) n.readAt = now;
+  }
+  res.json({ ok: true });
 });
 
 // ---------- Leadership actions ----------
@@ -1962,7 +2020,7 @@ app.post('/api/v1/findings/:id/re-alert', (req, res) => {
   finding.disposition = null;
   finding.dispositionBy = null;
   finding.dispositionAt = null;
-  const { parentRole } = escalateFindingUp(finding, industry);
+  const { parentRole } = escalateFindingUp(finding, industry, 'A parked trip-wire fired — the finding re-opened one level up. Now your call.');
   syncLiveDeadline(finding);
   logAudit('finding', finding.id, `re-alerted — trip-wire fired, back to open${parentRole ? ` one level up (now ${parentRole}'s call)` : ''}`);
   res.json(stripServerFields(finding));
@@ -2266,6 +2324,9 @@ export function exportState() {
     decisionLedgerState: Object.fromEntries(
       Object.entries(decisionLedgerState).map(([k, list]) => [k, list.filter((d) => !d.findingId?.startsWith('live-'))]),
     ),
+    notificationsState: Object.fromEntries(
+      Object.entries(notificationsState).map(([k, list]) => [k, list.filter((n) => !n.findingId?.startsWith('live-'))]),
+    ),
     datasetsState,
     analysisRequestsState,
   };
@@ -2293,6 +2354,7 @@ export function importState(snapshot) {
   if (snapshot.closureKpisState) closureKpisState = snapshot.closureKpisState;
   if (snapshot.findingActionsState) findingActionsState = snapshot.findingActionsState;
   if (snapshot.decisionLedgerState) decisionLedgerState = snapshot.decisionLedgerState;
+  if (snapshot.notificationsState) notificationsState = snapshot.notificationsState;
   if (snapshot.datasetsState) datasetsState = snapshot.datasetsState;
   if (snapshot.analysisRequestsState) analysisRequestsState = snapshot.analysisRequestsState;
 }

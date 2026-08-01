@@ -5,6 +5,7 @@ import { useCurrentUser } from '../../api/dashboard';
 import { clearActiveTenant, getActiveTenant, tenantForIndustry } from '../../tenants';
 import { Avatar } from '../shared/Avatar';
 import { LensMenu } from './LensMenu';
+import { NotificationsBell } from './NotificationsBell';
 
 // The one top bar: identity on the left, command bar in the middle, the
 // lens + help + you on the right. Page titles live on the screens themselves.
@@ -82,13 +83,7 @@ export function TopNav() {
       <div className="top-actions">
         <LensMenu />
         <Link to="/guide" className="topnav-help">Help</Link>
-        <div className="bell">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.7 21a2 2 0 01-3.4 0" />
-          </svg>
-          <span className="dot"></span>
-        </div>
+        <NotificationsBell />
         {user && (
           <span title={`${user.name} · ${user.role}`} style={{ display: 'inline-flex' }}>
             <Avatar initials={user.initials} background={user.avatarBg} />
