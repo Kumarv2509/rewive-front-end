@@ -264,8 +264,9 @@ app.get('/api/v1/decisions/stats', (req, res) => {
   // the table under them was role-scoped — so a division COO saw other
   // divisions' entities in the rollup and the two halves of the screen
   // disagreed about the same period.
+  runAssessorPass(industry);
   const findings = filterByPersona(findingsState[industry] ?? [], persona, scope);
-  const ledger = filterByPersona(op(req).decisionLedger ?? [], persona, scope);
+  const ledger = filterByPersona(decisionLedgerState[industry] ?? [], persona, scope);
   // FMCG, Healthcare and Hypermarket are all UAE orgs and seed their impact
   // figures in AED; Manufacturing is the only USD pack. Keep this in step with
   // the seeds, or the tiles re-badge a sum of AED figures with a dollar sign.
@@ -277,7 +278,8 @@ app.get('/api/v1/decisions/stats', (req, res) => {
 
 app.get('/api/v1/decisions', (req, res) => {
   const { function: fn, verdict, persona, scope } = req.query;
-  let result = filterByPersona(op(req).decisionLedger, persona, scope);
+  runAssessorPass(v4Industry(req));
+  let result = filterByPersona(decisionLedgerState[v4Industry(req)] ?? [], persona, scope);
   if (fn && fn !== 'all') result = result.filter((d) => d.function === fn);
   if (verdict && verdict !== 'all') result = result.filter((d) => d.verdict === verdict);
   res.json(result);
@@ -1337,7 +1339,44 @@ let brainsState = JSON.parse(JSON.stringify(brains));
 let findingsState = JSON.parse(JSON.stringify(findingsSeed));
 let closureKpisState = JSON.parse(JSON.stringify(closureKpisSeed));
 let findingActionsState = JSON.parse(JSON.stringify(findingActionsSeed));
+// The Decision Ledger is mutable state, not a static pack: every disposition
+// appends a row, so the system of record is written by the product's own
+// Decide flow. Seeded per industry from the content packs.
+let decisionLedgerState = Object.fromEntries(
+  Object.entries(opContent).map(([k, pack]) => [k, JSON.parse(JSON.stringify(pack.decisionLedger ?? []))]),
+);
 const shadowOrgsSeed = JSON.parse(JSON.stringify(shadowOrgs));
+
+// ---------- The assessor agent ----------
+// Delivers the later verdict on a decision by reading what its recovery target
+// did: closed → worked, regressed → didn't, still tracking → keep measuring.
+// Runs lazily before every ledger read, so a verdict appears as soon as the
+// closure state justifies it. A delivered verdict is written once and audited,
+// never re-litigated; rows whose too-early note was hand-written (seeds) are
+// left alone so a template never clobbers a crafted narrative.
+function runAssessorPass(industry) {
+  const ledger = decisionLedgerState[industry] ?? [];
+  const closures = closureKpisState[industry] ?? [];
+  for (const row of ledger) {
+    if (row.verdict !== 'too_early' || !row.findingId) continue;
+    const closure = closures.find((c) => c.findingId === row.findingId);
+    if (!closure) continue;
+    if (closure.status === 'closed' && !row.assessorNote) {
+      row.verdict = 'worked';
+      row.measuredImpact = { text: `${closure.baseline} → ${closure.current}`, direction: 'up' };
+      row.assessorNote = `Assessor agent: ${closure.name} — held at ${closure.current} against the ${closure.target} exit condition, from a ${closure.baseline} baseline. The number came back; loop closed.`;
+      logAudit('decision', row.id, `assessor verdict: worked — ${closure.name}`);
+    } else if (closure.status === 'regressed' && !row.assessorNote) {
+      row.verdict = 'not_worked';
+      row.measuredImpact = { text: `${closure.current} against a ${closure.target} exit condition`, direction: 'down' };
+      row.assessorNote = `Assessor agent: ${closure.name} regressed — ${closure.current} against ${closure.target}. The loop closed without the number coming back.`;
+      logAudit('decision', row.id, `assessor verdict: didn't work — ${closure.name}`);
+    } else if (closure.status === 'tracking' && !row.assessorNote) {
+      // No verdict yet — but keep the measurement honest as the target moves.
+      row.measuredImpact = { text: `measuring… ${closure.current} of a ${closure.target} exit condition`, direction: 'flat' };
+    }
+  }
+}
 
 function v4Industry(req) {
   const q = req.query.industry;
@@ -1693,6 +1732,7 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
   if (finding.status !== 'open') return res.status(400).json({ message: 'This finding already has a disposition' });
   const { disposition, reason, reAlertCondition } = req.body;
   const now = new Date().toISOString();
+  let ledgerSubtitle = null; // set per branch — becomes the ledger row's rationale line
 
   if (disposition === 'accept') {
     // Accept: the finding is real — generate its measurable exit condition and keep watching.
@@ -1723,6 +1763,7 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
     finding.status = 'accepted';
     finding.closureKpiId = closure.id;
     logAudit('finding', finding.id, `accepted — closure KPI created: ${closure.name}`);
+    ledgerSubtitle = `Recovery target: ${closure.name}`;
   } else if (disposition === 'act') {
     // Act: spin up the existing solution-design loop, seeded from the finding.
     const solutionId = `sol-${Date.now()}`;
@@ -1752,6 +1793,7 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
     finding.status = 'acting';
     finding.solutionDesignId = solutionId;
     logAudit('finding', finding.id, 'disposition: act — solution design opened');
+    ledgerSubtitle = 'Fix opened — solution design and tasks to follow';
   } else if (disposition === 'acknowledge') {
     // Acknowledge: watch state — carries a re-alert condition so it comes back if it worsens.
     const node = brainsState[industry].nodes.find((n) => n.id === finding.linkedKpiNodeId);
@@ -1759,12 +1801,14 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
     finding.reAlertCondition = reAlertCondition
       || `Re-alert if ${node?.name ?? 'the linked KPI'} worsens a further 5% or after 14 days`;
     logAudit('finding', finding.id, `acknowledged — ${finding.reAlertCondition}`);
+    ledgerSubtitle = `Parked — ${finding.reAlertCondition}`;
   } else if (disposition === 'abandon') {
     // Abandon: requires a reason — the reason is what tunes the agent.
     if (!reason || !reason.trim()) return res.status(400).json({ message: 'Abandoning a finding requires a reason — it tunes the agent' });
     finding.status = 'abandoned';
     finding.dispositionReason = reason.trim();
     logAudit('finding', finding.id, `abandoned with reason: ${reason.trim()}`);
+    ledgerSubtitle = `Dismissed — ${reason.trim()}`;
   } else {
     return res.status(400).json({ message: 'disposition must be accept, act, acknowledge or abandon' });
   }
@@ -1773,6 +1817,30 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
   finding.dispositionBy = currentUser.name;
   finding.dispositionAt = now;
   finding.slaHoursRemaining = 0;
+
+  // The ledger write: every decision lands in the Decision Ledger the moment
+  // it is made — the four A's under their UI names, verdict left to the
+  // assessor. Rows for live-* findings stay in-memory only (stripped from the
+  // KV snapshot with their parent, which is re-raised from Postgres).
+  const verbLabel = { accept: 'Accept', act: 'Act', acknowledge: 'Park', abandon: 'Dismiss' }[disposition];
+  const ledgerRow = {
+    id: `led-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    persona: finding.persona,
+    title: `${verbLabel} — ${finding.title}`,
+    subtitle: ledgerSubtitle ?? finding.summary,
+    madeBy: { type: 'human', name: currentUser.name, initials: currentUser.initials, avatarBg: currentUser.avatarBg },
+    informedBy: { type: 'agent', name: finding.raisedByAgentName },
+    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+    verdict: 'too_early',
+    measuredImpact: { text: 'measuring…', direction: 'flat' },
+    function: finding.streamKey === 'finance' ? 'finance' : 'operations',
+    findingId: finding.id,
+    ...(finding.entity ? { entity: finding.entity } : {}),
+    ...(finding.region ? { region: finding.region } : {}),
+  };
+  (decisionLedgerState[industry] ?? (decisionLedgerState[industry] = [])).unshift(ledgerRow);
+  logAudit('decision', ledgerRow.id, `${verbLabel} recorded in the Decision Ledger for ${finding.id}`);
+
   res.json(stripServerFields(finding));
 });
 
@@ -2195,6 +2263,9 @@ export function exportState() {
     findingActionsState: Object.fromEntries(
       Object.entries(findingActionsState).map(([k, list]) => [k, list.filter((a) => !a.findingId.startsWith('live-'))]),
     ),
+    decisionLedgerState: Object.fromEntries(
+      Object.entries(decisionLedgerState).map(([k, list]) => [k, list.filter((d) => !d.findingId?.startsWith('live-'))]),
+    ),
     datasetsState,
     analysisRequestsState,
   };
@@ -2221,6 +2292,7 @@ export function importState(snapshot) {
   if (snapshot.findingsState) findingsState = snapshot.findingsState;
   if (snapshot.closureKpisState) closureKpisState = snapshot.closureKpisState;
   if (snapshot.findingActionsState) findingActionsState = snapshot.findingActionsState;
+  if (snapshot.decisionLedgerState) decisionLedgerState = snapshot.decisionLedgerState;
   if (snapshot.datasetsState) datasetsState = snapshot.datasetsState;
   if (snapshot.analysisRequestsState) analysisRequestsState = snapshot.analysisRequestsState;
 }

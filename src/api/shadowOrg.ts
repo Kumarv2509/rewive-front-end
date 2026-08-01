@@ -131,6 +131,8 @@ export function useDisposeFinding(findingId: string) {
       queryClient.invalidateQueries({ queryKey: ['shadow-org'] });
       // Accept creates a closure KPI; act creates a solution design.
       queryClient.invalidateQueries({ queryKey: ['closure-kpis'] });
+      // Every disposition writes a Decision Ledger row (stats + table).
+      queryClient.invalidateQueries({ queryKey: ['decisions'] });
     },
   });
 }
