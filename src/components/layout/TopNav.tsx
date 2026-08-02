@@ -6,6 +6,7 @@ import { clearActiveTenant, getActiveTenant, tenantForIndustry } from '../../ten
 import { Avatar } from '../shared/Avatar';
 import { LensMenu } from './LensMenu';
 import { NotificationsBell } from './NotificationsBell';
+import { useCommandPalette } from './CommandPalette';
 
 // The one top bar: identity on the left, command bar in the middle, the
 // lens + help + you on the right. Page titles live on the screens themselves.
@@ -18,6 +19,7 @@ export function TopNav() {
   const tenant = tenantForIndustry(profile?.industry ?? null) ?? getActiveTenant();
   const [orgOpen, setOrgOpen] = useState(false);
   const orgRef = useRef<HTMLDivElement>(null);
+  const { open: openPalette } = useCommandPalette();
 
   useEffect(() => {
     if (!orgOpen) return;
@@ -72,13 +74,13 @@ export function TopNav() {
         </div>
       )}
       <div className="topnav-spacer" />
-      <div className="cmdbar">
+      <button type="button" className="cmdbar" onClick={openPalette}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="11" cy="11" r="7" />
           <path d="M20 20l-3.5-3.5" />
         </svg>
         Ask Rewive to do something… <span className="kbd">⌘K</span>
-      </div>
+      </button>
       <div className="topnav-spacer" />
       <div className="top-actions">
         <LensMenu />
