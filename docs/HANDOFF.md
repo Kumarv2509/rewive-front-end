@@ -1,4 +1,187 @@
-# Handoff — the Hypermarket industry pack + the finding action tracker (2026-07-28)
+# Handoff — the product-structure reframe + three gaps made real (2026-08-01)
+
+## Where things stand
+
+- **EVERYTHING COMMITTED AND PUSHED** except this handoff edit. `v5` is
+  in sync with `origin/v5` at `c167da6`. The network was clear the whole
+  session (GitHub 200, no FortiGate) — but per this file's standing
+  lesson, re-test before every push, don't inherit the claim.
+- Six commits went up across this session (2026-07-31 → 08-01):
+  1. `282ecfb` **feat(v5): hypermarket industry pack — GulfMart demo**
+  2. `92fdf7f` **feat(v5): finding action tracker**
+  3. `77f924a` docs(v5): the previous handoff
+  4. `0da9eb3` **docs: architecture & product doc set — the docs/
+     Obsidian vault** (ARCH-001…004 + DIAGRAMS + PROD-001, `.obsidian/`
+     gitignored — untracked work from a parallel docs session the
+     previous handoff didn't mention; committed separately)
+  5. `504f951` **feat(v5): the ledger writes itself + the assessor agent
+     delivers verdicts** (gaps #1 + #5, below)
+  6. `c167da6` **feat(v5): escalations leave the app — the notification
+     outbox at the bell** (gap #3, below)
+- `npm run build` + `eslint .` clean after every commit. Everything was
+  smoke-tested against a running mock server (curl chains) and the bell
+  was screenshotted headless (zero console errors).
+- Commits 1–2 were the previous session's uncommitted work, **split into
+  the two commits its handoff prescribed** even though three files
+  (`types.ts`, `app.js`, `v4data.js`) carried both features. Technique
+  worth keeping: `git diff <file> | sed` to drop unwanted hunks →
+  `git apply --cached` for whole-hunk splits; for the one mixed hunk,
+  temporarily delete the other feature's block from the working file,
+  `git add`, restore from a scratchpad backup. Verify the staged blob
+  with `git show :file | node --check` before committing.
+
+## This session (2026-08-01, part 1): the product-structure reframe
+
+The founder: *"the product is evolved so much … can we reframe the
+overall product structure and understand what is missing and how to
+scale?"* Delivered as an analysis in chat — **NOT yet captured as a
+doc.** The offer to write it up as `PROD-002 — Product structure &
+scaling map` in the docs vault is open; the founder chose "lets start
+the missing ones" instead. If they ask for it, the material is in this
+section.
+
+**The reframe — three planes** (the v6 nav already reflects this):
+1. **The world model** — what we watch: Operating Picture graph,
+   tracking configs, connectors, datasets, KPI library (Foundation).
+2. **The loop engine** — what happens when a number drifts: findings →
+   4-A decision → actions/workers → recovery targets → ledger +
+   assessor verdict (Today / Findings / Decisions / Execution).
+3. **The accountability fabric** — who answers: persona hierarchy, dual
+   ownership, SLA escalation, entities/regions, tenancy, and (spec'd in
+   PROD-001, unbuilt) roles/permissions.
+The agent layer (holders / workers / assessors) is the machine half of
+the fabric, one agent per loop stage — not a fourth plane.
+
+**The honesty map:** Sense → Find is genuinely real (the live
+pipeline); Close is half-real; Decide and Act were real *state
+machines* wearing seeded *evidence*. Sharpest discovery: **the
+disposition route never wrote the Decision Ledger** — every ledger row
+on screen was seeded. The category claim ("system of record for
+operational decisions") didn't record decisions. Fixed this session.
+
+**The ranked gaps** (as delivered to the founder):
+1. The ledger write — **DONE** (`504f951`).
+2. **The onboarding factory** — the #1 structural blocker: all four
+   industries were hand-seeded; a customer can't do that. Seeds must
+   become templates + an authoring path (likely LLM-assisted: upload
+   KPI tree / org chart / P&L → draft Operating Picture). Needs a
+   design conversation before building (wizard vs LLM-drafted).
+3. Escalation that leaves the app — **DONE demo-grade** (`c167da6`);
+   real email/Slack is moot while tenants have fake domains.
+4. The real substrate — ARCH-001…004 sequence it; none of it built.
+5. The assessor agent — **DONE** (`504f951`).
+6. Real workers — most expensive, rightly deferred; the action tracker
+   makes Act real with humans first.
+7. Smalls: **⌘K bar is decorative** (no search behind it — confirmed),
+   no thread comments, no exports, drift detection is 3 deterministic
+   rules.
+
+**Scaling phases:** P1 make the loop honest (design-partner ready), P2
+onboarding factory, P3 agent ladder (assessor first, then narrow
+workers), P4 enterprise per ARCH-001. Compass metrics:
+time-to-first-finding, % decided within SLA, % decisions with verdicts.
+
+## This session (2026-08-01, part 2): gaps #1 + #5 — the ledger writes itself
+
+`504f951`, all in `mock-server/app.js` + one hook edit:
+
+- **`decisionLedgerState`** — mutable per-industry state seeded from
+  `opContent[k].decisionLedger`; both ledger routes (`/decisions`,
+  `/decisions/stats`) now read it instead of the static pack.
+- **The write**: the disposition route appends a row the moment the
+  decision is made — title `«Accept|Act|Park|Dismiss» — «finding
+  title»` (the UI vocabulary, deliberately), subtitle set per branch
+  (`ledgerSubtitle`: recovery target / "Fix opened" / re-alert rule /
+  dismissal reason), `verdict: 'too_early'`, impact "measuring…",
+  `function`: finance stream → 'finance', else 'operations', persona /
+  entity / region / findingId inherited from the finding, `madeBy` =
+  `currentUser`, `informedBy` = the raising agent. `date` is a display
+  string (`'01 Aug'`) matching seeds — NOT ISO.
+- **`runAssessorPass(industry)`** — runs lazily at the top of both
+  ledger reads. For each `too_early` row with a `findingId`: closure
+  `closed` → verdict `worked`, impact `baseline → current`, authored
+  `assessorNote`, audited; `regressed` → `not_worked`; `tracking` →
+  keeps the "measuring… X of a Y exit condition" text honest. **All
+  three branches skip rows that already carry an `assessorNote`** — so
+  hand-written seed narratives are never clobbered by the template.
+  The existing `POST /closure-kpis/:id/close` route is what flips a
+  closure closed, so the chain works from the UI's close-loop button.
+- KV snapshot: `decisionLedgerState` in `exportState`/`importState`,
+  rows with `findingId?.startsWith('live-')` stripped (the standing
+  convention). Consequence, accepted demo-grade: **a decision on a
+  live-* finding survives in-memory only** — on serverless it vanishes
+  with the next cold start (the proper fix is Postgres persistence).
+- `useDisposeFinding` (`src/api/shadowOrg.ts`) now also invalidates
+  `['decisions']`.
+- Verified: accept `fmcg-f-protein-fill` → ledger row with recovery
+  target + "measuring… 84% of a 96% exit condition" → close the loop →
+  verdict `worked`, impact "84% → 96%", authored note. Dismiss writes
+  its reason. Stats stay derived and healthy.
+
+## This session (2026-08-01, part 3): gap #3 — the notification outbox
+
+`c167da6`. Framing that made this honest: real SMTP is pointless while
+tenants have demo email domains, so the bell IS the delivery channel —
+each row is "what an email would have carried".
+
+- **`notificationsState`** — per-industry, **seeded empty, always**:
+  only the real engine writes it (that's the point). Ring buffer at
+  100. `pushNotification(industry, {type, persona, findingId, title,
+  body})`.
+- **The write-point is inside `escalateFindingUp`** — so all four
+  escalation paths deliver with no per-site code: manual escalate, the
+  SLA heartbeat, re-alert trip-wires (custom note via the new third
+  param `deliveryNote`), and the live-deadline sweep. Recipient =
+  `finding.persona` AFTER the walk (the new owner). When the walk forks
+  to the dotted line a second `dotted_flag` delivery goes to that role.
+- Routes: `GET /api/v1/notifications` (lens-scoped via the same
+  `filterByPersona` as every surface), `POST /notifications/read`
+  ({ids}). NOT in `LIVE_LOCK_EXEMPT` (touches shared state). In the KV
+  snapshot with live-* stripping.
+- **Frontend**: `src/api/notifications.ts` (`useNotifications` polling
+  30s, `useMarkNotificationsRead`);
+  `src/components/layout/NotificationsBell.tsx` replaces the decorative
+  bell in `TopNav` — unread dot, `.menu` popover (type eyebrow, title,
+  body, age), click-through to the finding thread, mark-all-read.
+  Gotcha: there is **no generic `.as-btn` reset class** in globals.css
+  (`.topnav-tenant.as-btn` is specific) — buttons got inline resets.
+- Verified by curl: escalation → coo delivery; re-escalate → group_ceo;
+  `fmcg-f-protein-tradespend` → `dotted_flag` to cfo; lens scoping (coo
+  lens sees it, cfo lens doesn't); mark-read sticks. Headless
+  Playwright screenshot of the open popover on `/command`: renders
+  correctly, zero console errors.
+
+### Natural next steps
+
+1. **⌘K command palette** — recommended next: small, contained,
+   visible. The bar in `TopNav` says "Ask Rewive to do something…" and
+   does nothing.
+2. **The onboarding factory design conversation** — the one that
+   changes the economics of every future customer. Don't start building
+   before the founder picks a shape.
+3. Capture the reframe as **PROD-002** in the docs vault (offer open).
+4. Carried from the previous handoff, still open: actions board behind
+   `?view=actions`; light action seeds for FMCG/Healthcare hero
+   findings; the `hm-f-h1/h2` phantom-closure references (fine for
+   demo).
+5. Notion MCP was added to local config (2026-07-30, HTTP transport) —
+   it loads on session start and needs OAuth via `/mcp` on first use.
+   Purpose not yet stated by the founder.
+
+### Servers / state at handoff (2026-08-02)
+
+**`dev:all` LEFT RUNNING with non-default flags**: started as
+`REWIVE_SWEEP_MS=0 REWIVE_SLA_HOURS_PER_TICK=0 npm run dev:all` (no
+auto-sweep, frozen SLA clocks — used for deterministic testing). The
+in-memory state carries this session's test residue: the fmcg hero
+finding is **escalated to group_ceo** and dispositioned state from the
+curl chains. **Restart with plain `npm run dev:all` before demoing.**
+Reset ports: `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p);
+done`.
+
+---
+
+# Previous handoff — the Hypermarket industry pack + the finding action tracker (2026-07-28)
 
 ## Where things stand
 
