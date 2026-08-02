@@ -1,4 +1,103 @@
-# Handoff — the product-structure reframe + three gaps made real (2026-08-01)
+# Handoff — the ⌘K palette (2026-08-02)
+
+## Where things stand
+
+- **COMMITTED AND PUSHED.** `v5` in sync with `origin/v5` at `1ce56a8`
+  (`feat(v5): the ⌘K palette — the command bar does something now`),
+  working tree clean except this handoff edit. Network was clear
+  (github 200, Sectigo cert) — re-test before your own push anyway.
+- `npm run build` + `eslint .` clean. Verified headless (Playwright) at
+  1440/1280/1024, zero console errors on the touched screens.
+- **The previous handoff's "servers at handoff" note was wrong about
+  what was running.** A `dev:all` from that session was still alive on
+  :4000/:5173 — the first port check here used bad `lsof` syntax
+  (`lsof -ti tcp:4000 tcp:5173` only queries the first; the second is
+  read as a filename) and reported nothing. Use the per-port loop the
+  reset line uses. Everything was killed and restarted plain, so the
+  dirty test state that handoff warned about is gone.
+
+## This session (2026-08-02): the ⌘K palette
+
+Gap #7's first small, and the one a viewer notices in 30 seconds: the
+top bar said "Ask Rewive to do something…" and was a bare `<div>`.
+
+- **`src/components/layout/CommandPalette.tsx`** (new).
+  `CommandPaletteProvider` wraps the whole of `AppLayout` (so it is
+  inside `RequireTenant`), owns the ⌘K/Ctrl-K hotkey, and exposes
+  `useCommandPalette().open()` — `TopNav`'s `.cmdbar` is now a
+  `<button>` calling it. Esc / backdrop-click close, ↑↓ move with
+  `scrollIntoView`, Enter runs, hover sets the active row.
+- **Three groups.** *Go to*: a hand-written `DESTINATIONS` array,
+  deliberately NOT derived from `NAV_GROUPS` — the palette wants the
+  tab-level destinations the rail hides (`?tab=watching`,
+  `?view=agents`, Business — P&L, Workforce, the Guide) and their
+  plain-language names, each tagged with its loop stage. *Findings*:
+  `useFindings` at the **effective lens** (`useEffectiveLens`), so the
+  palette can never show what the queue does not; the footer states the
+  lens out loud. Matches title, id, summary, agent, entity, severity.
+  *Do*: run an agent sweep, set lens (admin-only — a locked non-admin
+  cannot change what they see), toggle team scope, switch organization.
+- **Empty query is a standing menu**, not 200 rows: the findings
+  actually needing a decision (4), then main screens (6), then verbs.
+- **Matching** is a small multi-word scorer (`score()`): word-start and
+  earlier hits rank higher, word order is forgiving, non-matching query
+  returns null. Cap 12 results.
+- **Two react-compiler lint rules bite here, both worth knowing:**
+  `setState` inside an effect is barred (reset the active row in the
+  input's `onChange`, not a `[query]` effect), and reassigning a
+  render-scoped cursor inside JSX is barred (group headers are computed
+  in a `useMemo` off `results[i-1]`, not a `let lastGroup` walked while
+  mapping).
+- **CSS**: `.cmdk-*` block in `globals.css` (backdrop z-index **200** —
+  above `.menu` 60, help 70, tour 80, toast 99). The bar itself is
+  fixed too: with a `flex:1` spacer either side, `.cmdbar{flex:1}` won
+  only a third of the free space and wrapped its own placeholder onto
+  two lines, rendering 55px tall inside the 56px bar. Now
+  `flex:0 1 520px` + `white-space:nowrap;overflow:hidden`. Measured
+  identical for a `<div>`, so this was pre-existing, not the button.
+  Note `.cmdbar` needed an explicit `font:inherit;text-align:left`
+  reset — there is still no generic button-reset class (same trap the
+  bell hit).
+- CLAUDE.md gained the palette convention under Styling: add a screen →
+  add a `DESTINATIONS` row; new verbs go in the `items` memo and must
+  close the palette themselves.
+
+### Found but NOT fixed — a real console error on Agent Teams
+
+`/operate/agent-teams` throws React's *"`<a>` cannot be a descendant of
+`<a>`"*: `WorkerRow` wraps its whole row in a `<Link to="/insights/…">`
+and then renders `MandateChip`, itself a `<Link to="/build/picture…">`,
+inside it. Pre-existing, unrelated to this work, but it is a genuine
+hydration-class error and the nested link is unclickable. Small fix
+(make the row a div with an explicit link, or lift the chip out).
+
+### Natural next steps
+
+1. **The onboarding factory design conversation** — still the one that
+   changes the economics of every future customer, and still needs the
+   founder to pick a shape (wizard vs LLM-drafted) before any code.
+2. The Agent Teams nested-link fix above.
+3. Capture the product-structure reframe as **PROD-002** (offer open
+   from last session).
+4. Carried: actions board behind `?view=actions`; light action seeds for
+   the FMCG/Healthcare hero findings; `hm-f-h1/h2` phantom closures.
+5. Palette follow-ons if wanted: search the Decision Ledger and agents
+   too, recent-destination memory, and a "Decide this finding" verb that
+   opens the disposition bar directly.
+
+### Servers / state at handoff (2026-08-02)
+
+**`dev:all` LEFT RUNNING with default flags** (background task
+`b0mvosmtl`): vite :5173 + mock API :4000, sweep every 60s, heartbeat
+on. State is a clean boot plus **one manual sweep** fired from the
+palette while testing (it may have raised `live-*` findings) and a
+handful of lens switches. Restart for a pristine demo. Reset ports:
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done` — the loop
+form matters, see the lsof note above.
+
+---
+
+# Previous handoff — the product-structure reframe + three gaps made real (2026-08-01)
 
 ## Where things stand
 
