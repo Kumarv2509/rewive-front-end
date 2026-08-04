@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSetIndustry } from '../../api/shadowOrg';
 import { usePersonaLens, type PersonaLens } from '../../components/layout/personaLens';
 import { personaLabel, personaGroupsForIndustry } from '../CommandCenter/personas';
-import { TENANTS, setActiveTenantId, tenantById, type Tenant } from '../../tenants';
+import { TENANTS, allTenants, setActiveTenantId, tenantById, type Tenant } from '../../tenants';
 
 // Organization sign-in: the SaaS front door. Each tenant is a workspace mapped
 // to an industry pack; the brand panel takes the org's identity, and the role
@@ -68,7 +68,7 @@ export function LoginScreen() {
 
           <div className="login-field-label">Organization</div>
           <div className="login-orgs">
-            {TENANTS.map((t) => (
+            {allTenants().map((t) => (
               <button
                 key={t.id}
                 type="button"
@@ -124,6 +124,8 @@ export function LoginScreen() {
 
           <div className="login-foot">
             Demo build — any password works. <Link to="/">Back to rewive.com</Link>
+            <br />
+            New here? <Link to="/onboard">Set up a new organization →</Link>
           </div>
         </form>
       </div>

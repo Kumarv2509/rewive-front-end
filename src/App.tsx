@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from 'react
 import { AppLayout } from './components/layout/AppLayout';
 import { getActiveTenant } from './tenants';
 import { LoginScreen } from './screens/Login';
+import { OnboardingScreen } from './screens/Onboarding';
 import { PersonaLensProvider } from './components/layout/personaLens';
 import { ToastProvider } from './components/shared/Toast';
 import { CommandCenterScreen } from './screens/CommandCenter';
@@ -52,6 +53,8 @@ function App() {
             <Route path="guide" element={<GuideScreen />} />
             {/* Organization sign-in — the tenant front door, no app chrome */}
             <Route path="login" element={<LoginScreen />} />
+            {/* The onboarding factory — create an organization, pre-tenant by definition */}
+            <Route path="onboard" element={<OnboardingScreen />} />
 
             <Route element={<RequireTenant />}>
             <Route element={<AppLayout />}>

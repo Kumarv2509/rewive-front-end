@@ -1,5 +1,6 @@
 import type { Persona } from '../../api/types';
 import { getActiveIndustry } from '../../api/client';
+import { getCustomTenant } from '../../tenants';
 
 // Personas double as routing roles: every finding is addressed to the role
 // whose call it is (see the Persona type for the routing rules).
@@ -85,13 +86,16 @@ export const LEGACY_PERSONAS: Persona[] = [
 ];
 
 function isLegacyIndustry(industry: string | null = getActiveIndustry()): boolean {
-  return industry === 'healthcare' || industry === 'manufacturing' || industry === 'hypermarket';
+  return industry === 'healthcare' || industry === 'manufacturing' || industry === 'hypermarket' || industry === 'custom';
 }
 
 export function personaLabel(p: Persona, industry?: string): string {
   const ind = industry ?? getActiveIndustry();
   if (ind === 'healthcare') return HEALTHCARE_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
   if (ind === 'hypermarket') return HYPERMARKET_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
+  // The onboarded org's overrides come from its People step, held on the
+  // client-side tenant session rather than a hardcoded map.
+  if (ind === 'custom') return getCustomTenant()?.labelOverrides?.[p] ?? PERSONA_LABEL[p];
   if (!isLegacyIndustry(ind)) return FMCG_LABEL_OVERRIDES[p] ?? PERSONA_LABEL[p];
   return PERSONA_LABEL[p];
 }

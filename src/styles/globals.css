@@ -183,6 +183,39 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
 .rowlink::after{content:'';position:absolute;inset:0}
 .dec-item:hover .rowlink{color:var(--accent-deep)}
 .rowlink-over{position:relative;z-index:1}
+/* Onboarding factory — the set-up-a-new-organization flow (public, pre-tenant) */
+.onb{min-height:100vh;background:var(--bg);padding:0 20px 60px}
+.onb-top{display:flex;align-items:center;gap:10px;max-width:880px;margin:0 auto;padding:18px 0;font-size:13px;font-weight:600;color:var(--ink-2)}
+.onb-exit{margin-left:auto;font-size:12.5px;color:var(--ink-2)}
+.onb-steps{display:flex;gap:6px;max-width:880px;margin:0 auto 14px}
+.onb-step{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-3);padding:4px 10px;border-radius:99px;border:1px solid var(--border)}
+.onb-step.on{color:var(--accent);border-color:var(--accent)}
+.onb-step.done{color:var(--ink-2)}
+.onb-body{max-width:880px;margin:0 auto;padding:26px 28px}
+.onb-body h2{font-size:var(--text-xl);margin:0 0 4px}
+.onb-sub{font-size:13px;color:var(--ink-2);margin:0 0 18px;line-height:1.5}
+.onb-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.onb-card{display:flex;flex-direction:column;gap:5px;text-align:left;padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;font:inherit}
+.onb-card.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.onb-card-name{font-weight:700;font-size:13.5px}
+.onb-card-blurb{font-size:12px;color:var(--ink-2);line-height:1.45}
+.onb-form{display:flex;flex-direction:column;gap:12px}
+.onb-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.onb-form input,.onb-form select,.onb-kpi-row input,.onb-mrow input:not([type=checkbox]),.onb-mrow select{border:1px solid var(--border);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:var(--card);color:var(--ink)}
+.onb-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.onb-label{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.onb-swatches{display:flex;gap:8px}
+.onb-swatch{width:26px;height:26px;border-radius:99px;border:2px solid transparent;cursor:pointer}
+.onb-swatch.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--card) inset}
+.onb-kpi-head{display:grid;grid-template-columns:1fr 110px 110px 34px;gap:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-3);margin:14px 0 4px}
+.onb-kpi-row{display:grid;grid-template-columns:1fr 110px 110px 34px;gap:8px;margin-bottom:6px}
+.onb-mrow{display:grid;grid-template-columns:18px minmax(140px,1fr) 74px 74px 92px 110px minmax(120px,150px) auto;gap:6px;align-items:center;padding:5px 0;border-top:1px solid var(--border);font-size:12.5px}
+.onb-mrow.off{opacity:.45}
+.onb-mrow .onb-mname{font-weight:600}
+.onb-note{font-size:12.5px;color:var(--ink-2);margin:10px 0}
+.onb-warn{font-size:12.5px;color:#92400E;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.onb-actions{display:flex;justify-content:space-between;margin-top:20px}
+@media (max-width:760px){.onb-grid{grid-template-columns:1fr}.onb-mrow{grid-template-columns:18px 1fr 70px 70px;row-gap:4px}.onb-mrow select{display:none}}
 .run-item{padding:13px 20px;border-top:1px solid var(--border)}
 .run-item .r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
 .run-item .nm{font-weight:500;font-size:13px}

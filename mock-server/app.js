@@ -46,6 +46,7 @@ import { plStatementSeed } from './pldata.js';
 import { businessContextSeed } from './businessdata.js';
 import { datasetsSeed } from './datasetsdata.js';
 import { personaScope, escalationParent, escalateFinding, roleSubtree, ROLE_CHILDREN } from './roles.js';
+import { buildDraft, buildArtifacts, buildOnboardSeries, CUSTOM_INDUSTRY } from './onboarding.js';
 import { deriveHalfYear, deriveStatTiles } from './halfyear.js';
 import * as tracking from './tracking.js';
 import { registerTrackingRoutes } from './tracking-routes.js';
@@ -268,9 +269,10 @@ app.get('/api/v1/decisions/stats', (req, res) => {
   const findings = filterByPersona(findingsState[industry] ?? [], persona, scope);
   const ledger = filterByPersona(decisionLedgerState[industry] ?? [], persona, scope);
   // FMCG, Healthcare and Hypermarket are all UAE orgs and seed their impact
-  // figures in AED; Manufacturing is the only USD pack. Keep this in step with
-  // the seeds, or the tiles re-badge a sum of AED figures with a dollar sign.
-  const currency = industry === 'manufacturing' ? '$' : 'AED';
+  // figures in AED; Manufacturing is the only USD pack; a custom org brings
+  // its own currency. Keep this in step with the seeds, or the tiles re-badge
+  // a sum of AED figures with a dollar sign.
+  const currency = statsCurrency(industry);
   const closures = filterClosuresByPersona(closureKpisState[industry] ?? [], findingsState[industry] ?? [], persona, scope);
   const halfYear = deriveHalfYear({ findings, closures, ledger, currency });
   res.json({ ...deriveStatTiles({ findings, ledger, currency }), ...(halfYear ? { halfYear } : {}) });
@@ -1426,19 +1428,144 @@ function findFinding(id) {
 // ---------- Org profile & industry templates ----------
 // Honour ?industry= so the client-driven context stays consistent even when the
 // serverless in-memory profile has reset (cold start).
+// The custom org brings its own name; every other industry keeps the seed's.
+function orgNameFor(industry) {
+  return industry === CUSTOM_INDUSTRY && customOrgState ? customOrgState.tenant.name : orgProfileSeed.orgName;
+}
+
 app.get('/api/v1/org-profile', (req, res) => {
   const q = req.query.industry;
-  res.json(q && brainsState[q] ? { ...orgProfileState, industry: q } : orgProfileState);
+  res.json(q && brainsState[q] ? { ...orgProfileState, industry: q, orgName: orgNameFor(q) } : orgProfileState);
 });
 
-app.get('/api/v1/industries', (req, res) => res.json(industryOptions));
+app.get('/api/v1/industries', (req, res) => {
+  if (!customOrgState) return res.json(industryOptions);
+  const included = customOrgState.brain.nodes.filter((n) => n.kind === 'stream_kpi').length;
+  res.json([
+    ...industryOptions,
+    { id: CUSTOM_INDUSTRY, name: customOrgState.tenant.name, description: 'Onboarded organization', streamCount: customOrgState.brain.streams.length, kpiCount: included },
+  ]);
+});
 
 app.put('/api/v1/org-profile', (req, res) => {
   const { industry } = req.body;
   if (!brainsState[industry]) return res.status(400).json({ message: 'Unknown industry template' });
-  orgProfileState = { ...orgProfileState, industry };
+  orgProfileState = { ...orgProfileState, industry, orgName: orgNameFor(industry) };
   logAudit('org', 'profile', `switched the industry template to ${industry}`);
   res.json(orgProfileState);
+});
+
+// ---------- The onboarding factory ----------
+// One runtime-created organization at a time, under the fixed industry key
+// 'custom'. Everything a hand-seeded industry gets at module load, a custom
+// org gets at commit time via installCustomOrg() — which is also re-run after
+// every KV snapshot import, because opContent / shadowOrgsSeed / the currency
+// maps are module-level objects the snapshot doesn't carry.
+let customOrgState = null;
+
+function installCustomOrg() {
+  if (!customOrgState) return;
+  const k = CUSTOM_INDUSTRY;
+  const org = customOrgState;
+  brainsState[k] = brainsState[k] ?? JSON.parse(JSON.stringify(org.brain));
+  opContent[k] = org.contentPack;
+  if (!opStateByIndustry[k]) {
+    opStateByIndustry[k] = {
+      pending: JSON.parse(JSON.stringify(org.contentPack.pendingDecisions)),
+      exceptions: JSON.parse(JSON.stringify(org.contentPack.runExceptions)),
+      chases: JSON.parse(JSON.stringify(org.contentPack.runChases)),
+      outcomes: JSON.parse(JSON.stringify(org.contentPack.outcomeReports)),
+      runDetails: JSON.parse(JSON.stringify(org.contentPack.runDetails)),
+    };
+  }
+  shadowOrgsSeed[k] = { industry: k, agents: JSON.parse(JSON.stringify(org.agents)) };
+  findingsState[k] = findingsState[k] ?? [];
+  closureKpisState[k] = closureKpisState[k] ?? [];
+  findingActionsState[k] = findingActionsState[k] ?? [];
+  decisionLedgerState[k] = decisionLedgerState[k] ?? [];
+  notificationsState[k] = notificationsState[k] ?? [];
+  businessContextSeed[k] = org.businessContext;
+  // The ISO code drives live-tracking value formatting; the stats route reads
+  // the same source via statsCurrency() below.
+  tracking.CURRENCY_BY_INDUSTRY[k] = org.currency;
+}
+
+// The Decision-stats tiles bill in the org's currency. Seeded packs keep the
+// old two-way split; a custom org brings its own code.
+function statsCurrency(industry) {
+  if (industry === CUSTOM_INDUSTRY && customOrgState) {
+    return customOrgState.currency === 'USD' ? '$' : customOrgState.currency;
+  }
+  return industry === 'manufacturing' ? '$' : 'AED';
+}
+
+// Draft: template + customer inputs → reviewable world model. Deterministic.
+app.post('/api/v1/onboarding/draft', (req, res) => {
+  try {
+    res.json(buildDraft(req.body ?? {}));
+  } catch (err) {
+    res.status(400).json({ message: err?.message ?? 'Could not build a draft' });
+  }
+});
+
+// Commit: reviewed draft → installed org + tracking configs + synthetic
+// 30-day history, so the first sweep judges the real present gap to target.
+app.post('/api/v1/onboarding/commit', async (req, res) => {
+  try {
+    const body = { ...(req.body ?? {}) };
+    const templateOrg = shadowOrgsSeed[body.template];
+    body.__templateAgents = templateOrg?.agents ?? [];
+    const artifacts = buildArtifacts(body);
+
+    customOrgState = artifacts;
+    brainsState[CUSTOM_INDUSTRY] = JSON.parse(JSON.stringify(artifacts.brain));
+    delete opStateByIndustry[CUSTOM_INDUSTRY]; // re-commit rebuilds the op state
+    installCustomOrg();
+
+    for (const plan of artifacts.trackingPlan) {
+      await tracking.upsertConfig({
+        nodeId: plan.nodeId,
+        industry: CUSTOM_INDUSTRY,
+        unit: plan.unit,
+        direction: plan.direction,
+        targetNumeric: plan.targetNumeric,
+        warnPct: plan.warnPct,
+        breachPct: plan.breachPct,
+        entity: plan.entity,
+        region: plan.region,
+        enabled: true,
+      });
+      await tracking.insertPoints(buildOnboardSeries(plan.nodeId, plan.currentNumeric, plan.targetNumeric));
+    }
+    // The ingest feed is a live dataset: tracked mandates read 'connected' on
+    // the Operating Picture instead of lying about data they demonstrably have.
+    if (artifacts.trackingPlan.length) {
+      const feeds = artifacts.brain.nodes
+        .filter((n) => artifacts.trackingPlan.some((p) => p.nodeId === n.id))
+        .map((n) => n.name);
+      const list = datasetsState[CUSTOM_INDUSTRY] ?? (datasetsState[CUSTOM_INDUSTRY] = []);
+      const ds = {
+        id: 'cust-ds-tracking',
+        name: 'Live mandate tracking',
+        description: 'Numeric readings for the live-tracked mandates, via the Rewive ingest API / CSV import.',
+        source: 'Rewive ingest',
+        cadence: 'daily',
+        status: 'live',
+        rows: artifacts.trackingPlan.length * 30,
+        columns: ['nodeId', 'date', 'value'],
+        lastLoadAt: new Date().toISOString(),
+        feeds,
+        analysisIdeas: [],
+      };
+      const idx = list.findIndex((d) => d.id === ds.id);
+      if (idx >= 0) list[idx] = ds; else list.push(ds);
+    }
+
+    logAudit('org', 'onboarding', `onboarded ${artifacts.tenant.name} from the ${body.template} template (${artifacts.trackingPlan.length} live-tracked mandates)`);
+    res.status(201).json({ tenant: artifacts.tenant, labels: artifacts.labels, industry: CUSTOM_INDUSTRY });
+  } catch (err) {
+    res.status(400).json({ message: err?.message ?? 'Could not create the organization' });
+  }
 });
 
 // ---------- KPI brain ----------
@@ -2329,6 +2456,10 @@ export function exportState() {
     ),
     datasetsState,
     analysisRequestsState,
+    // The whole runtime-created org rides in one blob; importState re-installs
+    // it into the module-level maps (opContent, shadowOrgsSeed, currency) that
+    // the snapshot doesn't carry.
+    customOrgState,
   };
 }
 
@@ -2357,6 +2488,10 @@ export function importState(snapshot) {
   if (snapshot.notificationsState) notificationsState = snapshot.notificationsState;
   if (snapshot.datasetsState) datasetsState = snapshot.datasetsState;
   if (snapshot.analysisRequestsState) analysisRequestsState = snapshot.analysisRequestsState;
+  if (snapshot.customOrgState) {
+    customOrgState = snapshot.customOrgState;
+    installCustomOrg();
+  }
 }
 
 export default app;

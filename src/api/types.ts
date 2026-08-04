@@ -991,7 +991,10 @@ export interface PlanningImportResult {
 // ============ v4 — shadow organization ============
 
 // ---------- Org profile & industry templates ----------
-export type IndustryKey = 'fmcg' | 'healthcare' | 'manufacturing' | 'hypermarket';
+// 'custom' is the one runtime-created organization (the onboarding factory);
+// the other four are the hand-seeded template industries.
+export type IndustryKey = 'fmcg' | 'healthcare' | 'manufacturing' | 'hypermarket' | 'custom';
+export type TemplateIndustryKey = Exclude<IndustryKey, 'custom'>;
 
 export interface OrgProfile {
   orgName: string;
@@ -1004,6 +1007,83 @@ export interface IndustryOption {
   description: string;
   streamCount: number;
   kpiCount: number;
+}
+
+// ---------- The onboarding factory ----------
+// Template + whatever the customer brings → a reviewable world-model draft →
+// commit installs the org. Deterministic server-side; the review step is
+// where judgment happens.
+export interface OnboardingKpiRow {
+  name: string;
+  target?: number | string | null;
+  current?: number | string | null;
+  unit?: string;
+}
+
+export interface OnboardingCompany {
+  name: string;
+  currency: string;
+  accent?: string;
+  sector?: string;
+  domain?: string;
+  tagline?: string;
+}
+
+export interface OnboardingRoleInput {
+  label?: string;
+  person?: string;
+}
+
+export interface OnboardingDraftInput {
+  template: TemplateIndustryKey;
+  company: OnboardingCompany;
+  kpis: OnboardingKpiRow[];
+}
+
+export interface OnboardingMandateRow {
+  id: string;
+  name: string;
+  streamKey: string;
+  definition: string;
+  unit: 'pct' | 'currency_m' | 'days' | 'ratio' | 'count';
+  direction: TrackingDirection;
+  target: number | null;
+  current: number | null;
+  source: 'matched' | 'added' | 'template';
+  include: boolean;
+}
+
+export interface OnboardingDraft {
+  template: TemplateIndustryKey;
+  currency: string;
+  streams: { key: string; name: string }[];
+  mandates: OnboardingMandateRow[];
+  warnings: string[];
+}
+
+export interface OnboardingCommitInput {
+  template: TemplateIndustryKey;
+  company: OnboardingCompany;
+  entities: { name: string; region?: string }[];
+  roles: Partial<Record<Persona, OnboardingRoleInput>>;
+  mandates: OnboardingMandateRow[];
+  streams: { key: string; name: string }[];
+}
+
+export interface OnboardingCommitResult {
+  tenant: {
+    id: string;
+    name: string;
+    mark: string;
+    industry: IndustryKey;
+    industryLabel: string;
+    accent: string;
+    domain: string;
+    tagline: string;
+    proofPoints: string[];
+  };
+  labels: Partial<Record<Persona, string>>;
+  industry: IndustryKey;
 }
 
 // ---------- KPI brain (graph: targets ← stream KPIs ← drivers) ----------

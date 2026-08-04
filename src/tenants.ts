@@ -84,13 +84,41 @@ export const TENANTS: Tenant[] = [
 ];
 
 const TENANT_KEY = 'rewive.tenant';
+const CUSTOM_TENANT_KEY = 'rewive.customTenant';
+
+// The onboarding factory's runtime-created organization. Stored client-side so
+// tenant resolution stays synchronous (RequireTenant has no loading state);
+// the server holds the matching world model under the 'custom' industry key.
+export interface CustomTenantSession extends Tenant {
+  /** Per-role label overrides chosen at onboarding (People step). */
+  labelOverrides?: Partial<Record<string, string>>;
+}
+
+export function getCustomTenant(): CustomTenantSession | null {
+  try {
+    const raw = localStorage.getItem(CUSTOM_TENANT_KEY);
+    if (!raw) return null;
+    const t = JSON.parse(raw) as CustomTenantSession;
+    return t && t.id && t.name ? t : null;
+  } catch { return null; }
+}
+
+export function setCustomTenant(tenant: CustomTenantSession) {
+  try { localStorage.setItem(CUSTOM_TENANT_KEY, JSON.stringify(tenant)); } catch { /* ignore */ }
+}
+
+/** Static tenants plus the onboarded one, for pickers. */
+export function allTenants(): Tenant[] {
+  const custom = getCustomTenant();
+  return custom ? [...TENANTS, custom] : TENANTS;
+}
 
 export function tenantById(id: string | null | undefined): Tenant | null {
-  return TENANTS.find((t) => t.id === id) ?? null;
+  return allTenants().find((t) => t.id === id) ?? null;
 }
 
 export function tenantForIndustry(industry: string | null): Tenant | null {
-  return TENANTS.find((t) => t.industry === industry) ?? null;
+  return allTenants().find((t) => t.industry === industry) ?? null;
 }
 
 export function setActiveTenantId(id: string) {
