@@ -71,8 +71,13 @@ cascade).
 
 ### Natural next steps
 
-1. **Walk the flow yourself** — `npm run dev:all`, /login → "Set up a
-   new organization". Expect styling asks; the review grid is dense.
+1. **The founder has NOT visually reviewed the flow yet.** They asked to
+   open it ("open lets check") but the Chrome extension failed to
+   connect — again, same as the four failures the 2026-07-21 handoff
+   records; keep using headless Playwright and just hand the founder the
+   URL. They were given http://localhost:5173/login → "Set up a new
+   organization" and the walk-through. **Expect styling asks next
+   session; the review grid is dense.**
 2. Onboarding follow-ons if wanted: wire added mandates into the P&L
    cascade (an edge-drafting step), a "Start over" / re-onboard entry
    point in-app (currently only /onboard), letting the People step
@@ -87,7 +92,9 @@ cascade).
 **`dev:all` LEFT RUNNING with default flags** (background task
 `bmcwjkm2e`): vite :5173 + mock API :4000. State: clean boot + one
 Falcon Foods Trading org onboarded via curl (manufacturing template,
-one DSO mandate) + an org-profile switch exercised back to fmcg. A
+one DSO mandate) + an org-profile switch exercised back to fmcg. The
+founder may be walking /onboard right now — creating their own org
+replaces the Falcon test org (one custom org at a time, by design). A
 restart clears the custom org — re-run /onboard for a demo. Reset:
 `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
 
