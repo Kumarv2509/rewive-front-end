@@ -1,4 +1,99 @@
-# Handoff — the ⌘K palette (2026-08-02)
+# Handoff — the onboarding factory (2026-08-05)
+
+## Where things stand
+
+- **COMMITTED AND PUSHED.** `v5` in sync with `origin/v5` at `6ff5dee`.
+  Two commits this session: `5477681` (the Agent Teams nested-link fix —
+  found already implemented but uncommitted in the working tree, verified
+  headless, then committed) and `6ff5dee` (**the onboarding factory**,
+  below). `npm run build` + `eslint .` clean. Network was clear both
+  pushes (github 200, Sectigo cert).
+- **A parallel docs session's work is in the tree, deliberately NOT
+  committed here**: `.gitignore` (+`.claude/skills/` sharing),
+  `docs/README.md`, new `docs/BRIEF-001-project-brief.md`,
+  `docs/OVERVIEW.md`, `.claude/`. Diffed, looks like a docs/skills
+  setup — leave it to its own session or commit it separately.
+
+## This session (2026-08-04→05): the onboarding factory
+
+The founder picked gap #2 (the #1 structural blocker) and made two
+shaping calls in the design conversation:
+1. **Hybrid shape**: template + adaptation + review (over pure wizard /
+   pure LLM-drafted).
+2. **NO new LLM API surface** — "i dont want to get into API ecosystem
+   yet as i am only creating the SAAS." The adapter is fully
+   deterministic; `authoring.js` keeps its grandfathered optional key.
+   Saved as memory `no-llm-integrations-yet` — don't re-propose.
+
+What shipped (detail in CLAUDE.md's new "onboarding factory" section):
+`/onboard` (public route, linked "Set up a new organization" on
+/login) → Template → Company → People → Your numbers → Review →
+commit installs a fifth org under industry key `custom`. Server:
+`mock-server/onboarding.js` (draft/artifacts/series, all pure) +
+`customOrgState`/`installCustomOrg()` in `app.js` (+ KV snapshot
+round-trip), `'custom'` in `roles.js` LEGACY_INDUSTRIES. Frontend:
+`src/screens/Onboarding/index.tsx`, `src/api/onboarding.ts`,
+`IndustryKey` union + onboarding types, custom-tenant session in
+`tenants.ts` (`rewive.customTenant` localStorage), label overrides in
+`personas.ts`, `.onb-*` CSS block.
+
+Design decisions worth keeping:
+- **Template numbers are never the customer's**: unclaimed template
+  mandates keep structure, numbers blanked. Content pack/business
+  context seeded EMPTY — the loop fills the ledger/runs of a real org.
+- **One upload parser** for KPI scorecards AND P&L exports
+  (name|kpi|label|line + target|budget + current|actual columns).
+- Matching: containment-blended token overlap, threshold 0.55
+  ("OEE — overall equipment effectiveness" claims template "OEE";
+  "Order fill rate" does NOT claim "Scrap rate"); `STREAM_HINTS`
+  vocabulary routes unmatched KPIs to a stream.
+- Tracking gets a **flat** 30-day synthetic series ending at the real
+  current value — the first sweep judges the org's true present gap,
+  no manufactured drama. Verified: DSO 61 vs 45 and OEE 78 vs 85
+  raised with correct persona/agent/entity; order fill 96.5 vs 97
+  (inside warn) stayed clear.
+- FMCG-template agents remap to the seven legacy roles
+  (`LEGACY_PERSONA_REMAP`); the chief lands as `coo`.
+
+Verified headless end-to-end (scratchpad `onboard-e2e.mjs`): full flow,
+zero console errors, lands on the Operating Picture, org chip/brand
+correct, live analysis strip shows the custom mandates, seeded
+industries untouched, org-profile orgName follows the org both ways,
+snapshot export→import keeps the org.
+
+Known demo-grade limits (all deliberate): one custom org at a time
+(fixed `custom` key; re-commit replaces it); the tenant is client-side
+(another browser won't list it on /login — the server org exists, the
+card doesn't); dev-server restart loses the org (in-memory), KV keeps
+it on serverless; added mandates have a single-node impact path (no
+edges yet — honest, but the Picture shows them unconnected to the
+cascade).
+
+### Natural next steps
+
+1. **Walk the flow yourself** — `npm run dev:all`, /login → "Set up a
+   new organization". Expect styling asks; the review grid is dense.
+2. Onboarding follow-ons if wanted: wire added mandates into the P&L
+   cascade (an edge-drafting step), a "Start over" / re-onboard entry
+   point in-app (currently only /onboard), letting the People step
+   seed `humanOwner` on ALL agents (today only exact-persona matches).
+3. Carried: PROD-002 capture; actions board `?view=actions`; light
+   action seeds for FMCG/Healthcare heroes; `hm-f-h1/h2` phantoms;
+   palette follow-ons (ledger/agent search, "Decide this finding").
+4. The parallel docs-session work (BRIEF-001 etc.) needs its own commit.
+
+### Servers / state at handoff (2026-08-05)
+
+**`dev:all` LEFT RUNNING with default flags** (background task
+`bmcwjkm2e`): vite :5173 + mock API :4000. State: clean boot + one
+Falcon Foods Trading org onboarded via curl (manufacturing template,
+one DSO mandate) + an org-profile switch exercised back to fmcg. A
+restart clears the custom org — re-run /onboard for a demo. Reset:
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — the ⌘K palette (2026-08-02)
 
 ## Where things stand
 
