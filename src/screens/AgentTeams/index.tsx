@@ -58,6 +58,9 @@ function MandateChip({ node, accent }: { node: BrainNode; accent?: string }) {
     <Link
       to={`/build/picture?focus=${node.id}`}
       title={`${node.definition} — view on the Operating Picture`}
+      // Sits above a stretched row link when nested in one (see WorkerRow);
+      // harmless where the chip stands on its own.
+      className="rowlink-over"
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600,
         color: accent ?? 'var(--ink-2)', textDecoration: 'none',
@@ -74,15 +77,24 @@ function MandateChip({ node, accent }: { node: BrainNode; accent?: string }) {
 // chip is the join made visible — the thread from "the agent watches this" to
 // "this worker works it".
 function WorkerRow({ worker, sharedMandates, accent, reportsTo }: { worker: AgentCatalogEntry; sharedMandates: BrainNode[]; accent: string; reportsTo?: string }) {
+  // The row is a div, not a Link: the mandate chips inside are links too, and
+  // an <a> inside an <a> is invalid (React throws, and the chip stops being
+  // clickable). The worker link stretches over the row instead — one click
+  // target, valid markup, chips still reachable.
   return (
-    <Link
-      to={`/insights/agents/${worker.agentId}`}
-      className="dec-item"
-      style={{ textDecoration: 'none', color: 'inherit', alignItems: 'center' }}
+    <div
+      className="dec-item rowlink-host"
+      style={{ alignItems: 'center' }}
     >
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-          <span style={{ fontSize: 12.5, fontWeight: 700 }}>{worker.name}</span>
+          <Link
+            to={`/insights/agents/${worker.agentId}`}
+            className="rowlink"
+            style={{ fontSize: 12.5, fontWeight: 700 }}
+          >
+            {worker.name}
+          </Link>
           <Pill tone={worker.state === 'live' ? 'green' : 'gray'}>{worker.state}</Pill>
         </div>
         {reportsTo && (
@@ -104,7 +116,7 @@ function WorkerRow({ worker, sharedMandates, accent, reportsTo }: { worker: Agen
           <div style={{ fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.4px', color: 'var(--ink-3)' }}>runs · {worker.lastRunAt ?? 'never'}</div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 

@@ -174,6 +174,15 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
 .dec-item:hover .t1 a{color:var(--accent-deep)}
 .dec-item .t2{font-size:12px;color:var(--ink-2)}
 .dec-item .acts{margin-left:auto;display:flex;gap:8px;flex-shrink:0}
+/* Stretched link — a whole row stays one click target without nesting <a> in
+   <a> (React throws, and the inner link becomes unclickable). Put
+   .rowlink-host on the row, .rowlink on its primary link, and .rowlink-over on
+   any other link inside that must stay clickable above the stretch. */
+.rowlink-host{position:relative}
+.rowlink{color:inherit;text-decoration:none}
+.rowlink::after{content:'';position:absolute;inset:0}
+.dec-item:hover .rowlink{color:var(--accent-deep)}
+.rowlink-over{position:relative;z-index:1}
 .run-item{padding:13px 20px;border-top:1px solid var(--border)}
 .run-item .r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
 .run-item .nm{font-weight:500;font-size:13px}
