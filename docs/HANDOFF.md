@@ -70,10 +70,12 @@ architecture. Delivered:
   kept to the one authoring surface. Cut from GTM: RAG/vector store,
   shared-Redis token budgets. Phases: P1 Sellable / P2
   Enterprise-ready / P3 Compounding.
-- **Notion tracker: NOT set up.** OAuth flow was started
-  (`mcp__notion__authenticate`), the founder never completed the
-  browser step. Re-run it next session if they still want the tracker;
-  meanwhile the harness task list carries P1.1–P1.6 (see `/tasks`).
+- **Notion tracker: SET UP (2026-08-09, later session).** OAuth
+  completed; a "Build Tracker" page + "Build items" database now live
+  under the founder's Rewive Project page — shipped history (DEMO-*),
+  P1.1 Done, P1.2–P3.2 planned. IDs + update convention are in the
+  `notion-build-tracker` memory. Keep statuses current as work lands;
+  Notion is status-of-record, the repo stays source of truth for code.
 
 ## This session, part 3: P1.1 shipped — the auth seam
 
