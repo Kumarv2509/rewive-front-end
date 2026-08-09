@@ -142,17 +142,44 @@ run** — the doctrine line ARCH-GTM-001 demanded.
 - Same pg caveat as P1.4: SKIP LOCKED path code-reviewed, not
   runtime-verified (no local Postgres/Docker).
 
+## Also this session: P1.6 — the evidence layer (`72dda78`)
+
+- **`mock-server/ledger.js`**: append-only sha256 hash-chained event
+  log — `decision` (awaited in the disposition route; actor = signed
+  claims' `sub` when a token is held), `verdict` (appended exactly
+  once by the assessor pass — events, never edits; the row mutation is
+  the display catching up), `transfer` (inside `escalateFindingUp` —
+  one accountable owner, transfers are events).
+- Routes: `GET /ledger/events` · `GET /ledger/verify` (recomputes the
+  whole chain; any historical edit breaks every hash after it) ·
+  `POST /ledger/anchor` (records the verified head; 409s a broken
+  chain) · `GET /ledger/anchors`.
+- **Postgres**: `ledger_events` via migration **004** (fan-out takes
+  tenant stores to v4); immutability is a `BEFORE UPDATE OR DELETE`
+  trigger — binds the table owner, stronger than revoked grants;
+  per-role grant hygiene lands with the Azure substrate. Memory mode
+  rides the KV snapshot UNSTRIPPED — events are history, not
+  re-raisable state; dangling live-* findingIds are honest past facts.
+- The screen's `decisionLedgerState` stays the display surface;
+  `decision_ledger` (002) stays for derived views, superseded as the
+  write target.
+- **contract/09** (5 tests): chain ordering, decision + transfer +
+  verdict all land as events, verify + anchor (anchor assertion
+  tolerant of background-sweep appends). Suite **49 tests, 0 fail**;
+  build + lint clean. Same pg caveat: trigger/insert path
+  runtime-unverified locally.
+
 ### Natural next steps
 
-1. **P1.6 — ledger hardening** is partially in-repo-able (the
-   `decision_ledger` table + fan-out exist; revoked write grants +
-   hash anchoring want real Postgres) — or jump to **P1.7** (Azure
-   substrate). Founder picks.
-2. Verify P1.4/P1.5 Postgres paths when a DATABASE_URL exists
-   (Docker/Neon): contract suite + watch `tenant_*` schemas and
-   `loop_timers` fill.
-3. Founder browser review of front door + auth (dev:all running).
-4. Carried: /onboard founder review, PROD-002 capture, actions board,
+1. **Phase 1's in-repo work is complete (P1.1–P1.6).** What remains is
+   **P1.7 — the Azure substrate** (UAE North, Entra External ID
+   swapping the JWT issuer, Key Vault, App Insights, PITR): every step
+   needs real cloud decisions — subscription, tenant, resource names.
+   A cheap intermediate: a free Neon Postgres to runtime-verify the
+   P1.4–P1.6 pg paths (schemas, SKIP LOCKED, the immutability
+   trigger) via the contract suite before any Azure work.
+2. Founder browser review of front door + auth (dev:all running).
+3. Carried: /onboard founder review, PROD-002 capture, actions board,
    hero action seeds, palette follow-ons.
 
 ### Servers / state at handoff
