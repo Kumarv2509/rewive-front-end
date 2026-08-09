@@ -23,7 +23,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.claude/
+# Local Claude Code state is ignored, except project skills — those are shared
+# guardrails and must travel with the repo. (Exclude the contents, not the
+# directory itself: git cannot re-include a path inside an excluded directory.)
+.claude/*
+!.claude/skills/
 .vercel
 
 # Obsidian vault workspace state (docs/ opens as a vault)

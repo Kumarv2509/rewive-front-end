@@ -15,6 +15,7 @@ by a new version, not rewritten in place under a new number.
 
 | Doc | Title | Status |
 |---|---|---|
+| [[BRIEF-001-project-brief\|BRIEF-001]] | **Project brief** — what Rewive is, and what it refuses to be | Draft |
 | [[ARCH-001-productization-strategy\|ARCH-001]] | SaaS &amp; on-prem productization strategy | Draft |
 | [[ARCH-002-multi-cloud-hosting\|ARCH-002]] | Multi-cloud hosting architecture | Draft |
 | [[ARCH-003-azure-hld\|ARCH-003]] | Rewive on Azure — High-Level Design | Draft |
@@ -33,6 +34,10 @@ derived view. Derived views are never cited by other documents.
 
 ### Series
 
+- **BRIEF** — the founding statement of the product. Every other document
+  descends from it; when one contradicts the brief, the brief wins or gets
+  amended deliberately. Enforced in day-to-day work by the `rewive-brief`
+  skill in `.claude/skills/`.
 - **ARCH** — how Rewive is built, hosted, and operated. Infrastructure and
   platform concerns.
 - **PROD** — what Rewive does and how it behaves. Product and application

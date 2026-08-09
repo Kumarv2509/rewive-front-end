@@ -1,4 +1,229 @@
-# Handoff — the onboarding factory (2026-08-05)
+# Handoff — the GTM architecture + the auth seam (2026-08-08→09)
+
+## Where things stand
+
+- **COMMITTED (2026-08-09), NOT YET PUSHED.** Three commits on `v5`
+  on top of `origin/v5` at `fccf0bb`:
+  1. `a3e9b5b` `feat(saas): the auth seam — sign-in mints a JWT,
+     claims outrank query params` — `mock-server/auth.js` (new),
+     `mock-server/app.js`, `src/api/auth.ts` (new), `src/api/client.ts`,
+     `src/api/types.ts`.
+  2. `3f5dd09` `feat(v5): single front door — tenants resolved by name,
+     never listed` — `Login/index.tsx`, `tenants.ts`, `Landing`,
+     `TopNav`, `CommandPalette`, `globals.css`, `CLAUDE.md` — the
+     front-door rewrite + the ten code-review fixes + the login chain.
+  3. The docs-session files + this handoff.
+  **Order deviates from the plan the previous handoff wrote** (front
+  door first): `Login/index.tsx` interleaves the front door with the
+  auth chain (`signIn` calls `login.mutate`), so a front-door-first
+  split needed a fabricated intermediate file. Auth-seam-first means
+  every commit is honest and builds — verified: `npm run build` +
+  `eslint .` clean at each of the two feature commits.
+- **Push pending** — test the network first per the standing
+  FortiGate rule further down this file.
+- `Architecture.png` in the repo root is the **founder's** Azure
+  target diagram — deliberately left untracked; don't commit it
+  without asking.
+
+## This session, part 1: /code-review on the front door — 10 findings, all fixed
+
+The founder ran `/code-review` on the front-door diff; 10 verified
+findings, then asked for all of them fixed:
+- `findTenants` now normalizes the **query** with the same `norm()`
+  (typing "Medcare UAE (demo)" — the name the product displays — used
+  to dead-end); `@`-queries get subdomain suffix matching plus a
+  domain-stem→org-name fallback (an onboarded founder's real email
+  used to hit "set up a new one", which would overwrite their org).
+  Genuinely unknown domains still return nothing.
+- `changeOrg` resets email/emailEdited/password/orgQuery and both
+  mutations (previous org's credentials leaked into the next org's
+  form); deletes ONLY the `org` param (was wiping the whole query).
+- `findOrg` writes `?org=` back so step 2 survives refresh; only
+  prefills full mailbox addresses (a bare "@medcare.ae" used to jam
+  the type=email input); role guard now uses `lensOfferedForIndustry`
+  instead of hand-rolling it.
+- `signIn` persists tenant/lens and navigates in `onSuccess` only
+  (was `onSettled` — a dead server still landed you on /command);
+  failure shows the shared `ErrorMessage` atom (`.login-err` CSS
+  deleted, `.login-card .state-msg` override added).
+- Brand panel + footer de-duplicated (they had already diverged);
+  CLAUDE.md's stale "?org= minted by landing CTAs" + missing GulfMart
+  fixed in both CLAUDE.md and the Login docblock.
+
+## This session, part 2: the GTM architecture (ARCH-GTM-001)
+
+The founder dropped `Architecture.png` (an Azure "Current Build"
+diagram) and asked for alignment feedback, then for the target
+architecture. Delivered:
+- **Feedback:** the diagram's green "Built and Live" boxes describe a
+  system that isn't this repo (FastAPI+JWT, per-customer Postgres,
+  AI Foundry, Blob/Key Vault — none exist here; the build is Vercel +
+  Express mock + KV + one optional shared Postgres + direct Anthropic
+  SDK, zero auth). The diagram also misses the one real live path —
+  the cron sweep pipeline. Full audit in the conversation.
+- **ARCH-GTM-001**, the go-to-market architecture, published as an
+  artifact: https://claude.ai/code/artifact/98d5a3b3-a095-4463-9918-834704834143
+  Thesis: the doctrine dictates the architecture — the centerpiece is
+  an always-on **loop engine** (sweep worker + durable Postgres
+  timers). Azure UAE North; Entra OIDC; API built to the existing mock
+  contract; DB-per-tenant + a control plane; append-only ledger; LLM
+  kept to the one authoring surface. Cut from GTM: RAG/vector store,
+  shared-Redis token budgets. Phases: P1 Sellable / P2
+  Enterprise-ready / P3 Compounding.
+- **Notion tracker: NOT set up.** OAuth flow was started
+  (`mcp__notion__authenticate`), the founder never completed the
+  browser step. Re-run it next session if they still want the tracker;
+  meanwhile the harness task list carries P1.1–P1.6 (see `/tasks`).
+
+## This session, part 3: P1.1 shipped — the auth seam
+
+"lets write to handoff and start this overall architecture saas
+working" → the first Phase-1 item, fully in-repo, demo-compatible:
+
+- **`mock-server/auth.js`** (new): HS256 JWT via node `crypto` (zero
+  new deps; secret `REWIVE_AUTH_SECRET`, dev fallback constant).
+  `POST /api/v1/auth/login` {email, tenantId, industry, seat} — any
+  password, demo parity — mints a 12h token. `authMiddleware`
+  validates **JWT-shaped bearers only** (three dot-segments): the
+  cron secret and hashed ingest keys are opaque single strings and
+  pass through untouched — that shape-check is what keeps
+  `/agent-sweep` and `/metrics` working, don't "simplify" it away.
+  Invalid/expired JWT → 401; no token → legacy demo mode.
+- **Precedence, everywhere context is resolved:** signed claims >
+  `?industry=` > stored profile — in `v4Industry` AND the org-profile
+  route (which reads the query directly; the first test pass caught
+  it bypassing the seam).
+- **Client:** `rewive.token` in localStorage; request interceptor
+  attaches the Bearer; a 401 response clears the token so the app
+  falls back to demo mode instead of wedging. `useLogin` in new
+  `src/api/auth.ts` (types in `types.ts`). Login chains
+  login → setIndustry → persist+navigate, errors surfaced on the
+  form. "Switch organization" (`clearActiveTenant`) clears the token —
+  the old org's claims must not outrank the next org's context.
+- **Verified by curl chain** (mock server, CRON_SECRET set): token
+  minted; healthcare claims beat `?industry=fmcg` on org-profile AND
+  findings (`hc-f-*` returned); tokenless legacy unchanged; garbage
+  JWT → 401; cron bearer → 200; unknown industry rejected at login.
+  NOT yet walked headless in the browser — the login UI chain is
+  typechecked but unexercised visually.
+- **The seam's point** (keep this framing): Entra OIDC later replaces
+  the *issuer* (HS256 dev secret → JWKS verify), not the middleware
+  contract, the claim names, or the client plumbing.
+
+### Natural next steps
+
+1. Push the three commits (network test first); founder review of the
+   front door + auth flow in a browser is still pending.
+2. **P1.2** — claims-driven tenancy: `RequireTenant`/`getActiveTenant`
+   read the token claims, localStorage demoted to cache.
+3. **P1.3** — contract test harness (mock as the spec, runnable
+   against any base URL) — unblocks the production API build.
+4. Notion OAuth if the founder wants the tracker in Notion.
+5. Carried: /onboard founder review, onboarding follow-ons, PROD-002
+   capture, actions board, hero action seeds, palette follow-ons.
+
+### Servers / state at handoff (2026-08-09)
+
+**Nothing running.** The previous session's `dev:all` (task
+`b7xev2hhy`) was stopped; this session's bare mock server (used for
+the curl verification, started with `CRON_SECRET=testcron`) was
+killed after the test. Start fresh with `npm run dev:all`. Reset:
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — the single front door (2026-08-05, later session)
+
+## Where things stand
+
+- **THIS SESSION'S WORK IS UNCOMMITTED.** `v5` is in sync with
+  `origin/v5` at `fccf0bb`; on top sit the front-door changes, all in
+  the working tree: `src/screens/Login/index.tsx` (rewritten),
+  `src/tenants.ts` (+`findTenants`), `src/screens/Landing/index.tsx`
+  (industry cards removed), `src/components/layout/TopNav.tsx` +
+  `CommandPalette.tsx` (switch-org retarget), `src/styles/globals.css`
+  (picker CSS swapped for found-row/error), `CLAUDE.md` (tenancy
+  paragraph). Suggested commit: `feat(v5): single front door — tenants
+  resolved by name, never listed`. `npm run build` + `eslint .` clean.
+- **The parallel docs-session files are STILL uncommitted** (unchanged
+  from the previous handoff): `.gitignore`, `docs/README.md`,
+  `docs/BRIEF-001-project-brief.md`, `docs/OVERVIEW.md`, `.claude/`.
+  Keep them out of the front-door commit.
+
+## This session (2026-08-05): the single front door
+
+The founder's call, made in two steps: *"the landing page which has
+multiple organization should be removed as per architecture the tenant
+name should bring the right login org"* → then *"remove the landing
+cards also, just one sign in."* The architecture now: **no surface
+anywhere lists the tenants** — a multi-tenant product doesn't show one
+customer the others.
+
+- **`/login` is two steps.** Step 1 "Find your organization": one input
+  accepting org name, workspace id, or work email. `findTenants(query)`
+  in `src/tenants.ts` resolves it and distinguishes found / ambiguous
+  ("gulf" matches GulfMart + Gulf Precision → asks for the full name) /
+  unknown (points at /onboard). A work email resolves by domain AND is
+  carried into the sign-in form. Step 2 is the org's branded sign-in
+  as before, org shown as a fixed row + "Change" (which also drops a
+  `?org=` param so refresh doesn't resurrect the org just left).
+- **`?org=<id>` deep links skip straight to step 2** — kept for
+  invite-style links. Nothing mints them anymore except tests.
+- **"Switch organization"** (TopNav + ⌘K palette) now navigates to
+  plain `/login` — there is no picker to preselect the old org in.
+- **Landing (`/`) lost the three industry cards** (`IndustryPicker`,
+  `INDUSTRIES`, `useEnter`, all `.ind-*` CSS deleted): hero has one
+  "Sign in to your organization →" CTA + a quiet "Set up a new
+  organization" sub-link (`.cta-row`/`.cta-sub`), header pill and the
+  closing CTA both go to `/login` (the `#start` anchor is gone).
+- The custom onboarded org resolves by name like any tenant
+  (`findTenants` reads `allTenants()`), client-side-tenant caveats
+  unchanged.
+- CLAUDE.md's Tenancy paragraph rewritten to describe the two-step
+  front door.
+
+Verified headless (scratchpad `login-e2e.mjs`, `landing-shot.mjs`):
+find-by-name, find-by-email, ambiguous + unknown errors, deep link,
+full sign-in landing on /command with the right org chip, switch-org
+returning to step 1, landing CTA routing — zero console errors.
+**Non-bug worth knowing:** `.login-brand` has a `.35s` background
+transition, so a screenshot taken the frame after resolving an org
+shows the default indigo, not the org accent — probe after ~500ms.
+
+Demo note: step 1 deliberately does NOT hint the demo org names (that
+would re-list the tenants). The ids that work: "Americana", "Medcare",
+"GulfMart", "Gulf Precision", or any `you@<org-domain>` email; any
+password; roles via "Sign in as".
+
+### Founder review
+
+The Chrome extension failed to connect a **fifth** time; the page was
+opened with plain `open http://localhost:5173/` instead and the founder
+walked it themselves (asked for the login ids — table above was
+provided). **No styling asks had landed when this handoff was
+written.** The /onboard visual review from the previous handoff is
+ALSO still pending.
+
+### Natural next steps
+
+1. Commit the front-door work (message above) once the founder is done
+   reviewing; push per the standing network-test rule.
+2. Previous handoff's list still stands: /onboard founder review,
+   onboarding follow-ons (P&L cascade edges, in-app re-onboard entry,
+   People-step humanOwner seeding), PROD-002 capture, actions board,
+   hero action seeds, palette follow-ons, docs-session commit.
+
+### Servers / state at handoff (2026-08-05, later session)
+
+**`dev:all` RUNNING with default flags** (background task `b7xev2hhy`):
+vite :5173 + mock API :4000. State: clean boot + the headless login
+sweeps + whatever the founder clicked reviewing; no custom org exists
+(the earlier Falcon test org died with the previous session's server).
+Reset: `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — the onboarding factory (2026-08-05)
 
 ## Where things stand
 
