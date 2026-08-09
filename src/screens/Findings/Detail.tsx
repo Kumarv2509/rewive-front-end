@@ -236,7 +236,7 @@ export function FindingDetailScreen() {
             when={finding.assessorVerdict ? new Date(finding.assessorVerdict.at).toLocaleString() : undefined}
           >
             {finding.assessorVerdict ? (
-              <div style={{ border: '1px solid rgba(21,128,61,.25)', borderRadius: 'var(--radius)', padding: '10px 14px', background: 'var(--green-soft)', fontSize: 12.5, color: 'var(--ink-2)' }}>
+              <div style={{ border: '1px solid color-mix(in srgb, var(--green) 30%, transparent)', borderRadius: 'var(--radius)', padding: '10px 14px', background: 'var(--green-soft)', fontSize: 12.5, color: 'var(--ink-2)' }}>
                 {finding.assessorVerdict.note}
               </div>
             ) : (

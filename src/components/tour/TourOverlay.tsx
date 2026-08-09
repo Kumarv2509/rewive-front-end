@@ -26,9 +26,9 @@ interface Rect {
 
 const css = `
 .tr-block{position:fixed;inset:0;z-index:80}
-.tr-dim{position:fixed;inset:0;z-index:80;background:rgba(5,5,14,.45)}
+.tr-dim{position:fixed;inset:0;z-index:80;background:var(--scrim)}
 .tr-hl{position:fixed;z-index:81;pointer-events:none;border-radius:14px;border:1.5px solid var(--accent);
-  box-shadow:0 0 0 200vmax rgba(5,5,14,.45);
+  box-shadow:0 0 0 200vmax var(--scrim);
   transition:top .25s ease,left .25s ease,width .25s ease,height .25s ease}
 .tr-card{position:fixed;z-index:82;width:min(400px,calc(100vw - 32px));background:var(--surface);color:var(--ink);
   border:1px solid var(--border-strong);border-radius:16px;padding:18px 20px 16px;
@@ -44,7 +44,7 @@ const css = `
 .tr-btn{font-size:12.5px;font-weight:600;border-radius:10px;padding:8px 16px;cursor:pointer;font-family:inherit;
   color:var(--ink);border:1px solid var(--border-strong);background:var(--glass);transition:background .2s}
 .tr-btn:hover{background:var(--glass-hover)}
-.tr-btn.primary{border:none;background:var(--accent);color:#fff;
+.tr-btn.primary{border:none;background:var(--accent);color:var(--on-emphasis);
   box-shadow:var(--shadow)}
 .tr-btn.primary:hover{filter:none;background:var(--accent-deep)}
 .tr-x{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;border:none;cursor:pointer;

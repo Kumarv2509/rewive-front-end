@@ -23,7 +23,7 @@ const css = `
 .om .brand .mk{width:30px;height:30px;border-radius:8px;background:var(--om-ink);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--ground);font-family:var(--om-serif)}
 .om .brand .nm{font-weight:700;letter-spacing:-.3px;font-size:16px;font-family:var(--om-serif)}
 .om .enter{font-family:var(--om-mono);font-size:.78rem;letter-spacing:.08em;text-decoration:none;color:var(--om-ink-2);border:1px solid var(--om-line-2);background:var(--om-card);border-radius:99px;padding:9px 18px;transition:all .2s;box-shadow:var(--shadow)}
-.om .enter:hover{color:var(--om-ink);border-color:#C9C9D0}
+.om .enter:hover{color:var(--om-ink);border-color:var(--om-line-2)}
 
 .om .eyebrow{font-family:var(--om-mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--om-ink-3)}
 .om h1,.om h2,.om h3{text-wrap:balance;font-weight:700;letter-spacing:-.02em;line-height:1.12;margin:0}
@@ -59,7 +59,7 @@ const css = `
 .om .viz .node{position:absolute;display:flex;flex-direction:column;align-items:center;gap:8px;width:88px}
 .om .viz .node .bx{width:44px;height:44px;border-radius:12px;border:1.5px dashed var(--om-line-2);display:flex;align-items:center;justify-content:center;font-family:var(--om-mono);font-size:.78rem;color:var(--om-ink-2);background:var(--om-card)}
 .om .viz .node .lb{font-size:.8rem;color:var(--om-ink-2);font-weight:600}
-.om .viz .node.you .bx{border-color:rgba(14,116,144,.55);color:var(--om-teal)}
+.om .viz .node.you .bx{border-color:color-mix(in srgb,var(--om-teal) 55%,transparent);color:var(--om-teal)}
 .om .viz .node.you .lb{color:var(--om-teal)}
 .om .n-sense{top:0;left:0}
 .om .n-find{top:0;right:0}
@@ -67,7 +67,7 @@ const css = `
 .om .n-close{bottom:0;left:0}
 .om .fcard{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(340px,80%);background:var(--om-card);border:1px solid var(--om-line);border-radius:12px;padding:16px 16px 13px;box-shadow:var(--shadow-lg)}
 .om .fcard .fc-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
-.om .fcard .fc-ava{width:26px;height:26px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800}
+.om .fcard .fc-ava{width:26px;height:26px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-emphasis);font-size:12px;font-weight:800}
 .om .fcard .fc-who{font-size:.8rem;font-weight:700}
 .om .fcard .fc-when{margin-left:auto;font-family:var(--om-mono);font-size:.64rem;color:var(--om-ink-3)}
 .om .fcard .fc-title{font-size:.94rem;font-weight:700;line-height:1.4;margin-bottom:7px}
@@ -75,11 +75,11 @@ const css = `
 .om .fcard .fc-body b{color:var(--om-ink);font-weight:600}
 .om .fcard .fc-chips{display:flex;gap:7px;margin-bottom:12px}
 .om .chip{font-family:var(--om-mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:3px 9px;font-weight:600}
-.om .chip.crit{color:var(--om-crit);background:var(--red-soft);border:1px solid rgba(185,28,28,.25)}
-.om .chip.sla{color:var(--om-warn);background:var(--amber-soft);border:1px solid rgba(180,83,9,.25)}
+.om .chip.crit{color:var(--om-crit);background:var(--red-soft);border:1px solid color-mix(in srgb,var(--om-crit) 28%,transparent)}
+.om .chip.sla{color:var(--om-warn);background:var(--amber-soft);border:1px solid color-mix(in srgb,var(--om-warn) 28%,transparent)}
 .om .fcard .fc-btns{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
 .om .fbtn{font-family:inherit;font-size:.76rem;font-weight:600;border-radius:8px;padding:7px 13px;border:1px solid var(--om-line-2);background:var(--om-card);color:var(--om-ink-2);cursor:default}
-.om .fbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.om .fbtn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-emphasis)}
 .om .fcard .fc-foot{font-family:var(--om-mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--om-ink-3);border-top:1px solid var(--om-line);padding-top:9px}
 .om .viz-cap{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);font-family:var(--om-mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--om-ink-3);white-space:nowrap}
 
@@ -98,7 +98,7 @@ const css = `
 .om .shift{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
 .om .col{border:1px solid var(--om-line);border-radius:var(--radius);background:var(--om-card);box-shadow:var(--shadow);padding:26px 26px 12px}
 .om .col.old{background:transparent;box-shadow:none}
-.om .col.new{border-color:rgba(79,70,229,.35)}
+.om .col.new{border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
 .om .col .col-tag{font-family:var(--om-mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:18px}
 .om .col.old .col-tag{color:var(--om-ink-3)}
 .om .col.new .col-tag{color:var(--i3)}
@@ -116,7 +116,7 @@ const css = `
 .om .tier .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .om .tier .t-def{color:var(--om-ink-2);font-size:.98rem}
 .om .tier .t-def b{color:var(--om-ink);font-weight:500}
-.om .tier.intent{border-color:rgba(14,116,144,.35)}
+.om .tier.intent{border-color:color-mix(in srgb,var(--om-teal) 35%,transparent)}
 .om .tier.intent .dot{background:var(--om-teal)}
 .om .tier.intent .t-label{color:var(--om-teal)}
 .om .tier.mandate .dot{background:var(--accent)}
@@ -124,7 +124,7 @@ const css = `
 .om .tier.sense .dot{background:var(--om-ink-3)}
 .om .tier.sense .t-label{color:var(--om-ink-2)}
 .om .tier-arrow{text-align:center;color:var(--om-ink-3);font-family:var(--om-mono);font-size:.7rem;letter-spacing:.14em}
-.om .held{margin-top:30px;border:1px solid rgba(79,70,229,.3);border-radius:var(--radius);background:var(--accent-soft);padding:22px 26px;font-family:var(--om-serif);font-size:clamp(1.05rem,1.8vw,1.4rem);font-weight:500;text-wrap:balance}
+.om .held{margin-top:30px;border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:var(--radius);background:var(--accent-soft);padding:22px 26px;font-family:var(--om-serif);font-size:clamp(1.05rem,1.8vw,1.4rem);font-weight:500;text-wrap:balance}
 
 .om .loop{display:grid;grid-template-columns:minmax(0,440px) 1fr;gap:clamp(28px,5vw,68px);align-items:center;margin-top:20px}
 .om .loop-svg-wrap{position:relative}
@@ -143,9 +143,9 @@ const css = `
 .om .dcard .verb{font-size:1.2rem;font-weight:700;letter-spacing:-.01em;font-family:var(--om-serif)}
 .om .dcard .tag{font-family:var(--om-mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;align-self:flex-start;border-radius:99px;padding:4px 10px;border:1px solid transparent}
 .om .dcard p{font-size:.9rem;color:var(--om-ink-2);line-height:1.55}
-.om .dcard.accept .verb{color:var(--om-teal)}.om .dcard.accept .tag{color:var(--om-teal);background:var(--teal-soft);border-color:rgba(14,116,144,.3)}
-.om .dcard.act .verb{color:var(--accent-deep)}.om .dcard.act .tag{color:var(--accent-deep);background:var(--accent-soft);border-color:rgba(79,70,229,.3)}
-.om .dcard.ack .verb{color:var(--om-warn)}.om .dcard.ack .tag{color:var(--om-warn);background:var(--amber-soft);border-color:rgba(180,83,9,.28)}
+.om .dcard.accept .verb{color:var(--om-teal)}.om .dcard.accept .tag{color:var(--om-teal);background:var(--teal-soft);border-color:color-mix(in srgb,var(--om-teal) 30%,transparent)}
+.om .dcard.act .verb{color:var(--accent-deep)}.om .dcard.act .tag{color:var(--accent-deep);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.om .dcard.ack .verb{color:var(--om-warn)}.om .dcard.ack .tag{color:var(--om-warn);background:var(--amber-soft);border-color:color-mix(in srgb,var(--om-warn) 30%,transparent)}
 .om .dcard.abandon .verb{color:var(--om-ink-2)}.om .dcard.abandon .tag{color:var(--om-ink-2);background:var(--glass);border-color:var(--om-line)}
 .om .dispo-foot{margin-top:20px;font-family:var(--om-mono);font-size:.82rem;color:var(--om-ink-3);letter-spacing:.02em}
 .om .dispo-foot b{color:var(--om-crit);font-weight:500}
@@ -183,7 +183,7 @@ const css = `
 .om .close{text-align:center;padding-bottom:clamp(70px,12vh,130px)}
 .om .close h2{max-width:20ch;margin:0 auto 22px}
 .om .close .lede{margin:0 auto 34px}
-.om .cta{display:inline-flex;align-items:center;gap:9px;font-family:var(--om-sans);font-size:1rem;font-weight:600;text-decoration:none;color:#fff;background:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:14px 26px;box-shadow:var(--shadow);transition:background .2s,border-color .2s}
+.om .cta{display:inline-flex;align-items:center;gap:9px;font-family:var(--om-sans);font-size:1rem;font-weight:600;text-decoration:none;color:var(--on-emphasis);background:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:14px 26px;box-shadow:var(--shadow);transition:background .2s,border-color .2s}
 .om .cta:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
 .om .cta .arr{font-family:var(--om-mono)}
 .om .close .sig{margin-top:40px;font-family:var(--om-mono);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--om-ink-3)}
@@ -217,7 +217,7 @@ function HeroViz() {
   return (
     <div className="viz" aria-hidden="true">
       <svg className="wires" viewBox="0 0 560 500" fill="none" preserveAspectRatio="none">
-        <g stroke="rgba(24,24,27,.30)" strokeWidth="1.5" strokeDasharray="4 6">
+        <g style={{ stroke: 'color-mix(in srgb, var(--ink) 30%, transparent)' }} strokeWidth="1.5" strokeDasharray="4 6">
           <path d="M 92 22 H 468" markerEnd="url(#omArr)" />
           <path d="M 514 48 V 430" markerEnd="url(#omArr)" />
           <path d="M 468 478 H 92" markerEnd="url(#omArr)" />
@@ -225,7 +225,7 @@ function HeroViz() {
         </g>
         <defs>
           <marker id="omArr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-            <path d="M0,0 L8,4 L0,8" fill="none" stroke="rgba(24,24,27,.45)" strokeWidth="1.5" />
+            <path d="M0,0 L8,4 L0,8" fill="none" style={{ stroke: 'color-mix(in srgb, var(--ink) 45%, transparent)' }} strokeWidth="1.5" />
           </marker>
         </defs>
       </svg>
@@ -388,26 +388,28 @@ export function LandingScreen() {
         <div className="loop">
           <div className="loop-svg-wrap">
             <svg viewBox="0 0 600 600" role="img" aria-label="The five-stage operating loop: sense, find, decide, act, close, repeating.">
-              <circle cx="300" cy="300" r="240" fill="none" stroke="rgba(24,24,27,.12)" strokeWidth="1.5" />
-              <circle className="om-pulse" cx="300" cy="300" r="240" fill="none" stroke="#4F46E5" strokeWidth="3" strokeLinecap="round" strokeDasharray="90 1418" strokeDashoffset="0" />
-              <text x="300" y="290" textAnchor="middle" fontFamily="ui-monospace,SF Mono,Menlo,monospace" fontSize="13" letterSpacing="3" fill="#9C9CA6">CONTINUOUS</text>
-              <text x="300" y="318" textAnchor="middle" fontFamily="Inter Variable,Inter,sans-serif" fontSize="21" fontWeight="600" letterSpacing="-0.3" fill="#18181B">The loop</text>
+              {/* SVG presentation attributes can't resolve var(), so every
+                  color rides the style prop — the loop retints with the theme. */}
+              <circle cx="300" cy="300" r="240" fill="none" style={{ stroke: 'color-mix(in srgb, var(--ink) 12%, transparent)' }} strokeWidth="1.5" />
+              <circle className="om-pulse" cx="300" cy="300" r="240" fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="3" strokeLinecap="round" strokeDasharray="90 1418" strokeDashoffset="0" />
+              <text x="300" y="290" textAnchor="middle" fontFamily="ui-monospace,SF Mono,Menlo,monospace" fontSize="13" letterSpacing="3" style={{ fill: 'var(--ink-3)' }}>CONTINUOUS</text>
+              <text x="300" y="318" textAnchor="middle" fontFamily="Inter Variable,Inter,sans-serif" fontSize="21" fontWeight="600" letterSpacing="-0.3" style={{ fill: 'var(--ink)' }}>The loop</text>
               <g fontFamily="ui-monospace,SF Mono,Menlo,monospace" fontSize="15" fontWeight="600">
-                <circle cx="300" cy="60" r="27" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.6" />
-                <text x="300" y="66" textAnchor="middle" fill="#4338CA">1</text>
-                <text x="300" y="24" textAnchor="middle" fontSize="14" fill="#18181B">Sense</text>
-                <circle cx="528" cy="226" r="27" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.6" />
-                <text x="528" y="232" textAnchor="middle" fill="#4338CA">2</text>
-                <text x="528" y="277" textAnchor="middle" fontSize="14" fill="#18181B">Find</text>
-                <circle cx="441" cy="494" r="27" fill="#FFFFFF" stroke="#0E7490" strokeWidth="1.8" />
-                <text x="441" y="500" textAnchor="middle" fill="#0E7490">3</text>
-                <text x="441" y="545" textAnchor="middle" fontSize="14" fill="#18181B">Decide</text>
-                <circle cx="159" cy="494" r="27" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.6" />
-                <text x="159" y="500" textAnchor="middle" fill="#4338CA">4</text>
-                <text x="159" y="545" textAnchor="middle" fontSize="14" fill="#18181B">Act</text>
-                <circle cx="72" cy="226" r="27" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.6" />
-                <text x="72" y="232" textAnchor="middle" fill="#4338CA">5</text>
-                <text x="72" y="277" textAnchor="middle" fontSize="14" fill="#18181B">Close</text>
+                <circle cx="300" cy="60" r="27" style={{ fill: 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth="1.6" />
+                <text x="300" y="66" textAnchor="middle" style={{ fill: 'var(--accent-deep)' }}>1</text>
+                <text x="300" y="24" textAnchor="middle" fontSize="14" style={{ fill: 'var(--ink)' }}>Sense</text>
+                <circle cx="528" cy="226" r="27" style={{ fill: 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth="1.6" />
+                <text x="528" y="232" textAnchor="middle" style={{ fill: 'var(--accent-deep)' }}>2</text>
+                <text x="528" y="277" textAnchor="middle" fontSize="14" style={{ fill: 'var(--ink)' }}>Find</text>
+                <circle cx="441" cy="494" r="27" style={{ fill: 'var(--surface)', stroke: 'var(--teal)' }} strokeWidth="1.8" />
+                <text x="441" y="500" textAnchor="middle" style={{ fill: 'var(--teal)' }}>3</text>
+                <text x="441" y="545" textAnchor="middle" fontSize="14" style={{ fill: 'var(--ink)' }}>Decide</text>
+                <circle cx="159" cy="494" r="27" style={{ fill: 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth="1.6" />
+                <text x="159" y="500" textAnchor="middle" style={{ fill: 'var(--accent-deep)' }}>4</text>
+                <text x="159" y="545" textAnchor="middle" fontSize="14" style={{ fill: 'var(--ink)' }}>Act</text>
+                <circle cx="72" cy="226" r="27" style={{ fill: 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth="1.6" />
+                <text x="72" y="232" textAnchor="middle" style={{ fill: 'var(--accent-deep)' }}>5</text>
+                <text x="72" y="277" textAnchor="middle" fontSize="14" style={{ fill: 'var(--ink)' }}>Close</text>
               </g>
             </svg>
           </div>

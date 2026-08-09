@@ -79,7 +79,7 @@ const css = `
 .gd{position:fixed;inset:0;z-index:60;background:var(--bg);color:var(--ink);font-family:var(--font-body)}
 .gd-top{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:18px 26px}
 .gd-brand{display:flex;align-items:center;gap:10px}
-.gd-brand .mk{width:28px;height:28px;border-radius:8px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px;font-family:var(--font-display)}
+.gd-brand .mk{width:28px;height:28px;border-radius:8px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--on-emphasis);font-size:14px;font-family:var(--font-display)}
 .gd-brand .nm{font-weight:700;font-size:14px;letter-spacing:-.2px;font-family:var(--font-display)}
 .gd-skip{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.06em;color:var(--ink-2);text-decoration:none;border:1px solid var(--border);background:var(--surface);border-radius:99px;padding:8px 16px;cursor:pointer;transition:all .2s}
 .gd-skip:hover{color:var(--ink);border-color:var(--border-strong)}
@@ -95,7 +95,7 @@ const css = `
 .gd-do{list-style:none;margin:0 0 24px;padding:0;display:flex;flex-direction:column;gap:9px}
 .gd-do li{display:flex;gap:11px;align-items:flex-start;font-size:.92rem;line-height:1.55;color:var(--ink)}
 .gd-do li .m{color:var(--teal);font-family:var(--font-mono);flex-shrink:0;margin-top:1px}
-.gd-cta{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;border:none;color:#fff;background:var(--accent);border-radius:var(--radius);padding:12px 22px;box-shadow:var(--shadow);cursor:pointer;transition:background .2s}
+.gd-cta{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;border:none;color:var(--on-emphasis);background:var(--accent);border-radius:var(--radius);padding:12px 22px;box-shadow:var(--shadow);cursor:pointer;transition:background .2s}
 .gd-cta:hover{background:var(--accent-deep)}
 .gd-ghost{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:600;text-decoration:none;color:var(--ink);border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:12px 22px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s}
 .gd-ghost:hover{border-color:var(--border-strong);background:var(--glass-hover)}

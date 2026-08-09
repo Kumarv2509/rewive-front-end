@@ -5,6 +5,7 @@ import { useCurrentUser } from '../../api/dashboard';
 import { clearActiveTenant, getActiveTenant, tenantForIndustry } from '../../tenants';
 import { Avatar } from '../shared/Avatar';
 import { LensMenu } from './LensMenu';
+import { ThemeMenu } from './ThemeMenu';
 import { NotificationsBell } from './NotificationsBell';
 import { useCommandPalette } from './CommandPalette';
 
@@ -86,6 +87,7 @@ export function TopNav() {
       <div className="topnav-spacer" />
       <div className="top-actions">
         <LensMenu />
+        <ThemeMenu />
         <Link to="/guide" className="topnav-help">Help</Link>
         <NotificationsBell />
         {user && (

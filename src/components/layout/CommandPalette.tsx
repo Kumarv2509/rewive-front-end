@@ -17,6 +17,7 @@ import { useToast } from '../shared/Toast';
 import { usePersonaLens, useEffectiveLens } from './personaLens';
 import { personaLabel, personaGroupsForIndustry, ROLE_CHILDREN } from '../../screens/CommandCenter/personas';
 import { clearActiveTenant } from '../../tenants';
+import { THEMES, setTheme } from '../../theme';
 import type { Finding } from '../../api/types';
 
 // The ⌘K bar, made real. One box that answers "where is X" and "do X" without
@@ -271,6 +272,21 @@ function Palette({ onClose }: { onClose: () => void }) {
       });
     }
 
+    for (const t of THEMES) {
+      out.push({
+        id: `do:theme:${t.id}`,
+        group: 'Do',
+        label: `Appearance: ${t.label}`,
+        hint: t.hint,
+        keywords: 'theme appearance look dark light mode skin style',
+        run: () => {
+          setTheme(t.id);
+          showToast(`Appearance: ${t.label}`);
+          onClose();
+        },
+      });
+    }
+
     out.push({
       id: 'do:switch-org',
       group: 'Do',
@@ -294,7 +310,9 @@ function Palette({ onClose }: { onClose: () => void }) {
     if (!q) {
       const needsDecision = items.filter((i) => i.group === 'Findings' && i.tag === FINDING_TAG.open).slice(0, 4);
       const screens = items.filter((i) => i.group === 'Go to').slice(0, 6);
-      const verbs = items.filter((i) => i.group === 'Do' && !i.id.startsWith('do:lens:')).slice(0, 3);
+      const verbs = items
+        .filter((i) => i.group === 'Do' && !i.id.startsWith('do:lens:') && !i.id.startsWith('do:theme:'))
+        .slice(0, 3);
       return [...needsDecision, ...screens, ...verbs];
     }
     return items

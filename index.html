@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Rewive — the decision accountability layer. Nothing drifts unanswered: every mandate held twice, every finding answered, every loop closed." />
     <title>Rewive · The Decision Accountability Layer</title>
+    <script>
+      // Apply the stored appearance before first paint so a non-default theme
+      // never flashes. Mirrors src/theme.ts — keep the key and default in sync.
+      try {
+        var t = localStorage.getItem('rewive.theme');
+        if (t !== 'signal' && t !== 'classic' && t !== 'terminal') t = 'signal';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* storage unavailable — CSS default (signal) applies */ }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -44,8 +44,8 @@ function FnBadge({ style, size = 34 }: { style: FnStyle; size?: number }) {
       style={{
         width: size, height: size, borderRadius: 8, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: Math.round(size * 0.5), background: style.c + '1A',
-        border: `1px solid ${style.c}33`,
+        fontSize: Math.round(size * 0.5), background: `color-mix(in srgb, ${style.c} 10%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${style.c} 20%, transparent)`,
       }}
     >
       {style.icon}

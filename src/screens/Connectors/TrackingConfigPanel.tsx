@@ -134,7 +134,7 @@ function FragmentRow({ node, cfg, isEditing, draft, setDraft, onEdit, onCancel, 
       </tr>
       {isEditing && (
         <tr>
-          <td colSpan={6} style={{ background: 'var(--paper-2, #f7f5f0)' }}>
+          <td colSpan={6} style={{ background: 'var(--glass)' }}>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end', padding: '10px 4px' }}>
               <Labeled label="Target">
                 <input style={{ ...inputStyle, width: 90 }} value={draft.targetNumeric}

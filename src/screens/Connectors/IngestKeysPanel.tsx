@@ -69,7 +69,7 @@ export function IngestKeysPanel() {
             </button>
             <button className="btn ghost sm" onClick={() => setJustCreated(null)}>Done</button>
           </div>
-          <pre style={{ marginTop: 10, fontSize: 11.5, background: 'var(--paper-2, #f6f4ee)', padding: 10, borderRadius: 8, overflowX: 'auto' }}>{curlExample}</pre>
+          <pre style={{ marginTop: 10, fontSize: 11.5, background: 'var(--glass)', padding: 10, borderRadius: 8, overflowX: 'auto' }}>{curlExample}</pre>
         </div>
       )}
 

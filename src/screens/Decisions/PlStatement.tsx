@@ -111,7 +111,7 @@ export function PlStatement() {
                     </td>
                   </tr>
                   {isOpen && breakdown?.map((row) => (
-                    <tr key={row.key} style={{ background: 'rgba(24,24,27,.02)' }}>
+                    <tr key={row.key} style={{ background: 'var(--glass)' }}>
                       <td style={{ paddingLeft: 42, color: 'var(--ink-2)' }}>{row.label}</td>
                       <Num v={row.actual} />
                       <Num v={row.budget} />

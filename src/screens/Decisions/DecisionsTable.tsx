@@ -53,7 +53,7 @@ export function DecisionsTable({ filters }: { filters: DecisionLedgerFilters }) 
               <td>
                 {d.madeBy.type === 'human' ? (
                   <span className="human">
-                    <Avatar initials={d.madeBy.initials ?? ''} background={d.madeBy.avatarBg ?? '#999'} size={22} fontSize={9} />
+                    <Avatar initials={d.madeBy.initials ?? ''} background={d.madeBy.avatarBg ?? 'var(--ink-3)'} size={22} fontSize={9} />
                     {d.madeBy.name}
                   </span>
                 ) : (
