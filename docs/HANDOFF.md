@@ -41,11 +41,39 @@
   full sign-out. Fresh profiles land on `/guide` first — seed
   `rewive.guideSeen=1` in tests.
 
+## Also this session: P1.3 — the contract test harness (`fa8912a`)
+
+- **`contract/`** (zero deps, `node:test` + fetch; `npm run
+  test:contract`; docs in `contract/README.md`): 36 behavior tests,
+  runnable against any target via `CONTRACT_BASE_URL` — the mock is
+  the reference implementation, a production API must pass unchanged.
+  `CONTRACT_MUTATIONS=0` for shared targets; `CONTRACT_SWEEP=1` gates
+  the slow live-sweep test (verified once: 16s, paced). Discovery-
+  driven — tests find "an open finding" at run time, never seed ids.
+- Covers: context + `?industry=` scoping; the auth seam (claims >
+  query cross-checked on content, opaque-bearer passthrough, 401);
+  world-model referential integrity (edges/watchers resolve, per
+  industry); the loop (Accept → recovery target → close → assessor
+  verdict upgrades the ledger row; ledger written at decision time
+  with UI-verb titles; Park carries a re-alert rule; Dismiss refused
+  without a reason; double-decide refused; escalation delivers a
+  notification to the new owner; actions CRUD); surfaces (persona on
+  every collection — catalog rows key on `agentId`); live tracking
+  (configs, metrics, ingest keys 201 + plaintext-once, sweep history).
+- **Contract discoveries the suite already paid for**: `Finding.
+  streamKey` was typed non-nullable but `fmcg-f-group-mix` (org-level)
+  is null — `types.ts` corrected + `streamName()` widened; the solo
+  persona lens legitimately includes `dottedPersona` matches; creates
+  answer **201**.
+- CLAUDE.md: Commands + Conventions now name the suite ("no test
+  suite" claim removed).
+
 ### Natural next steps
 
-1. **P1.3 — contract test harness**: the mock's REST contract as an
-   executable spec runnable against any base URL. Update the Notion
-   row to In progress on start.
+1. **P1.4 — control plane** (tenant catalog + DB-per-customer
+   provisioning) is next in ARCH-GTM-001 order, but it's the first
+   item that needs real Azure decisions — founder's call on
+   sequencing. Update the Notion row when starting.
 2. Founder browser review of front door + auth (dev:all is running).
 3. Carried: /onboard founder review, PROD-002 capture, actions board,
    hero action seeds, palette follow-ons.
