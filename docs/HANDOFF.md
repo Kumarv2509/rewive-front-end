@@ -102,13 +102,55 @@ Azure). What shipped:
   machine. First session with a DATABASE_URL: run the contract suite
   and watch `cp_tenants` + `tenant_*` schemas appear.
 
+## Also this session: P1.5 — the loop engine (`4d4b8c6`)
+
+Escalation is now a **scheduled event, not a query someone has to
+run** — the doctrine line ARCH-GTM-001 demanded.
+
+- **`mock-server/timers.js`**: durable timer queue — `loop_timers`
+  claimed with `FOR UPDATE SKIP LOCKED` (pg) / exact-semantics memory
+  mirror. One pending timer per (kind, subject) — scheduling replaces.
+  Memory timers deliberately NOT in KV (live-* convention).
+- **A timer is a wake-up, never the truth**: `executeLoopTimers`
+  (app.js) re-reads the live row before acting — stale/duplicate
+  wake-ups no-op. This is what makes the engine + the hydrate lazy
+  backstop (kept, serverless) + the sweep coexist without
+  double-firing: all act on the same `slaDeadlineAt`/status.
+- **Factoring — clocks → timers, data → sweeps**: `sla_escalation`
+  (armed at sweep-raise via `sweepCtx.scheduleLoopTimers`, re-armed by
+  every deadline move — the write-point is inside `syncLiveDeadline`,
+  no per-site code — cancelled on decision) and `re_alert_window`
+  (the "or after N days" half of a Park, armed at disposition). The
+  "worsens a further X%" half and recovery progress stay sweep-driven.
+- Worker: `runLoopEngineTick` (hydrate → execute → persist) on a
+  dev-server interval `REWIVE_ENGINE_MS` (default 15s, 0 off);
+  `POST /loop-engine/tick` (in-request, middleware does
+  hydrate/persist); `GET /loop-timers`. `REWIVE_TIMER_TEST=1` unlocks
+  `asOf` time travel on the tick route — dev/test lever.
+- Migration **003-loop-timers** joins the control-plane series;
+  `migrate.js` now applies the WHOLE series ("the shared store is
+  tenant zero"). `timers.js` also lazily ensures its table.
+- **Verified end-to-end via time travel** (REWIVE_TIMER_TEST=1,
+  sweeps/engine intervals off, all through HTTP): sweep raised 10
+  live findings each born with an armed wake-up → +26h tick claimed
+  all 10, escalated 5, correctly zeroed 5 whose persona is already
+  the top of the role tree → parked one (SLA timer cancelled, 14-day
+  window armed) → +15d tick re-opened it one level up
+  (coo → group_ceo, level 2), bell-notified the new owner, re-armed
+  a fresh SLA wake-up. contract/08 added (3 tests, one
+  CONTRACT_SWEEP-gated); suite 44 tests 0 fail; build+lint clean.
+- Same pg caveat as P1.4: SKIP LOCKED path code-reviewed, not
+  runtime-verified (no local Postgres/Docker).
+
 ### Natural next steps
 
-1. **P1.5 — the loop engine** (always-on sweep worker + durable
-   Postgres timers) is the last big item buildable in-repo; P1.7
-   (Azure substrate) is where cloud decisions start. Founder picks.
-2. Verify the control plane's Postgres path when a DATABASE_URL is
-   available (Docker/Neon).
+1. **P1.6 — ledger hardening** is partially in-repo-able (the
+   `decision_ledger` table + fan-out exist; revoked write grants +
+   hash anchoring want real Postgres) — or jump to **P1.7** (Azure
+   substrate). Founder picks.
+2. Verify P1.4/P1.5 Postgres paths when a DATABASE_URL exists
+   (Docker/Neon): contract suite + watch `tenant_*` schemas and
+   `loop_timers` fill.
 3. Founder browser review of front door + auth (dev:all running).
 4. Carried: /onboard founder review, PROD-002 capture, actions board,
    hero action seeds, palette follow-ons.
