@@ -26,7 +26,7 @@ const nodeTypes = {
   input: InputNode,
   process: ProcessNode,
   output: OutputNode,
-  agent: AgentNode,
+  worker: AgentNode,
   approval: ApprovalNode,
   loop: LoopNode,
 };
@@ -116,7 +116,7 @@ export function StudioCanvas({
     const base = { id, position: { x: 240 + Math.random() * 200, y: 360 + Math.random() * 80 } };
     const newNode: StudioNode =
       kind === 'agent'
-        ? { ...base, kind, label: 'Nested agent' }
+        ? { ...base, kind, label: 'Nested worker' }
         : kind === 'approval'
         ? { ...base, kind, label: 'Approval', approverUserIds: [], instructions: '' }
         : { ...base, kind, label: 'Loop', iterationMode: 'fixed_count', iterationCount: 1, childNodeIds: [] };
@@ -126,7 +126,7 @@ export function StudioCanvas({
   return (
     <div className="studio-canvas">
       <div style={{ position: 'absolute', zIndex: 10, top: 12, left: 12, display: 'flex', gap: 6 }}>
-        <button className="btn ghost sm" onClick={() => addNode('agent')}>+ Agent node</button>
+        <button className="btn ghost sm" onClick={() => addNode('agent')}>+ Worker node</button>
         <button className="btn ghost sm" onClick={() => addNode('approval')}>+ Approval node</button>
         <button className="btn ghost sm" onClick={() => addNode('loop')}>+ Loop node</button>
       </div>

@@ -1,13 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient, setActiveIndustry } from './client';
+import { apiClient, setActiveIndustry, getAuthClaims, setAuthToken, clearAuthToken } from './client';
+import { tenantForIndustry } from '../tenants';
 import type {
   ClosureKpi,
   CustomBrainNodeInput,
   DispositionInput,
   Finding,
+  FindingAction,
+  FindingActionInput,
+  FindingActionUpdate,
   FindingStatus,
   IndustryOption,
   KpiBrain,
+  LeadershipActionInput,
+  LoginInput,
+  LoginResponse,
   OrgProfile,
   Persona,
   RoleScope,
@@ -34,6 +41,24 @@ export function useSetIndustry() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (industry: OrgProfile['industry']) => {
+      // Claims outrank ?industry= on the server (P1.1), so while a token is
+      // held an industry switch must re-mint it for the tenant that owns the
+      // new industry — otherwise the switch silently reverts on the next
+      // request. Demo parity: /auth/login accepts any credentials, so the
+      // re-mint reuses the session's email and seat.
+      const claims = getAuthClaims();
+      if (claims && claims.industry !== industry) {
+        const owner = tenantForIndustry(industry);
+        if (owner) {
+          const input: LoginInput = { email: claims.sub, tenantId: owner.id, industry, seat: claims.seat };
+          const { data } = await apiClient.post<LoginResponse>('/auth/login', input);
+          setAuthToken(data.token);
+        } else {
+          // No tenant in this browser owns the industry — a stale token would
+          // pin the API to the old org; drop to tokenless demo mode instead.
+          clearAuthToken();
+        }
+      }
       setActiveIndustry(industry); // send on every subsequent request (survives serverless cold starts)
       return (await apiClient.put<OrgProfile>('/org-profile', { industry })).data;
     },
@@ -127,6 +152,8 @@ export function useDisposeFinding(findingId: string) {
       queryClient.invalidateQueries({ queryKey: ['shadow-org'] });
       // Accept creates a closure KPI; act creates a solution design.
       queryClient.invalidateQueries({ queryKey: ['closure-kpis'] });
+      // Every disposition writes a Decision Ledger row (stats + table).
+      queryClient.invalidateQueries({ queryKey: ['decisions'] });
     },
   });
 }
@@ -135,6 +162,22 @@ export function useEscalateFinding(findingId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => (await apiClient.post<Finding>(`/findings/${findingId}/escalate`)).data,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['findings', findingId], updated);
+      queryClient.invalidateQueries({ queryKey: ['findings'] });
+      queryClient.invalidateQueries({ queryKey: ['shadow-org'] });
+    },
+  });
+}
+
+// Pushing on a finding owned below you: ask, reassign, raise priority, take.
+// Distinct from useDisposeFinding — a leader does not get the four A's on
+// someone else's call.
+export function useLeadershipAction(findingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: LeadershipActionInput) =>
+      (await apiClient.post<Finding>(`/findings/${findingId}/leadership`, input)).data,
     onSuccess: (updated) => {
       queryClient.setQueryData(['findings', findingId], updated);
       queryClient.invalidateQueries({ queryKey: ['findings'] });
@@ -155,11 +198,46 @@ export function useReAlertFinding(findingId: string) {
   });
 }
 
-// ---------- Exit conditions (closure) ----------
-export function useClosureKpis() {
+// ---------- Finding actions (the tracker on a finding's thread) ----------
+export function useFindingActions(findingId: string | undefined) {
   return useQuery({
-    queryKey: ['closure-kpis'],
-    queryFn: async () => (await apiClient.get<ClosureKpi[]>('/closure-kpis')).data,
+    queryKey: ['finding-actions', findingId],
+    queryFn: async () => (await apiClient.get<FindingAction[]>(`/findings/${findingId}/actions`)).data,
+    enabled: !!findingId,
+  });
+}
+
+export function useAddFindingAction(findingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: FindingActionInput) =>
+      (await apiClient.post<FindingAction>(`/findings/${findingId}/actions`, input)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finding-actions', findingId] });
+    },
+  });
+}
+
+export function useUpdateFindingAction(findingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ actionId, ...input }: FindingActionUpdate & { actionId: string }) =>
+      (await apiClient.patch<FindingAction>(`/finding-actions/${actionId}`, input)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finding-actions', findingId] });
+    },
+  });
+}
+
+// ---------- Exit conditions (closure) ----------
+// Exit conditions inherit the scope of the finding they came from, so the lens
+// has to travel with the request — otherwise Watching/Closed showed every
+// division's exit conditions under every role.
+export function useClosureKpis(persona?: Persona | 'all', scope?: RoleScope) {
+  return useQuery({
+    queryKey: ['closure-kpis', persona ?? 'all', scope ?? 'self'],
+    queryFn: async () =>
+      (await apiClient.get<ClosureKpi[]>('/closure-kpis', { params: { persona, scope } })).data,
     refetchInterval: 30_000,
   });
 }

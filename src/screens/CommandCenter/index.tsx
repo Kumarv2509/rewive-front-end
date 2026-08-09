@@ -4,13 +4,12 @@ import { useDashboardSummary } from '../../api/dashboard';
 import { hasSeenGuide } from '../Guide/seen';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useEffectiveLens } from '../../components/layout/personaLens';
-import { ScopeBanner } from '../../components/shared/ScopeBanner';
-import { TodayStats } from './TodayStats';
+import { LoopStrip } from '../../components/shared/LoopStrip';
 import { UnifiedQueue } from './UnifiedQueue';
 import { PulseList } from './PulseList';
 import { LiveRunsList } from './LiveRunsList';
 import { TopPerformerCard } from './TopPerformerCard';
-import { PERSONA_LABEL } from './personas';
+import { personaLabel } from './personas';
 
 export function CommandCenterScreen() {
   const navigate = useNavigate();
@@ -30,20 +29,23 @@ export function CommandCenterScreen() {
       {isLoading && <Loading label="Loading your day…" />}
       {isError && <ErrorMessage message="Couldn't load dashboard summary." />}
       {summary && (
-        <>
-          <div data-tour="cc-briefing">
-            <h1 className="page">Good morning, {summary.greetingName}</h1>
-            <div className="sub">
-              {persona === 'all' ? (
-                <span dangerouslySetInnerHTML={{ __html: summary.summarySentence }} />
-              ) : (
-                <>Here's what needs the {PERSONA_LABEL[persona]} lens today.</>
-              )}
+        <header className="page-header" data-tour="cc-briefing">
+          <div className="ph-row">
+            <div>
+              <h1 className="page">Good morning, {summary.greetingName}</h1>
+              <div className="subtitle">
+                {persona === 'all' ? (
+                  <span dangerouslySetInnerHTML={{ __html: summary.summarySentence }} />
+                ) : (
+                  <>Here's what needs the {personaLabel(persona)} lens today.</>
+                )}
+              </div>
+            </div>
+            <div className="ph-actions">
+              <LoopStrip stage="Decide" />
             </div>
           </div>
-          <ScopeBanner />
-          <TodayStats persona={persona} scope={scope} />
-        </>
+        </header>
       )}
 
       <div className="grid home-cols">

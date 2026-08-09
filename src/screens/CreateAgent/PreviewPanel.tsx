@@ -13,7 +13,7 @@ export function PreviewPanel({ sessionId, agentId }: { sessionId: string; agentI
   return (
     <div className="card preview">
       <div className="ph">
-        ⚡ Agent preview
+        ⚡ Worker preview
         <span className={`pill ${preview?.state === 'live' ? 'green' : 'gray'}`} style={{ marginLeft: 'auto' }}>
           {preview?.state === 'live' ? 'Live' : 'Draft'}
         </span>

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useEffectiveLens } from '../../components/layout/personaLens';
-import { Intro } from '../../components/shared/Intro';
-import { ScopeBanner } from '../../components/shared/ScopeBanner';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { StatsRow } from './StatsRow';
 import { HalfYearReview } from './HalfYearReview';
 import { DecisionsTable } from './DecisionsTable';
@@ -28,20 +27,12 @@ export function DecisionsScreen() {
 
   return (
     <section className="screen">
-      <h1 className="page">Decision Ledger</h1>
-      <Intro
-        line="The company's memory of judgment — every decision, who made it, what it cost or earned, and whether it worked."
-        more={
-          <>
-            Every disposition lands here the moment it's made: who made the call (human or agent), the finding that
-            prompted it, and what it was expected to cost or earn. 30–90 days later an assessor returns a verdict —
-            worked, didn't, or too early — with the measured impact next to the estimate that justified the call.
-            Rows link back to the finding they answered, so the whole thread is one click away.
-          </>
-        }
+      <PageHeader
+        title="Decision Ledger"
+        subtitle="Every decision, who made it, what it cost or earned — and, 30–90 days later, whether it worked. Rows link back to the finding they answered."
       />
 
-      <StatsRow />
+      <StatsRow persona={persona} scope={scope} />
 
       <div className="tabs">
         <button className={`tab${view === 'ledger' ? ' active' : ''}`} onClick={() => setView('ledger')}>Ledger</button>
@@ -50,8 +41,7 @@ export function DecisionsScreen() {
 
       {view === 'ledger' && (
         <>
-          <ScopeBanner />
-          <HalfYearReview />
+          <HalfYearReview persona={persona} scope={scope} />
           <div className="filters">
             {functionFilters.map((f) => (
               <button key={f.key} className={`fchip${fn === f.key ? ' on' : ''}`} onClick={() => setFn(f.key)}>{f.label}</button>

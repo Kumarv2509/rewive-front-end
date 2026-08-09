@@ -8,7 +8,10 @@ import {
   useTestRunAgentSpec,
   useHandbackAgentSpec,
   usePublishAgentSpec,
+  useSetReportsTo,
 } from '../../api/agentSpec';
+import { useShadowOrg } from '../../api/shadowOrg';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { HandoffCard } from '../../components/shared/HandoffCard';
@@ -23,14 +26,57 @@ const statusTone: Record<AgentSpecStatus, 'gray' | 'amber' | 'teal' | 'green'> =
   published: 'green',
 };
 
+// Which holder agent this worker reports to. Defaulted server-side from the
+// finding that spawned it (its raising agent); editable here until published.
+function ReportsToPanel({ spec }: { spec: AgentSpec }) {
+  const { showToast } = useToast();
+  const { data: org } = useShadowOrg('all', 'team');
+  const setReportsTo = useSetReportsTo(spec.id);
+  const agents = org?.agents ?? [];
+  const locked = spec.status === 'published';
+  const hasHolder = !!spec.reportsToAgentId;
+
+  return (
+    <div className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>
+      <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>Reports to</div>
+      <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10 }}>
+        The holder agent this worker answers to — its place in the org. Defaulted from the finding that raised it; change it if this worker belongs to another team.
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <select
+          value={spec.reportsToAgentId ?? ''}
+          disabled={locked || setReportsTo.isPending || agents.length === 0}
+          onChange={(e) => {
+            const id = e.target.value || null;
+            const name = agents.find((a) => a.id === id)?.name ?? null;
+            setReportsTo.mutate({ reportsToAgentId: id, reportsToAgentName: name }, { onSuccess: () => showToast('Reporting line updated') });
+          }}
+          style={{ border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit', minWidth: 240, background: 'var(--surface)' }}
+        >
+          <option value="">— No holder agent —</option>
+          {agents.map((a) => (
+            <option key={a.id} value={a.id}>{a.name}{a.humanOwner?.role ? ` · ${a.humanOwner.role}` : ''}</option>
+          ))}
+        </select>
+        {hasHolder && !locked && (
+          <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>defaulted from the finding</span>
+        )}
+        {locked && (
+          <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>locked — published</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function UnifiedAgentStudioScreen() {
   const { agentSpecId } = useParams();
   const { data: spec, isLoading, isError } = useAgentSpec(agentSpecId);
 
   if (isLoading) return <section className="screen"><Loading /></section>;
-  if (isError || !spec) return <section className="screen"><ErrorMessage message="Couldn't load this agent." /></section>;
+  if (isError || !spec) return <section className="screen"><ErrorMessage message="Couldn't load this worker." /></section>;
 
-  // key={spec.id} resets the draft fields below whenever the underlying agent changes.
+  // key={spec.id} resets the draft fields below whenever the underlying worker changes.
   return <AgentStudioBody key={spec.id} spec={spec} />;
 }
 
@@ -57,12 +103,16 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
     <section className="screen">
       <Link to={`/build/solutions/${spec.solutionDesignId}`} className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Solution design</Link>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <h1 className="page" style={{ marginBottom: 0 }}>{spec.name}</h1>
-        <Pill tone={statusTone[spec.status]}>{spec.status.replace(/_/g, ' ')}</Pill>
-        <Pill tone="gray">v{spec.version}</Pill>
-      </div>
-      <div className="sub">One spec, two altitudes &mdash; business and developer edit the same agent, not separate copies.</div>
+      <PageHeader
+        title={spec.name}
+        subtitle="One spec, two altitudes — business and developer edit the same worker, not separate copies."
+        actions={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Pill tone={statusTone[spec.status]}>{spec.status.replace(/_/g, ' ')}</Pill>
+            <Pill tone="gray">v{spec.version}</Pill>
+          </div>
+        }
+      />
 
       <div className="filters" style={{ marginBottom: 16 }}>
         <button className={`fchip${altitude === 'business' ? ' on' : ''}`} onClick={() => setAltitude('business')}>Business</button>
@@ -70,14 +120,16 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
       </div>
 
       {spec.needsTechnicalWork && spec.status === 'drafting' && (
-        <div className="concept-note">The validation agent flagged this may need a new data connector &mdash; consider escalating to a developer below.</div>
+        <div className="concept-note">The validation worker flagged this may need a new data connector &mdash; consider escalating to a developer below.</div>
       )}
 
       <DelegateIdentityPanel spec={spec} />
 
+      <ReportsToPanel spec={spec} />
+
       {altitude === 'business' && (
         <div className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>
-          <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 10 }}>What this agent does</div>
+          <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 10 }}>What this worker does</div>
           <textarea
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
@@ -185,16 +237,16 @@ function AgentStudioBody({ spec }: { spec: AgentSpec }) {
 
       {spec.status === 'published' ? (
         <div className="card" style={{ padding: '16px 20px', background: 'var(--green-soft)', border: 'none', color: 'var(--green)', fontWeight: 600, fontSize: 13 }}>
-          Published &mdash; now live in Agent Space.
+          Published &mdash; now live in Worker Space.
         </div>
       ) : (
         canPublish && (
           <button
             className="btn primary"
             disabled={publish.isPending}
-            onClick={() => publish.mutate(undefined, { onSuccess: () => { showToast('Agent published'); navigate(`/build/solutions/${spec.solutionDesignId}`); } })}
+            onClick={() => publish.mutate(undefined, { onSuccess: () => { showToast('Worker published'); navigate(`/build/solutions/${spec.solutionDesignId}`); } })}
           >
-            Publish agent
+            Publish worker
           </button>
         )
       )}

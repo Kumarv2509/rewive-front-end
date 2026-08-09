@@ -6,18 +6,18 @@ import type { AgentNodeData } from '../../../api/types';
 export type AgentNodeFlowData = AgentNodeData & { onChange: (patch: Partial<AgentNodeData>) => void };
 
 export function AgentNode({ data }: NodeProps & { data: AgentNodeFlowData }) {
-  const { data: agents } = useAgentCatalog({});
+  const { data: workers } = useAgentCatalog({});
 
   return (
     <div className="studio-node agent">
       <Handle type="target" position={Position.Left} />
-      <div className="sn-head">Nested agent</div>
+      <div className="sn-head">Nested worker</div>
       <div className="sn-body">
         <select value={data.refAgentId ?? ''} onChange={(e) => data.onChange({ refAgentId: e.target.value || undefined })}>
-          <option value="">Select existing agent…</option>
-          {agents?.map((a) => <option key={a.agentId} value={a.agentId}>{a.name}</option>)}
+          <option value="">Select existing worker…</option>
+          {workers?.map((a) => <option key={a.agentId} value={a.agentId}>{a.name}</option>)}
         </select>
-        {data.refAgentId && <Link className="all" style={{ fontSize: 11.5 }} to={`/insights/agents/${data.refAgentId}`}>View agent →</Link>}
+        {data.refAgentId && <Link className="all" style={{ fontSize: 11.5 }} to={`/insights/agents/${data.refAgentId}`}>View worker →</Link>}
       </div>
       <Handle type="source" position={Position.Right} />
     </div>

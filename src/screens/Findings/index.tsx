@@ -1,18 +1,21 @@
 import { Link, useSearchParams } from 'react-router-dom';
-import { useClosureKpis, useFindings, useKpiBrain } from '../../api/shadowOrg';
+import { useClosureKpis, useFindings, useKpiBrain, useShadowOrg } from '../../api/shadowOrg';
 import { useEffectiveLens } from '../../components/layout/personaLens';
-import { Intro } from '../../components/shared/Intro';
-import { ScopeBanner } from '../../components/shared/ScopeBanner';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
-import { PERSONA_LABEL } from '../CommandCenter/personas';
+import { PERSONAS, personaLabel, roleSubtree } from '../CommandCenter/personas';
 import { ExitConditionCard, TripWireRow } from './Lifecycle';
-import { severityTone, slaTone, statusLabel, statusTone } from './meta';
-import type { Finding } from '../../api/types';
+import { slaTone, statusLabel, statusTone } from './meta';
+import { AgentView } from './AgentView';
+import { LiveAnalysisStrip } from './LiveAnalysisStrip';
+import { OrgRollup } from './OrgRollup';
+import { detectThemes, rollupByReport, splitByOwnership } from './rollup';
+import type { Finding, Persona } from '../../api/types';
 
-// One finding, one lifecycle: Open (waiting on a disposition) → Watching
-// (exit conditions, solutions in motion, trip-wires) → Closed. The old
-// Closure screen is the Watching/Closed tabs now.
+// One finding, one lifecycle: Open (needs a decision) → Watching (recovery
+// targets, fixes in motion, parked re-alerts) → Closed. The old Closure
+// screen is the Watching/Closed tabs now.
 const TABS = [
   { key: 'open', label: 'Open' },
   { key: 'watching', label: 'Watching' },
@@ -21,28 +24,35 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]['key'];
 
+// One row = title + a plain meta line + at most two badges (severity dot,
+// SLA clock). Everything else lives in the meta line or on the thread.
 function FindingRow({ finding, streamName }: { finding: Finding; streamName?: string }) {
   return (
     <div className="dec-item">
-      <div className="dec-ico" style={{ background: 'var(--accent-soft)' }}>🕵️</div>
-      <div style={{ minWidth: 0 }}>
+      <span className={`ag-dot sev-${finding.severity}`} title={`Severity: ${finding.severity}`} />
+      <div style={{ minWidth: 0, flex: 1 }}>
         <div className="t1">
-          <Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link>{' '}
-          <Pill tone={severityTone[finding.severity]}>{finding.severity}</Pill>
-          {finding.escalationLevel > 0 && <> <Pill tone="red">escalated</Pill></>}
-          {' '}<Pill tone="gray">→ {PERSONA_LABEL[finding.persona]}</Pill>
+          <Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link>
         </div>
         <div className="t2">
           {finding.raisedByAgentName}
           {streamName ? <> · {streamName}</> : null}
-          {finding.entity ? <> · {finding.entity}{finding.region ? ` (${finding.region})` : ''}</> : null} · {finding.impactEstimate}
+          {finding.entity ? <> · {finding.entity}{finding.region ? ` (${finding.region})` : ''}</> : null}
+          {' '}· {finding.impactEstimate}
+          {finding.origin === 'sweep' && <> · live data</>}
+          {finding.escalationLevel > 0 && (
+            <span style={{ color: 'var(--red)' }}>
+              {' '}· {finding.escalatedFrom ? `escalated from ${personaLabel(finding.escalatedFrom)}` : 'escalated'}
+            </span>
+          )}
+          {finding.dottedPersona && <> · visible to {personaLabel(finding.dottedPersona)}</>}
         </div>
       </div>
       <div className="acts" style={{ alignItems: 'center' }}>
         {finding.status === 'open' ? (
           <>
-            <Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h SLA</Pill>
-            <Link className="btn primary sm" to={`/operate/findings/${finding.id}`}>Disposition</Link>
+            <Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h</Pill>
+            <Link className="btn primary sm" to={`/operate/findings/${finding.id}`}>Decide</Link>
           </>
         ) : (
           <Pill tone={statusTone[finding.status]}>{statusLabel[finding.status]}</Pill>
@@ -54,26 +64,37 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
 
 export function FindingsScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { persona, scope } = useEffectiveLens();
+  const { persona, scope, rolesInScope } = useEffectiveLens();
   const tab = (TABS.some((t) => t.key === searchParams.get('tab')) ? searchParams.get('tab') : 'open') as TabKey;
   const stream = searchParams.get('stream') ?? 'all';
   const region = searchParams.get('region') ?? 'all';
+  // Drill-down from a rollup row: narrow the open tab to one report's branch.
+  // Validated — a hand-edited URL must not reach roleSubtree with a junk role.
+  const ownerParam = searchParams.get('owner');
+  const owner = ownerParam && PERSONAS.includes(ownerParam as Persona) ? (ownerParam as Persona) : null;
+  // Lifecycle (Open / Watching / Closed) is the default view — the queue.
+  // Grouping by the agent that raised each finding ("who found this, and have
+  // they been right before") is the opt-in, behind ?view=agents.
+  const byAgent = searchParams.get('view') === 'agents';
 
   // The global lens routes here too: a sales supervisor sees sales findings,
   // Commercial finance sees returns / discounts / trade spend, the COO sees
   // the cross-functional ones — plus their whole team in hierarchy mode.
   const { data: findings, isLoading, isError } = useFindings({ stream, persona, scope });
-  const { data: closures } = useClosureKpis();
+  const { data: closures } = useClosureKpis(persona, scope);
   const { data: brain } = useKpiBrain();
+  const { data: org } = useShadowOrg(persona, scope);
 
-  const setParam = (key: 'tab' | 'stream' | 'region', value: string) => {
+  const setParam = (key: 'tab' | 'stream' | 'region' | 'owner' | 'view', value: string) => {
     const next = new URLSearchParams(searchParams);
-    if ((key === 'tab' && value === 'open') || ((key === 'stream' || key === 'region') && value === 'all')) next.delete(key);
+    if ((key === 'tab' && value === 'open') || (key !== 'tab' && value === 'all')) next.delete(key);
     else next.set(key, value);
+    // Switching tabs or filters drops a drill-down — it only scopes the open tab.
+    if (key !== 'owner') next.delete('owner');
     setSearchParams(next, { replace: true });
   };
 
-  const streamName = (key: string) => brain?.streams.find((s) => s.key === key)?.name;
+  const streamName = (key: string | null) => brain?.streams.find((s) => s.key === key)?.name;
 
   // Entity/region is a client-side lens over the role-scoped data — options
   // come from the unfiltered set so the picker never loses entries.
@@ -88,53 +109,71 @@ export function FindingsScreen() {
   const inFlight = scopedClosures?.filter((c) => c.status !== 'closed') ?? [];
   const closedLoops = scopedClosures?.filter((c) => c.status === 'closed') ?? [];
 
+  // A senior lens does not inherit its team's queue — it inherits its team's
+  // exceptions. With "+ their team" on, the open tab splits in two: the
+  // findings this role must answer itself, and a roll-up (one row per direct
+  // report, plus cross-division patterns) of what the organisation is
+  // carrying. Without hierarchy mode nothing below applies — the role's own
+  // list is the whole list.
+  const lensRole = persona === 'all' ? null : persona;
+  const hierarchyOn = lensRole !== null && (rolesInScope?.length ?? 1) > 1;
+  const split = lensRole ? splitByOwnership(scoped ?? [], lensRole) : null;
+  const allMyOpen = split ? split.mine.filter((f) => f.status === 'open') : [];
+  // Escalations are the one thing that reaches a senior role on its own: the
+  // level below let a clock lapse, so ownership moved up. They lead the page.
+  const escalatedToMe = allMyOpen.filter((f) => f.escalationLevel > 0 && f.escalatedFrom);
+  const myOpen = allMyOpen.filter((f) => !escalatedToMe.includes(f));
+  const dottedOpen = split ? split.dotted.filter((f) => f.status === 'open') : [];
+  const delegated = split?.delegated ?? [];
+  const rollupRows = hierarchyOn && lensRole ? rollupByReport(delegated, lensRole) : [];
+  const themes = hierarchyOn && lensRole ? detectThemes(delegated, lensRole) : [];
+  const drillRoles = owner ? roleSubtree(owner) : null;
+  const drilled = drillRoles ? open.filter((f) => drillRoles.includes(f.persona)) : [];
+
   const tabCount: Record<TabKey, number> = {
-    open: open.length,
+    // In hierarchy mode the tab counts what this role must answer, not what
+    // the whole subtree is holding — the rest is a roll-up, not a queue.
+    open: hierarchyOn ? allMyOpen.length : open.length,
     watching: inFlight.length + acting.length + acknowledged.length,
     closed: closedLoops.length + abandoned.length,
   };
 
   return (
     <section className="screen" style={{ maxWidth: 1280 }}>
-      <h1 className="page">Findings</h1>
-      <Intro
-        line="Raised by your counterparts when a number drifts — every finding demands an answer, then stays watched until the number is back."
-        more={
-          <>
-            A finding moves through one lifecycle. <b>Open</b>: waiting on one of four dispositions — Accept (set a
-            measurable exit condition), Act (open a solution with tasks), Acknowledge (park it on a trip-wire), or
-            Abandon (dismiss with a reason that tunes the counterpart). Unanswered findings escalate on their SLA.
-            <b> Watching</b>: accepted findings live here as exit conditions with progress toward target; acknowledged
-            ones sit on a trip-wire. <b>Closed</b>: the number came back — or the finding was dismissed — and the
-            decision is in the ledger.
-          </>
-        }
+      <PageHeader
+        title="Findings"
+        subtitle="Raised by an agent when a number drifts. Every finding gets a decision — Accept, Act, Park, or Dismiss — then stays watched until the number is back."
       />
-      <ScopeBanner />
+
+      {/* The agents, mid-walk: what they are reading right now, and what
+          they raised. Renders nothing until a sweep has ever run. */}
+      <LiveAnalysisStrip />
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-        <div className="tabs" style={{ marginBottom: 0, borderBottom: 'none', flex: 1 }}>
-          {TABS.map((t) => (
-            <button key={t.key} className={`tab${tab === t.key ? ' active' : ''}`} onClick={() => setParam('tab', t.key)}>
-              {t.label} <span style={{ color: 'var(--ink-3)', fontWeight: 600 }}>{tabCount[t.key]}</span>
-            </button>
-          ))}
+        {byAgent ? (
+          <div style={{ flex: 1, fontSize: 13, color: 'var(--ink-2)' }}>
+            Every finding in your scope, grouped by the agent that raised it.
+          </div>
+        ) : (
+          <div className="tabs" style={{ marginBottom: 0, borderBottom: 'none', flex: 1 }}>
+            {TABS.map((t) => (
+              <button key={t.key} className={`tab${tab === t.key ? ' active' : ''}`} onClick={() => setParam('tab', t.key)}>
+                {t.label} <span style={{ color: 'var(--ink-3)', fontWeight: 600 }}>{tabCount[t.key]}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="seg">
+          <button className={byAgent ? '' : 'on'} onClick={() => setParam('view', 'all')}>Lifecycle</button>
+          <button className={byAgent ? 'on' : ''} onClick={() => setParam('view', 'agents')}>By agent</button>
         </div>
-        <select
-          value={stream}
-          onChange={(e) => setParam('stream', e.target.value)}
-          style={{ border: '1px solid var(--border-strong)', borderRadius: 8, padding: '6px 10px', fontSize: 12.5, fontFamily: 'inherit' }}
-        >
+        <select className="select" value={stream} onChange={(e) => setParam('stream', e.target.value)}>
           <option value="all">All streams</option>
           {brain?.streams.map((s) => (
             <option key={s.key} value={s.key}>{s.name}</option>
           ))}
         </select>
-        <select
-          value={region}
-          onChange={(e) => setParam('region', e.target.value)}
-          style={{ border: '1px solid var(--border-strong)', borderRadius: 8, padding: '6px 10px', fontSize: 12.5, fontFamily: 'inherit' }}
-        >
+        <select className="select" value={region} onChange={(e) => setParam('region', e.target.value)}>
           <option value="all">All regions</option>
           {regions.map((r) => (
             <option key={r} value={r}>{r}</option>
@@ -145,31 +184,109 @@ export function FindingsScreen() {
       {isLoading && <Loading />}
       {isError && <ErrorMessage />}
 
-      {tab === 'open' && scoped && (
+      {byAgent && scoped && <AgentView findings={scoped} agents={org?.agents ?? []} />}
+
+      {!byAgent && tab === 'open' && scoped && !hierarchyOn && (
         <>
           {open.length > 0 ? (
             <div className="card" style={{ marginBottom: 16 }} data-tour="findings-open">
               <div className="sec-head">
-                <h3>Waiting on a disposition</h3>
+                <h3>Needs a decision</h3>
                 <Pill tone="red">{open.length}</Pill>
               </div>
               {open.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
             </div>
           ) : (
             <div className="card" data-tour="findings-open">
-              <div className="state-msg">Nothing open — the counterparts are quiet here. Accepted and acknowledged findings live under Watching.</div>
+              <div className="state-msg">Nothing open — the agents are quiet here. Accepted and parked findings live under Watching.</div>
             </div>
           )}
         </>
       )}
 
-      {tab === 'watching' && (
+      {/* Drilled into one report's branch from a roll-up row. */}
+      {!byAgent && tab === 'open' && scoped && hierarchyOn && owner && (
+        <>
+          <div style={{ marginBottom: 12 }}>
+            <button
+              className="btn sm"
+              onClick={() => setParam('owner', 'all')}
+            >
+              ← All reports
+            </button>
+          </div>
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div className="sec-head">
+              <h3>{personaLabel(owner)} — open in this branch</h3>
+              <Pill tone={drilled.length ? 'red' : 'green'}>{drilled.length}</Pill>
+            </div>
+            {drilled.length === 0 && <div className="state-msg">Nothing open in this branch right now.</div>}
+            {drilled.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+          </div>
+        </>
+      )}
+
+      {!byAgent && tab === 'open' && scoped && hierarchyOn && !owner && (
+        <>
+          {escalatedToMe.length > 0 && (
+            <>
+              <div className="sec-head" style={{ padding: '0 0 12px' }}>
+                <h3>Escalated to you</h3>
+                <Pill tone="red">{escalatedToMe.length}</Pill>
+              </div>
+              <div className="t2" style={{ margin: '-6px 0 12px', color: 'var(--ink-3)' }}>
+                A clock ran out below you, so ownership moved up. These are yours now — nothing else in your organisation
+                reaches you automatically.
+              </div>
+              <div className="card" style={{ marginBottom: 24 }}>
+                {escalatedToMe.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+              </div>
+            </>
+          )}
+
+          <div className="card" style={{ marginBottom: 24 }} data-tour="findings-open">
+            <div className="sec-head">
+              <h3>Your call</h3>
+              <Pill tone={myOpen.length ? 'red' : 'green'}>{myOpen.length}</Pill>
+            </div>
+            {myOpen.length === 0 && (
+              <div className="state-msg">
+                {escalatedToMe.length > 0
+                  ? 'Nothing raised directly to you — only the escalations above. What your organisation is carrying is rolled up below.'
+                  : 'Nothing is waiting on your decision. What your organisation is carrying is rolled up below.'}
+              </div>
+            )}
+            {myOpen.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+          </div>
+
+          {dottedOpen.length > 0 && (
+            <>
+              <div className="sec-head" style={{ padding: '0 0 12px' }}>
+                <h3>Visible to you — not your call</h3>
+                <Pill tone="amber">{dottedOpen.length}</Pill>
+              </div>
+              <div className="card" style={{ marginBottom: 24 }}>
+                {dottedOpen.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+              </div>
+            </>
+          )}
+
+          <OrgRollup
+            rows={rollupRows}
+            themes={themes}
+            delegatedCount={delegated.filter((f) => f.status === 'open').length}
+            onDrill={(role) => setParam('owner', role)}
+          />
+        </>
+      )}
+
+      {!byAgent && tab === 'watching' && (
         <>
           <div className="sec-head" style={{ padding: '0 0 12px' }}>
-            <h3>Exit conditions in flight</h3>
+            <h3>Recovery targets — watched until the number is back</h3>
             <Pill tone="teal">{inFlight.length}</Pill>
           </div>
-          {inFlight.length === 0 && <div className="card" style={{ marginBottom: 24 }}><div className="state-msg">No open exit conditions — Accept a finding and it appears here, watched until the number is back.</div></div>}
+          {inFlight.length === 0 && <div className="card" style={{ marginBottom: 24 }}><div className="state-msg">No recovery targets being watched — Accept a finding and it appears here until the number is back.</div></div>}
           <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }} data-tour="closure-exit">
             {inFlight.map((c) => <ExitConditionCard key={c.id} c={c} />)}
           </div>
@@ -177,7 +294,7 @@ export function FindingsScreen() {
           {acting.length > 0 && (
             <>
               <div className="sec-head" style={{ padding: '0 0 12px' }}>
-                <h3>Solutions in motion</h3>
+                <h3>Fixes in motion</h3>
                 <Pill tone="indigo">{acting.length}</Pill>
               </div>
               <div className="card" style={{ marginBottom: 24 }}>
@@ -189,7 +306,7 @@ export function FindingsScreen() {
           {acknowledged.length > 0 && (
             <>
               <div className="sec-head" style={{ padding: '0 0 12px' }}>
-                <h3>On a trip-wire</h3>
+                <h3>Parked — will re-alert if it worsens</h3>
                 <Pill tone="amber">{acknowledged.length}</Pill>
               </div>
               <div className="card" style={{ marginBottom: 24 }}>
@@ -200,13 +317,13 @@ export function FindingsScreen() {
         </>
       )}
 
-      {tab === 'closed' && (
+      {!byAgent && tab === 'closed' && (
         <>
           <div className="sec-head" style={{ padding: '0 0 12px' }}>
             <h3>Closed loops — the number came back</h3>
             <Pill tone="green">{closedLoops.length}</Pill>
           </div>
-          {closedLoops.length === 0 && <div className="card" style={{ marginBottom: 24 }}><div className="state-msg">No closed loops yet — when an exit condition is met, the finding retires itself here.</div></div>}
+          {closedLoops.length === 0 && <div className="card" style={{ marginBottom: 24 }}><div className="state-msg">No closed loops yet — when a recovery target is met, the finding retires itself here.</div></div>}
           <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
             {closedLoops.map((c) => <ExitConditionCard key={c.id} c={c} />)}
           </div>
@@ -214,7 +331,7 @@ export function FindingsScreen() {
           {abandoned.length > 0 && (
             <>
               <div className="sec-head" style={{ padding: '0 0 12px' }}>
-                <h3>Dismissed — the reason tuned the counterpart</h3>
+                <h3>Dismissed — the reason tuned the agent</h3>
                 <Pill tone="gray">{abandoned.length}</Pill>
               </div>
               <div className="card">

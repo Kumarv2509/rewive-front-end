@@ -3,7 +3,7 @@ import type { HandoffCardData } from '../../api/types';
 export function HandoffCard({ card }: { card: HandoffCardData }) {
   const isHandback = card.kind === 'handback';
   return (
-    <div className="concept-note" style={{ background: isHandback ? 'var(--teal-soft)' : 'var(--amber-soft)', border: 'none', color: isHandback ? '#0D9488' : '#92400E' }}>
+    <div className="concept-note" style={{ background: isHandback ? 'var(--teal-soft)' : 'var(--amber-soft)', border: 'none', color: isHandback ? 'var(--teal)' : 'var(--amber)' }}>
       <div>
         <div style={{ fontWeight: 700, fontSize: 12 }}>
           {isHandback ? 'Handed back to business' : 'Escalated to developer'}

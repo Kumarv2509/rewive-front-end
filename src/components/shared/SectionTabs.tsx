@@ -8,7 +8,7 @@ export interface SectionTab {
 }
 
 // Tab header for merged nav surfaces (Execution = runs/tasks/outcomes,
-// Agents = counterparts/workforce). Tabs are links, so each surface keeps its
+// Agents = agents/workforce). Tabs are links, so each surface keeps its
 // URL and old bookmarks keep working.
 export function SectionTabs({ tabs }: { tabs: SectionTab[] }) {
   const { pathname } = useLocation();
@@ -37,6 +37,15 @@ export const EXECUTION_TABS: SectionTab[] = [
 
 // eslint-disable-next-line react-refresh/only-export-components -- tab presets co-located with the component intentionally
 export const AGENTS_TABS: SectionTab[] = [
-  { to: '/operate/counterparts', label: 'Counterparts', match: '/operate/counterparts' },
+  { to: '/operate/agent-teams', label: 'Teams', match: '/operate/agent-teams' },
+  { to: '/operate/counterparts', label: 'Agents', match: '/operate/counterparts' },
   { to: '/insights/agents', label: 'Workforce', match: '/insights/agents' },
+];
+
+// eslint-disable-next-line react-refresh/only-export-components -- tab presets co-located with the component intentionally
+export const FOUNDATION_TABS: SectionTab[] = [
+  { to: '/build/picture', label: 'Operating Picture', match: '/build/picture' },
+  { to: '/build/kpis', label: 'Mandates', match: '/build/kpis' },
+  { to: '/build/connectors', label: 'Connectors', match: '/build/connectors' },
+  { to: '/build/datasets', label: 'Datasets', match: '/build/datasets' },
 ];

@@ -4,11 +4,13 @@ import { useDisposeFinding, useEscalateFinding } from '../../api/shadowOrg';
 import { useToast } from '../../components/shared/Toast';
 import type { Finding, FindingDisposition } from '../../api/types';
 
+// UI labels over the four API disposition values — the values themselves
+// (accept/act/acknowledge/abandon) never change.
 const OPTIONS: { key: FindingDisposition; title: string; consequence: string }[] = [
-  { key: 'accept', title: 'Accept', consequence: 'Real — an exit condition is set and the counterpart watches it until met' },
-  { key: 'act', title: 'Act', consequence: 'Open a solution design with tasks, straight into the build loop' },
-  { key: 'acknowledge', title: 'Acknowledge', consequence: 'Known issue — watched, and it comes back harder if it worsens' },
-  { key: 'abandon', title: 'Abandon', consequence: 'Not real — requires a reason, and the reason tunes the agent' },
+  { key: 'accept', title: 'Accept', consequence: 'Real — set a recovery target, watched until the number is back' },
+  { key: 'act', title: 'Act', consequence: 'Open a fix — a solution design with tasks and a worker' },
+  { key: 'acknowledge', title: 'Park', consequence: 'Known issue — it re-alerts if it gets worse' },
+  { key: 'abandon', title: 'Dismiss', consequence: 'Not real — your reason tunes the agent' },
 ];
 
 export function DispositionBar({ finding }: { finding: Finding }) {
@@ -32,17 +34,23 @@ export function DispositionBar({ finding }: { finding: Finding }) {
       {
         onSuccess: (updated) => {
           if (disposition === 'act' && updated.solutionDesignId) {
-            showToast('Solution design opened from this finding');
+            showToast('Fix opened from this finding');
             navigate(`/build/solutions/${updated.solutionDesignId}`);
           } else if (disposition === 'accept') {
-            showToast('Accepted — exit condition set, the counterpart keeps watching');
+            showToast('Accepted — recovery target set, the agent keeps watching');
           } else if (disposition === 'acknowledge') {
-            showToast('Acknowledged — it will re-alert if it worsens');
+            showToast('Parked — it will re-alert if it worsens');
           } else {
-            showToast('Abandoned — the reason was fed back to tune the agent');
+            showToast('Dismissed — the reason was fed back to tune the agent');
           }
         },
-        onError: () => showToast('Could not record the disposition — abandon needs a reason'),
+        // The server's own message is the truthful one — a stale tab whose
+        // finding was already dispositioned elsewhere used to be told
+        // "abandon needs a reason", which is about a different failure entirely.
+        onError: (err: unknown) => {
+          const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+          showToast(message ?? 'Could not record the decision — please try again.');
+        },
       },
     );
   };
@@ -50,11 +58,11 @@ export function DispositionBar({ finding }: { finding: Finding }) {
   return (
     <div className="card" style={{ padding: '16px 20px', marginBottom: 16, borderColor: 'var(--accent)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontWeight: 700, fontSize: 13.5 }}>This finding needs a disposition</div>
+        <div style={{ fontWeight: 600, fontSize: 13.5 }}>Your decision</div>
         <button
           className="btn ghost sm"
           disabled={escalate.isPending}
-          onClick={() => escalate.mutate(undefined, { onSuccess: () => showToast('Escalated up the chain of counterparts') })}
+          onClick={() => escalate.mutate(undefined, { onSuccess: () => showToast('Escalated up the chain of agents') })}
         >
           Not mine — escalate ↑
         </button>
@@ -100,7 +108,7 @@ export function DispositionBar({ finding }: { finding: Finding }) {
             disabled={dispose.isPending || (selected === 'abandon' && !reason.trim())}
             onClick={() => selected && confirm(selected)}
           >
-            Confirm {selected}
+            Confirm {selected === 'abandon' ? 'dismiss' : 'park'}
           </button>
         </div>
       )}

@@ -35,11 +35,11 @@ export function ChatPanel({ sessionId, onAgentCreated }: { sessionId: string; on
   const handleCreate = () => {
     setCreating(true);
     createAgent.mutate(sessionId, {
-      onSuccess: (agent) => {
+      onSuccess: (worker) => {
         setCreating(false);
         setCreated(true);
-        onAgentCreated(agent.agentId);
-        showToast(`${agent.name} is live — first run queued`);
+        onAgentCreated(worker.agentId);
+        showToast(`${worker.name} is live — first run queued`);
       },
       onError: () => setCreating(false),
     });
@@ -49,14 +49,14 @@ export function ChatPanel({ sessionId, onAgentCreated }: { sessionId: string; on
     <div className="card chat">
       <div className="chat-head">
         <div className="logo-mark" style={{ width: 26, height: 26, fontSize: 12, borderRadius: 7 }}>R</div>
-        <div style={{ fontWeight: 700, fontSize: 13.5 }}>Agent Builder</div>
+        <div style={{ fontWeight: 700, fontSize: 13.5 }}>Worker Builder</div>
         {session?.detectedTemplate && (
           <span className="pill indigo" style={{ marginLeft: 'auto' }}>{session.detectedTemplate}</span>
         )}
       </div>
       <div className="chat-body">
         {isLoading && <Loading label="Starting session…" />}
-        {isError && <ErrorMessage message="Couldn't reach the agent builder." />}
+        {isError && <ErrorMessage message="Couldn't reach the worker builder." />}
         {session?.messages.map((m) => (
           <div className={`msg ${m.role}`} key={m.id}>
             {m.stepLabel && <div className="mini">{m.stepLabel}</div>}
@@ -93,7 +93,7 @@ export function ChatPanel({ sessionId, onAgentCreated }: { sessionId: string; on
                 </div>
                 <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
                   <button className="btn primary" disabled={creating || created} onClick={handleCreate}>
-                    {created ? '✓ Agent created' : creating ? 'Building agent…' : 'Create agent'}
+                    {created ? '✓ Worker created' : creating ? 'Building worker…' : 'Create worker'}
                   </button>
                   <button className="btn ghost" onClick={handleRefine}>Refine plan</button>
                 </div>

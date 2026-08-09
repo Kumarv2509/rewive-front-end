@@ -1,22 +1,23 @@
 import { useDecisionStats } from '../../api/decisions';
-import type { HalfYearBreakdownRow, HalfYearMonth } from '../../api/types';
+import type { HalfYearBreakdownRow, HalfYearMonth, Persona, RoleScope } from '../../api/types';
 
-// Series colors validated for CVD + contrast against the dark card surface
-// (dataviz six-checks: lightness band, chroma, deutan/tritan ΔE, contrast).
+// Series colors come from the theme tokens (accent / teal / green) so they stay
+// legible on the light card surface. Applied via style objects — var() is not
+// valid inside SVG presentation attributes.
 const SERIES = [
-  { key: 'raised', label: 'Raised', color: '#7C7CFF' },
-  { key: 'decided', label: 'Decided', color: '#0D9488' },
-  { key: 'closed', label: 'Closed', color: '#16A34A' },
+  { key: 'raised', label: 'Raised', color: 'var(--accent)' },
+  { key: 'decided', label: 'Decided', color: 'var(--teal)' },
+  { key: 'closed', label: 'Closed', color: 'var(--green)' },
 ] as const;
 
-const WIN_COLOR = '#FBBF24';
+const WIN_COLOR = 'var(--amber)';
 
 function MonthlyLoopBars({ months }: { months: HalfYearMonth[] }) {
   const W = 360;
   const H = 150;
   const padB = 22;
   const padT = 10;
-  const max = Math.max(...months.map((m) => Math.max(m.raised, m.decided, m.closed)));
+  const max = Math.max(1, ...months.map((m) => Math.max(m.raised, m.decided, m.closed)));
   const group = W / months.length;
   const barW = 10;
   const gap = 2;
@@ -25,7 +26,7 @@ function MonthlyLoopBars({ months }: { months: HalfYearMonth[] }) {
   return (
     <svg width={W} height={H} role="img" aria-label="Findings raised, decided and closed per month">
       {[0.5, 1].map((f) => (
-        <line key={f} x1={0} x2={W} y1={y(max * f)} y2={y(max * f)} stroke="rgba(255,255,255,.07)" />
+        <line key={f} x1={0} x2={W} y1={y(max * f)} y2={y(max * f)} style={{ stroke: 'var(--border)' }} />
       ))}
       {months.map((m, i) => {
         const cx = i * group + group / 2;
@@ -41,7 +42,7 @@ function MonthlyLoopBars({ months }: { months: HalfYearMonth[] }) {
                 width={barW}
                 height={H - padB - y(v)}
                 rx={3}
-                fill={SERIES[s].color}
+                style={{ fill: SERIES[s].color }}
               >
                 <title>{`${m.month} — ${SERIES[s].label.toLowerCase()}: ${v}`}</title>
               </rect>
@@ -52,7 +53,7 @@ function MonthlyLoopBars({ months }: { months: HalfYearMonth[] }) {
           </g>
         );
       })}
-      <line x1={0} x2={W} y1={H - padB} y2={H - padB} stroke="rgba(255,255,255,.16)" />
+      <line x1={0} x2={W} y1={H - padB} y2={H - padB} style={{ stroke: 'var(--border-strong)' }} />
     </svg>
   );
 }
@@ -62,8 +63,9 @@ function WinRateLine({ months }: { months: HalfYearMonth[] }) {
   const H = 150;
   const padB = 22;
   const padT = 14;
-  const lo = 40;
-  const hi = 90;
+  // Scale to the data so derived rates near 0% or 100% don't clip the plot.
+  const lo = Math.min(40, ...months.map((m) => m.winRatePct - 5));
+  const hi = Math.max(90, ...months.map((m) => m.winRatePct + 5));
   const x = (i: number) => (W / months.length) * i + W / months.length / 2;
   const y = (v: number) => padT + (H - padT - padB) * (1 - (v - lo) / (hi - lo));
   const coords = months.map((m, i) => `${x(i)},${y(m.winRatePct)}`).join(' ');
@@ -73,13 +75,13 @@ function WinRateLine({ months }: { months: HalfYearMonth[] }) {
     <svg width={W} height={H} role="img" aria-label="Decision win rate per month">
       {[50, 70].map((v) => (
         <g key={v}>
-          <line x1={0} x2={W} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,.07)" />
+          <line x1={0} x2={W} y1={y(v)} y2={y(v)} style={{ stroke: 'var(--border)' }} />
           <text x={2} y={y(v) - 3} fontSize={9.5} fill="var(--ink-3)">{v}%</text>
         </g>
       ))}
-      <polyline points={coords} fill="none" stroke={WIN_COLOR} strokeWidth={2} />
+      <polyline points={coords} fill="none" style={{ stroke: WIN_COLOR }} strokeWidth={2} />
       {months.map((m, i) => (
-        <circle key={m.month} cx={x(i)} cy={y(m.winRatePct)} r={4} fill={WIN_COLOR} stroke="var(--surface-solid)" strokeWidth={2}>
+        <circle key={m.month} cx={x(i)} cy={y(m.winRatePct)} r={4} style={{ fill: WIN_COLOR, stroke: 'var(--surface-solid)' }} strokeWidth={2}>
           <title>{`${m.month} — win rate ${m.winRatePct}%`}</title>
         </circle>
       ))}
@@ -91,7 +93,7 @@ function WinRateLine({ months }: { months: HalfYearMonth[] }) {
           {m.month}
         </text>
       ))}
-      <line x1={0} x2={W} y1={H - padB} y2={H - padB} stroke="rgba(255,255,255,.16)" />
+      <line x1={0} x2={W} y1={H - padB} y2={H - padB} style={{ stroke: 'var(--border-strong)' }} />
     </svg>
   );
 }
@@ -123,8 +125,8 @@ function BreakdownTable({ title, rows }: { title: string; rows: HalfYearBreakdow
 
 // The half-year review: how the loop ran over the last six months, and where —
 // by month, by business entity, and by region.
-export function HalfYearReview() {
-  const { data } = useDecisionStats();
+export function HalfYearReview({ persona, scope }: { persona: Persona | 'all'; scope?: RoleScope }) {
+  const { data } = useDecisionStats(persona, scope);
   const hy = data?.halfYear;
   if (!hy) return null;
 

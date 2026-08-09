@@ -18,6 +18,12 @@ const SEGMENTS_BY_INDUSTRY: Record<string, { key: KpiSegment; label: string }[]>
     { key: 'clinic', label: 'Clinic' },
     { key: 'pharmacy', label: 'Pharmacy chain' },
   ],
+  // The catalog's retail/distribution segments carry the store-side KPIs, so
+  // the hypermarket context reuses them under retail-flavoured labels.
+  hypermarket: [
+    { key: 'retail_trade', label: 'Stores & trade' },
+    { key: 'distribution', label: 'Supply chain' },
+  ],
 };
 
 function segmentsForIndustry() {

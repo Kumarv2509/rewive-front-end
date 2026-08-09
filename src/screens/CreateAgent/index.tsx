@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChatPanel } from './ChatPanel';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { PreviewPanel } from './PreviewPanel';
 
 function makeSessionId() {
@@ -12,8 +13,10 @@ export function CreateAgentScreen() {
 
   return (
     <section className="screen">
-      <h1 className="page">Create an agent</h1>
-      <div className="sub">Describe the job in plain language. Rewive asks what it needs, shows you the plan, and builds the agent — no workflows, no prompts.</div>
+      <PageHeader
+        title="Create a worker"
+        subtitle="Describe the job in plain language. Rewive asks what it needs, shows you the plan, and builds the worker — no workflows, no prompts."
+      />
 
       <div className="grid create-wrap">
         <ChatPanel sessionId={sessionId} onAgentCreated={setAgentId} />

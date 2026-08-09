@@ -1,6 +1,7 @@
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useSuggestedSignals, useSignalDetail, useRequestUnmask, useRequestSimilarAccess } from '../../api/signalStudio';
 import { useCreateSolutionDesign } from '../../api/solutionDesign';
+import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { useToast } from '../../components/shared/Toast';
@@ -44,13 +45,13 @@ export function SignalDetailScreen() {
 
   return (
     <section className="screen">
-      <Link to="/insights/signals" className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Signal Studio</Link>
+      <Link to="/operate/findings" className="btn ghost sm" style={{ marginBottom: 14, display: 'inline-flex' }}>&larr; Findings</Link>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <Pill tone={categoryTone[signal.category]}>{signal.category.replace('_', ' ')}</Pill>
-        <h1 className="page" style={{ marginBottom: 0 }}>{signal.name}</h1>
-      </div>
-      <div className="sub">{signal.description}</div>
+      <PageHeader
+        title={signal.name}
+        subtitle={signal.description}
+        actions={<Pill tone={categoryTone[signal.category]}>{signal.category.replace('_', ' ')}</Pill>}
+      />
 
       <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', marginBottom: 16 }}>
         <div className="card" style={{ padding: '16px 20px' }}>

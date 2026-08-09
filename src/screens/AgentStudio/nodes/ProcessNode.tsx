@@ -26,7 +26,7 @@ export function ProcessNode({ data }: NodeProps & { data: ProcessNodeFlowData })
       <div className="sn-body">
         <textarea
           className="main"
-          placeholder="Describe what this agent should do with the incoming data…"
+          placeholder="Describe what this worker should do with the incoming data…"
           value={data.instructions}
           onChange={(e) => data.onChange({ instructions: e.target.value })}
         />

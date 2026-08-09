@@ -6,8 +6,8 @@ import type { ClosureKpi, Finding } from '../../api/types';
 
 const closureTone = { tracking: 'teal', closed: 'green', regressed: 'red' } as const;
 
-// A finding the owner Accepted lives on as an exit condition — the Watching
-// stage of its lifecycle, not a separate screen.
+// A finding the owner Accepted lives on as a recovery target — the Watching
+// stage of its lifecycle, not a separate screen. (API name: exit condition.)
 export function ExitConditionCard({ c }: { c: ClosureKpi }) {
   const close = useCloseExitCondition();
   const { showToast } = useToast();
@@ -26,8 +26,8 @@ export function ExitConditionCard({ c }: { c: ClosureKpi }) {
         from finding: {c.findingTitle} →
       </Link>
 
-      <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,.09)', overflow: 'hidden', margin: '12px 0 8px' }}>
-        <div style={{ height: '100%', width: `${c.progressPct}%`, borderRadius: 99, background: done ? 'var(--green)' : 'var(--accent-grad)', boxShadow: done ? 'none' : '0 0 10px rgba(124,99,255,.5)', transition: 'width .4s' }} />
+      <div style={{ height: 8, borderRadius: 99, background: 'var(--glass-hover)', overflow: 'hidden', margin: '12px 0 8px' }}>
+        <div style={{ height: '100%', width: `${c.progressPct}%`, borderRadius: 99, background: done ? 'var(--green)' : 'var(--accent-grad)', transition: 'width .4s' }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>
@@ -47,8 +47,8 @@ export function ExitConditionCard({ c }: { c: ClosureKpi }) {
   );
 }
 
-// Acknowledged findings sit on a trip-wire until the line they were parked
-// behind is crossed.
+// Parked (acknowledged) findings sit on a re-alert rule until the line they
+// were parked behind is crossed.
 export function TripWireRow({ finding }: { finding: Finding }) {
   const reAlert = useReAlertFinding(finding.id);
   const { showToast } = useToast();
@@ -57,15 +57,15 @@ export function TripWireRow({ finding }: { finding: Finding }) {
       <div className="dec-ico" style={{ background: 'var(--amber-soft)' }}>⏰</div>
       <div style={{ minWidth: 0 }}>
         <div className="t1"><Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link></div>
-        <div className="t2">Trip-wire · {finding.reAlertCondition ?? 'watching for change'}</div>
+        <div className="t2">Re-alerts when · {finding.reAlertCondition ?? 'watching for change'}</div>
       </div>
       <div className="acts">
         <button
           className="btn ghost sm"
           disabled={reAlert.isPending}
-          onClick={() => reAlert.mutate(undefined, { onSuccess: () => showToast('Trip-wire fired — the finding is back, louder') })}
+          onClick={() => reAlert.mutate(undefined, { onSuccess: () => showToast('Re-alerted — the finding is back, louder') })}
         >
-          Trip the wire · re-alert
+          Re-alert now
         </button>
       </div>
     </div>

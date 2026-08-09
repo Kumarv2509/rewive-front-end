@@ -1,8 +1,8 @@
 import { Pill } from '../../components/shared/Pill';
 import type { ImpactPathStep } from '../../api/types';
 
-const kindLabel = { driver: 'sense', stream_kpi: 'mandate', target: 'intent' } as const;
-const kindTone = { driver: 'gray', stream_kpi: 'indigo', target: 'teal' } as const;
+const kindLabel = { driver: 'sense', stream_kpi: 'mandate', pl_line: 'P&L line', target: 'intent' } as const;
+const kindTone = { driver: 'gray', stream_kpi: 'indigo', pl_line: 'amber', target: 'teal' } as const;
 
 // The propagation chain from the leaf where the finding fired up to the org target it threatens.
 export function ImpactPath({ steps }: { steps: ImpactPathStep[] }) {

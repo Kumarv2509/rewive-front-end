@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Intro } from '../../components/shared/Intro';
+import { PageHeader } from '../../components/shared/PageHeader';
+import { SectionTabs, FOUNDATION_TABS } from '../../components/shared/SectionTabs';
 import { SelectKpisTab } from './SelectKpisTab';
 import { ImportPlanningTab } from './ImportPlanningTab';
 import { TrackedKpisPanel } from './TrackedKpisPanel';
@@ -11,16 +12,10 @@ export function KpiLibraryScreen() {
 
   return (
     <section className="screen" style={{ maxWidth: 1140 }}>
-      <h1 className="page">Mandate Library</h1>
-      <Intro
-        line="Pick the mandates that matter for your operating context, or import them from a planning tool."
-        more={
-          <>
-            This is the starting point when onboarding a new company. Every mandate you track lists exactly which
-            senses (data feeds) need to be connected before its counterpart can watch it and findings can surface —
-            a mandate without a sense is blind, and the Operating Picture says so.
-          </>
-        }
+      <PageHeader
+        title="Mandates"
+        subtitle="Pick the mandates that matter for your operating context, or import them from a planning tool."
+        tabs={<SectionTabs tabs={FOUNDATION_TABS} />}
       />
 
       <div className="tabs">

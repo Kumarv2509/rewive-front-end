@@ -36,7 +36,7 @@ export function DelegateIdentityPanel({ spec }: { spec: AgentSpec }) {
         <div style={{ fontWeight: 700, fontSize: 13.5 }}>Delegate identity</div>
         <Pill tone="gray">a delegate, not a bot</Pill>
       </div>
-      <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 12 }}>How this agent presents itself and behaves — not just what it does.</div>
+      <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 12 }}>How this worker presents itself and behaves — not just what it does.</div>
 
       <label style={{ fontSize: 11.5, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Name</label>
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>

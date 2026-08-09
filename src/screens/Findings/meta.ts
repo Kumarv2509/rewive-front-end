@@ -8,11 +8,11 @@ export const severityTone: Record<FindingSeverity, 'red' | 'amber' | 'indigo' | 
 };
 
 export const statusLabel: Record<FindingStatus, string> = {
-  open: 'awaiting disposition',
-  accepted: 'accepted · exit condition set',
-  acting: 'acting · solution open',
-  acknowledged: 'acknowledged · watching',
-  abandoned: 'abandoned · agent tuned',
+  open: 'needs a decision',
+  accepted: 'accepted · recovery target set',
+  acting: 'acting · fix in motion',
+  acknowledged: 'parked · will re-alert',
+  abandoned: 'dismissed · agent tuned',
   closed: 'closed',
 };
 

@@ -9,50 +9,54 @@ export interface AreaNavItem {
   icon: NavIconKey;
   /** Extra path prefixes that keep this item highlighted (merged surfaces). */
   match?: string[];
+  /** Loop-stage word rendered right-aligned on the rail item. */
+  stage?: string;
 }
 
-// One flat rail, ordered by the loop: what needs you → find → decide → act →
-// who does the work → how fast the loop closes → setup. Merged surfaces
-// (Execution = runs+tasks+outcomes, Agents = counterparts+workforce) stay on
-// their original routes; `match` keeps the rail item lit across the set.
-export const NAV_ITEMS: AreaNavItem[] = [
-  { to: '/command', label: 'Today', end: true, icon: 'home' },
-  { to: '/operate/findings', label: 'Findings', icon: 'signal', match: ['/operate/findings', '/operate/closure', '/insights/signals'] },
-  { to: '/operate/decisions', label: 'Decisions', icon: 'check' },
-  { to: '/operate/runs', label: 'Execution', icon: 'clock', match: ['/operate/runs', '/operate/tasks', '/insights/outcomes'] },
-  { to: '/operate/counterparts', label: 'Agents', icon: 'shadow', match: ['/operate/counterparts', '/insights/agents'] },
-  { to: '/insights/people', label: 'Performance', icon: 'people' },
-  { to: '/build/picture', label: 'Foundation', icon: 'brain', match: ['/build'] },
+export interface NavGroup {
+  /** Quiet uppercase label above the group; omitted for the first group. */
+  label?: string;
+  items: AreaNavItem[];
+}
+
+// The rail is grouped so the loop is visible at a glance: Today (what needs
+// you), then the loop stages Find → Decide → Act, then the org, then setup.
+// Merged surfaces (Execution = runs+tasks+outcomes, Agents = agents+workforce)
+// stay on their original routes; `match` keeps the rail item lit across the
+// set. The Act sub-flow (solution design → agent build) is reached from a
+// finding, so it keeps Findings lit — mid-loop, not "Foundation".
+export const NAV_GROUPS: NavGroup[] = [
+  {
+    items: [{ to: '/command', label: 'Today', end: true, icon: 'home' }],
+  },
+  {
+    label: 'The loop',
+    items: [
+      { to: '/operate/findings', label: 'Findings', icon: 'signal', stage: 'Find', match: ['/operate/findings', '/operate/closure', '/insights/signals', '/build/solutions', '/build/agent-studio', '/build/studio', '/build/create'] },
+      { to: '/operate/decisions', label: 'Decisions', icon: 'check', stage: 'Decide' },
+      { to: '/operate/runs', label: 'Execution', icon: 'clock', stage: 'Act', match: ['/operate/runs', '/operate/tasks', '/insights/outcomes'] },
+    ],
+  },
+  {
+    label: 'The org',
+    items: [
+      { to: '/operate/counterparts', label: 'Agents', icon: 'shadow', match: ['/operate/counterparts', '/insights/agents', '/operate/agent-teams'] },
+      { to: '/insights/people', label: 'Performance', icon: 'people' },
+      { to: '/business/overview', label: 'Business', icon: 'chart', match: ['/business'] },
+    ],
+  },
+  {
+    label: 'Setup',
+    items: [
+      { to: '/build/picture', label: 'Foundation', icon: 'brain', match: ['/build/picture', '/build/kpis', '/build/connectors', '/build/datasets'] },
+    ],
+  },
 ];
+
+export const NAV_ITEMS: AreaNavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 export function isNavItemActive(item: AreaNavItem, pathname: string): boolean {
   if (item.end) return pathname === item.to;
   const prefixes = item.match ?? [item.to];
   return prefixes.some((p) => pathname.startsWith(p));
-}
-
-// Off-rail screens still need a crumb title.
-const SPECIAL_TITLES: [prefix: string, title: string][] = [
-  ['/operate/findings/', 'Findings / Thread'],
-  ['/operate/tasks', 'Execution / Tasks'],
-  ['/operate/runs', 'Execution / Runs'],
-  ['/insights/outcomes', 'Execution / Outcomes'],
-  ['/operate/counterparts', 'Agents / Counterparts'],
-  ['/insights/agents', 'Agents / Workforce'],
-  ['/insights/signals', 'Findings / Signal'],
-  ['/build/picture', 'Foundation / Operating Picture'],
-  ['/build/kpis', 'Foundation / Mandate Library'],
-  ['/build/connectors', 'Foundation / Data Connectors'],
-  ['/build/agent-studio', 'Foundation / Unified Agent Studio'],
-  ['/build/solutions', 'Foundation / Solution Design'],
-  ['/build/studio', 'Foundation / Agent Studio'],
-  ['/build/create', 'Foundation / Create an Agent'],
-];
-
-export function crumbTitle(pathname: string): string {
-  for (const [prefix, title] of SPECIAL_TITLES) {
-    if (pathname.startsWith(prefix)) return title;
-  }
-  const item = NAV_ITEMS.find((i) => isNavItemActive(i, pathname));
-  return item?.label ?? 'Rewive';
 }

@@ -9,7 +9,6 @@ import {
   topPerformer,
   runDetails,
   runs,
-  decisionStats,
   decisionLedger,
   leaderboardHighlights,
   leaderboard,
@@ -40,14 +39,86 @@ import {
   findingsSeed,
   closureKpisSeed,
   plImpactSeed,
+  findingActionsSeed,
 } from './v4data.js';
 import { opContent } from './v4content.js';
 import { plStatementSeed } from './pldata.js';
-import { personaScope } from './roles.js';
+import { businessContextSeed } from './businessdata.js';
+import { datasetsSeed } from './datasetsdata.js';
+import { personaScope, escalationParent, escalateFinding, roleSubtree, ROLE_CHILDREN } from './roles.js';
+import { buildDraft, buildArtifacts, buildOnboardSeries, CUSTOM_INDUSTRY } from './onboarding.js';
+import { deriveHalfYear, deriveStatTiles } from './halfyear.js';
+import * as tracking from './tracking.js';
+import { registerTrackingRoutes } from './tracking-routes.js';
+import { runSweep } from './sweep.js';
+import { seedTrackingIfEmpty } from './seed-tracking.js';
+import { authMiddleware, registerAuthRoutes } from './auth.js';
+import {
+  initControlPlane, registerControlPlaneRoutes, provisionOnboardedTenant,
+  exportControlPlane, importControlPlane,
+} from './control-plane.js';
+import * as loopTimers from './timers.js';
+import * as ledger from './ledger.js';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
+// The auth seam: JWT-shaped bearers are validated and become req.auth; the
+// cron secret and ingest keys (opaque bearers) pass through untouched, and
+// tokenless requests keep the legacy ?industry= demo behavior.
+app.use(authMiddleware);
+registerAuthRoutes(app, { isKnownIndustry: (k) => Boolean(brainsState[k]) });
+
+// Live-tracking overlay: Postgres (or the memory fallback) is the source of
+// truth for sweep-raised findings/closures. Hydrate them into the in-memory
+// state before each request so every existing route (dispositions, escalation,
+// closure, persona filters) works on them unmodified; write dirty rows back
+// once the response is out. Serverless invocations additionally await
+// persistLiveState() explicitly in api/handler.js — this fire-and-forget is
+// the long-lived dev-server path.
+// hydrateLiveState wholesale-replaces the shared live-row maps and overwrites
+// findingsState entries; persistLiveState diffs those same maps. If a polling
+// GET's hydrate runs between a mutating request's response and its fire-and-
+// forget persist, it swaps in stale rows, the mutation vanishes from
+// findingsState, and the persist then finds nothing dirty — the disposition is
+// silently lost. Serialize the whole hydrate → handler → persist span per
+// request so the next request's hydrate can't start until the prior persist has
+// written back. Traffic on this mock is a single demo user, so the throughput
+// cost is irrelevant next to not losing dispositions.
+let liveLock = Promise.resolve();
+
+// Read-only routes that never read or write findingsState — they go straight
+// to the tracking store, so the serialization above buys them nothing. The
+// sweep holds the lock for its whole run (seconds, by design — it is paced so
+// the analysis is watchable), and the live strip has to be able to poll
+// *during* that run or there is nothing to watch. Keep this list to routes
+// that genuinely touch no shared in-memory state.
+const LIVE_LOCK_EXEMPT = new Set(['/api/v1/sweep-progress']);
+
+app.use((req, res, next) => {
+  if (req.method === 'GET' && LIVE_LOCK_EXEMPT.has(req.path)) return next();
+  const prev = liveLock;
+  let release;
+  liveLock = new Promise((resolve) => { release = resolve; });
+  prev.then(async () => {
+    try {
+      await hydrateLiveState();
+    } catch (err) {
+      console.warn('[live] hydrate failed:', err?.message ?? err);
+    }
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      persistLiveState()
+        .catch((err) => console.warn('[live] persist failed:', err?.message ?? err))
+        .finally(release);
+    };
+    res.on('finish', finish);
+    res.on('close', finish); // release even if the connection drops before finish
+    next();
+  });
+});
 
 // In-memory mutable state for this server process. Note: on serverless platforms
 // (e.g. Vercel) each invocation may hit a different cold instance, so this state
@@ -80,9 +151,28 @@ app.get('/api/v1/me', (req, res) => res.json(currentUser));
 // ---------- Dashboard / Command Center ----------
 // Every collection item belongs to exactly one persona (role). scope='team'
 // widens the lens to the role's whole reporting subtree (hierarchy mode).
+// Items visible via the dotted line (findings carry dottedPersona once an
+// escalation forks) count as in-scope for the functional parent too.
 function filterByPersona(items, persona, scope) {
   const roles = personaScope(persona, scope);
-  return roles ? items.filter((d) => roles.has(d.persona)) : items;
+  return roles ? items.filter((d) => roles.has(d.persona) || (d.dottedPersona && roles.has(d.dottedPersona))) : items;
+}
+
+// Exit conditions carry no persona of their own — they belong to whoever owns
+// the finding they came from, so they inherit its scope. Pass the UNFILTERED
+// findings here; filtering both against each other would compound.
+// Fails open on an unresolvable findingId: two seeded manufacturing closures
+// (mfg-c-h1, mfg-c-h2) point at findings that don't exist, and hiding them
+// under every lens would be a worse bug than showing them under all of them.
+function filterClosuresByPersona(closures, findings, persona, scope) {
+  const roles = personaScope(persona, scope);
+  if (!roles) return closures;
+  const byId = new Map(findings.map((f) => [f.id, f]));
+  return closures.filter((c) => {
+    const f = byId.get(c.findingId);
+    if (!f) return true;
+    return roles.has(f.persona) || (f.dottedPersona && roles.has(f.dottedPersona));
+  });
 }
 
 // Greeting + summary sentence only. The old kpis block (and its per-persona
@@ -176,11 +266,34 @@ app.post('/api/v1/runs/:id/resume', (req, res) => {
 });
 
 // ---------- Decision Ledger ----------
-app.get('/api/v1/decisions/stats', (req, res) => res.json(op(req).decisionStats));
+// The stat tiles and half-year review are both derived from the live findings/
+// closure/ledger state, not seeded, so they always reconcile with the rest of
+// the product (and with each other).
+app.get('/api/v1/decisions/stats', (req, res) => {
+  const industry = v4Industry(req);
+  const { persona, scope } = req.query;
+  // Scoped to the lens, same as the ledger table below these tiles. Without
+  // this the tiles and the By-entity/By-region rollups were company-wide while
+  // the table under them was role-scoped — so a division COO saw other
+  // divisions' entities in the rollup and the two halves of the screen
+  // disagreed about the same period.
+  runAssessorPass(industry);
+  const findings = filterByPersona(findingsState[industry] ?? [], persona, scope);
+  const ledger = filterByPersona(decisionLedgerState[industry] ?? [], persona, scope);
+  // FMCG, Healthcare and Hypermarket are all UAE orgs and seed their impact
+  // figures in AED; Manufacturing is the only USD pack; a custom org brings
+  // its own currency. Keep this in step with the seeds, or the tiles re-badge
+  // a sum of AED figures with a dollar sign.
+  const currency = statsCurrency(industry);
+  const closures = filterClosuresByPersona(closureKpisState[industry] ?? [], findingsState[industry] ?? [], persona, scope);
+  const halfYear = deriveHalfYear({ findings, closures, ledger, currency });
+  res.json({ ...deriveStatTiles({ findings, ledger, currency }), ...(halfYear ? { halfYear } : {}) });
+});
 
 app.get('/api/v1/decisions', (req, res) => {
   const { function: fn, verdict, persona, scope } = req.query;
-  let result = filterByPersona(op(req).decisionLedger, persona, scope);
+  runAssessorPass(v4Industry(req));
+  let result = filterByPersona(decisionLedgerState[v4Industry(req)] ?? [], persona, scope);
   if (fn && fn !== 'all') result = result.filter((d) => d.function === fn);
   if (verdict && verdict !== 'all') result = result.filter((d) => d.verdict === verdict);
   res.json(result);
@@ -277,7 +390,7 @@ app.post('/api/v1/agents', (req, res) => {
   const session = getOrCreateSession(sessionId);
   const planMessage = session.messages.find((m) => m.stepType === 'plan');
   const agentId = `agent-${Date.now()}`;
-  const preview = { ...makeDraftPreview(), state: 'live', name: planMessage?.plan?.name ?? 'New Agent' };
+  const preview = { ...makeDraftPreview(), state: 'live', name: planMessage?.plan?.name ?? 'New Worker' };
   createdAgents.set(agentId, { sessionId, preview });
   res.json({ agentId, state: 'live', name: preview.name });
 });
@@ -296,7 +409,7 @@ let connectionsState = [...connections];
 let auditLogState = [...auditLog];
 
 function logAudit(entityType, entityId, action, actorName = 'Kumara Vijayan') {
-  auditLogState.push({ id: `al-${Date.now()}`, entityType, entityId, action, actorName, timestamp: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) });
+  auditLogState.push({ id: `al-${Date.now()}-${auditLogState.length}`, entityType, entityId, action, actorName, timestamp: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) });
 }
 
 app.get('/api/v1/connector-types', (req, res) => res.json(connectorTypesState));
@@ -706,6 +819,7 @@ const agentSpecs = new Map();
 // live Act in this session.
 solutionDesigns.set('sol-fmcg-riyadh-otif', {
   id: 'sol-fmcg-riyadh-otif',
+  industry: 'fmcg',
   signalId: 'fmcg-f-7',
   signalName: 'Riyadh DC case fill sliding — key-account penalties accruing',
   signalCategory: 'laggard',
@@ -724,6 +838,109 @@ solutionDesigns.set('sol-fmcg-riyadh-otif', {
   validation: null,
   createdAt: '2026-06-18T09:00:00Z',
   updatedAt: '2026-06-18T09:00:00Z',
+});
+
+// Healthcare's Act loops, pre-seeded the same way: each of these findings was
+// dispositioned Act earlier in the demo timeline, so the task list exists from
+// the seed rather than only after a live Act. Tasks carry their own persona —
+// a network-level fix fans work out to the sites that have to do it.
+// The CFO's Act loop. Worth reading as a whole: the front office had already
+// acknowledged the same drift with a trip-wire because the fix — showing the
+// desk what the patient actually owes — was not in their control. This is the
+// level that owns it acting, which is what releases the level below.
+solutionDesigns.set('sol-hc-cfo-poscash', {
+  id: 'sol-hc-cfo-poscash',
+  industry: 'healthcare',
+  signalId: 'hc-f-poscash',
+  signalName: 'Point-of-service collections stuck at 41% while patient co-pay share keeps rising',
+  signalCategory: 'revenue_leakage',
+  status: 'drafting',
+  approach: 'Stop asking the desk to collect an amount it cannot verify. Put the payer’s own liability response on the check-in screen, take card-on-file consent at booking, and re-base the collection target on verified liability rather than billed value.',
+  dataNeeded: 'eClaimLink eligibility and benefits responses; patient liability by visit; desk collection events by site and hour; self-pay recovery after the visit',
+  owner: { name: 'Rashid Al Balushi', initials: 'RB', avatarBg: '#B45309' },
+  guardrails: 'Never quote a patient a liability figure the payer response does not support. No collection pressure at the point of clinical need — emergency presentations are exempt.',
+  copiedFromLabel: null,
+  taskList: [
+    { id: 'sol-hc-cfo-poscash-t1', type: 'new_agent', title: 'Patient liability agent — live benefits lookup at check-in', owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona: 'cfo' },
+    { id: 'sol-hc-cfo-poscash-t2', type: 'human_task', title: 'Ship the benefits display to the three busiest desks', owner: 'Rashid Al Balushi', status: 'in_progress', channel: 'app', comments: [], persona: 'cfo' },
+    { id: 'sol-hc-cfo-poscash-t3', type: 'human_task', title: 'Re-base the desk collection target on verified liability, not billed value', owner: 'Anita Mathew', status: 'confirmed', channel: 'app', comments: [], persona: 'fpa' },
+    { id: 'sol-hc-cfo-poscash-t4', type: 'human_task', title: 'Add card-on-file consent to the booking call', owner: 'Omar Sheikh', status: 'needs_review', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-hc-cfo-poscash-t5', type: 'human_task', title: 'Agree the emergency-presentation exemption with clinical', owner: 'Dr. Meera Nair', status: 'confirmed', channel: 'app', comments: [], persona: 'operations_head' },
+    { id: 'sol-hc-cfo-poscash-t6', type: 'existing_agent', title: 'Revenue cycle agent — track desk collection by site weekly', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'cfo' },
+  ],
+  validation: null,
+  createdAt: '2026-07-16T07:10:00Z',
+  updatedAt: '2026-07-19T13:25:00Z',
+});
+
+solutionDesigns.set('sol-hc-coo-access', {
+  id: 'sol-hc-coo-access',
+  industry: 'healthcare',
+  signalId: 'hc-f-coo-access',
+  signalName: 'Appointment lead time is 9 days network-wide and every site is solving it separately',
+  signalCategory: 'laggard',
+  status: 'drafting',
+  approach: 'Stop three local fixes and run one: a shared slot pool across the three sites, an agent that offers the patient the earliest appointment anywhere in the network at booking, and one owner for network capacity rather than three.',
+  dataNeeded: 'Scheduling system slot inventory across all sites; booking-to-appointment intervals; patient home postcode for travel tolerance',
+  owner: { name: 'Kumara Vijayan', initials: 'KV', avatarBg: '#4F46E5' },
+  guardrails: 'Never offer a cross-site appointment without showing the travel implication. No change to clinical triage priority.',
+  copiedFromLabel: null,
+  taskList: [
+    { id: 'sol-hc-coo-access-t1', type: 'new_agent', title: 'Network slot-matching agent — offer earliest availability across sites', owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona: 'coo' },
+    { id: 'sol-hc-coo-access-t2', type: 'human_task', title: 'Name a single owner for network capacity', owner: 'Kumara Vijayan', status: 'needs_review', channel: 'app', comments: [], persona: 'coo' },
+    { id: 'sol-hc-coo-access-t3', type: 'human_task', title: 'Publish Sharjah slot inventory to the shared pool', owner: 'Layla Haddad', status: 'confirmed', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-coo-access-t4', type: 'human_task', title: 'Add the cross-site offer to the booking-call script', owner: 'Omar Sheikh', status: 'in_progress', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-hc-coo-access-t5', type: 'existing_agent', title: 'Patient experience agent — watch lead time by site weekly', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'coo' },
+  ],
+  validation: null,
+  createdAt: '2026-07-08T08:30:00Z',
+  updatedAt: '2026-07-17T11:15:00Z',
+});
+
+solutionDesigns.set('sol-hc-fo-elig', {
+  id: 'sol-hc-fo-elig',
+  industry: 'healthcare',
+  signalId: 'hc-f-fo-elig',
+  signalName: 'Eligibility is not being verified at check-in on roughly one visit in six',
+  signalCategory: 'cost_drainer',
+  status: 'drafting',
+  approach: 'Make the check impossible to skip rather than asking people to remember it under queue pressure: hard-stop the registration screen without an eligibility response, pre-run eligibility overnight for booked patients so the desk only handles walk-ins, and staff the 08:00 rush to the arrival curve.',
+  dataNeeded: 'Registration timestamps by desk and hour; eClaimLink eligibility responses; ELIG-001 rejections traced to registration',
+  owner: { name: 'Omar Sheikh', initials: 'OS', avatarBg: '#0369A1' },
+  guardrails: 'Never block a clinical encounter on an eligibility failure — flag for billing and let the patient be seen.',
+  copiedFromLabel: 'Adapted from the February registration checklist loop',
+  taskList: [
+    { id: 'sol-hc-fo-elig-t1', type: 'new_agent', title: 'Overnight eligibility pre-check agent — booked patients', owner: 'Platform team', status: 'proposed', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-hc-fo-elig-t2', type: 'human_task', title: 'Hard-stop registration without an eligibility response', owner: 'Omar Sheikh', status: 'confirmed', channel: 'app', comments: [], persona: 'sales_supervisor' },
+    { id: 'sol-hc-fo-elig-t3', type: 'human_task', title: 'Staff the 08:00–09:00 desk rush to the arrival curve', owner: 'Layla Haddad', status: 'in_progress', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-fo-elig-t4', type: 'existing_agent', title: 'Revenue cycle agent — trace ELIG-001 back to the registering desk', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'sales_supervisor' },
+  ],
+  validation: null,
+  createdAt: '2026-07-15T06:20:00Z',
+  updatedAt: '2026-07-19T14:40:00Z',
+});
+
+solutionDesigns.set('sol-hc-cm-wait', {
+  id: 'sol-hc-cm-wait',
+  industry: 'healthcare',
+  signalId: 'hc-f-cm-wait',
+  signalName: 'Sharjah afternoon sessions are running 38 minutes behind by the third patient',
+  signalCategory: 'laggard',
+  status: 'validated',
+  approach: 'Re-base slot length on the measured consultation time rather than the booked one, protect the session start, and stop counting the check-in queue as free time.',
+  dataNeeded: 'Consultation start/end timestamps by clinician; session start times; check-in to called-in intervals',
+  owner: { name: 'Layla Haddad', initials: 'LH', avatarBg: '#9333EA' },
+  guardrails: 'No reduction in daily appointment volume without the clinical lead agreeing the trade.',
+  copiedFromLabel: null,
+  taskList: [
+    { id: 'sol-hc-cm-wait-t1', type: 'human_task', title: 'Re-base afternoon slots to 17 minutes on the three worst clinics', owner: 'Layla Haddad', status: 'done', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-cm-wait-t2', type: 'human_task', title: 'Protect the 14:00 start — no admin block in the preceding slot', owner: 'Layla Haddad', status: 'confirmed', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-cm-wait-t3', type: 'existing_agent', title: 'Patient experience agent — alert when a session starts 10+ min late', owner: 'Reused, no change needed', status: 'confirmed', channel: 'app', comments: [], persona: 'store_manager' },
+    { id: 'sol-hc-cm-wait-t4', type: 'human_task', title: 'Report arrival-to-check-in inside the wait-time mandate', owner: 'Omar Sheikh', status: 'needs_review', channel: 'app', comments: [], persona: 'sales_supervisor' },
+  ],
+  validation: null,
+  createdAt: '2026-07-11T09:45:00Z',
+  updatedAt: '2026-07-18T16:05:00Z',
 });
 
 function makeDefaultTaskList(solutionId, signalName, persona = 'operations_head') {
@@ -777,6 +994,7 @@ app.post('/api/v1/solutions', (req, res) => {
   const now = new Date().toISOString();
   const solution = {
     id,
+    industry: v4Industry(req),
     signalId,
     signalName: signal.name,
     signalCategory: signal.category,
@@ -890,8 +1108,13 @@ app.post('/api/v1/quick-solutions/:id/confirm', (req, res) => {
 // ---------- Tasks (assigned across all solution designs, and confirmed quick solutions) ----------
 app.get('/api/v1/tasks', (req, res) => {
   const { status, persona, scope } = req.query;
+  const industry = v4Industry(req);
   const all = [];
+  // Tasks fan out of a solution design, which belongs to the org whose finding
+  // opened it. Without this filter every tenant sees every other tenant's task
+  // list — a Medcare lens showing an Americana penalty waiver.
   for (const solution of solutionDesigns.values()) {
+    if (solution.industry && solution.industry !== industry) continue;
     for (const task of solution.taskList) {
       all.push({ ...task, solutionId: solution.id, solutionName: solution.signalName });
     }
@@ -955,6 +1178,10 @@ app.post('/api/v1/agent-specs', (req, res) => {
     status: 'drafting',
     needsTechnicalWork: solution.validation?.recommendation === 'dev_handoff',
     owner: solution.owner,
+    // Default the holder agent from the finding this solution came from; the
+    // builder can retarget it in Agent Studio before publishing.
+    reportsToAgentId: solution.holderAgentId ?? null,
+    reportsToAgentName: solution.holderAgentName ?? null,
     version: 1,
     versionTrail: [{ version: 1, summary: 'Drafted from the approved solution design', actorName: currentUser.name, altitude: 'business', timestamp: new Date().toISOString() }],
     intent: solution.approach,
@@ -999,6 +1226,16 @@ app.patch('/api/v1/agent-specs/:id/business', (req, res) => {
   if (intent !== undefined) spec.intent = intent;
   if (capabilities !== undefined) spec.capabilities = capabilities;
   pushVersion(spec, 'Updated the business plan', 'business');
+  res.json(spec);
+});
+
+app.patch('/api/v1/agent-specs/:id/reports-to', (req, res) => {
+  const spec = agentSpecs.get(req.params.id);
+  if (!spec) return res.status(404).json({ message: 'Agent spec not found' });
+  const { reportsToAgentId, reportsToAgentName } = req.body;
+  spec.reportsToAgentId = reportsToAgentId ?? null;
+  spec.reportsToAgentName = reportsToAgentName ?? null;
+  pushVersion(spec, `Reports to ${spec.reportsToAgentName ?? 'no agent'}`, 'business');
   res.json(spec);
 });
 
@@ -1086,10 +1323,12 @@ app.post('/api/v1/agent-specs/:id/publish', (req, res) => {
     roiToDate: { label: 'Measured impact', value: '—', direction: 'flat' },
     tokenCostToDate: { tokens: 0, estCost: '$0.00' },
     runsCount: 0, lastRunAt: null,
+    reportsToAgentId: spec.reportsToAgentId ?? null,
+    reportsToAgentName: spec.reportsToAgentName ?? null,
   };
   createdAgents.set(agentId, { sessionId: null, preview, catalogMeta });
   spec.linkedAgentId = agentId;
-  pushVersion(spec, 'Published — now live in Agent Space', spec.needsTechnicalWork ? 'developer' : 'business');
+  pushVersion(spec, 'Published — now live in Workforce', spec.needsTechnicalWork ? 'developer' : 'business');
 
   const found = findTask(spec.taskId);
   if (found) found.task.status = 'done';
@@ -1113,16 +1352,98 @@ let orgProfileState = { ...orgProfileSeed };
 let brainsState = JSON.parse(JSON.stringify(brains));
 let findingsState = JSON.parse(JSON.stringify(findingsSeed));
 let closureKpisState = JSON.parse(JSON.stringify(closureKpisSeed));
+let findingActionsState = JSON.parse(JSON.stringify(findingActionsSeed));
+// The Decision Ledger is mutable state, not a static pack: every disposition
+// appends a row, so the system of record is written by the product's own
+// Decide flow. Seeded per industry from the content packs.
+let decisionLedgerState = Object.fromEntries(
+  Object.entries(opContent).map(([k, pack]) => [k, JSON.parse(JSON.stringify(pack.decisionLedger ?? []))]),
+);
 const shadowOrgsSeed = JSON.parse(JSON.stringify(shadowOrgs));
 
+// ---------- Notifications (the escalation outbox) ----------
+// "Silence escalates" only means something if the escalation reaches its new
+// owner — these rows are what an email/Slack delivery would carry, surfaced at
+// the bell until a real channel exists. Written by the engine (manual
+// escalate, SLA heartbeat, re-alert trip-wires), never seeded.
+let notificationsState = Object.fromEntries(Object.keys(findingsSeed).map((k) => [k, []]));
+
+function pushNotification(industry, { type, persona, findingId, title, body }) {
+  if (!persona) return;
+  const list = notificationsState[industry] ?? (notificationsState[industry] = []);
+  list.unshift({
+    id: `ntf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type,
+    persona,
+    findingId,
+    title,
+    body,
+    createdAt: new Date().toISOString(),
+    readAt: null,
+  });
+  // Ring buffer — the bell is recent history, not an archive.
+  if (list.length > 100) list.length = 100;
+}
+
+// ---------- The assessor agent ----------
+// Delivers the later verdict on a decision by reading what its recovery target
+// did: closed → worked, regressed → didn't, still tracking → keep measuring.
+// Runs lazily before every ledger read, so a verdict appears as soon as the
+// closure state justifies it. A delivered verdict is written once and audited,
+// never re-litigated; rows whose too-early note was hand-written (seeds) are
+// left alone so a template never clobbers a crafted narrative.
+// A verdict is delivered exactly once (the !assessorNote guard above the call
+// sites) — appended as an event, never an edit; the in-memory row mutation is
+// the display surface catching up with the evidence. Fire-and-forget: the
+// assessor pass runs synchronously inside ledger reads.
+function appendVerdictEvent(industry, row, closure) {
+  ledger.appendEvent({
+    kind: 'verdict', industry, persona: row.persona, findingId: row.findingId,
+    actor: 'Assessor agent',
+    payload: { verdict: row.verdict, measuredImpact: row.measuredImpact, closureName: closure.name, ledgerRowId: row.id },
+  }).catch((err) => console.warn('[ledger] verdict event failed:', err?.message ?? err));
+}
+
+function runAssessorPass(industry) {
+  const rows = decisionLedgerState[industry] ?? [];
+  const closures = closureKpisState[industry] ?? [];
+  for (const row of rows) {
+    if (row.verdict !== 'too_early' || !row.findingId) continue;
+    const closure = closures.find((c) => c.findingId === row.findingId);
+    if (!closure) continue;
+    if (closure.status === 'closed' && !row.assessorNote) {
+      row.verdict = 'worked';
+      row.measuredImpact = { text: `${closure.baseline} → ${closure.current}`, direction: 'up' };
+      row.assessorNote = `Assessor agent: ${closure.name} — held at ${closure.current} against the ${closure.target} exit condition, from a ${closure.baseline} baseline. The number came back; loop closed.`;
+      appendVerdictEvent(industry, row, closure);
+      logAudit('decision', row.id, `assessor verdict: worked — ${closure.name}`);
+    } else if (closure.status === 'regressed' && !row.assessorNote) {
+      row.verdict = 'not_worked';
+      row.measuredImpact = { text: `${closure.current} against a ${closure.target} exit condition`, direction: 'down' };
+      row.assessorNote = `Assessor agent: ${closure.name} regressed — ${closure.current} against ${closure.target}. The loop closed without the number coming back.`;
+      appendVerdictEvent(industry, row, closure);
+      logAudit('decision', row.id, `assessor verdict: didn't work — ${closure.name}`);
+    } else if (closure.status === 'tracking' && !row.assessorNote) {
+      // No verdict yet — but keep the measurement honest as the target moves.
+      row.measuredImpact = { text: `measuring… ${closure.current} of a ${closure.target} exit condition`, direction: 'flat' };
+    }
+  }
+}
+
 function v4Industry(req) {
+  // A signed session outranks a query param — claims are the seam Entra OIDC
+  // later plugs into. The ?industry= fallback keeps tokenless demo mode working.
+  const claimed = req.auth?.industry;
+  if (claimed && brainsState[claimed]) return claimed;
   const q = req.query.industry;
   return q && brainsState[q] ? q : orgProfileState.industry;
 }
 
-// closureTemplate is a server-side hint consumed on accept — not part of the client contract
+// closureTemplate is a server-side hint consumed on accept — not part of the
+// client contract. closureTemplateNumeric is its numeric twin on sweep-raised
+// findings (used to compute recovery progress).
 function stripServerFields(finding) {
-  const { closureTemplate, ...rest } = finding;
+  const { closureTemplate, closureTemplateNumeric, ...rest } = finding;
   return rest;
 }
 
@@ -1137,23 +1458,196 @@ function findFinding(id) {
 // ---------- Org profile & industry templates ----------
 // Honour ?industry= so the client-driven context stays consistent even when the
 // serverless in-memory profile has reset (cold start).
+// The custom org brings its own name; every other industry keeps the seed's.
+function orgNameFor(industry) {
+  return industry === CUSTOM_INDUSTRY && customOrgState ? customOrgState.tenant.name : orgProfileSeed.orgName;
+}
+
 app.get('/api/v1/org-profile', (req, res) => {
-  const q = req.query.industry;
-  res.json(q && brainsState[q] ? { ...orgProfileState, industry: q } : orgProfileState);
+  // Same precedence as v4Industry: signed claims > ?industry= > stored profile.
+  const claimed = req.auth?.industry;
+  const q = claimed && brainsState[claimed] ? claimed : req.query.industry;
+  res.json(q && brainsState[q] ? { ...orgProfileState, industry: q, orgName: orgNameFor(q) } : orgProfileState);
 });
 
-app.get('/api/v1/industries', (req, res) => res.json(industryOptions));
+app.get('/api/v1/industries', (req, res) => {
+  if (!customOrgState) return res.json(industryOptions);
+  const included = customOrgState.brain.nodes.filter((n) => n.kind === 'stream_kpi').length;
+  res.json([
+    ...industryOptions,
+    { id: CUSTOM_INDUSTRY, name: customOrgState.tenant.name, description: 'Onboarded organization', streamCount: customOrgState.brain.streams.length, kpiCount: included },
+  ]);
+});
 
 app.put('/api/v1/org-profile', (req, res) => {
   const { industry } = req.body;
   if (!brainsState[industry]) return res.status(400).json({ message: 'Unknown industry template' });
-  orgProfileState = { ...orgProfileState, industry };
+  orgProfileState = { ...orgProfileState, industry, orgName: orgNameFor(industry) };
   logAudit('org', 'profile', `switched the industry template to ${industry}`);
   res.json(orgProfileState);
 });
 
+// ---------- The onboarding factory ----------
+// One runtime-created organization at a time, under the fixed industry key
+// 'custom'. Everything a hand-seeded industry gets at module load, a custom
+// org gets at commit time via installCustomOrg() — which is also re-run after
+// every KV snapshot import, because opContent / shadowOrgsSeed / the currency
+// maps are module-level objects the snapshot doesn't carry.
+let customOrgState = null;
+
+function installCustomOrg() {
+  if (!customOrgState) return;
+  const k = CUSTOM_INDUSTRY;
+  const org = customOrgState;
+  brainsState[k] = brainsState[k] ?? JSON.parse(JSON.stringify(org.brain));
+  opContent[k] = org.contentPack;
+  if (!opStateByIndustry[k]) {
+    opStateByIndustry[k] = {
+      pending: JSON.parse(JSON.stringify(org.contentPack.pendingDecisions)),
+      exceptions: JSON.parse(JSON.stringify(org.contentPack.runExceptions)),
+      chases: JSON.parse(JSON.stringify(org.contentPack.runChases)),
+      outcomes: JSON.parse(JSON.stringify(org.contentPack.outcomeReports)),
+      runDetails: JSON.parse(JSON.stringify(org.contentPack.runDetails)),
+    };
+  }
+  shadowOrgsSeed[k] = { industry: k, agents: JSON.parse(JSON.stringify(org.agents)) };
+  findingsState[k] = findingsState[k] ?? [];
+  closureKpisState[k] = closureKpisState[k] ?? [];
+  findingActionsState[k] = findingActionsState[k] ?? [];
+  decisionLedgerState[k] = decisionLedgerState[k] ?? [];
+  notificationsState[k] = notificationsState[k] ?? [];
+  businessContextSeed[k] = org.businessContext;
+  // The ISO code drives live-tracking value formatting; the stats route reads
+  // the same source via statsCurrency() below.
+  tracking.CURRENCY_BY_INDUSTRY[k] = org.currency;
+}
+
+// The Decision-stats tiles bill in the org's currency. Seeded packs keep the
+// old two-way split; a custom org brings its own code.
+function statsCurrency(industry) {
+  if (industry === CUSTOM_INDUSTRY && customOrgState) {
+    return customOrgState.currency === 'USD' ? '$' : customOrgState.currency;
+  }
+  return industry === 'manufacturing' ? '$' : 'AED';
+}
+
+// Draft: template + customer inputs → reviewable world model. Deterministic.
+app.post('/api/v1/onboarding/draft', (req, res) => {
+  try {
+    res.json(buildDraft(req.body ?? {}));
+  } catch (err) {
+    res.status(400).json({ message: err?.message ?? 'Could not build a draft' });
+  }
+});
+
+// Commit: reviewed draft → installed org + tracking configs + synthetic
+// 30-day history, so the first sweep judges the real present gap to target.
+app.post('/api/v1/onboarding/commit', async (req, res) => {
+  try {
+    const body = { ...(req.body ?? {}) };
+    const templateOrg = shadowOrgsSeed[body.template];
+    body.__templateAgents = templateOrg?.agents ?? [];
+    const artifacts = buildArtifacts(body);
+
+    customOrgState = artifacts;
+    brainsState[CUSTOM_INDUSTRY] = JSON.parse(JSON.stringify(artifacts.brain));
+    delete opStateByIndustry[CUSTOM_INDUSTRY]; // re-commit rebuilds the op state
+    installCustomOrg();
+
+    for (const plan of artifacts.trackingPlan) {
+      await tracking.upsertConfig({
+        nodeId: plan.nodeId,
+        industry: CUSTOM_INDUSTRY,
+        unit: plan.unit,
+        direction: plan.direction,
+        targetNumeric: plan.targetNumeric,
+        warnPct: plan.warnPct,
+        breachPct: plan.breachPct,
+        entity: plan.entity,
+        region: plan.region,
+        enabled: true,
+      });
+      await tracking.insertPoints(buildOnboardSeries(plan.nodeId, plan.currentNumeric, plan.targetNumeric));
+    }
+    // The ingest feed is a live dataset: tracked mandates read 'connected' on
+    // the Operating Picture instead of lying about data they demonstrably have.
+    if (artifacts.trackingPlan.length) {
+      const feeds = artifacts.brain.nodes
+        .filter((n) => artifacts.trackingPlan.some((p) => p.nodeId === n.id))
+        .map((n) => n.name);
+      const list = datasetsState[CUSTOM_INDUSTRY] ?? (datasetsState[CUSTOM_INDUSTRY] = []);
+      const ds = {
+        id: 'cust-ds-tracking',
+        name: 'Live mandate tracking',
+        description: 'Numeric readings for the live-tracked mandates, via the Rewive ingest API / CSV import.',
+        source: 'Rewive ingest',
+        cadence: 'daily',
+        status: 'live',
+        rows: artifacts.trackingPlan.length * 30,
+        columns: ['nodeId', 'date', 'value'],
+        lastLoadAt: new Date().toISOString(),
+        feeds,
+        analysisIdeas: [],
+      };
+      const idx = list.findIndex((d) => d.id === ds.id);
+      if (idx >= 0) list[idx] = ds; else list.push(ds);
+    }
+
+    // The onboarding factory is the provisioning flow's prototype (ARCH-GTM-001):
+    // committing an org now also walks the real control-plane lifecycle —
+    // catalog row, tenant store, migration ledger. Replace-on-recommit, same
+    // one-runtime-org rule as the in-memory install above.
+    const provisioning = await provisionOnboardedTenant(
+      { id: artifacts.tenant.id, name: artifacts.tenant.name, template: body.template },
+      { isKnownTemplate },
+    ).catch((err) => ({ error: err?.message ?? 'provisioning failed' }));
+
+    logAudit('org', 'onboarding', `onboarded ${artifacts.tenant.name} from the ${body.template} template (${artifacts.trackingPlan.length} live-tracked mandates)`);
+    res.status(201).json({ tenant: artifacts.tenant, labels: artifacts.labels, industry: CUSTOM_INDUSTRY, provisioning });
+  } catch (err) {
+    res.status(400).json({ message: err?.message ?? 'Could not create the organization' });
+  }
+});
+
 // ---------- KPI brain ----------
-app.get('/api/v1/kpi-brain', (req, res) => res.json(brainsState[v4Industry(req)]));
+// Node statuses are reconciled with the Datasets registry at read time — a
+// mandate is 'connected' only when a live dataset names it in `feeds`, and a
+// sense only when its stream has a live dataset. Declared-but-not-landed data
+// (expected/receiving) reads 'needs_data': a mandate without data is blind,
+// and the picture says so. 'proposed' nodes and the statement tiers (targets,
+// P&L lines) keep their seeded status.
+function reconcileBrainStatuses(brain, datasets) {
+  const liveFeeds = new Set();
+  for (const ds of datasets) {
+    if (ds.status !== 'live') continue;
+    for (const f of ds.feeds ?? []) liveFeeds.add(f);
+  }
+  const liveStreams = new Set(
+    brain.nodes.filter((n) => n.kind === 'stream_kpi' && liveFeeds.has(n.name)).map((n) => n.streamKey),
+  );
+  const nodes = brain.nodes.map((n) => {
+    // 'proposed' and 'declined' are petition-lifecycle states set explicitly by
+    // the accept/decline routes — reconciliation from the dataset registry must
+    // not recompute them, or a declined petition reappears on the canvas.
+    if (n.status === 'proposed' || n.status === 'declined') return n;
+    if (n.kind === 'stream_kpi') return { ...n, status: liveFeeds.has(n.name) ? 'connected' : 'needs_data' };
+    if (n.kind === 'driver') return { ...n, status: liveStreams.has(n.streamKey) ? 'connected' : 'needs_data' };
+    return n;
+  });
+  return { ...brain, nodes };
+}
+
+app.get('/api/v1/kpi-brain', async (req, res) => {
+  const industry = v4Industry(req);
+  let brain = reconcileBrainStatuses(brainsState[industry], datasetsState[industry] ?? []);
+  try {
+    // Live-tracked mandates get real numbers overlaid at read time.
+    brain = await tracking.overlayLiveTracking(brain);
+  } catch (err) {
+    console.warn('[live] overlay failed:', err?.message ?? err);
+  }
+  res.json(brain);
+});
 
 app.post('/api/v1/kpi-brain/nodes', (req, res) => {
   const brain = brainsState[v4Industry(req)];
@@ -1291,6 +1785,66 @@ app.get('/api/v1/findings/:id', (req, res) => {
   res.json(stripServerFields(hit.finding));
 });
 
+// ---------- Finding actions (the tracker on a finding's thread) ----------
+// Work items that live inside a finding's lifecycle — not a standalone ticket
+// system. Completing every action never closes the finding; the recovery
+// target does. Live (sweep-raised) findings can carry actions too: the rows
+// sit in the same in-memory store, keyed under the finding's industry.
+const ACTION_STATUSES = ['open', 'in_progress', 'blocked', 'done'];
+
+function actionsForFinding(findingId, industry) {
+  const list = findingActionsState[industry] ?? (findingActionsState[industry] = []);
+  const doneLast = (a) => (a.status === 'done' ? 1 : 0);
+  return list
+    .filter((a) => a.findingId === findingId)
+    .sort((a, b) => doneLast(a) - doneLast(b) || a.createdAt.localeCompare(b.createdAt));
+}
+
+app.get('/api/v1/findings/:id/actions', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  res.json(actionsForFinding(req.params.id, hit.industry));
+});
+
+app.post('/api/v1/findings/:id/actions', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  const { title, owner, dueAt } = req.body ?? {};
+  if (!title || !String(title).trim()) return res.status(400).json({ message: 'title is required' });
+  const action = {
+    id: `fa-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    findingId: req.params.id,
+    title: String(title).trim(),
+    owner: String(owner ?? '').trim() || 'Unassigned',
+    source: 'human',
+    status: 'open',
+    note: null,
+    dueAt: dueAt ?? null,
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
+  };
+  (findingActionsState[hit.industry] ?? (findingActionsState[hit.industry] = [])).push(action);
+  res.status(201).json(action);
+});
+
+app.patch('/api/v1/finding-actions/:actionId', (req, res) => {
+  for (const list of Object.values(findingActionsState)) {
+    const action = list.find((a) => a.id === req.params.actionId);
+    if (!action) continue;
+    const { status, note, owner, dueAt } = req.body ?? {};
+    if (status !== undefined) {
+      if (!ACTION_STATUSES.includes(status)) return res.status(400).json({ message: `status must be one of ${ACTION_STATUSES.join(', ')}` });
+      action.status = status;
+    }
+    if (note !== undefined) action.note = note;
+    if (owner !== undefined) action.owner = String(owner).trim() || action.owner;
+    if (dueAt !== undefined) action.dueAt = dueAt;
+    action.updatedAt = new Date().toISOString();
+    return res.json(action);
+  }
+  return res.status(404).json({ message: 'Action not found' });
+});
+
 // FP&A rollup: findings translated onto the P&L, per line item.
 app.get('/api/v1/pl-impact', (req, res) => {
   res.json(plImpactSeed[v4Industry(req)] ?? []);
@@ -1302,19 +1856,84 @@ app.get('/api/v1/pl-statement', (req, res) => {
   res.json(plStatementSeed[v4Industry(req)] ?? { period: '', unit: '', dimALabel: '', dimBLabel: '', lines: [], anomalies: [] });
 });
 
-app.post('/api/v1/findings/:id/disposition', (req, res) => {
+// Business context: the base data the mandates stand on — what the company
+// is, sales by SKU/customer, with drifting rows linked to their findings.
+app.get('/api/v1/business-context', (req, res) => {
+  res.json(businessContextSeed[v4Industry(req)] ?? businessContextSeed.fmcg);
+});
+
+// ---------- Datasets (placeholder registry for the data to come) ----------
+let datasetsState = JSON.parse(JSON.stringify(datasetsSeed));
+let analysisRequestsState = {}; // industry -> requests[] (one workspace per tenant)
+
+app.get('/api/v1/datasets', (req, res) => {
+  res.json(datasetsState[v4Industry(req)] ?? []);
+});
+
+// Stage a dataset now (e.g. a CSV dropped on the Datasets screen): it registers
+// as 'receiving' with the client-profiled shape, ahead of a real pipeline.
+app.post('/api/v1/datasets', (req, res) => {
+  const { name, rows, columns } = req.body;
+  if (!name) return res.status(400).json({ message: 'name is required' });
+  const industry = v4Industry(req);
+  const dataset = {
+    id: `${industry}-ds-${Date.now()}`,
+    name,
+    description: 'Staged upload — profiled on receipt, awaiting the analysis pipeline.',
+    source: 'Manual upload',
+    cadence: 'one-off',
+    status: 'receiving',
+    rows: Number.isFinite(rows) ? rows : null,
+    columns: Array.isArray(columns) ? columns.slice(0, 40) : [],
+    lastLoadAt: new Date().toISOString(),
+    feeds: [],
+    analysisIdeas: [],
+  };
+  datasetsState[industry] = [dataset, ...(datasetsState[industry] ?? [])];
+  logAudit('connection', dataset.id, `staged dataset "${name}" (${dataset.rows ?? '?'} rows)`);
+  res.status(201).json(dataset);
+});
+
+app.get('/api/v1/analysis-requests', (req, res) => res.json(analysisRequestsState[v4Industry(req)] ?? []));
+
+app.post('/api/v1/analysis-requests', (req, res) => {
+  const { datasetId, question } = req.body;
+  if (!question) return res.status(400).json({ message: 'question is required' });
+  const industry = v4Industry(req);
+  const dataset = datasetId
+    ? (datasetsState[industry] ?? []).find((d) => d.id === datasetId)
+    : null;
+  const list = analysisRequestsState[industry] ?? (analysisRequestsState[industry] = []);
+  const request = {
+    id: `ar-${Date.now()}-${list.length}`,
+    datasetId: dataset?.id ?? null,
+    datasetName: dataset?.name ?? null,
+    question,
+    status: 'queued',
+    createdAt: new Date().toISOString(),
+  };
+  list.push(request);
+  logAudit('connection', request.id, `queued analysis: "${question.slice(0, 80)}"`);
+  res.status(201).json(request);
+});
+
+app.post('/api/v1/findings/:id/disposition', async (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
   const { finding, industry } = hit;
   if (finding.status !== 'open') return res.status(400).json({ message: 'This finding already has a disposition' });
   const { disposition, reason, reAlertCondition } = req.body;
   const now = new Date().toISOString();
+  let ledgerSubtitle = null; // set per branch — becomes the ledger row's rationale line
 
   if (disposition === 'accept') {
     // Accept: the finding is real — generate its measurable exit condition and keep watching.
+    const isLive = finding.id.startsWith('live-');
     const template = finding.closureTemplate ?? { name: `Close: ${finding.title}`, baseline: '—', target: '—' };
     const closure = {
-      id: `${industry}-c-${Date.now()}`,
+      // live-* ids route the closure to Postgres instead of the KV snapshot
+      id: isLive ? `live-c-${Date.now()}` : `${industry}-c-${Date.now()}`,
+      ...(isLive ? { origin: 'sweep' } : {}),
       findingId: finding.id,
       findingTitle: finding.title,
       name: template.name,
@@ -1326,18 +1945,29 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
       watchedByAgentName: finding.raisedByAgentName,
       createdAt: now,
       closedAt: null,
+      // Inherited from the finding: an exit condition belongs to the same
+      // entity and region as the drift that created it, and the By-entity
+      // rollup skips rows with no entity.
+      ...(finding.entity ? { entity: finding.entity } : {}),
+      ...(finding.region ? { region: finding.region } : {}),
     };
     closureKpisState[industry].push(closure);
     finding.status = 'accepted';
     finding.closureKpiId = closure.id;
     logAudit('finding', finding.id, `accepted — closure KPI created: ${closure.name}`);
+    ledgerSubtitle = `Recovery target: ${closure.name}`;
   } else if (disposition === 'act') {
     // Act: spin up the existing solution-design loop, seeded from the finding.
     const solutionId = `sol-${Date.now()}`;
     const categoryByStream = { finance: 'cost_drainer', commercial: 'revenue_leakage', marketing: 'revenue_leakage' };
     const solution = {
       id: solutionId,
+      industry,
       signalId: finding.id,
+      // The holder agent this finding was raised by — flows to the agent spec
+      // as the default "reports to" when a worker is built (editable in Studio).
+      holderAgentId: finding.raisedByAgentId,
+      holderAgentName: finding.raisedByAgentName,
       signalName: finding.title,
       signalCategory: categoryByStream[finding.streamKey] ?? (finding.severity === 'critical' ? 'derailer' : 'laggard'),
       status: 'drafting',
@@ -1355,6 +1985,7 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
     finding.status = 'acting';
     finding.solutionDesignId = solutionId;
     logAudit('finding', finding.id, 'disposition: act — solution design opened');
+    ledgerSubtitle = 'Fix opened — solution design and tasks to follow';
   } else if (disposition === 'acknowledge') {
     // Acknowledge: watch state — carries a re-alert condition so it comes back if it worsens.
     const node = brainsState[industry].nodes.find((n) => n.id === finding.linkedKpiNodeId);
@@ -1362,12 +1993,14 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
     finding.reAlertCondition = reAlertCondition
       || `Re-alert if ${node?.name ?? 'the linked KPI'} worsens a further 5% or after 14 days`;
     logAudit('finding', finding.id, `acknowledged — ${finding.reAlertCondition}`);
+    ledgerSubtitle = `Parked — ${finding.reAlertCondition}`;
   } else if (disposition === 'abandon') {
     // Abandon: requires a reason — the reason is what tunes the agent.
     if (!reason || !reason.trim()) return res.status(400).json({ message: 'Abandoning a finding requires a reason — it tunes the agent' });
     finding.status = 'abandoned';
     finding.dispositionReason = reason.trim();
     logAudit('finding', finding.id, `abandoned with reason: ${reason.trim()}`);
+    ledgerSubtitle = `Dismissed — ${reason.trim()}`;
   } else {
     return res.status(400).json({ message: 'disposition must be accept, act, acknowledge or abandon' });
   }
@@ -1376,18 +2009,221 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
   finding.dispositionBy = currentUser.name;
   finding.dispositionAt = now;
   finding.slaHoursRemaining = 0;
+
+  // The loop engine's clock: a decided finding stops its SLA wake-up; a parked
+  // one arms the WINDOW half of its re-alert rule ("or after N days") — the
+  // data half ("worsens a further X%") stays with the sweep.
+  if (finding.id.startsWith('live-')) {
+    await loopTimers.cancelTimers(finding.id).catch(() => {});
+    if (disposition === 'acknowledge') {
+      const { days } = parseReAlertCondition(finding.reAlertCondition);
+      await loopTimers.scheduleTimer({
+        kind: 're_alert_window', subjectId: finding.id, industry,
+        fireAt: new Date(Date.now() + days * 86_400_000).toISOString(),
+      }).catch(() => {});
+    }
+  }
+
+  // The ledger write: every decision lands in the Decision Ledger the moment
+  // it is made — the four A's under their UI names, verdict left to the
+  // assessor. Rows for live-* findings stay in-memory only (stripped from the
+  // KV snapshot with their parent, which is re-raised from Postgres).
+  const verbLabel = { accept: 'Accept', act: 'Act', acknowledge: 'Park', abandon: 'Dismiss' }[disposition];
+  const ledgerRow = {
+    id: `led-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    persona: finding.persona,
+    title: `${verbLabel} — ${finding.title}`,
+    subtitle: ledgerSubtitle ?? finding.summary,
+    madeBy: { type: 'human', name: currentUser.name, initials: currentUser.initials, avatarBg: currentUser.avatarBg },
+    informedBy: { type: 'agent', name: finding.raisedByAgentName },
+    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+    verdict: 'too_early',
+    measuredImpact: { text: 'measuring…', direction: 'flat' },
+    function: finding.streamKey === 'finance' ? 'finance' : 'operations',
+    findingId: finding.id,
+    ...(finding.entity ? { entity: finding.entity } : {}),
+    ...(finding.region ? { region: finding.region } : {}),
+  };
+  (decisionLedgerState[industry] ?? (decisionLedgerState[industry] = [])).unshift(ledgerRow);
+  // The durable evidence under the screen's ledger (P1.6): the decision as an
+  // immutable hash-chained event. Awaited — a decision that isn't in the
+  // evidence layer didn't happen.
+  await ledger.appendEvent({
+    kind: 'decision', industry, persona: finding.persona, findingId: finding.id,
+    actor: req.auth?.sub ?? currentUser.name,
+    payload: { title: ledgerRow.title, subtitle: ledgerRow.subtitle, disposition, ledgerRowId: ledgerRow.id },
+  }).catch((err) => console.warn('[ledger] decision event failed:', err?.message ?? err));
+  logAudit('decision', ledgerRow.id, `${verbLabel} recorded in the Decision Ledger for ${finding.id}`);
+
   res.json(stripServerFields(finding));
 });
+
+// The chief agent of an industry is the stream-less agent at the top of
+// its shadow org (persona group_ceo for FMCG, coo for the legacy industries).
+// Escalation routes to its real id — never a templated `${industry}-sa-chief`,
+// which only matched FMCG and left healthcare/manufacturing escalations
+// unattached (the seeded chiefs are hc-sa-chief / mfg-sa-chief).
+function chiefIdFor(industry) {
+  return shadowOrgsSeed[industry]?.agents.find((a) => a.streamKey === null)?.id ?? null;
+}
+
+// Escalation is the stitch between levels of the org: an unanswered finding
+// becomes the parent role's call. The walk itself (persona up the solid line,
+// dotted-line flag, level, SLA, chief routing) lives once in roles.js
+// escalateFinding; this binds it to the industry's chief. Shared by the escalate
+// route and the SLA heartbeat.
+function escalateFindingUp(finding, industry, deliveryNote) {
+  const fromPersona = finding.persona;
+  const result = escalateFinding(finding, { industry, chiefId: chiefIdFor(industry) });
+  // One accountable owner; transfers are events (P1.6) — every escalation
+  // lands in the evidence layer with who held it and who holds it now.
+  if (finding.persona !== fromPersona) {
+    ledger.appendEvent({
+      kind: 'transfer', industry, persona: finding.persona, findingId: finding.id,
+      actor: 'Rewive (escalation)',
+      payload: { from: fromPersona, to: finding.persona, escalationLevel: finding.escalationLevel, title: finding.title },
+    }).catch((err) => console.warn('[ledger] transfer event failed:', err?.message ?? err));
+  }
+  // The delivery moment: the finding is now the parent role's call, and the
+  // parent must hear about it without having the product open.
+  pushNotification(industry, {
+    type: 'escalation',
+    persona: finding.persona,
+    findingId: finding.id,
+    title: finding.title,
+    body: deliveryNote ?? `Unanswered on the level below — now your call. SLA reset to ${finding.slaHoursRemaining}h.`,
+  });
+  if (result.dottedRole) {
+    pushNotification(industry, {
+      type: 'dotted_flag',
+      persona: result.dottedRole,
+      findingId: finding.id,
+      title: finding.title,
+      body: 'Flagged to you on the functional line as it escalated.',
+    });
+  }
+  return result;
+}
+
+// A manual escalate/re-alert resets slaHoursRemaining, but for live findings the
+// wall-clock slaDeadlineAt is the source of truth (hydrate recomputes the hours
+// from it). Push the deadline out to match, or the reset is reverted on the next
+// request and the stale deadline auto-escalates the finding a second time.
+function syncLiveDeadline(finding) {
+  if (!finding.id.startsWith('live-')) return;
+  const row = liveFindingRows.get(finding.id);
+  if (!row) return;
+  row.slaDeadlineAt = new Date(Date.now() + (finding.slaHoursRemaining || 0) * 3_600_000).toISOString();
+  // Every deadline move re-arms the loop engine's wake-up here — one
+  // write-point, no per-site code (same pattern as escalateFindingUp's
+  // notification delivery). Fire-and-forget: the timer is a hint, and the
+  // hydrate backstop still catches a missed schedule.
+  scheduleSlaTimer(row).catch(() => {});
+}
+
+/** Arm the loop engine's SLA wake-up for an open live finding. The timer is a
+ * wake-up, not the truth — the executor re-reads the row when it fires. */
+function scheduleSlaTimer(row) {
+  if (row?.finding?.status === 'open' && row.slaDeadlineAt) {
+    return loopTimers.scheduleTimer({
+      kind: 'sla_escalation', subjectId: row.id, industry: row.industry, fireAt: row.slaDeadlineAt,
+    });
+  }
+  return Promise.resolve();
+}
 
 app.post('/api/v1/findings/:id/escalate', (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
   const { finding, industry } = hit;
   if (finding.status !== 'open') return res.status(400).json({ message: 'Only open findings can be escalated' });
-  finding.escalationLevel += 1;
-  finding.escalatedToAgentId = `${industry}-sa-chief`;
-  finding.slaHoursRemaining = 12;
-  logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} up the shadow org`);
+  const { parentRole, dottedRole } = escalateFindingUp(finding, industry);
+  syncLiveDeadline(finding);
+  logAudit('finding', finding.id, `escalated to level ${finding.escalationLevel} — now ${parentRole ? `${parentRole}'s` : 'the top role’s'} call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`);
+  res.json(stripServerFields(finding));
+});
+
+// ---------- Notifications (the escalation outbox) ----------
+app.get('/api/v1/notifications', (req, res) => {
+  const { persona, scope } = req.query;
+  res.json(filterByPersona(notificationsState[v4Industry(req)] ?? [], persona, scope));
+});
+
+app.post('/api/v1/notifications/read', (req, res) => {
+  const ids = new Set(req.body?.ids ?? []);
+  const now = new Date().toISOString();
+  for (const n of notificationsState[v4Industry(req)] ?? []) {
+    if (ids.has(n.id) && !n.readAt) n.readAt = now;
+  }
+  res.json({ ok: true });
+});
+
+// ---------- Leadership actions ----------
+// A senior role looking at a finding owned below them must NOT get the four-A
+// disposition — that is the owner's call, and offering it quietly breaks the
+// accountability model. What a leader can legitimately do is push on it: ask
+// for a status, move it to a different report, raise its priority, or pull
+// ownership up to themselves. Everything here is logged on the finding so the
+// thread shows who leaned on it and when.
+const SEVERITY_LADDER = ['low', 'medium', 'high', 'critical'];
+const LEADERSHIP_ACTIONS = new Set(['ask', 'reassign', 'raise_priority', 'take']);
+
+app.post('/api/v1/findings/:id/leadership', (req, res) => {
+  const hit = findFinding(req.params.id);
+  if (!hit) return res.status(404).json({ message: 'Finding not found' });
+  const { finding } = hit;
+  const { action, byPersona, toPersona, note } = req.body ?? {};
+
+  if (!LEADERSHIP_ACTIONS.has(action)) return res.status(400).json({ message: 'Unknown leadership action' });
+  if (!byPersona || !ROLE_CHILDREN[byPersona]) return res.status(400).json({ message: 'A valid acting role is required' });
+  if (finding.status !== 'open') return res.status(400).json({ message: 'Only open findings can be pushed on' });
+
+  // Authority check: the actor must sit strictly above the current owner.
+  // Acting on your own finding is a disposition, not a leadership action.
+  const below = roleSubtree(byPersona).filter((r) => r !== byPersona);
+  if (!below.includes(finding.persona)) {
+    return res.status(403).json({ message: 'This finding is not owned below you' });
+  }
+
+  const at = new Date().toISOString();
+  const entry = { action, byPersona, at, note: note || null, toPersona: null };
+  let summary;
+
+  if (action === 'ask') {
+    // No ownership change and no clock change — asking is not deciding.
+    finding.awaitingResponseTo = byPersona;
+    summary = `${byPersona} asked ${finding.persona} for a status`;
+  } else if (action === 'reassign') {
+    if (!toPersona || !below.includes(toPersona)) {
+      return res.status(400).json({ message: 'Reassign target must be a role below you' });
+    }
+    entry.toPersona = toPersona;
+    summary = `${byPersona} reassigned this from ${finding.persona} to ${toPersona}`;
+    finding.persona = toPersona;
+    finding.slaHoursRemaining = 24; // a new owner gets a fresh clock
+    syncLiveDeadline(finding);
+  } else if (action === 'raise_priority') {
+    const i = SEVERITY_LADDER.indexOf(finding.severity);
+    const next = SEVERITY_LADDER[Math.min(i + 1, SEVERITY_LADDER.length - 1)];
+    summary = next === finding.severity
+      ? `${byPersona} flagged this as already at top severity`
+      : `${byPersona} raised severity ${finding.severity} → ${next}`;
+    finding.severity = next;
+    finding.slaHoursRemaining = Math.max(4, Math.round(finding.slaHoursRemaining / 2));
+    syncLiveDeadline(finding);
+  } else {
+    // take — ownership moves up. The leader now owns the disposition.
+    entry.toPersona = byPersona;
+    summary = `${byPersona} took ownership from ${finding.persona}`;
+    finding.takenFrom = finding.persona;
+    finding.persona = byPersona;
+    finding.slaHoursRemaining = 24;
+    syncLiveDeadline(finding);
+  }
+
+  entry.summary = summary;
+  finding.leadershipLog = [...(finding.leadershipLog ?? []), entry];
+  logAudit('finding', finding.id, summary);
   res.json(stripServerFields(finding));
 });
 
@@ -1395,23 +2231,27 @@ app.post('/api/v1/findings/:id/escalate', (req, res) => {
 app.post('/api/v1/findings/:id/re-alert', (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
-  const { finding } = hit;
+  const { finding, industry } = hit;
   if (finding.status !== 'acknowledged') return res.status(400).json({ message: 'Only acknowledged findings can re-alert' });
   finding.status = 'open';
   finding.disposition = null;
   finding.dispositionBy = null;
   finding.dispositionAt = null;
-  finding.slaHoursRemaining = 12;
-  finding.escalationLevel += 1;
-  logAudit('finding', finding.id, 're-alerted — trip-wire fired, back to open for disposition');
+  const { parentRole } = escalateFindingUp(finding, industry, 'A parked trip-wire fired — the finding re-opened one level up. Now your call.');
+  syncLiveDeadline(finding);
+  logAudit('finding', finding.id, `re-alerted — trip-wire fired, back to open${parentRole ? ` one level up (now ${parentRole}'s call)` : ''}`);
   res.json(stripServerFields(finding));
 });
 
 // ---------- Exit conditions (closure) ----------
-app.get('/api/v1/closure-kpis', (req, res) => res.json(closureKpisState[v4Industry(req)]));
+app.get('/api/v1/closure-kpis', (req, res) => {
+  const industry = v4Industry(req);
+  const { persona, scope } = req.query;
+  res.json(filterClosuresByPersona(closureKpisState[industry] ?? [], findingsState[industry] ?? [], persona, scope));
+});
 
 // Close the loop: mark an exit condition met, which closes its originating finding too.
-app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
+app.post('/api/v1/closure-kpis/:id/close', async (req, res) => {
   const industry = v4Industry(req);
   const closure = closureKpisState[industry].find((c) => c.id === req.params.id);
   if (!closure) return res.status(404).json({ message: 'Exit condition not found' });
@@ -1430,6 +2270,7 @@ app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
       at: now,
     };
     logAudit('finding', finding.id, 'loop closed — assessor confirmed the exit condition held');
+    if (finding.id.startsWith('live-')) await loopTimers.cancelTimers(finding.id).catch(() => {});
   }
   logAudit('kpi', closure.id, `exit condition met and closed: ${closure.name}`);
   res.json(closure);
@@ -1438,6 +2279,349 @@ app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
 // ---------- Full-state snapshot, for persistence on serverless (see mock-server/kv.js) ----------
 // Reaches into every mutable collection above rather than threading a store
 // through each route — keeps this additive instead of rewriting ~40 handlers.
+// ============ Demo heartbeat (dev server only) ============
+// Makes the loop run by itself: SLA clocks tick down and expired findings walk
+// up the org unprompted ("silence escalates" — live), agents sweep the
+// senses they watch on a cadence, and active connectors pull fresh loads.
+// Only server.js starts this — never the serverless handler (api/handler.js),
+// where an interval can't survive the invocation.
+const TICK_MS = 30_000;
+// 0.1h per 30s tick = demo time runs 12x real time — the 4h hero finding
+// auto-escalates ~20 real minutes after boot. Tune per demo:
+//   REWIVE_SLA_HOURS_PER_TICK=0    freeze the clocks
+//   REWIVE_SLA_HOURS_PER_TICK=1    stage speed — the hero escalates in ~2 min
+const SLA_HOURS_PER_TICK = Number(process.env.REWIVE_SLA_HOURS_PER_TICK ?? 0.1);
+const SENSE_SWEEP_EVERY_TICKS = 4; // each agent re-checks its senses every ~2 min
+const CONNECTOR_LOAD_EVERY_MS = 5 * 60_000; // active connectors pull a load every ~5 min
+
+let heartbeatTickCount = 0;
+const connectorLastLoadMs = new Map();
+
+function heartbeatTick() {
+  heartbeatTickCount += 1;
+  const nowIso = new Date().toISOString();
+  const nowMs = Date.now();
+
+  // 1) SLA clocks — silence escalates, without anyone clicking.
+  if (SLA_HOURS_PER_TICK > 0) {
+    for (const [industry, findings] of Object.entries(findingsState)) {
+      for (const finding of findings) {
+        // Live findings run wall-clock SLAs (sla_deadline_at, recomputed at
+        // hydrate) — the demo tick doesn't apply to them.
+        if (finding.id.startsWith('live-')) continue;
+        if (finding.status !== 'open' || finding.slaHoursRemaining <= 0) continue;
+        finding.slaHoursRemaining = Math.round((finding.slaHoursRemaining - SLA_HOURS_PER_TICK) * 10) / 10;
+        if (finding.slaHoursRemaining > 0) continue;
+        if (escalationParent(finding.persona, industry)) {
+          const { parentRole, dottedRole } = escalateFindingUp(finding, industry);
+          logAudit(
+            'finding',
+            finding.id,
+            `SLA expired unanswered — auto-escalated to level ${finding.escalationLevel}, now ${parentRole}'s call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`,
+            'Rewive (system)',
+          );
+        } else {
+          // Top of the tree: nowhere left to go — breached and waiting.
+          finding.slaHoursRemaining = 0;
+          logAudit('finding', finding.id, 'SLA breached at the top of the org — waiting unanswered', 'Rewive (system)');
+        }
+      }
+    }
+  }
+
+  // 2) Sense sweeps — agents re-check the numbers they watch, staggered
+  // so the timestamps read organically. First tick sweeps everyone.
+  for (const org of Object.values(shadowOrgsSeed)) {
+    org.agents.forEach((agent, i) => {
+      if (heartbeatTickCount === 1 || (heartbeatTickCount + i) % SENSE_SWEEP_EVERY_TICKS === 0) {
+        agent.lastSenseSweepAt = nowIso;
+      }
+    });
+  }
+
+  // 3) Connector loads — active connections pull fresh data on a cadence.
+  for (const conn of connectionsState) {
+    if (conn.status !== 'active') continue;
+    const last = connectorLastLoadMs.get(conn.id) ?? 0;
+    if (nowMs - last >= CONNECTOR_LOAD_EVERY_MS) {
+      connectorLastLoadMs.set(conn.id, nowMs);
+      logAudit('connection', conn.id, `pulled a fresh load — ${conn.name}`, 'Rewive (system)');
+    }
+    const mins = Math.round((nowMs - connectorLastLoadMs.get(conn.id)) / 60_000);
+    conn.lastSyncedAt = mins < 1 ? 'just now' : `${mins} min ago`;
+  }
+
+  // 4) Live datasets ride the same cadence — fresh loads with a little row growth.
+  for (const list of Object.values(datasetsState)) {
+    for (const ds of list) {
+      if (ds.status !== 'live') continue;
+      const last = connectorLastLoadMs.get(ds.id) ?? 0;
+      if (nowMs - last >= CONNECTOR_LOAD_EVERY_MS) {
+        connectorLastLoadMs.set(ds.id, nowMs);
+        ds.lastLoadAt = nowIso;
+        if (typeof ds.rows === 'number') ds.rows += Math.max(1, Math.round(ds.rows * 0.0004));
+      }
+    }
+  }
+}
+
+export function startHeartbeat() {
+  heartbeatTick(); // first sweep immediately so screens show life right away
+  const timer = setInterval(heartbeatTick, TICK_MS);
+  timer.unref?.();
+  return timer;
+}
+
+// ============ Live tracking: hydrate/persist overlay ============
+// Sweep-raised findings/closures (live-* ids) live in the tracking store
+// (Postgres, or memory in dev). They are hydrated into findingsState /
+// closureKpisState so every existing route works on them unmodified, then
+// written back after the request. They are stripped from the KV snapshot
+// below so the store stays the single writer for them (no split-brain).
+let liveFindingRows = new Map(); // id -> store row ({...row, finding: <object in findingsState>})
+let liveFindingSnapshots = new Map(); // id -> serialized row at hydrate time
+let liveClosureRows = new Map(); // id -> store row
+let liveClosureSnapshots = new Map();
+
+// slaHoursRemaining is recomputed from the wall clock on every hydrate — keep
+// it out of the dirty-diff so it alone never triggers a write-back.
+function serializeLiveRow(row) {
+  const clone = JSON.parse(JSON.stringify(row));
+  delete clone.finding?.slaHoursRemaining;
+  return JSON.stringify(clone);
+}
+
+export async function hydrateLiveState() {
+  const [rows, closures] = await Promise.all([tracking.loadLiveFindings(), tracking.loadLiveClosures()]);
+  liveFindingRows = new Map();
+  liveFindingSnapshots = new Map();
+  liveClosureRows = new Map();
+  liveClosureSnapshots = new Map();
+
+  for (const row of rows) {
+    // Snapshot as loaded — any mutation after this point (SLA escalation here,
+    // dispositions in the routes) shows up as a dirty diff and persists.
+    liveFindingSnapshots.set(row.id, serializeLiveRow(row));
+    const finding = row.finding;
+
+    // Wall-clock SLA: no heartbeat runs on serverless, so silence escalates on
+    // the first request after the deadline passes.
+    if (row.status === 'open' && row.slaDeadlineAt) {
+      const remainingH = (new Date(row.slaDeadlineAt).getTime() - Date.now()) / 3_600_000;
+      if (remainingH > 0) {
+        finding.slaHoursRemaining = Math.round(remainingH * 10) / 10;
+      } else if (escalationParent(finding.persona, row.industry)) {
+        const { parentRole, dottedRole } = escalateFindingUp(finding, row.industry);
+        row.slaDeadlineAt = new Date(Date.now() + finding.slaHoursRemaining * 3_600_000).toISOString();
+        await scheduleSlaTimer(row); // re-arm the engine for the fresh deadline
+        logAudit('finding', finding.id, `SLA expired unanswered — auto-escalated to level ${finding.escalationLevel}, now ${parentRole}'s call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`, 'Rewive (system)');
+      } else {
+        finding.slaHoursRemaining = 0;
+      }
+    }
+
+    const list = findingsState[row.industry] ?? (findingsState[row.industry] = []);
+    const idx = list.findIndex((f) => f.id === row.id);
+    if (idx === -1) list.push(finding);
+    else list[idx] = finding;
+    liveFindingRows.set(row.id, row);
+  }
+
+  for (const row of closures) {
+    liveClosureSnapshots.set(row.id, JSON.stringify(row));
+    const list = closureKpisState[row.industry] ?? (closureKpisState[row.industry] = []);
+    const idx = list.findIndex((c) => c.id === row.id);
+    if (idx === -1) list.push(row.closure);
+    else list[idx] = row.closure;
+    liveClosureRows.set(row.id, row);
+  }
+}
+
+// The acknowledge trip-wire is entered as free text ("re-alert if it worsens a
+// further 10% or after 30 days"). Pull the numbers out so the sweep enforces
+// what the user actually typed, not a fixed 5%/14d — the condition shown on the
+// finding's thread and the condition enforced must be the same. Falls back to
+// the 5%/14d default the acknowledge placeholder advertises when no numbers are
+// given (so the displayed default still matches).
+function parseReAlertCondition(text) {
+  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(text ?? '');
+  const days = /(\d+)\s*days?/i.exec(text ?? '');
+  return { pct: pct ? Number(pct[1]) : 5, days: days ? Number(days[1]) : 14 };
+}
+
+export async function persistLiveState() {
+  for (const [id, row] of liveFindingRows) {
+    row.status = row.finding.status;
+    // A live finding acknowledged through the normal route gets its structured
+    // trip-wire meta here; the sweep fills in ackDeviationPct on its next pass.
+    if (row.finding.status === 'acknowledged' && !row.reAlert) {
+      const { pct, days } = parseReAlertCondition(row.finding.reAlertCondition);
+      row.reAlert = { pct, days, ackAt: row.finding.dispositionAt ?? new Date().toISOString(), ackDeviationPct: null };
+    }
+    const serialized = serializeLiveRow(row);
+    if (serialized !== liveFindingSnapshots.get(id)) {
+      await tracking.saveLiveFinding(row);
+      liveFindingSnapshots.set(id, serialized);
+    }
+  }
+
+  // Existing hydrated closures (sweep progress, close route) plus closures
+  // newly created by accepting a live finding during this request.
+  for (const [industry, list] of Object.entries(closureKpisState)) {
+    for (const closure of list) {
+      if (!closure.id.startsWith('live-')) continue;
+      const row = liveClosureRows.get(closure.id)
+        ?? { id: closure.id, industry, findingId: closure.findingId, closure };
+      row.closure = closure;
+      const serialized = JSON.stringify(row);
+      if (serialized !== liveClosureSnapshots.get(closure.id)) {
+        await tracking.saveLiveClosure(row);
+        liveClosureRows.set(closure.id, row);
+        liveClosureSnapshots.set(closure.id, serialized);
+      }
+    }
+  }
+}
+
+const sweepCtx = {
+  getBrains: () => brainsState,
+  shadowOrgs: shadowOrgsSeed,
+  escalateFinding,
+  chiefIdFor,
+  logAudit,
+  // Arm the loop engine's SLA wake-up for a row the sweep just raised or
+  // re-opened. The sweep passes its own row (not the request-hydrated one).
+  scheduleLoopTimers: (row) => (row?.finding?.status === 'open' && row.slaDeadlineAt
+    ? loopTimers.scheduleTimer({ kind: 'sla_escalation', subjectId: row.id, industry: row.industry, fireAt: row.slaDeadlineAt })
+    : Promise.resolve()),
+  getOrgName: () => orgProfileState.orgName ?? 'the org',
+  // First seeded finding of the industry doubles as the authoring tone example.
+  exampleFindingFor: (industry) => {
+    const seed = findingsSeed[industry]?.[0];
+    return seed ? { title: seed.title, summary: seed.summary, evidence: seed.evidence, impactEstimate: seed.impactEstimate } : null;
+  },
+};
+
+export const runLiveSweep = (trigger) => runSweep(trigger, sweepCtx);
+
+/** Default live-tracked mandates — no-ops once any config exists. */
+export const seedLiveTracking = () => seedTrackingIfEmpty(() => brainsState);
+
+// The control plane's templates are the four hand-seeded industries — 'custom'
+// is an installed org, not a template anyone can provision from.
+const isKnownTemplate = (k) => k !== CUSTOM_INDUSTRY && Boolean(brainsState[k]);
+export const seedControlPlane = () => initControlPlane({ isKnownTemplate });
+registerControlPlaneRoutes(app, { isKnownTemplate, logAudit });
+
+// ---------- The loop engine (ARCH-GTM-001 P1.5): durable wall-clock timers ----------
+// Escalation becomes a scheduled event, not a query someone has to run: timers
+// live in the store (loop_timers / memory mirror), the executor claims what is
+// due and re-checks the live row before acting. The clock half runs here; the
+// data half (trip-wire worsening, recovery progress) stays with the sweep —
+// those are events from metrics, not clocks. hydrateLiveState's lazy check
+// remains as the serverless backstop; both act on the same slaDeadlineAt, so
+// whichever fires first resets the deadline and the other no-ops.
+export async function executeLoopTimers(asOf = Date.now()) {
+  const due = await loopTimers.claimDueTimers(20, asOf);
+  const results = [];
+  for (const t of due) {
+    const row = liveFindingRows.get(t.subjectId);
+    const finding = row?.finding;
+    const done = (action) => results.push({ id: t.id, kind: t.kind, subjectId: t.subjectId, action });
+    if (!finding) { done('stale — subject gone'); continue; }
+
+    if (t.kind === 'sla_escalation') {
+      if (finding.status !== 'open' || !row.slaDeadlineAt) { done('stale — no longer open'); continue; }
+      if (new Date(row.slaDeadlineAt).getTime() > asOf) {
+        // The deadline moved after this wake-up was armed — re-arm, don't act.
+        await scheduleSlaTimer(row);
+        done('rescheduled — deadline moved');
+        continue;
+      }
+      if (!escalationParent(finding.persona, row.industry)) {
+        finding.slaHoursRemaining = 0;
+        done('at the top of the org — clock zeroed');
+        continue;
+      }
+      const { parentRole, dottedRole } = escalateFindingUp(finding, row.industry);
+      row.slaDeadlineAt = new Date(asOf + finding.slaHoursRemaining * 3_600_000).toISOString();
+      await scheduleSlaTimer(row);
+      logAudit('finding', finding.id, `SLA expired unanswered — loop engine escalated to level ${finding.escalationLevel}, now ${parentRole}'s call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`, 'Rewive (loop engine)');
+      done(`escalated to ${parentRole}`);
+    } else if (t.kind === 're_alert_window') {
+      if (finding.status !== 'acknowledged') { done('stale — no longer parked'); continue; }
+      finding.status = 'open';
+      finding.disposition = null;
+      finding.dispositionBy = null;
+      finding.dispositionAt = null;
+      escalateFindingUp(finding, row.industry, 'The parked window expired — back for a fresh decision one level up.');
+      row.status = 'open';
+      row.slaDeadlineAt = new Date(asOf + 12 * 3_600_000).toISOString();
+      await scheduleSlaTimer(row);
+      logAudit('finding', finding.id, 're-alert window expired — loop engine re-opened it one level up', 'Rewive (loop engine)');
+      done('re-alerted — window expired');
+    } else {
+      done('unknown timer kind');
+    }
+  }
+  return { claimed: due.length, results };
+}
+
+// ---------- The append-only ledger (P1.6): the evidence layer ----------
+app.get('/api/v1/ledger/events', async (req, res) => {
+  res.json({ storeMode: ledger.ledgerStoreMode(), events: await ledger.listEvents(req.query.industry ?? null) });
+});
+
+app.get('/api/v1/ledger/verify', async (_req, res) => {
+  res.json(await ledger.verifyChain());
+});
+
+app.post('/api/v1/ledger/anchor', async (_req, res) => {
+  try {
+    const anchor = await ledger.anchorHead();
+    logAudit('decision', 'ledger', `ledger anchored at seq ${anchor.seq} — head ${anchor.headHash.slice(0, 12)}…`);
+    res.status(201).json(anchor);
+  } catch (err) {
+    res.status(err.status ?? 500).json({ message: err.message });
+  }
+});
+
+app.get('/api/v1/ledger/anchors', async (_req, res) => {
+  res.json(await ledger.listAnchors());
+});
+
+app.get('/api/v1/loop-timers', async (req, res) => {
+  res.json({
+    storeMode: loopTimers.timerStoreMode(),
+    timers: await loopTimers.listTimers(req.query.industry ?? null),
+  });
+});
+
+app.post('/api/v1/loop-engine/tick', async (req, res) => {
+  // REWIVE_TIMER_TEST=1 unlocks time travel (asOf) — dev/test lever only.
+  const asOf = process.env.REWIVE_TIMER_TEST === '1' && req.body?.asOf
+    ? new Date(req.body.asOf).getTime()
+    : Date.now();
+  res.json(await executeLoopTimers(asOf));
+});
+
+/** The always-on worker's tick, for callers outside a request (the dev-server
+ * interval): hydrate → execute → persist, same shape the middleware gives the
+ * route version. */
+export async function runLoopEngineTick() {
+  await hydrateLiveState();
+  const out = await executeLoopTimers();
+  await persistLiveState();
+  return out;
+}
+
+registerTrackingRoutes(app, {
+  v4Industry,
+  getBrains: () => brainsState,
+  logAudit,
+  runSweep: runLiveSweep,
+});
+
 export function exportState() {
   return {
     agentSessions: Object.fromEntries(agentSessions),
@@ -1456,8 +2640,37 @@ export function exportState() {
     signalDetails,
     orgProfileState,
     brainsState,
-    findingsState,
-    closureKpisState,
+    // live-* entities are stripped: the tracking store (Postgres) is their
+    // single durable home — a KV copy would go stale and overwrite dispositions.
+    findingsState: Object.fromEntries(
+      Object.entries(findingsState).map(([k, list]) => [k, list.filter((f) => !f.id.startsWith('live-'))]),
+    ),
+    closureKpisState: Object.fromEntries(
+      Object.entries(closureKpisState).map(([k, list]) => [k, list.filter((c) => !c.id.startsWith('live-'))]),
+    ),
+    // Actions on live-* findings are dropped with their parent: the finding is
+    // re-raised from Postgres with a fresh id, so a KV copy would orphan them.
+    findingActionsState: Object.fromEntries(
+      Object.entries(findingActionsState).map(([k, list]) => [k, list.filter((a) => !a.findingId.startsWith('live-'))]),
+    ),
+    decisionLedgerState: Object.fromEntries(
+      Object.entries(decisionLedgerState).map(([k, list]) => [k, list.filter((d) => !d.findingId?.startsWith('live-'))]),
+    ),
+    notificationsState: Object.fromEntries(
+      Object.entries(notificationsState).map(([k, list]) => [k, list.filter((n) => !n.findingId?.startsWith('live-'))]),
+    ),
+    datasetsState,
+    analysisRequestsState,
+    // The whole runtime-created org rides in one blob; importState re-installs
+    // it into the module-level maps (opContent, shadowOrgsSeed, currency) that
+    // the snapshot doesn't carry.
+    customOrgState,
+    // Tenant catalog + memory-mode stores. In Postgres mode cp_tenants is the
+    // durable ledger and this blob is belt-and-braces only.
+    controlPlaneState: exportControlPlane(),
+    // The evidence layer (memory mode). Events are history — never stripped,
+    // even for live-* findings: a dangling findingId is an honest past fact.
+    ledgerEventsState: ledger.exportLedger(),
   };
 }
 
@@ -1481,6 +2694,17 @@ export function importState(snapshot) {
   if (snapshot.brainsState) brainsState = snapshot.brainsState;
   if (snapshot.findingsState) findingsState = snapshot.findingsState;
   if (snapshot.closureKpisState) closureKpisState = snapshot.closureKpisState;
+  if (snapshot.findingActionsState) findingActionsState = snapshot.findingActionsState;
+  if (snapshot.decisionLedgerState) decisionLedgerState = snapshot.decisionLedgerState;
+  if (snapshot.notificationsState) notificationsState = snapshot.notificationsState;
+  if (snapshot.datasetsState) datasetsState = snapshot.datasetsState;
+  if (snapshot.analysisRequestsState) analysisRequestsState = snapshot.analysisRequestsState;
+  if (snapshot.customOrgState) {
+    customOrgState = snapshot.customOrgState;
+    installCustomOrg();
+  }
+  if (snapshot.controlPlaneState) importControlPlane(snapshot.controlPlaneState);
+  if (snapshot.ledgerEventsState) ledger.importLedger(snapshot.ledgerEventsState);
 }
 
 export default app;
