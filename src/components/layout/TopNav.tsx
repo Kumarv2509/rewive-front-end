@@ -39,7 +39,9 @@ export function TopNav() {
 
   const switchOrg = () => {
     clearActiveTenant();
-    navigate(tenant ? `/login?org=${tenant.id}` : '/login');
+    // Land on "find your organization" — the front door doesn't list tenants,
+    // so there is no picker to preselect the old org in.
+    navigate('/login');
   };
 
   return (

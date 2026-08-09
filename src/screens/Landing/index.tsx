@@ -1,25 +1,4 @@
-import { useNavigate } from 'react-router-dom';
-import type { IndustryKey } from '../../api/types';
-import { tenantForIndustry } from '../../tenants';
-
-// Manufacturing pack exists but is hidden until it's as deep as the other two —
-// a shallow third industry weakens the "this understands my business" effect.
-const INDUSTRIES: { id: IndustryKey; name: string; blurb: string; mandates: number }[] = [
-  { id: 'fmcg', name: 'FMCG / food & beverage', blurb: 'Manufacturing, distribution and trade across modern and traditional channels.', mandates: 26 },
-  { id: 'healthcare', name: 'Healthcare', blurb: 'Clinical operations, revenue cycle, patient experience, pharmacy, finance and people.', mandates: 22 },
-  { id: 'hypermarket', name: 'Hypermarket retail', blurb: 'Store operations, merchandising, supply chain, e-commerce and customer across a multi-site network.', mandates: 21 },
-];
-
-function useEnter() {
-  const navigate = useNavigate();
-  // Picking a context hands you to the organization sign-in with that tenant
-  // preselected — the SaaS front door owns setting the industry.
-  const enter = (id: IndustryKey) => {
-    const tenant = tenantForIndustry(id);
-    navigate(tenant ? `/login?org=${tenant.id}` : '/login');
-  };
-  return { enter, pending: false };
-}
+import { Link } from 'react-router-dom';
 
 const css = `
 .om{
@@ -70,18 +49,9 @@ const css = `
 .om .hero .lede{margin-bottom:26px}
 .om .hero .thesis-line{font-family:var(--om-mono);font-size:.9rem;color:var(--om-ink-2);border-left:2px solid var(--accent);padding-left:16px;max-width:56ch;margin-bottom:34px}
 .om .hero .thesis-line b{color:var(--om-ink);font-weight:500}
-.om .ind-picker{scroll-margin-top:24px}
-.om .ind-picker-label{font-family:var(--om-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--om-ink-3);margin-bottom:14px}
-.om .ind-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:880px}
-.om .ind-card{text-align:left;cursor:pointer;font-family:inherit;color:var(--om-ink);background:var(--om-card);border:1px solid var(--om-line-2);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:8px;transition:border-color .18s,box-shadow .18s;box-shadow:var(--shadow)}
-.om .ind-card:hover:not(:disabled){border-color:var(--accent);box-shadow:var(--shadow-lg)}
-.om .ind-card:disabled{opacity:.5;cursor:default}
-.om .ind-card .ind-name{font-size:1rem;font-weight:700;letter-spacing:-.01em}
-.om .ind-card .ind-blurb{font-size:.84rem;color:var(--om-ink-2);line-height:1.5;flex:1}
-.om .ind-card .ind-foot{display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:12px;border-top:1px solid var(--om-line)}
-.om .ind-card .ind-count{font-family:var(--om-mono);font-size:.72rem;color:var(--om-ink-3)}
-.om .ind-card .ind-go{font-size:.86rem;font-weight:600;color:var(--i3)}
-.om .ind-card .ind-go .arr{font-family:var(--om-mono)}
+.om .cta-row{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.om .cta-sub{font-size:.92rem;font-weight:600;text-decoration:none;color:var(--om-ink-2);border-bottom:1px solid var(--om-line-2);padding-bottom:2px;transition:color .2s,border-color .2s}
+.om .cta-sub:hover{color:var(--om-ink);border-color:var(--om-ink-3)}
 
 /* the system, working — finding card inside the loop */
 .om .viz{position:relative;min-height:500px}
@@ -239,30 +209,8 @@ const css = `
   .om .ex-step:first-child{border-top:none}
   .om .tier{grid-template-columns:1fr;gap:8px}
 }
-@media(max-width:720px){.om .ind-cards{grid-template-columns:1fr}}
 @media(max-width:520px){.om .dispo{grid-template-columns:1fr}.om .anatomy{grid-template-columns:1fr}.om .stats{grid-template-columns:1fr}}
 `;
-
-function IndustryPicker() {
-  const { enter, pending } = useEnter();
-  return (
-    <div className="ind-picker" id="start">
-      <div className="ind-picker-label">Choose your operating context to begin</div>
-      <div className="ind-cards">
-        {INDUSTRIES.map((ind) => (
-          <button key={ind.id} className="ind-card" disabled={pending} onClick={() => enter(ind.id)}>
-            <div className="ind-name">{ind.name}</div>
-            <div className="ind-blurb">{ind.blurb}</div>
-            <div className="ind-foot">
-              <span className="ind-count">{ind.mandates} mandates</span>
-              <span className="ind-go">Enter <span className="arr">→</span></span>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /** The system, caught mid-loop: a finding waiting on its human, inside Sense → Find → Decide → Act → Close. */
 function HeroViz() {
@@ -321,7 +269,7 @@ export function LandingScreen() {
           <span className="mk">R</span>
           <span className="nm">Rewive</span>
         </span>
-        <a href="#start" className="enter">Get started ↓</a>
+        <Link to="/login" className="enter">Sign in</Link>
       </header>
 
       {/* HERO — the story on the left, the system caught working on the right */}
@@ -332,7 +280,10 @@ export function LandingScreen() {
             <h1>Nothing drifts <span className="grad-text">unanswered</span>.</h1>
             <p className="lede">Rewive watches your numbers alongside the people who own them. When one drifts, it raises a finding, gets it decided, and keeps watching until the number is back.</p>
             <p className="thesis-line"><b>Every mandate is held twice</b> — once by a person, once by its agent.</p>
-            <IndustryPicker />
+            <div className="cta-row">
+              <Link to="/login" className="cta">Sign in to your organization <span className="arr">→</span></Link>
+              <Link to="/onboard" className="cta-sub">Set up a new organization</Link>
+            </div>
           </div>
           <HeroViz />
         </div>
@@ -562,7 +513,7 @@ export function LandingScreen() {
       <section className="close wrap">
         <h2>A red number is <span className="grad-text">no longer nobody's problem</span>.</h2>
         <p className="lede">The organization does the work. Its agents make sure the work still serves the intent, catch it when it doesn't, and bring you the decision the moment it counts.</p>
-        <div><a href="#start" className="cta">Choose your context <span className="arr">↑</span></a></div>
+        <div><Link to="/login" className="cta">Sign in to your organization <span className="arr">→</span></Link></div>
         <p className="sig">Every mandate, held twice.</p>
       </section>
     </div>

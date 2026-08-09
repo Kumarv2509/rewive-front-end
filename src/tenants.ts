@@ -1,5 +1,5 @@
 import type { IndustryKey } from './api/types';
-import { getActiveIndustry, clearActiveIndustry } from './api/client';
+import { getActiveIndustry, clearActiveIndustry, clearAuthToken } from './api/client';
 
 // SaaS tenancy, demo-grade: each organization (tenant) is a workspace that maps
 // onto one industry pack. Signing in as an org sets the industry context and
@@ -117,6 +117,40 @@ export function tenantById(id: string | null | undefined): Tenant | null {
   return allTenants().find((t) => t.id === id) ?? null;
 }
 
+/**
+ * Resolve organizations from what a signing-in user knows — the org's name, its
+ * workspace id, or their work email. The front door never lists tenants (a
+ * multi-tenant product doesn't show one customer the others), so this lookup is
+ * how the right org is found. Returns all matches so the caller can tell
+ * "found", "ambiguous" and "unknown" apart.
+ */
+export function findTenants(query: string): Tenant[] {
+  // Normalize both sides the same way, or the name the product itself displays
+  // ("Medcare UAE (demo)") fails to match its own tenant.
+  const norm = (s: string) => s.toLowerCase().replace(/\(demo\)/g, '').trim();
+  const q = norm(query);
+  if (!q) return [];
+  const tenants = allTenants();
+  if (q.includes('@')) {
+    const domain = q.split('@').pop()!.trim();
+    const byDomain = tenants.filter((t) => {
+      const d = t.domain.toLowerCase();
+      return d === domain || domain.endsWith(`.${d}`);
+    });
+    if (byDomain.length) return byDomain;
+    // No tenant owns that domain — e.g. an onboarded org whose stored domain is
+    // the derived "<slug>.example" placeholder. Fall back to matching the
+    // domain's stem against org names so "you@acmefoods.com" finds "Acme Foods"
+    // instead of dead-ending at "set up a new one" (which would overwrite it).
+    const squash = (s: string) => s.replace(/[^a-z0-9]/g, '');
+    const stem = squash(domain.split('.')[0] ?? '');
+    return stem ? tenants.filter((t) => squash(norm(t.name)).includes(stem)) : [];
+  }
+  const exact = tenants.filter((t) => t.id === q || norm(t.name) === q || t.domain.toLowerCase() === q);
+  if (exact.length) return exact;
+  return tenants.filter((t) => norm(t.name).includes(q) || t.domain.toLowerCase().includes(q));
+}
+
 export function tenantForIndustry(industry: string | null): Tenant | null {
   return allTenants().find((t) => t.industry === industry) ?? null;
 }
@@ -131,6 +165,9 @@ export function clearActiveTenant() {
   // surviving industry key and silently re-signs the user in — making "Switch
   // organization" (and the RequireTenant gate) a no-op after the first session.
   clearActiveIndustry();
+  // Switching organization is a sign-out: the old org's token must not keep
+  // outranking the next org's ?industry= on the API.
+  clearAuthToken();
 }
 
 /**

@@ -16,7 +16,7 @@ import { useCurrentUser } from '../../api/dashboard';
 import { useToast } from '../shared/Toast';
 import { usePersonaLens, useEffectiveLens } from './personaLens';
 import { personaLabel, personaGroupsForIndustry, ROLE_CHILDREN } from '../../screens/CommandCenter/personas';
-import { clearActiveTenant, getActiveTenant } from '../../tenants';
+import { clearActiveTenant } from '../../tenants';
 import type { Finding } from '../../api/types';
 
 // The ⌘K bar, made real. One box that answers "where is X" and "do X" without
@@ -278,9 +278,8 @@ function Palette({ onClose }: { onClose: () => void }) {
       hint: 'Sign in to another tenant',
       keywords: 'tenant login sign out company',
       run: () => {
-        const tenant = getActiveTenant();
         clearActiveTenant();
-        navigate(tenant ? `/login?org=${tenant.id}` : '/login');
+        navigate('/login');
         onClose();
       },
     });
