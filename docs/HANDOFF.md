@@ -1,4 +1,66 @@
-# Handoff — the GTM architecture + the auth seam (2026-08-08→09)
+# Handoff — commits landed, the Notion tracker, P1.2 (2026-08-09, later session)
+
+## Where things stand
+
+- **ALL COMMITTED AND PUSHED**; `v5` in sync with `origin/v5` at
+  `bdb3163`. This session: the previous handoff's three commits landed
+  (`a3e9b5b` auth seam, `3f5dd09` front door, `a60e277` docs — auth
+  seam committed FIRST, see the order note in the previous handoff's
+  updated "Where things stand"), then `1012472` (handoff: Notion
+  tracker live), then **`bdb3163` — P1.2 claims-driven tenancy**.
+- **The Notion build tracker is live and is the status-of-record**:
+  Build Tracker page + Build items DB under the founder's Rewive
+  Project page. P1.1 and P1.2 are Done there; P1.3 is named next. IDs
+  + update convention in the `notion-build-tracker` memory — flip a
+  row to In progress when starting, Done with commits when landing.
+- `npm run build` + `eslint .` clean; network was clear both pushes.
+
+## This session: P1.2 — claims-driven tenancy (`bdb3163`)
+
+- `getAuthClaims()` in `src/api/client.ts`: decodes the held JWT
+  (display/derivation only — server verifies signatures), self-prunes
+  expired/garbage tokens on read.
+- `getActiveTenant()` (`src/tenants.ts`) is **claims-first**: claims'
+  `tid` names the org; `rewive.tenant`/`rewive.industry` are demoted
+  to caches synced from claims. Unresolvable `tid` (custom org whose
+  client session was cleared) drops the token and falls back. The
+  legacy tokenless path is byte-for-byte the old behavior.
+- `useSetIndustry` (`src/api/shadowOrg.ts`) **re-mints the token** for
+  the tenant owning the new industry when one is held — P1.1 had made
+  claims outrank `?industry=`, which silently broke the Operating
+  Picture's industry switch under a token (data kept the old org).
+  No owning tenant → clearAuthToken (tokenless demo mode), never a
+  stale token. Also fixes the onboarding commit (switch to `custom`).
+- CLAUDE.md tenancy paragraph now documents the whole seam
+  (P1.1+P1.2, cron/ingest passthrough, Entra-swaps-the-issuer).
+- **Verified headless** (scratchpad `p12-e2e.mjs`, Playwright via the
+  global omniroute install — `ln -s` its node_modules into the
+  scratchpad; ESM ignores NODE_PATH): 10 checks green, zero console
+  errors — mint, stale-cache resync, re-mint on industry switch with
+  fmcg data actually served, expired-token prune + fallback, switch-org
+  full sign-out. Fresh profiles land on `/guide` first — seed
+  `rewive.guideSeen=1` in tests.
+
+### Natural next steps
+
+1. **P1.3 — contract test harness**: the mock's REST contract as an
+   executable spec runnable against any base URL. Update the Notion
+   row to In progress on start.
+2. Founder browser review of front door + auth (dev:all is running).
+3. Carried: /onboard founder review, PROD-002 capture, actions board,
+   hero action seeds, palette follow-ons.
+
+### Servers / state at handoff
+
+**`dev:all` RUNNING** (default flags, started this session): vite
+:5173 + mock :4000. State: clean boot + the p12-e2e login sweeps (a
+live-* fmcg finding may exist from the seeded sweep). Restart for a
+pristine demo. Reset: `for p in 4000 5173 5174; do kill $(lsof -ti
+tcp:$p); done`.
+
+---
+
+# Previous handoff — the GTM architecture + the auth seam (2026-08-08→09)
 
 ## Where things stand
 
