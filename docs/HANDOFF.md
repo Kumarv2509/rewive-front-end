@@ -68,14 +68,49 @@
 - CLAUDE.md: Commands + Conventions now name the suite ("no test
   suite" claim removed).
 
+## Also this session: P1.4 — the control plane, demo-grade in-repo (`20826d1`)
+
+Founder's call: "lets start P1.4 demo-grade in-repo" (over waiting for
+Azure). What shipped:
+
+- **`mock-server/control-plane.js`** (`/api/v1/control-plane/*`,
+  API-only, no UI): tenant catalog + per-tenant store provisioning +
+  migration fan-out. Postgres mode = dedicated **schema** per tenant
+  (`tenant_<id>`, per-schema `schema_migrations`, `SET LOCAL
+  search_path` inside a transaction; catalog durable in `cp_tenants`).
+  Memory mode = same lifecycle, real version ledger (tables parsed
+  from the actual SQL), rides the KV snapshot (`controlPlaneState`).
+- **Migration series**: v1 IS `schema.sql` (referenced, zero drift
+  with `npm run migrate`); v2 `migrations/002-decision-ledger.sql`
+  (append-only ledger table — P1.6 hardens with grants + hash anchor).
+- Boot provisions the four demo tenants idempotently
+  (`seedControlPlane` from `server.js` + `api/handler.js` — the
+  handler's `seedOnce` is now a `Promise.all` of both seeds).
+- **`/onboarding/commit` walks the real lifecycle** via
+  `provisionOnboardedTenant` (replace-on-recommit verified: one
+  onboarding row after double commit) and returns a `provisioning`
+  block. Onboarding UI unchanged (doesn't show it yet).
+- Seed tenants refuse deprovisioning (400); unknown 404.
+- **contract/07-control-plane.test.mjs** (5 tests): series ordered,
+  seeds ready at latest, provision validates/409s duplicate, fan-out
+  converges + idempotent second run, deprovision guards. Suite
+  **41/41 green**. CLAUDE.md gained a control-plane paragraph.
+- **Honest limits, stated in the module header**: schema-per-tenant
+  stands in for DB-per-customer; the data plane does NOT yet read
+  from tenant stores (that rewire is the production step); **the
+  Postgres path is runtime-unverified** — no Postgres/Docker on this
+  machine. First session with a DATABASE_URL: run the contract suite
+  and watch `cp_tenants` + `tenant_*` schemas appear.
+
 ### Natural next steps
 
-1. **P1.4 — control plane** (tenant catalog + DB-per-customer
-   provisioning) is next in ARCH-GTM-001 order, but it's the first
-   item that needs real Azure decisions — founder's call on
-   sequencing. Update the Notion row when starting.
-2. Founder browser review of front door + auth (dev:all is running).
-3. Carried: /onboard founder review, PROD-002 capture, actions board,
+1. **P1.5 — the loop engine** (always-on sweep worker + durable
+   Postgres timers) is the last big item buildable in-repo; P1.7
+   (Azure substrate) is where cloud decisions start. Founder picks.
+2. Verify the control plane's Postgres path when a DATABASE_URL is
+   available (Docker/Neon).
+3. Founder browser review of front door + auth (dev:all running).
+4. Carried: /onboard founder review, PROD-002 capture, actions board,
    hero action seeds, palette follow-ons.
 
 ### Servers / state at handoff
