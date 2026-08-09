@@ -1,4 +1,43 @@
-# Handoff — commits landed, the Notion tracker, P1.2 (2026-08-09, later session)
+# Handoff — session close (2026-08-09, evening)
+
+## Where things stand at close
+
+- **Everything committed, pushed, and MERGED**: `v5` = `origin/v5` at
+  `31273bf`; **PR #5 merged to `master` at `4be1088`** (retitled +
+  full description first). Working tree clean except `Architecture.png`
+  (founder's file, deliberately untracked). One session arc delivered
+  **P1.2 → P1.6** — everything in Phase 1 buildable in-repo is built:
+  claims-driven tenancy, the contract harness (49 tests), the control
+  plane, the loop engine, the evidence layer. Details in the sections
+  below, one per item.
+- **The Notion tracker is current and is the status-of-record**
+  (rows P1.1–P1.6 Done with commits; page "Current state" rewritten
+  clean — an earlier stale-sentence accumulation was found and fixed;
+  convention in the `notion-build-tracker` memory).
+- **Founder product review IN PROGRESS at close**: dev:all was
+  restarted CLEAN (contract-suite residue wiped) and the browser
+  opened at `/` via `open` (Chrome extension untried this session —
+  historic failures). The founder was given the full walk: front door
+  (find-org: ambiguous "gulf" case, unknown-org case), auth chain,
+  industry switch on the Operating Picture (the P1.2 fix), live
+  strip, the bell, switch-org. **No feedback had arrived when this
+  handoff was written — expect asks next session.** A clean pass
+  flips P1.1/P1.2 to Verified in Notion.
+- Next build item: **P1.7 Azure substrate** (needs founder cloud
+  decisions). Cheap pre-step: free Neon/Docker Postgres to
+  runtime-verify P1.4–P1.6 pg paths (contract suite against a real
+  `DATABASE_URL`).
+
+### Servers / state at close
+
+**`dev:all` RUNNING, default flags, clean boot** (:5173 vite, :4000
+api) — started fresh for the founder's review; interval sweeps will
+have raised live findings since. Reset:
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — commits landed, the Notion tracker, P1.2 (2026-08-09, later session)
 
 ## Where things stand
 
