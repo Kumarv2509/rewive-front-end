@@ -20,6 +20,39 @@ export function clearAuthToken() {
   try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
 }
 
+// The token's claims (P1.2 — claims-driven tenancy): the client derives who is
+// signed in from the token itself, not from separately-stored state. Decoding
+// here is display/derivation only — the signature is the server's to verify;
+// a tampered claim buys nothing because every API response is claims-scoped
+// server-side.
+export interface AuthClaims {
+  sub: string;      // email
+  tid: string;      // tenant id
+  industry: string;
+  seat: string;     // persona role picked at sign-in
+  exp: number;
+}
+
+/** Claims of the held session token, or null. An expired or malformed token is
+ * cleared on read so every consumer sees the same answer — the same fallback
+ * the 401 interceptor provides, without waiting for a request to fail. */
+export function getAuthClaims(): AuthClaims | null {
+  const token = getAuthToken();
+  if (!token) return null;
+  try {
+    const payload = token.split('.')[1];
+    const claims = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as AuthClaims;
+    if (typeof claims.exp !== 'number' || claims.exp * 1000 < Date.now()) {
+      clearAuthToken();
+      return null;
+    }
+    return claims;
+  } catch {
+    clearAuthToken();
+    return null;
+  }
+}
+
 export function setActiveIndustry(industry: string) {
   try { localStorage.setItem(INDUSTRY_KEY, industry); } catch { /* ignore */ }
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient, setActiveIndustry } from './client';
+import { apiClient, setActiveIndustry, getAuthClaims, setAuthToken, clearAuthToken } from './client';
+import { tenantForIndustry } from '../tenants';
 import type {
   ClosureKpi,
   CustomBrainNodeInput,
@@ -12,6 +13,8 @@ import type {
   IndustryOption,
   KpiBrain,
   LeadershipActionInput,
+  LoginInput,
+  LoginResponse,
   OrgProfile,
   Persona,
   RoleScope,
@@ -38,6 +41,24 @@ export function useSetIndustry() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (industry: OrgProfile['industry']) => {
+      // Claims outrank ?industry= on the server (P1.1), so while a token is
+      // held an industry switch must re-mint it for the tenant that owns the
+      // new industry — otherwise the switch silently reverts on the next
+      // request. Demo parity: /auth/login accepts any credentials, so the
+      // re-mint reuses the session's email and seat.
+      const claims = getAuthClaims();
+      if (claims && claims.industry !== industry) {
+        const owner = tenantForIndustry(industry);
+        if (owner) {
+          const input: LoginInput = { email: claims.sub, tenantId: owner.id, industry, seat: claims.seat };
+          const { data } = await apiClient.post<LoginResponse>('/auth/login', input);
+          setAuthToken(data.token);
+        } else {
+          // No tenant in this browser owns the industry — a stale token would
+          // pin the API to the old org; drop to tokenless demo mode instead.
+          clearAuthToken();
+        }
+      }
       setActiveIndustry(industry); // send on every subsequent request (survives serverless cold starts)
       return (await apiClient.put<OrgProfile>('/org-profile', { industry })).data;
     },

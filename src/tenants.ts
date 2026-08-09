@@ -1,5 +1,5 @@
 import type { IndustryKey } from './api/types';
-import { getActiveIndustry, clearActiveIndustry, clearAuthToken } from './api/client';
+import { getActiveIndustry, setActiveIndustry, clearActiveIndustry, clearAuthToken, getAuthClaims } from './api/client';
 
 // SaaS tenancy, demo-grade: each organization (tenant) is a workspace that maps
 // onto one industry pack. Signing in as an org sets the industry context and
@@ -171,12 +171,33 @@ export function clearActiveTenant() {
 }
 
 /**
- * The signed-in organization. The industry choice stays authoritative: if the
- * industry was switched in-app (Foundation → Operating Picture) or the session
- * predates tenancy, adopt the tenant that owns the active industry so the
- * chrome never claims one org while showing another's data.
+ * The signed-in organization — claims-driven (P1.2). A valid session token is
+ * the authority: its `tid` names the org, and the rewive.tenant/rewive.industry
+ * localStorage keys are demoted to caches kept trailing the claims (the server
+ * ignores ?industry= while a token is held, so a diverging cache is harmless —
+ * syncing it just keeps tokenless code paths from disagreeing with the chrome).
+ *
+ * Tokenless sessions keep the legacy behavior — demo mode is a first-class
+ * mode while the mock server accepts tokenless requests: the industry choice
+ * stays authoritative, so an in-app industry switch or a pre-tenancy session
+ * adopts the tenant that owns the active industry.
  */
 export function getActiveTenant(): Tenant | null {
+  const claims = getAuthClaims();
+  if (claims) {
+    const claimed = tenantById(claims.tid);
+    if (claimed) {
+      try {
+        if (localStorage.getItem(TENANT_KEY) !== claimed.id) setActiveTenantId(claimed.id);
+      } catch { /* ignore */ }
+      if (getActiveIndustry() !== claims.industry) setActiveIndustry(claims.industry);
+      return claimed;
+    }
+    // The token names a tenant this browser can't resolve (e.g. a custom org
+    // whose client-side session was cleared). Keeping it would pin every API
+    // response to an org the UI can't render — drop to the legacy path.
+    clearAuthToken();
+  }
   let stored: string | null = null;
   try { stored = localStorage.getItem(TENANT_KEY); } catch { /* ignore */ }
   const tenant = tenantById(stored);
