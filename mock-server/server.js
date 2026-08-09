@@ -1,4 +1,4 @@
-import app, { startHeartbeat, runLiveSweep, seedLiveTracking } from './app.js';
+import app, { startHeartbeat, runLiveSweep, seedLiveTracking, seedControlPlane } from './app.js';
 import { hasDb } from './db.js';
 
 const PORT = process.env.PORT || 4000;
@@ -16,6 +16,11 @@ app.listen(PORT, async () => {
     return 0;
   });
   if (seeded) console.log(`Seeded ${seeded} live-tracked mandates with ~30 days of metrics.`);
+  const provisioned = await seedControlPlane().catch((err) => {
+    console.warn('[seed] control plane seed failed:', err?.message ?? err);
+    return 0;
+  });
+  if (provisioned) console.log(`Control plane: provisioned ${provisioned} demo tenant stores.`);
   startHeartbeat();
   console.log('Demo heartbeat running — SLA clocks tick, senses sweep, connectors load.');
   if (SWEEP_MS > 0) {

@@ -53,6 +53,10 @@ import { registerTrackingRoutes } from './tracking-routes.js';
 import { runSweep } from './sweep.js';
 import { seedTrackingIfEmpty } from './seed-tracking.js';
 import { authMiddleware, registerAuthRoutes } from './auth.js';
+import {
+  initControlPlane, registerControlPlaneRoutes, provisionOnboardedTenant,
+  exportControlPlane, importControlPlane,
+} from './control-plane.js';
 
 const app = express();
 app.use(cors());
@@ -1573,8 +1577,17 @@ app.post('/api/v1/onboarding/commit', async (req, res) => {
       if (idx >= 0) list[idx] = ds; else list.push(ds);
     }
 
+    // The onboarding factory is the provisioning flow's prototype (ARCH-GTM-001):
+    // committing an org now also walks the real control-plane lifecycle —
+    // catalog row, tenant store, migration ledger. Replace-on-recommit, same
+    // one-runtime-org rule as the in-memory install above.
+    const provisioning = await provisionOnboardedTenant(
+      { id: artifacts.tenant.id, name: artifacts.tenant.name, template: body.template },
+      { isKnownTemplate },
+    ).catch((err) => ({ error: err?.message ?? 'provisioning failed' }));
+
     logAudit('org', 'onboarding', `onboarded ${artifacts.tenant.name} from the ${body.template} template (${artifacts.trackingPlan.length} live-tracked mandates)`);
-    res.status(201).json({ tenant: artifacts.tenant, labels: artifacts.labels, industry: CUSTOM_INDUSTRY });
+    res.status(201).json({ tenant: artifacts.tenant, labels: artifacts.labels, industry: CUSTOM_INDUSTRY, provisioning });
   } catch (err) {
     res.status(400).json({ message: err?.message ?? 'Could not create the organization' });
   }
@@ -2422,6 +2435,12 @@ export const runLiveSweep = (trigger) => runSweep(trigger, sweepCtx);
 /** Default live-tracked mandates — no-ops once any config exists. */
 export const seedLiveTracking = () => seedTrackingIfEmpty(() => brainsState);
 
+// The control plane's templates are the four hand-seeded industries — 'custom'
+// is an installed org, not a template anyone can provision from.
+const isKnownTemplate = (k) => k !== CUSTOM_INDUSTRY && Boolean(brainsState[k]);
+export const seedControlPlane = () => initControlPlane({ isKnownTemplate });
+registerControlPlaneRoutes(app, { isKnownTemplate, logAudit });
+
 registerTrackingRoutes(app, {
   v4Industry,
   getBrains: () => brainsState,
@@ -2472,6 +2491,9 @@ export function exportState() {
     // it into the module-level maps (opContent, shadowOrgsSeed, currency) that
     // the snapshot doesn't carry.
     customOrgState,
+    // Tenant catalog + memory-mode stores. In Postgres mode cp_tenants is the
+    // durable ledger and this blob is belt-and-braces only.
+    controlPlaneState: exportControlPlane(),
   };
 }
 
@@ -2504,6 +2526,7 @@ export function importState(snapshot) {
     customOrgState = snapshot.customOrgState;
     installCustomOrg();
   }
+  if (snapshot.controlPlaneState) importControlPlane(snapshot.controlPlaneState);
 }
 
 export default app;

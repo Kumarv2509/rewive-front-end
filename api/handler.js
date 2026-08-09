@@ -1,4 +1,4 @@
-import app, { exportState, importState, persistLiveState, seedLiveTracking } from '../mock-server/app.js';
+import app, { exportState, importState, persistLiveState, seedLiveTracking, seedControlPlane } from '../mock-server/app.js';
 import { loadState, saveState } from '../mock-server/kv.js';
 
 // Deployed demos never run server.js, so the default live-tracked mandates get
@@ -26,10 +26,18 @@ export default async function handler(req, res) {
   importState(await loadState());
 
   // After importState — the seed reads brainsState, which the snapshot rewrites.
-  seedOnce ??= seedLiveTracking().catch((err) => {
-    console.warn('[seed] live tracking seed failed:', err?.message ?? err);
-    return 0;
-  });
+  seedOnce ??= Promise.all([
+    seedLiveTracking().catch((err) => {
+      console.warn('[seed] live tracking seed failed:', err?.message ?? err);
+      return 0;
+    }),
+    // Idempotent: recovers the catalog from cp_tenants (Postgres) or the KV
+    // snapshot just imported, then registers any missing demo tenants.
+    seedControlPlane().catch((err) => {
+      console.warn('[seed] control plane seed failed:', err?.message ?? err);
+      return 0;
+    }),
+  ]);
   await seedOnce;
 
   await new Promise((resolve) => {
