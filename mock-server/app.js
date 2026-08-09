@@ -58,6 +58,7 @@ import {
   exportControlPlane, importControlPlane,
 } from './control-plane.js';
 import * as loopTimers from './timers.js';
+import * as ledger from './ledger.js';
 
 const app = express();
 app.use(cors());
@@ -1391,10 +1392,22 @@ function pushNotification(industry, { type, persona, findingId, title, body }) {
 // closure state justifies it. A delivered verdict is written once and audited,
 // never re-litigated; rows whose too-early note was hand-written (seeds) are
 // left alone so a template never clobbers a crafted narrative.
+// A verdict is delivered exactly once (the !assessorNote guard above the call
+// sites) — appended as an event, never an edit; the in-memory row mutation is
+// the display surface catching up with the evidence. Fire-and-forget: the
+// assessor pass runs synchronously inside ledger reads.
+function appendVerdictEvent(industry, row, closure) {
+  ledger.appendEvent({
+    kind: 'verdict', industry, persona: row.persona, findingId: row.findingId,
+    actor: 'Assessor agent',
+    payload: { verdict: row.verdict, measuredImpact: row.measuredImpact, closureName: closure.name, ledgerRowId: row.id },
+  }).catch((err) => console.warn('[ledger] verdict event failed:', err?.message ?? err));
+}
+
 function runAssessorPass(industry) {
-  const ledger = decisionLedgerState[industry] ?? [];
+  const rows = decisionLedgerState[industry] ?? [];
   const closures = closureKpisState[industry] ?? [];
-  for (const row of ledger) {
+  for (const row of rows) {
     if (row.verdict !== 'too_early' || !row.findingId) continue;
     const closure = closures.find((c) => c.findingId === row.findingId);
     if (!closure) continue;
@@ -1402,11 +1415,13 @@ function runAssessorPass(industry) {
       row.verdict = 'worked';
       row.measuredImpact = { text: `${closure.baseline} → ${closure.current}`, direction: 'up' };
       row.assessorNote = `Assessor agent: ${closure.name} — held at ${closure.current} against the ${closure.target} exit condition, from a ${closure.baseline} baseline. The number came back; loop closed.`;
+      appendVerdictEvent(industry, row, closure);
       logAudit('decision', row.id, `assessor verdict: worked — ${closure.name}`);
     } else if (closure.status === 'regressed' && !row.assessorNote) {
       row.verdict = 'not_worked';
       row.measuredImpact = { text: `${closure.current} against a ${closure.target} exit condition`, direction: 'down' };
       row.assessorNote = `Assessor agent: ${closure.name} regressed — ${closure.current} against ${closure.target}. The loop closed without the number coming back.`;
+      appendVerdictEvent(industry, row, closure);
       logAudit('decision', row.id, `assessor verdict: didn't work — ${closure.name}`);
     } else if (closure.status === 'tracking' && !row.assessorNote) {
       // No verdict yet — but keep the measurement honest as the target moves.
@@ -2030,6 +2045,14 @@ app.post('/api/v1/findings/:id/disposition', async (req, res) => {
     ...(finding.region ? { region: finding.region } : {}),
   };
   (decisionLedgerState[industry] ?? (decisionLedgerState[industry] = [])).unshift(ledgerRow);
+  // The durable evidence under the screen's ledger (P1.6): the decision as an
+  // immutable hash-chained event. Awaited — a decision that isn't in the
+  // evidence layer didn't happen.
+  await ledger.appendEvent({
+    kind: 'decision', industry, persona: finding.persona, findingId: finding.id,
+    actor: req.auth?.sub ?? currentUser.name,
+    payload: { title: ledgerRow.title, subtitle: ledgerRow.subtitle, disposition, ledgerRowId: ledgerRow.id },
+  }).catch((err) => console.warn('[ledger] decision event failed:', err?.message ?? err));
   logAudit('decision', ledgerRow.id, `${verbLabel} recorded in the Decision Ledger for ${finding.id}`);
 
   res.json(stripServerFields(finding));
@@ -2050,7 +2073,17 @@ function chiefIdFor(industry) {
 // escalateFinding; this binds it to the industry's chief. Shared by the escalate
 // route and the SLA heartbeat.
 function escalateFindingUp(finding, industry, deliveryNote) {
+  const fromPersona = finding.persona;
   const result = escalateFinding(finding, { industry, chiefId: chiefIdFor(industry) });
+  // One accountable owner; transfers are events (P1.6) — every escalation
+  // lands in the evidence layer with who held it and who holds it now.
+  if (finding.persona !== fromPersona) {
+    ledger.appendEvent({
+      kind: 'transfer', industry, persona: finding.persona, findingId: finding.id,
+      actor: 'Rewive (escalation)',
+      payload: { from: fromPersona, to: finding.persona, escalationLevel: finding.escalationLevel, title: finding.title },
+    }).catch((err) => console.warn('[ledger] transfer event failed:', err?.message ?? err));
+  }
   // The delivery moment: the finding is now the parent role's call, and the
   // parent must hear about it without having the product open.
   pushNotification(industry, {
@@ -2534,6 +2567,29 @@ export async function executeLoopTimers(asOf = Date.now()) {
   return { claimed: due.length, results };
 }
 
+// ---------- The append-only ledger (P1.6): the evidence layer ----------
+app.get('/api/v1/ledger/events', async (req, res) => {
+  res.json({ storeMode: ledger.ledgerStoreMode(), events: await ledger.listEvents(req.query.industry ?? null) });
+});
+
+app.get('/api/v1/ledger/verify', async (_req, res) => {
+  res.json(await ledger.verifyChain());
+});
+
+app.post('/api/v1/ledger/anchor', async (_req, res) => {
+  try {
+    const anchor = await ledger.anchorHead();
+    logAudit('decision', 'ledger', `ledger anchored at seq ${anchor.seq} — head ${anchor.headHash.slice(0, 12)}…`);
+    res.status(201).json(anchor);
+  } catch (err) {
+    res.status(err.status ?? 500).json({ message: err.message });
+  }
+});
+
+app.get('/api/v1/ledger/anchors', async (_req, res) => {
+  res.json(await ledger.listAnchors());
+});
+
 app.get('/api/v1/loop-timers', async (req, res) => {
   res.json({
     storeMode: loopTimers.timerStoreMode(),
@@ -2612,6 +2668,9 @@ export function exportState() {
     // Tenant catalog + memory-mode stores. In Postgres mode cp_tenants is the
     // durable ledger and this blob is belt-and-braces only.
     controlPlaneState: exportControlPlane(),
+    // The evidence layer (memory mode). Events are history — never stripped,
+    // even for live-* findings: a dangling findingId is an honest past fact.
+    ledgerEventsState: ledger.exportLedger(),
   };
 }
 
@@ -2645,6 +2704,7 @@ export function importState(snapshot) {
     installCustomOrg();
   }
   if (snapshot.controlPlaneState) importControlPlane(snapshot.controlPlaneState);
+  if (snapshot.ledgerEventsState) ledger.importLedger(snapshot.ledgerEventsState);
 }
 
 export default app;

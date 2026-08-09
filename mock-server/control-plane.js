@@ -30,6 +30,7 @@ export const MIGRATIONS = [
   { version: 1, name: 'tenant-store-core', file: 'schema.sql' },
   { version: 2, name: 'decision-ledger', file: 'migrations/002-decision-ledger.sql' },
   { version: 3, name: 'loop-timers', file: 'migrations/003-loop-timers.sql' },
+  { version: 4, name: 'ledger-events', file: 'migrations/004-ledger-events.sql' },
 ];
 const LATEST = MIGRATIONS[MIGRATIONS.length - 1].version;
 
