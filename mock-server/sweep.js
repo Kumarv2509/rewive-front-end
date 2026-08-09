@@ -253,6 +253,7 @@ export async function runSweep(trigger, ctx) {
               active.status = 'open';
               active.slaDeadlineAt = new Date(Date.now() + 12 * 3_600_000).toISOString();
               await tracking.saveLiveFinding(active);
+              await ctx.scheduleLoopTimers?.(active);
               run.reAlertsFired += 1;
               step.status = 're-alert';
               step.detail = worsened ? `trip-wire fired — deviation worsened to ${result.dev.toFixed(1)}%` : 'trip-wire fired — the acknowledge window expired';
@@ -329,6 +330,7 @@ export async function runSweep(trigger, ctx) {
           row.authoredBy = authoredBy;
           const saved = await tracking.saveLiveFinding(row);
           if (saved) {
+            await ctx.scheduleLoopTimers?.(row);
             run.findingsRaised += 1;
             step.status = 'raised';
             step.detail = row.finding.title;

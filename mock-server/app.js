@@ -57,6 +57,7 @@ import {
   initControlPlane, registerControlPlaneRoutes, provisionOnboardedTenant,
   exportControlPlane, importControlPlane,
 } from './control-plane.js';
+import * as loopTimers from './timers.js';
 
 const app = express();
 app.use(cors());
@@ -1901,7 +1902,7 @@ app.post('/api/v1/analysis-requests', (req, res) => {
   res.status(201).json(request);
 });
 
-app.post('/api/v1/findings/:id/disposition', (req, res) => {
+app.post('/api/v1/findings/:id/disposition', async (req, res) => {
   const hit = findFinding(req.params.id);
   if (!hit) return res.status(404).json({ message: 'Finding not found' });
   const { finding, industry } = hit;
@@ -1994,6 +1995,20 @@ app.post('/api/v1/findings/:id/disposition', (req, res) => {
   finding.dispositionAt = now;
   finding.slaHoursRemaining = 0;
 
+  // The loop engine's clock: a decided finding stops its SLA wake-up; a parked
+  // one arms the WINDOW half of its re-alert rule ("or after N days") — the
+  // data half ("worsens a further X%") stays with the sweep.
+  if (finding.id.startsWith('live-')) {
+    await loopTimers.cancelTimers(finding.id).catch(() => {});
+    if (disposition === 'acknowledge') {
+      const { days } = parseReAlertCondition(finding.reAlertCondition);
+      await loopTimers.scheduleTimer({
+        kind: 're_alert_window', subjectId: finding.id, industry,
+        fireAt: new Date(Date.now() + days * 86_400_000).toISOString(),
+      }).catch(() => {});
+    }
+  }
+
   // The ledger write: every decision lands in the Decision Ledger the moment
   // it is made — the four A's under their UI names, verdict left to the
   // assessor. Rows for live-* findings stay in-memory only (stripped from the
@@ -2064,7 +2079,24 @@ function escalateFindingUp(finding, industry, deliveryNote) {
 function syncLiveDeadline(finding) {
   if (!finding.id.startsWith('live-')) return;
   const row = liveFindingRows.get(finding.id);
-  if (row) row.slaDeadlineAt = new Date(Date.now() + (finding.slaHoursRemaining || 0) * 3_600_000).toISOString();
+  if (!row) return;
+  row.slaDeadlineAt = new Date(Date.now() + (finding.slaHoursRemaining || 0) * 3_600_000).toISOString();
+  // Every deadline move re-arms the loop engine's wake-up here — one
+  // write-point, no per-site code (same pattern as escalateFindingUp's
+  // notification delivery). Fire-and-forget: the timer is a hint, and the
+  // hydrate backstop still catches a missed schedule.
+  scheduleSlaTimer(row).catch(() => {});
+}
+
+/** Arm the loop engine's SLA wake-up for an open live finding. The timer is a
+ * wake-up, not the truth — the executor re-reads the row when it fires. */
+function scheduleSlaTimer(row) {
+  if (row?.finding?.status === 'open' && row.slaDeadlineAt) {
+    return loopTimers.scheduleTimer({
+      kind: 'sla_escalation', subjectId: row.id, industry: row.industry, fireAt: row.slaDeadlineAt,
+    });
+  }
+  return Promise.resolve();
 }
 
 app.post('/api/v1/findings/:id/escalate', (req, res) => {
@@ -2186,7 +2218,7 @@ app.get('/api/v1/closure-kpis', (req, res) => {
 });
 
 // Close the loop: mark an exit condition met, which closes its originating finding too.
-app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
+app.post('/api/v1/closure-kpis/:id/close', async (req, res) => {
   const industry = v4Industry(req);
   const closure = closureKpisState[industry].find((c) => c.id === req.params.id);
   if (!closure) return res.status(404).json({ message: 'Exit condition not found' });
@@ -2205,6 +2237,7 @@ app.post('/api/v1/closure-kpis/:id/close', (req, res) => {
       at: now,
     };
     logAudit('finding', finding.id, 'loop closed — assessor confirmed the exit condition held');
+    if (finding.id.startsWith('live-')) await loopTimers.cancelTimers(finding.id).catch(() => {});
   }
   logAudit('kpi', closure.id, `exit condition met and closed: ${closure.name}`);
   res.json(closure);
@@ -2347,6 +2380,7 @@ export async function hydrateLiveState() {
       } else if (escalationParent(finding.persona, row.industry)) {
         const { parentRole, dottedRole } = escalateFindingUp(finding, row.industry);
         row.slaDeadlineAt = new Date(Date.now() + finding.slaHoursRemaining * 3_600_000).toISOString();
+        await scheduleSlaTimer(row); // re-arm the engine for the fresh deadline
         logAudit('finding', finding.id, `SLA expired unanswered — auto-escalated to level ${finding.escalationLevel}, now ${parentRole}'s call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`, 'Rewive (system)');
       } else {
         finding.slaHoursRemaining = 0;
@@ -2422,6 +2456,11 @@ const sweepCtx = {
   escalateFinding,
   chiefIdFor,
   logAudit,
+  // Arm the loop engine's SLA wake-up for a row the sweep just raised or
+  // re-opened. The sweep passes its own row (not the request-hydrated one).
+  scheduleLoopTimers: (row) => (row?.finding?.status === 'open' && row.slaDeadlineAt
+    ? loopTimers.scheduleTimer({ kind: 'sla_escalation', subjectId: row.id, industry: row.industry, fireAt: row.slaDeadlineAt })
+    : Promise.resolve()),
   getOrgName: () => orgProfileState.orgName ?? 'the org',
   // First seeded finding of the industry doubles as the authoring tone example.
   exampleFindingFor: (industry) => {
@@ -2440,6 +2479,85 @@ export const seedLiveTracking = () => seedTrackingIfEmpty(() => brainsState);
 const isKnownTemplate = (k) => k !== CUSTOM_INDUSTRY && Boolean(brainsState[k]);
 export const seedControlPlane = () => initControlPlane({ isKnownTemplate });
 registerControlPlaneRoutes(app, { isKnownTemplate, logAudit });
+
+// ---------- The loop engine (ARCH-GTM-001 P1.5): durable wall-clock timers ----------
+// Escalation becomes a scheduled event, not a query someone has to run: timers
+// live in the store (loop_timers / memory mirror), the executor claims what is
+// due and re-checks the live row before acting. The clock half runs here; the
+// data half (trip-wire worsening, recovery progress) stays with the sweep —
+// those are events from metrics, not clocks. hydrateLiveState's lazy check
+// remains as the serverless backstop; both act on the same slaDeadlineAt, so
+// whichever fires first resets the deadline and the other no-ops.
+export async function executeLoopTimers(asOf = Date.now()) {
+  const due = await loopTimers.claimDueTimers(20, asOf);
+  const results = [];
+  for (const t of due) {
+    const row = liveFindingRows.get(t.subjectId);
+    const finding = row?.finding;
+    const done = (action) => results.push({ id: t.id, kind: t.kind, subjectId: t.subjectId, action });
+    if (!finding) { done('stale — subject gone'); continue; }
+
+    if (t.kind === 'sla_escalation') {
+      if (finding.status !== 'open' || !row.slaDeadlineAt) { done('stale — no longer open'); continue; }
+      if (new Date(row.slaDeadlineAt).getTime() > asOf) {
+        // The deadline moved after this wake-up was armed — re-arm, don't act.
+        await scheduleSlaTimer(row);
+        done('rescheduled — deadline moved');
+        continue;
+      }
+      if (!escalationParent(finding.persona, row.industry)) {
+        finding.slaHoursRemaining = 0;
+        done('at the top of the org — clock zeroed');
+        continue;
+      }
+      const { parentRole, dottedRole } = escalateFindingUp(finding, row.industry);
+      row.slaDeadlineAt = new Date(asOf + finding.slaHoursRemaining * 3_600_000).toISOString();
+      await scheduleSlaTimer(row);
+      logAudit('finding', finding.id, `SLA expired unanswered — loop engine escalated to level ${finding.escalationLevel}, now ${parentRole}'s call${dottedRole ? `, flagged to ${dottedRole} on the functional line` : ''}`, 'Rewive (loop engine)');
+      done(`escalated to ${parentRole}`);
+    } else if (t.kind === 're_alert_window') {
+      if (finding.status !== 'acknowledged') { done('stale — no longer parked'); continue; }
+      finding.status = 'open';
+      finding.disposition = null;
+      finding.dispositionBy = null;
+      finding.dispositionAt = null;
+      escalateFindingUp(finding, row.industry, 'The parked window expired — back for a fresh decision one level up.');
+      row.status = 'open';
+      row.slaDeadlineAt = new Date(asOf + 12 * 3_600_000).toISOString();
+      await scheduleSlaTimer(row);
+      logAudit('finding', finding.id, 're-alert window expired — loop engine re-opened it one level up', 'Rewive (loop engine)');
+      done('re-alerted — window expired');
+    } else {
+      done('unknown timer kind');
+    }
+  }
+  return { claimed: due.length, results };
+}
+
+app.get('/api/v1/loop-timers', async (req, res) => {
+  res.json({
+    storeMode: loopTimers.timerStoreMode(),
+    timers: await loopTimers.listTimers(req.query.industry ?? null),
+  });
+});
+
+app.post('/api/v1/loop-engine/tick', async (req, res) => {
+  // REWIVE_TIMER_TEST=1 unlocks time travel (asOf) — dev/test lever only.
+  const asOf = process.env.REWIVE_TIMER_TEST === '1' && req.body?.asOf
+    ? new Date(req.body.asOf).getTime()
+    : Date.now();
+  res.json(await executeLoopTimers(asOf));
+});
+
+/** The always-on worker's tick, for callers outside a request (the dev-server
+ * interval): hydrate → execute → persist, same shape the middleware gives the
+ * route version. */
+export async function runLoopEngineTick() {
+  await hydrateLiveState();
+  const out = await executeLoopTimers();
+  await persistLiveState();
+  return out;
+}
 
 registerTrackingRoutes(app, {
   v4Industry,

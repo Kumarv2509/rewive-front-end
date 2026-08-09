@@ -1,9 +1,12 @@
-// Applies mock-server/schema.sql to DATABASE_URL. Idempotent — run any time.
-//   DATABASE_URL=postgres://... npm run migrate
+// Applies the full tenant-store migration series (control-plane.js MIGRATIONS)
+// to DATABASE_URL — the shared store is tenant zero, so it runs the same
+// series the control plane fans out to tenant schemas. Idempotent — run any
+// time:  DATABASE_URL=postgres://... npm run migrate
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { hasDb, query } from './db.js';
+import { MIGRATIONS } from './control-plane.js';
 
 if (!process.env.DATABASE_URL) {
   console.error('DATABASE_URL is not set — nothing to migrate. (Memory mode needs no migration.)');
@@ -11,12 +14,14 @@ if (!process.env.DATABASE_URL) {
 }
 
 const here = dirname(fileURLToPath(import.meta.url));
-const sql = readFileSync(join(here, 'schema.sql'), 'utf8');
 
 try {
   if (!hasDb()) throw new Error('pg driver unavailable');
-  await query(sql);
-  console.log('Migration applied — live-tracking schema is up to date.');
+  for (const m of MIGRATIONS) {
+    await query(readFileSync(join(here, m.file), 'utf8'));
+    console.log(`v${m.version} ${m.name} — applied.`);
+  }
+  console.log('Migration complete — the shared store is up to date.');
   process.exit(0);
 } catch (err) {
   console.error('Migration failed:', err.message);

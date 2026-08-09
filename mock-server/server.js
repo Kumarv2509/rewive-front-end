@@ -1,4 +1,4 @@
-import app, { startHeartbeat, runLiveSweep, seedLiveTracking, seedControlPlane } from './app.js';
+import app, { startHeartbeat, runLiveSweep, seedLiveTracking, seedControlPlane, runLoopEngineTick } from './app.js';
 import { hasDb } from './db.js';
 
 const PORT = process.env.PORT || 4000;
@@ -29,5 +29,16 @@ app.listen(PORT, async () => {
     }, SWEEP_MS);
     sweepTimer.unref?.();
     console.log(`Agent sweep running every ${Math.round(SWEEP_MS / 1000)}s (REWIVE_SWEEP_MS to tune, 0 to disable).`);
+  }
+  // The loop engine's always-on worker (P1.5): claims due wall-clock timers
+  // (SLA escalation, re-alert windows) and acts. On serverless this tick has
+  // no home — the hydrate backstop covers it there; here the promise holds.
+  const ENGINE_MS = Number(process.env.REWIVE_ENGINE_MS ?? 15_000);
+  if (ENGINE_MS > 0) {
+    const engineTimer = setInterval(() => {
+      runLoopEngineTick().catch((err) => console.warn('[loop-engine] tick failed:', err?.message ?? err));
+    }, ENGINE_MS);
+    engineTimer.unref?.();
+    console.log(`Loop engine ticking every ${Math.round(ENGINE_MS / 1000)}s (REWIVE_ENGINE_MS to tune, 0 to disable).`);
   }
 });

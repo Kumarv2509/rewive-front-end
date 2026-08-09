@@ -29,6 +29,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const MIGRATIONS = [
   { version: 1, name: 'tenant-store-core', file: 'schema.sql' },
   { version: 2, name: 'decision-ledger', file: 'migrations/002-decision-ledger.sql' },
+  { version: 3, name: 'loop-timers', file: 'migrations/003-loop-timers.sql' },
 ];
 const LATEST = MIGRATIONS[MIGRATIONS.length - 1].version;
 
