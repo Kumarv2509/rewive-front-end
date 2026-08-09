@@ -94,7 +94,7 @@ export function FindingsScreen() {
     setSearchParams(next, { replace: true });
   };
 
-  const streamName = (key: string) => brain?.streams.find((s) => s.key === key)?.name;
+  const streamName = (key: string | null) => brain?.streams.find((s) => s.key === key)?.name;
 
   // Entity/region is a client-side lens over the role-scoped data — options
   // come from the unfiltered set so the picker never loses entries.

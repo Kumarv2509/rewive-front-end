@@ -12,7 +12,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "migrate": "node mock-server/migrate.js"
+    "migrate": "node mock-server/migrate.js",
+    "test:contract": "node --test --test-concurrency=1 contract/*.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.3",

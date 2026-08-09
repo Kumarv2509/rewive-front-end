@@ -18,9 +18,10 @@ npm run build         # tsc -b && vite build (type-checks, then builds to dist/)
 npm run lint          # eslint .
 npm run preview       # Preview the production build
 npm run migrate       # Apply mock-server/schema.sql to DATABASE_URL (live tracking)
+npm run test:contract # Contract suite (contract/): the mock's REST contract as an executable spec
 ```
 
-There is no test suite configured.
+The only test suite is the **contract harness** (`contract/`, zero deps — `node:test` + fetch): the mock server is the reference implementation of the API contract, and a production API must pass the same suite via `CONTRACT_BASE_URL`. Discovery-driven (never seed-id-dependent); mutation tests skip with `CONTRACT_MUTATIONS=0`; see `contract/README.md`. There are no component/unit tests.
 
 ## Live mandate tracking (the one real pipeline)
 
@@ -105,5 +106,5 @@ Findings, Decision Ledger, Operating Picture, mandate, worker, agent, Open/Watch
 
 - Path imports are relative (no `@/` alias configured).
 - Currency: AED for FMCG and Healthcare (both UAE orgs), USD for Manufacturing. Seed org is "Americana Foods (demo)".
-- New API resources: type in `src/api/types.ts`, hook in `src/api/<domain>.ts`, mock route + per-industry seed in `mock-server/`.
+- New API resources: type in `src/api/types.ts`, hook in `src/api/<domain>.ts`, mock route + per-industry seed in `mock-server/`, and a behavior test in `contract/` for anything the frontend will rely on.
 - Vite proxies `/api` to `http://localhost:4000` (see `vite.config.ts`) — don't hardcode the mock server port elsewhere.

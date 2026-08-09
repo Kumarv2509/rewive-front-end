@@ -1249,7 +1249,9 @@ export interface Finding {
   summary: string;
   raisedByAgentId: string;
   raisedByAgentName: string;
-  streamKey: string;
+  /** null = org-level finding — no single stream owns it (same convention as
+      the chief agent). Surfaced by the contract suite: fmcg-f-group-mix. */
+  streamKey: string | null;
   linkedKpiNodeId: string;
   severity: FindingSeverity;
   impactPath: ImpactPathStep[]; // leaf → target
