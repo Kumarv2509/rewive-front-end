@@ -52,10 +52,16 @@ import * as tracking from './tracking.js';
 import { registerTrackingRoutes } from './tracking-routes.js';
 import { runSweep } from './sweep.js';
 import { seedTrackingIfEmpty } from './seed-tracking.js';
+import { authMiddleware, registerAuthRoutes } from './auth.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
+// The auth seam: JWT-shaped bearers are validated and become req.auth; the
+// cron secret and ingest keys (opaque bearers) pass through untouched, and
+// tokenless requests keep the legacy ?industry= demo behavior.
+app.use(authMiddleware);
+registerAuthRoutes(app, { isKnownIndustry: (k) => Boolean(brainsState[k]) });
 
 // Live-tracking overlay: Postgres (or the memory fallback) is the source of
 // truth for sweep-raised findings/closures. Hydrate them into the in-memory
@@ -1405,6 +1411,10 @@ function runAssessorPass(industry) {
 }
 
 function v4Industry(req) {
+  // A signed session outranks a query param — claims are the seam Entra OIDC
+  // later plugs into. The ?industry= fallback keeps tokenless demo mode working.
+  const claimed = req.auth?.industry;
+  if (claimed && brainsState[claimed]) return claimed;
   const q = req.query.industry;
   return q && brainsState[q] ? q : orgProfileState.industry;
 }
@@ -1434,7 +1444,9 @@ function orgNameFor(industry) {
 }
 
 app.get('/api/v1/org-profile', (req, res) => {
-  const q = req.query.industry;
+  // Same precedence as v4Industry: signed claims > ?industry= > stored profile.
+  const claimed = req.auth?.industry;
+  const q = claimed && brainsState[claimed] ? claimed : req.query.industry;
   res.json(q && brainsState[q] ? { ...orgProfileState, industry: q, orgName: orgNameFor(q) } : orgProfileState);
 });
 

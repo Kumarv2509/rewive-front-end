@@ -988,6 +988,21 @@ export interface PlanningImportResult {
   importedAt: string;
 }
 
+// ---------- Auth (the seam — ARCH-GTM-001 P1.1) ----------
+// Demo-grade credentials, production-grade shape: sign-in mints a signed JWT
+// whose claims (tenant, industry, seat) the server treats as authoritative.
+export interface LoginInput {
+  email: string;
+  tenantId: string;
+  industry: IndustryKey;
+  seat: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  expiresInSeconds: number;
+}
+
 // ============ v4 — shadow organization ============
 
 // ---------- Org profile & industry templates ----------
