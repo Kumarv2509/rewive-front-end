@@ -142,6 +142,14 @@ run** — the doctrine line ARCH-GTM-001 demanded.
 - Same pg caveat as P1.4: SKIP LOCKED path code-reviewed, not
   runtime-verified (no local Postgres/Docker).
 
+## Merged to master (2026-08-09)
+
+**PR #5 (`v5` → `master`) was retitled, given an accurate description,
+and MERGED at `4be1088`** — master now carries the whole build: the
+product (live tracking, four industries, v6 redesign, onboarding
+factory, front door) and the Phase-1 SaaS foundations (P1.1–P1.6).
+`v5` remains the working branch, now even with master.
+
 ## Also this session: P1.6 — the evidence layer (`72dda78`)
 
 - **`mock-server/ledger.js`**: append-only sha256 hash-chained event
