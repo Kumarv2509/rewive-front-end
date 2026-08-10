@@ -262,16 +262,34 @@ export function buildArtifacts(commit) {
 
   const brain = { industry: CUSTOM_INDUSTRY, streams: template.streams.map((s) => ({ ...s })), nodes, edges };
 
-  // One holder agent per template agent, personas remapped to the seven legacy
-  // roles, human owners renamed from the People step. Watch lists follow the
-  // re-id'd nodes; exactly one agent keeps streamKey null (the chief).
+  // Holder agents, blended with the org's actual mandates (not just the
+  // template's): each stream agent watches every included mandate on its
+  // stream, stream agents whose stream holds no mandates are dropped (a
+  // sales-only org must not show manufacturing/quality holders with nothing
+  // to hold), and the chief — the one streamKey-null agent, always kept —
+  // picks up any mandate whose stream has no agent, so nothing goes unheld.
+  // Personas remap to the seven legacy roles; People-step names apply.
   const roleInputs = commit.roles ?? {};
   const personOf = (persona) => String(roleInputs[persona]?.person ?? '').trim();
   const templateAgents = commit.__templateAgents; // injected by app.js (shadowOrgs lives there)
-  const outAgents = (templateAgents ?? []).map((a) => {
+  const mandateIdsByStream = new Map();
+  for (const m of included) {
+    if (!mandateIdsByStream.has(m.streamKey)) mandateIdsByStream.set(m.streamKey, []);
+    mandateIdsByStream.get(m.streamKey).push(m.id);
+  }
+  const keptAgents = (templateAgents ?? []).filter(
+    (a) => a.streamKey === null || (mandateIdsByStream.get(a.streamKey) ?? []).length > 0,
+  );
+  const keptAgentIds = new Set(keptAgents.map((a) => reId(a.id)));
+  const chiefId = keptAgents.find((a) => a.streamKey === null) ? reId(keptAgents.find((a) => a.streamKey === null).id) : null;
+  const coveredStreams = new Set(keptAgents.map((a) => a.streamKey));
+  const orphanMandateIds = included.filter((m) => !coveredStreams.has(m.streamKey)).map((m) => m.id);
+  const outAgents = keptAgents.map((a) => {
     const persona = a.streamKey === null ? 'coo' : toLegacyPersona(a.persona);
     const person = personOf(persona);
     const initials = person ? person.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() : a.humanOwner?.initials ?? '·';
+    const streamMandates = a.streamKey === null ? orphanMandateIds : mandateIdsByStream.get(a.streamKey) ?? [];
+    const reportsTo = a.reportsToAgentId ? reId(a.reportsToAgentId) : null;
     return {
       ...a,
       id: reId(a.id),
@@ -282,12 +300,17 @@ export function buildArtifacts(commit) {
         initials,
         role: roleInputs[persona]?.label || a.humanOwner?.role || persona,
       },
-      watchesNodeIds: (a.watchesNodeIds ?? []).map(reId).filter((id) => nodeIds.has(id)),
+      watchesNodeIds: [...new Set([
+        ...(a.watchesNodeIds ?? []).map(reId).filter((id) => nodeIds.has(id)),
+        ...streamMandates,
+      ])],
       openFindings: 0,
       slaBreaches: 0,
       health: 'healthy',
       lastFindingAt: null,
-      reportsToAgentId: a.reportsToAgentId ? reId(a.reportsToAgentId) : null,
+      // A dropped agent can't be reported to — re-point at the chief. The
+      // chief itself reports to no one.
+      reportsToAgentId: a.streamKey === null ? null : (reportsTo && keptAgentIds.has(reportsTo) ? reportsTo : chiefId),
     };
   });
 
