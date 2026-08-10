@@ -24,6 +24,14 @@ export function SkuSalesScreen() {
         tabs={<BusinessTabs />}
       />
 
+      {data.skus.length === 0 ? (
+        <div className="card" style={{ padding: 24 }}>
+          <div className="state-msg" style={{ padding: 0, textAlign: 'left' }}>
+            No sales base data yet — rows appear when a {data.skuDimension.toLowerCase()} sales dataset lands
+            (Foundation → Connectors). The mandates are already live-tracked; this page adds the detail beneath them.
+          </div>
+        </div>
+      ) : (
       <div className="card">
         <table className="t">
           <thead>
@@ -63,10 +71,13 @@ export function SkuSalesScreen() {
           </tbody>
         </table>
       </div>
+      )}
 
+      {data.skus.length > 0 && (
       <div style={{ marginTop: 14, fontSize: 12, color: 'var(--ink-3)' }}>
         “Drifting” means the agent watching this number has raised a finding — the link opens its thread, where the four-A call is made.
       </div>
+      )}
     </section>
   );
 }

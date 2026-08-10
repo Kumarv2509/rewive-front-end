@@ -25,6 +25,14 @@ export function CustomerSalesScreen() {
         tabs={<BusinessTabs />}
       />
 
+      {data.customers.length === 0 ? (
+        <div className="card" style={{ padding: 24 }}>
+          <div className="state-msg" style={{ padding: 0, textAlign: 'left' }}>
+            No customer base data yet — rows appear when a {data.customerDimension.toLowerCase()} sales dataset lands
+            (Foundation → Connectors). The mandates are already live-tracked; this page adds the detail beneath them.
+          </div>
+        </div>
+      ) : (
       <div className="card">
         <table className="t">
           <thead>
@@ -68,10 +76,13 @@ export function CustomerSalesScreen() {
           </tbody>
         </table>
       </div>
+      )}
 
+      {data.customers.length > 0 && (
       <div style={{ marginTop: 14, fontSize: 12, color: 'var(--ink-3)' }}>
         OSA = on-shelf availability from store audits; DSO = days sales outstanding vs contracted terms.
       </div>
+      )}
     </section>
   );
 }

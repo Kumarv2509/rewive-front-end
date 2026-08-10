@@ -40,6 +40,18 @@ export function PlStatement() {
 
   if (isLoading) return <Loading />;
   if (isError || !data) return <ErrorMessage message="Couldn't load the P&L statement." />;
+  // A runtime-onboarded org has no P&L yet — say so instead of rendering a
+  // skeleton statement with a blank period and empty dimension chips.
+  if (!data.lines.length) {
+    return (
+      <div className="card" style={{ padding: '24px' }}>
+        <div className="state-msg" style={{ padding: 0, textAlign: 'left' }}>
+          No P&amp;L has been loaded for this organization yet. The statement appears when finance data lands —
+          bring it in through Foundation → Connectors, the same way the live-tracked mandates arrived.
+        </div>
+      </div>
+    );
+  }
 
   const toggle = (key: string) =>
     setExpanded((prev) => {

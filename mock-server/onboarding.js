@@ -354,6 +354,15 @@ export function buildArtifacts(commit) {
       divisions: [],
       entities: entities.map((e) => ({ name: e.name, region: e.region || '', role: '' })),
       channels: [],
+      // Product doctrine, not customer data — every org gets the same guide.
+      // Omitting it crashed the Business overview for onboarded orgs (the
+      // client types it as required and renders it unguarded).
+      actGuide: [
+        { title: 'Start from the number', body: 'Sales by product and sales by customer are the base data. A row marked “drifting” means the agent watching that number has already raised a finding — the link takes you to its thread.' },
+        { title: 'The finding is the unit of work', body: 'Each finding names the drift, the evidence, and the role whose call it is. It waits in that role\'s Today queue with an SLA clock. Silence is not neutral: past the SLA it escalates up the role tree.' },
+        { title: 'Make the four-A call', body: 'Accept sets a measurable recovery target the agent watches until the number is back. Act opens a solution design. Park sets a re-alert rule. Dismiss requires a reason, which tunes the agent.' },
+        { title: 'Nothing is done until the number is back', body: 'Accepted findings appear in Findings → Watching until the recovery target holds. Every call lands in the Decision Ledger, and an assessor returns a verdict later: worked, didn\'t, or too early. That is the company\'s memory of judgment.' },
+      ],
     },
     skus: [],
     customers: [],

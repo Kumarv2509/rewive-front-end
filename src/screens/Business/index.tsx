@@ -35,7 +35,9 @@ export function BusinessOverviewScreen() {
         ))}
       </div>
 
-      {/* Divisions */}
+      {/* Divisions — a runtime-onboarded org has none; don't render a header over nothing */}
+      {overview.divisions.length > 0 && (
+      <>
       <div className="sec-head" style={{ padding: '4px 0 10px' }}><h3>Divisions — each with its own COO, P&amp;L and agents</h3></div>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginBottom: 16 }}>
         {overview.divisions.map((d) => (
@@ -53,11 +55,16 @@ export function BusinessOverviewScreen() {
           </div>
         ))}
       </div>
+      </>
+      )}
 
       {/* Entities + channels */}
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
         <div className="card" style={{ padding: '16px 20px' }}>
           <div className="sec-head" style={{ padding: '0 0 10px' }}><h3>Operating entities</h3></div>
+          {overview.entities.length === 0 && (
+            <div style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>No entities recorded yet.</div>
+          )}
           {overview.entities.map((e) => (
             <div key={e.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--border)', fontSize: 12.5 }}>
               <div><strong>{e.name}</strong> <span style={{ color: 'var(--ink-3)' }}>· {e.region}</span></div>
@@ -67,6 +74,9 @@ export function BusinessOverviewScreen() {
         </div>
         <div className="card" style={{ padding: '16px 20px' }}>
           <div className="sec-head" style={{ padding: '0 0 10px' }}><h3>Where the revenue comes from</h3></div>
+          {overview.channels.length === 0 && (
+            <div style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Channel mix appears when sales data lands.</div>
+          )}
           {overview.channels.map((c) => (
             <div key={c.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--border)', fontSize: 12.5 }}>
               <div><strong>{c.name}</strong> <span className="pill gray" style={{ marginLeft: 6 }}>{c.share}</span></div>
@@ -99,10 +109,11 @@ export function BusinessOverviewScreen() {
         </>
       )}
 
-      {/* How to act */}
+      {/* How to act — defensive ?? []: a context missing this field (an org
+          seeded before the field existed) must not white-screen the surface */}
       <div className="sec-head" style={{ padding: '4px 0 10px' }}><h3>How to act on what you see here</h3></div>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12, marginBottom: 16 }}>
-        {overview.actGuide.map((g, i) => (
+        {(overview.actGuide ?? []).map((g, i) => (
           <div key={g.title} className="card" style={{ padding: '16px 20px' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 600, color: 'var(--accent-deep)', marginBottom: 6 }}>STEP {i + 1}</div>
             <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{g.title}</div>
