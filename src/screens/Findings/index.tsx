@@ -38,7 +38,7 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
           {finding.raisedByAgentName}
           {streamName ? <> · {streamName}</> : null}
           {finding.entity ? <> · {finding.entity}{finding.region ? ` (${finding.region})` : ''}</> : null}
-          {' '}· {finding.impactEstimate}
+          {' '}· <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{finding.impactEstimate}</span>
           {finding.origin === 'sweep' && <> · live data</>}
           {finding.escalationLevel > 0 && (
             <span style={{ color: 'var(--red)' }}>
@@ -52,7 +52,7 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
         {finding.status === 'open' ? (
           <>
             <Pill tone={slaTone(finding.slaHoursRemaining)}>{finding.slaHoursRemaining}h</Pill>
-            <Link className="btn primary sm" to={`/operate/findings/${finding.id}`}>Decide</Link>
+            <Link className="btn sm decide" to={`/operate/findings/${finding.id}`}>Decide</Link>
           </>
         ) : (
           <Pill tone={statusTone[finding.status]}>{statusLabel[finding.status]}</Pill>

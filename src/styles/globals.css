@@ -6,20 +6,22 @@
 :root{
   color-scheme:light;
   /* Signal (default) — Swiss data-poster: white ground, near-black ink, one
-     alarm-orange accent reserved for drift/attention, hard rules, square corners. */
+     warm terracotta accent reserved for drift/attention (the coral #FF3E00 was
+     retired 2026-08-10 for warm-and-subtle), hard rules, softly squared
+     corners (rounded pills — the Aug-2026 friendliness pass). */
   --bg:#FFFFFF; --surface:#FFFFFF; --surface-solid:#FFFFFF; --card:var(--surface);
   --border:#E7E7EB; --border-strong:#C9C9CF;
   --ink:#0B0B0E; --ink-2:#55555E; --ink-3:#8E8E98;
-  --accent:#FF3E00; --accent-soft:#FFF0EA; --accent-deep:#D63400;
+  --accent:#C05B41; --accent-soft:#F8EEE9; --accent-deep:#9C452F;
   --accent-grad:linear-gradient(135deg,var(--accent) 0%,var(--accent) 100%);
   --green:#00794A; --green-soft:#EBF7F1; --amber:#B35300; --amber-soft:#FFF4E8;
-  --red:#C81E00; --red-soft:#FFF0ED; --teal:#006C7E; --teal-soft:#E9F6F8;
+  --red:#AE3B2A; --red-soft:#F9EDEA; --teal:#006C7E; --teal-soft:#E9F6F8;
   --glass:rgba(11,11,14,.03); --glass-hover:rgba(11,11,14,.06);
   /* Text on filled emphasis surfaces (accent / ink / red badges) */
   --on-emphasis:#FFFFFF;
   /* Modal + popover backdrops */
   --scrim:rgba(11,11,14,.34);
-  --radius-sm:2px; --radius:3px; --radius-lg:5px; --radius-pill:3px;
+  --radius-sm:4px; --radius:6px; --radius-lg:10px; --radius-pill:99px;
   /* The hard rule — Signal draws structural lines in ink, not hairline gray */
   --rule-w:2px; --rule-c:var(--ink);
   --shadow:0 0 0 rgba(0,0,0,0);
@@ -141,7 +143,7 @@ body{
 .top-actions{display:flex;align-items:center;gap:14px}
 .bell{position:relative;cursor:pointer;color:var(--ink-2)}
 .bell .dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--surface)}
-.content{flex:1;overflow-y:auto;padding:28px 32px;background:var(--surface)}
+.content{flex:1;overflow-y:auto;padding:32px 36px;background:var(--surface)}
 .screen{max-width:1140px;margin:0 auto;animation:fadein .25s ease}
 @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
@@ -165,6 +167,10 @@ h1.page{font-family:var(--font-display);font-size:22px;font-weight:var(--w-displ
 .btn.ghost{background:transparent;border-color:var(--border-strong);color:var(--ink);box-shadow:none}
 .btn.ghost:hover:not(:disabled){background:var(--glass-hover)}
 .btn.sm{padding:5px 11px;font-size:12px;border-radius:var(--radius-sm)}
+/* Row-level CTA (Decide / Approve in list rows): quiet outline that fills on
+   hover — a page of rows must not shout; the accent stays for real drift. */
+.btn.decide{color:var(--accent-deep);border-color:color-mix(in srgb,var(--accent) 40%,transparent);background:var(--surface);box-shadow:none}
+.btn.decide:hover:not(:disabled),.dec-item:hover .btn.decide:not(:disabled){background:var(--accent);border-color:var(--accent);color:var(--on-emphasis)}
 .agent-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--accent-deep);background:var(--accent-soft);border:none;border-radius:var(--radius-sm);padding:3px 9px}
 .agent-chip::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--accent)}
 .human{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600}
@@ -218,13 +224,13 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
 /* inline prose link — accent, no underline (house style for links inside sentences) */
 .link{color:var(--accent-deep);font-weight:500;text-decoration:none}
 .link:hover{text-decoration:underline}
-.dec-item{display:flex;align-items:center;gap:14px;padding:13px 20px;border-top:1px solid var(--border);transition:opacity .35s, transform .35s, background .15s}
+.dec-item{display:flex;align-items:center;gap:14px;padding:15px 20px;border-top:1px solid var(--border);transition:opacity .35s, transform .35s, background .15s}
 .dec-item:hover{background:var(--glass)}
 .dec-ico{width:34px;height:34px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;border:1px solid var(--border);background:var(--bg)}
 .dec-item .t1{font-weight:500;font-size:13.5px}
 .dec-item .t1 a{text-decoration:none;color:inherit}
 .dec-item:hover .t1 a{color:var(--accent-deep)}
-.dec-item .t2{font-size:12px;color:var(--ink-2)}
+.dec-item .t2{font-size:12px;color:var(--ink-2);margin-top:2px;line-height:1.5}
 .dec-item .acts{margin-left:auto;display:flex;gap:8px;flex-shrink:0}
 /* Stretched link — a whole row stays one click target without nesting <a> in
    <a> (React throws, and the inner link becomes unclickable). Put

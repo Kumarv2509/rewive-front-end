@@ -114,7 +114,7 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
                   <Link to={`/operate/findings/${f.id}`}>{f.title}</Link>
                 </div>
                 <div className="t2">
-                  {f.raisedByAgentName} · {f.impactEstimate}
+                  {f.raisedByAgentName} · <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{f.impactEstimate}</span>
                   {f.persona !== persona && <> · {personaLabel(f.persona)}</>}
                   {f.dottedPersona && <> · visible to {personaLabel(f.dottedPersona)}</>}
                 </div>
@@ -122,7 +122,7 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
               <div className="acts" style={{ alignItems: 'center' }}>
                 <span className={`ag-dot sev-${f.severity}`} title={`Severity: ${f.severity}`} />
                 <Pill tone={slaTone(f.slaHoursRemaining)}>{f.slaHoursRemaining}h</Pill>
-                <Link className="btn primary sm" to={`/operate/findings/${f.id}`}>Decide</Link>
+                <Link className="btn sm decide" to={`/operate/findings/${f.id}`}>Decide</Link>
               </div>
             </div>
           ))}
@@ -139,7 +139,7 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
           </div>
           <div className="acts">
             <button
-              className="btn primary sm"
+              className="btn sm decide"
               disabled={approve.isPending}
               onClick={() =>
                 approve.mutate(d.id, {
