@@ -42,3 +42,21 @@ test('a sweep-raised finding is born with an armed SLA wake-up', { skip: process
   }
   if (!checked) t.skip('no open live findings after the sweep');
 });
+
+test('Park phrasing becomes the clock: "after 2 weeks" arms a ~14-day window', { skip: process.env.CONTRACT_SWEEP !== '1' && 'set CONTRACT_SWEEP=1 (slow)' }, async (t) => {
+  await api('/agent-sweep', { method: 'POST' });
+  let pick = null;
+  for (const ind of ['fmcg', 'healthcare', 'hypermarket', 'manufacturing']) {
+    const live = (await api(`/findings?industry=${ind}`)).data.filter((f) => f.id.startsWith('live-') && f.status === 'open');
+    if (live.length) { pick = { ind, finding: live[0] }; break; }
+  }
+  if (!pick) return t.skip('no open live finding to park');
+  await api(`/findings/${pick.finding.id}/disposition?industry=${pick.ind}`, {
+    method: 'POST', body: { disposition: 'acknowledge', reAlertCondition: 'known issue — review after 2 weeks' },
+  });
+  const timer = (await api('/loop-timers')).data.timers
+    .find((tm) => tm.subjectId === pick.finding.id && tm.kind === 're_alert_window' && tm.status === 'pending');
+  assert.ok(timer, 'parking must arm a re-alert window');
+  const days = (new Date(timer.fireAt).getTime() - Date.now()) / 86_400_000;
+  assert.ok(days > 13 && days < 15, `"after 2 weeks" must be a ~14-day clock, got ${days.toFixed(1)}d — an unparsed phrase silently becoming the default is a wrong clock`);
+});

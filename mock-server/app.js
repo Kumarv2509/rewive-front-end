@@ -2453,10 +2453,28 @@ export async function hydrateLiveState() {
 // finding's thread and the condition enforced must be the same. Falls back to
 // the 5%/14d default the acknowledge placeholder advertises when no numbers are
 // given (so the displayed default still matches).
+// The re-alert rule is free text the business types ("review after 2 weeks"),
+// so the parser must understand what people actually write — a phrase it
+// doesn't parse silently becomes the 14-day default, which is a wrong clock,
+// not a refused one. Understood: "N days" / "N weeks" / "N months" (digits or
+// "a"/"one"/"two"…"twelve") and "N%". Explicit days win over weeks over months.
+const WORD_NUMBERS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
+function parseCount(match) {
+  if (!match) return null;
+  const raw = match[1].toLowerCase();
+  return /^\d+$/.test(raw) ? Number(raw) : WORD_NUMBERS[raw] ?? null;
+}
 function parseReAlertCondition(text) {
-  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(text ?? '');
-  const days = /(\d+)\s*days?/i.exec(text ?? '');
-  return { pct: pct ? Number(pct[1]) : 5, days: days ? Number(days[1]) : 14 };
+  const t = text ?? '';
+  const NUM = '(\\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)';
+  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(t);
+  const days = parseCount(new RegExp(`${NUM}\\s*days?\\b`, 'i').exec(t));
+  const weeks = parseCount(new RegExp(`${NUM}\\s*weeks?\\b`, 'i').exec(t));
+  const months = parseCount(new RegExp(`${NUM}\\s*months?\\b`, 'i').exec(t));
+  return {
+    pct: pct ? Number(pct[1]) : 5,
+    days: days ?? (weeks != null ? weeks * 7 : null) ?? (months != null ? months * 30 : null) ?? 14,
+  };
 }
 
 export async function persistLiveState() {
