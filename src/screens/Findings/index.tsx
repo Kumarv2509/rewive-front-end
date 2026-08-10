@@ -132,6 +132,9 @@ export function FindingsScreen() {
   const abandoned = scoped?.filter((f) => f.status === 'abandoned') ?? [];
   const inFlight = scopedClosures?.filter((c) => c.status !== 'closed') ?? [];
   const closedLoops = scopedClosures?.filter((c) => c.status === 'closed') ?? [];
+  // The assessor's verdict lives on the finding a closed loop answered; some
+  // seeded closures reference phantom findings — those simply get no badge.
+  const verdictFor = new Map(scoped?.map((f) => [f.id, f.assessorVerdict] as const) ?? []);
 
   // A senior lens does not inherit its team's queue — it inherits its team's
   // exceptions. With "+ their team" on, the open tab splits in two: the
@@ -357,7 +360,7 @@ export function FindingsScreen() {
           </div>
           {closedLoops.length === 0 && <div className="card" style={{ marginBottom: 24 }}><div className="state-msg">No closed loops yet — when a recovery target is met, the finding retires itself here.</div></div>}
           <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
-            {closedLoops.map((c) => <ExitConditionCard key={c.id} c={c} />)}
+            {closedLoops.map((c) => <ExitConditionCard key={c.id} c={c} verdict={verdictFor.get(c.findingId)} />)}
           </div>
 
           {abandoned.length > 0 && (

@@ -5,10 +5,19 @@ import { useToast } from '../../components/shared/Toast';
 import type { ClosureKpi, Finding } from '../../api/types';
 
 const closureTone = { tracking: 'teal', closed: 'green', regressed: 'red' } as const;
+const verdictLabel = { worked: 'assessor · worked', not_worked: "assessor · didn't work", too_early: 'assessor · too early' } as const;
+const verdictTone = { worked: 'green', not_worked: 'red', too_early: 'gray' } as const;
+
+function daysBetween(fromIso: string, toIso: string): number {
+  return Math.max(1, Math.round((new Date(toIso).getTime() - new Date(fromIso).getTime()) / 86_400_000));
+}
 
 // A finding the owner Accepted lives on as a recovery target — the Watching
 // stage of its lifecycle, not a separate screen. (API name: exit condition.)
-export function ExitConditionCard({ c }: { c: ClosureKpi }) {
+// `verdict` is the assessor's later call on the finding behind this loop —
+// passed in by the screen (it lives on the Finding, not the closure) and only
+// present once the loop is closed. Absent for phantom findingIds; no badge.
+export function ExitConditionCard({ c, verdict }: { c: ClosureKpi; verdict?: Finding['assessorVerdict'] }) {
   const close = useCloseExitCondition();
   const { showToast } = useToast();
   const done = c.status === 'closed';
@@ -16,7 +25,14 @@ export function ExitConditionCard({ c }: { c: ClosureKpi }) {
   return (
     <div className="card" style={{ padding: '16px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-        <Pill tone={closureTone[c.status]}>{c.status}</Pill>
+        <span style={{ display: 'inline-flex', gap: 6, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <Pill tone={closureTone[c.status]}>{c.status}</Pill>
+          {done && verdict && (
+            <span title={verdict.note}>
+              <Pill tone={verdictTone[verdict.verdict]}>{verdictLabel[verdict.verdict]}</Pill>
+            </span>
+          )}
+        </span>
         <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
           {c.entity ? `${c.entity}${c.region ? ` (${c.region})` : ''} · ` : ''}watched by {c.watchedByAgentName}
         </span>
@@ -32,6 +48,7 @@ export function ExitConditionCard({ c }: { c: ClosureKpi }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>
           baseline {c.baseline} · now {c.current} · target {c.target} · {c.progressPct}%
+          {done && c.closedAt && <> · <span className="mono">closed in {daysBetween(c.createdAt, c.closedAt)}d</span></>}
         </span>
         {/* Closure is a measured target being met, not a status someone sets:
             the close affordance appears only once the watching agent reports
