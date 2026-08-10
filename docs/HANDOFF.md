@@ -1,4 +1,65 @@
-# Handoff — session close (2026-08-09, evening)
+# Handoff — the Signal redesign: switchable appearance themes (2026-08-10)
+
+## Where things stand at close
+
+- **This session was the visual redesign.** The founder found the July
+  look "boring for a data game"; three directions were mocked as an
+  artifact (Trading desk / Control room / Signal —
+  https://claude.ai/code/artifact/75c9eb1b-87fc-4176-9509-8319b954d824)
+  and the founder chose **Signal**, delivered as **three switchable
+  appearance themes**: `signal` (new default — Swiss data-poster,
+  alarm-orange `#FF3E00` reserved for drift, hard 2px ink rules,
+  Archivo display/figures), `classic` (the July zinc+indigo look
+  preserved verbatim), `terminal` (dark trading desk, periwinkle
+  accent, mono figures).
+- **Commits, in order:** `0fa8924` (theme system: globals.css token
+  blocks per `data-theme`, `src/theme.ts` + `rewive.theme`, pre-paint
+  script in index.html, `ThemeMenu` in TopNav + `Appearance:` ⌘K
+  verbs, ~40 literal-color fixes across components incl. the Landing
+  loop SVG) · `4295c5f` (story.html + demo.html restyled to Signal;
+  their stale routes and pre-vocabulary copy fixed —
+  Park/Dismiss/recovery target/re-alert) · `35467c7` (favicon bolt
+  flattened to solid Signal orange; purple original backed up only in
+  the session scratchpad — it IS in git history if ever needed).
+- **PUSH STATE: `0fa8924` and `4295c5f` are on `origin/v5`;
+  `35467c7` is NOT PUSHED** — the office FortiGate TLS interception
+  returned mid-session (confirmed by cert issuer, see the
+  `fortinet-git-push` memory; do NOT disable SSL verify, do NOT trust
+  `gh auth status`). First action on a clean network: `git push`.
+- **The Notion tracker is current**: new row **DEMO-THEMES** in the
+  Build items DB, Done, commits `0fa8924, 4295c5f, 35467c7`.
+- **CLAUDE.md Styling section rewritten** for v7 (the theme
+  architecture + the never-fork-component-rules rule); the
+  `paper-ledger-rebrand` memory updated to match.
+- **Where to look before touching styles:** everything is a token in
+  `src/styles/globals.css` (three `:root[data-theme=…]` blocks, one
+  vocabulary). New tokens: `--on-emphasis`, `--scrim`,
+  `--rule-w/-c`, `--radius-pill`, `--font-figures`, `--w-display`,
+  `--track-display`, `--card`. Tints are
+  `color-mix(in srgb, var(--x) N%, transparent)`; SVG colors go in
+  `style` props (presentation attributes can't resolve `var()`).
+- **Known leftovers, all deliberate:** server-seeded sparkline hexes
+  in `mock-server/data.js` don't retint (legible in all themes);
+  AgentTeams function hues + avatar/tenant accents stay literal
+  (identity colors, data); the bundle-size chunk warning predates
+  this work. Verification was headless (Playwright cached Chromium,
+  scratchpad `shoot.mjs` — playwright-core npm-installed in the
+  scratchpad; the Chrome extension was NOT connected this session):
+  Today/Findings/Decisions/Landing screenshotted in all three themes,
+  build + lint clean.
+- **Still open from the previous handoff:** founder review feedback on
+  P1.1/P1.2 (flip to Verified in Notion on a clean pass) and P1.7
+  Azure substrate (needs founder cloud decisions).
+
+### Servers / state at close
+
+**`dev:all` RUNNING** (:5173 vite, :4000 api) from the redesign
+verification. Reset:
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — session close (2026-08-09, evening)
 
 ## Where things stand at close
 
