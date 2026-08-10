@@ -11,6 +11,12 @@ import { LiveRunsList } from './LiveRunsList';
 import { TopPerformerCard } from './TopPerformerCard';
 import { personaLabel } from './personas';
 
+function greetingForHour(hour: number): string {
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export function CommandCenterScreen() {
   const navigate = useNavigate();
   // Non-admins are locked to their role; hierarchy mode widens to their team.
@@ -32,7 +38,7 @@ export function CommandCenterScreen() {
         <header className="page-header" data-tour="cc-briefing">
           <div className="ph-row">
             <div>
-              <h1 className="page">Good morning, {summary.greetingName}</h1>
+              <h1 className="page">{greetingForHour(new Date().getHours())}, {summary.greetingName}</h1>
               <div className="subtitle">
                 {persona === 'all' ? (
                   <span dangerouslySetInnerHTML={{ __html: summary.summarySentence }} />

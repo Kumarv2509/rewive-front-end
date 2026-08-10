@@ -6,6 +6,7 @@ import { usePendingDecisions } from '../../api/dashboard';
 import { useApproveDecision } from '../../api/decisions';
 import { useFindings } from '../../api/shadowOrg';
 import { slaTone } from '../Findings/meta';
+import { timeAgo } from '../../components/shared/timeAgo';
 import { personaLabel } from './personas';
 import type { Finding, PendingDecision, Persona, RoleScope } from '../../api/types';
 
@@ -114,7 +115,8 @@ export function UnifiedQueue({ persona, scope }: { persona: Persona | 'all'; sco
                   <Link to={`/operate/findings/${f.id}`}>{f.title}</Link>
                 </div>
                 <div className="t2">
-                  {f.raisedByAgentName} · <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{f.impactEstimate}</span>
+                  <span className="mono" style={{ color: 'var(--ink-3)' }}>{timeAgo(f.detectedAt)}</span>
+                  {' '}· {f.raisedByAgentName} · <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{f.impactEstimate}</span>
                   {f.persona !== persona && <> · {personaLabel(f.persona)}</>}
                   {f.dottedPersona && <> · visible to {personaLabel(f.dottedPersona)}</>}
                 </div>

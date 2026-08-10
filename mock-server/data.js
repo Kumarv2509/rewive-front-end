@@ -68,12 +68,9 @@ export let pendingDecisions = [
   },
 ];
 
+// The win-rate line is NOT seeded here — the pulse route derives it from the
+// ledger so it can never contradict the Decisions screen's own tiles.
 export const pulse = [
-  {
-    id: 'p1',
-    dotColor: 'var(--green)',
-    html: '<b>78% of decisions</b> made through Rewive this quarter are confirmed as <b>worked</b> — up from 61% last quarter.',
-  },
   {
     id: 'p2',
     dotColor: 'var(--accent)',

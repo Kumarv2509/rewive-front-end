@@ -178,7 +178,18 @@ function filterClosuresByPersona(closures, findings, persona, scope) {
 // Greeting + summary sentence only. The old kpis block (and its per-persona
 // overrides) was display-dead after v5.1 — Today computes its stats from
 // findings / approvals / decision-stats, which are role-scoped already.
-app.get('/api/v1/dashboard/summary', (req, res) => res.json(op(req).dashboardSummary));
+// The greeting sentence is derived, not seeded — the packs used to assert
+// invented figures ("Rewive executed 87 actions") that nothing stood behind.
+// The mandate count is real (stream-KPI nodes in the Operating Picture);
+// greetingName stays from the pack.
+app.get('/api/v1/dashboard/summary', (req, res) => {
+  const industry = v4Industry(req);
+  const mandates = (brainsState[industry]?.nodes ?? []).filter((n) => n.kind === 'stream_kpi').length;
+  res.json({
+    ...op(req).dashboardSummary,
+    summarySentence: `Every number here has two owners — your agents are watching <b style="color:var(--ink)">${mandates} mandates</b> alongside the people who hold them. What needs you is below.`,
+  });
+});
 
 app.get('/api/v1/decisions/pending', (req, res) => res.json(filterByPersona(opS(req).pending, req.query.persona, req.query.scope)));
 
@@ -190,7 +201,25 @@ app.post('/api/v1/decisions/:id/approve', (req, res) => {
   res.json(decision ?? { id });
 });
 
-app.get('/api/v1/pulse', (req, res) => res.json(op(req).pulse));
+// The pulse leads with the loop's own scorecard, derived from the ledger with
+// the same worked/assessed arithmetic as the Decisions tiles (halfyear.js) —
+// a seeded win-rate claim once contradicted the screen that sits one click
+// away. Domain-flavor items stay seeded per industry.
+app.get('/api/v1/pulse', (req, res) => {
+  const industry = v4Industry(req);
+  runAssessorPass(industry);
+  const ledger = decisionLedgerState[industry] ?? [];
+  const assessed = ledger.filter((r) => r.verdict === 'worked' || r.verdict === 'not_worked');
+  const worked = assessed.filter((r) => r.verdict === 'worked').length;
+  const winRateItem = assessed.length >= 3
+    ? [{
+        id: `${industry}-pulse-winrate`,
+        dotColor: worked * 2 >= assessed.length ? 'var(--green)' : 'var(--amber)',
+        html: `<b>${Math.round((100 * worked) / assessed.length)}% of assessed decisions</b> worked — ${worked} of ${assessed.length}, straight from the Decision Ledger.`,
+      }]
+    : [];
+  res.json([...winRateItem, ...op(req).pulse]);
+});
 
 app.get('/api/v1/runs/live', (req, res) => res.json(filterByPersona(op(req).liveRuns, req.query.persona, req.query.scope)));
 
