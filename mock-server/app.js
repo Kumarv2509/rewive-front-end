@@ -1923,6 +1923,10 @@ app.post('/api/v1/findings/:id/disposition', async (req, res) => {
   const { finding, industry } = hit;
   if (finding.status !== 'open') return res.status(400).json({ message: 'This finding already has a disposition' });
   const { disposition, reason, reAlertCondition } = req.body;
+  // One free-text field, three meanings: abandon = the required dismissal
+  // reason; accept/act = the optional decision note (the judgment behind the
+  // call, recorded so the ledger row is auditable, not just the machine line).
+  const note = typeof reason === 'string' && reason.trim() ? reason.trim() : null;
   const now = new Date().toISOString();
   let ledgerSubtitle = null; // set per branch — becomes the ledger row's rationale line
 
@@ -1954,8 +1958,9 @@ app.post('/api/v1/findings/:id/disposition', async (req, res) => {
     closureKpisState[industry].push(closure);
     finding.status = 'accepted';
     finding.closureKpiId = closure.id;
+    if (note) finding.dispositionReason = note;
     logAudit('finding', finding.id, `accepted — closure KPI created: ${closure.name}`);
-    ledgerSubtitle = `Recovery target: ${closure.name}`;
+    ledgerSubtitle = note ? `Recovery target: ${closure.name} — ${note}` : `Recovery target: ${closure.name}`;
   } else if (disposition === 'act') {
     // Act: spin up the existing solution-design loop, seeded from the finding.
     const solutionId = `sol-${Date.now()}`;
@@ -1971,7 +1976,11 @@ app.post('/api/v1/findings/:id/disposition', async (req, res) => {
       signalName: finding.title,
       signalCategory: categoryByStream[finding.streamKey] ?? (finding.severity === 'critical' ? 'derailer' : 'laggard'),
       status: 'drafting',
-      approach: `Work the finding raised by ${finding.raisedByAgentName}: ${finding.summary}`,
+      // The decider's note is the brief when one was given; the machine line
+      // keeps the trace back to the raising agent either way.
+      approach: note
+        ? `${note} (from the finding raised by ${finding.raisedByAgentName}: ${finding.summary})`
+        : `Work the finding raised by ${finding.raisedByAgentName}: ${finding.summary}`,
       dataNeeded: finding.evidence.map((e) => e.label).join('; ') || 'existing connected data',
       owner: { name: currentUser.name, initials: currentUser.initials, avatarBg: currentUser.avatarBg },
       guardrails: 'Pause and ask before any change with a projected impact over $2,000.',
@@ -1984,8 +1993,9 @@ app.post('/api/v1/findings/:id/disposition', async (req, res) => {
     solutionDesigns.set(solutionId, solution);
     finding.status = 'acting';
     finding.solutionDesignId = solutionId;
+    if (note) finding.dispositionReason = note;
     logAudit('finding', finding.id, 'disposition: act — solution design opened');
-    ledgerSubtitle = 'Fix opened — solution design and tasks to follow';
+    ledgerSubtitle = note ? `Fix opened — ${note}` : 'Fix opened — solution design and tasks to follow';
   } else if (disposition === 'acknowledge') {
     // Acknowledge: watch state — carries a re-alert condition so it comes back if it worsens.
     const node = brainsState[industry].nodes.find((n) => n.id === finding.linkedKpiNodeId);
@@ -1996,11 +2006,11 @@ app.post('/api/v1/findings/:id/disposition', async (req, res) => {
     ledgerSubtitle = `Parked — ${finding.reAlertCondition}`;
   } else if (disposition === 'abandon') {
     // Abandon: requires a reason — the reason is what tunes the agent.
-    if (!reason || !reason.trim()) return res.status(400).json({ message: 'Abandoning a finding requires a reason — it tunes the agent' });
+    if (!note) return res.status(400).json({ message: 'Abandoning a finding requires a reason — it tunes the agent' });
     finding.status = 'abandoned';
-    finding.dispositionReason = reason.trim();
-    logAudit('finding', finding.id, `abandoned with reason: ${reason.trim()}`);
-    ledgerSubtitle = `Dismissed — ${reason.trim()}`;
+    finding.dispositionReason = note;
+    logAudit('finding', finding.id, `abandoned with reason: ${note}`);
+    ledgerSubtitle = `Dismissed — ${note}`;
   } else {
     return res.status(400).json({ message: 'disposition must be accept, act, acknowledge or abandon' });
   }

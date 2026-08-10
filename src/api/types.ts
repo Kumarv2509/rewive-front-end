@@ -1261,7 +1261,7 @@ export interface Finding {
   disposition: FindingDisposition | null;
   dispositionBy: string | null;
   dispositionAt: string | null;
-  dispositionReason: string | null; // required for abandon
+  dispositionReason: string | null; // abandon: the required dismissal reason · accept/act: the optional decision note
   slaHoursRemaining: number;
   escalationLevel: number; // 0 = stream owner, 1+ = up the shadow org
   escalatedToAgentId: string | null;
@@ -1298,7 +1298,7 @@ export interface Finding {
 
 export interface DispositionInput {
   disposition: FindingDisposition;
-  reason?: string; // required for abandon
+  reason?: string; // abandon: required dismissal reason · accept/act: optional decision note (lands in the ledger row)
   reAlertCondition?: string; // optional override for acknowledge
 }
 

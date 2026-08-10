@@ -22,13 +22,13 @@ export function DispositionBar({ finding }: { finding: Finding }) {
   const [reason, setReason] = useState('');
   const [reAlert, setReAlert] = useState('');
 
-  const needsInput = selected === 'abandon' || selected === 'acknowledge';
-
   const confirm = (disposition: FindingDisposition) => {
     dispose.mutate(
       {
         disposition,
-        reason: disposition === 'abandon' ? reason : undefined,
+        // abandon: the required dismissal reason; accept/act: the optional
+        // decision note — both travel on the same field and land in the ledger.
+        reason: disposition !== 'acknowledge' && reason.trim() ? reason : undefined,
         reAlertCondition: disposition === 'acknowledge' && reAlert.trim() ? reAlert : undefined,
       },
       {
@@ -74,8 +74,10 @@ export function DispositionBar({ finding }: { finding: Finding }) {
             key={opt.key}
             className={`dispo-opt${selected === opt.key ? ' on' : ''}`}
             onClick={() => {
+              // Switching cards clears the typed text — a dismissal reason must
+              // not silently become an accept note.
+              if (selected !== opt.key) { setReason(''); setReAlert(''); }
               setSelected(opt.key);
-              if (opt.key === 'accept' || opt.key === 'act') confirm(opt.key);
             }}
             disabled={dispose.isPending}
           >
@@ -85,30 +87,36 @@ export function DispositionBar({ finding }: { finding: Finding }) {
         ))}
       </div>
 
-      {needsInput && (
+      {selected && (
         <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          {selected === 'abandon' ? (
-            <textarea
-              rows={2}
-              style={{ flex: 1, resize: 'vertical', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit' }}
-              placeholder="Why is this not a real finding? The reason tunes the agent — be specific."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          ) : (
+          {selected === 'acknowledge' ? (
             <input
               style={{ flex: 1, border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit' }}
               placeholder="Optional re-alert condition (defaults to: worsens a further 5% or 14 days pass)"
               value={reAlert}
               onChange={(e) => setReAlert(e.target.value)}
             />
+          ) : (
+            <textarea
+              rows={2}
+              style={{ flex: 1, resize: 'vertical', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit' }}
+              placeholder={
+                selected === 'abandon'
+                  ? 'Why is this not a real finding? The reason tunes the agent — be specific.'
+                  : selected === 'accept'
+                    ? 'Optional — what are you accepting and why? Lands in the Decision Ledger with your call.'
+                    : "Optional — what should the fix achieve? Becomes the fix's brief and lands in the Decision Ledger."
+              }
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
           )}
           <button
             className="btn primary sm"
             disabled={dispose.isPending || (selected === 'abandon' && !reason.trim())}
-            onClick={() => selected && confirm(selected)}
+            onClick={() => confirm(selected)}
           >
-            Confirm {selected === 'abandon' ? 'dismiss' : 'park'}
+            Confirm {OPTIONS.find((o) => o.key === selected)?.title.toLowerCase()}
           </button>
         </div>
       )}

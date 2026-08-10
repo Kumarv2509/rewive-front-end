@@ -78,12 +78,14 @@ test('Accept: recovery target created, ledger written, closure delivers the verd
   if (!pick) return t.skip('no open finding available');
   const { ind, finding } = pick;
 
+  const NOTE = 'Contract suite: freight team engaged, expect recovery by month-end';
   const { status, data: decided } = await api(`/findings/${finding.id}/disposition?industry=${ind}`, {
-    method: 'POST', body: { disposition: 'accept' },
+    method: 'POST', body: { disposition: 'accept', reason: NOTE },
   });
   assert.equal(status, 200);
   assert.equal(decided.status, 'accepted');
   assert.ok(decided.closureKpiId, 'accept must mint a recovery target');
+  assert.equal(decided.dispositionReason, NOTE, 'the optional accept note must be recorded on the finding');
 
   const closure = (await api(`/closure-kpis?industry=${ind}`)).data.find((c) => c.id === decided.closureKpiId);
   assert.ok(closure, 'the recovery target must be watchable');
@@ -94,6 +96,7 @@ test('Accept: recovery target created, ledger written, closure delivers the verd
   assert.ok(row, 'the decision must land in the ledger the moment it is made');
   assert.ok(row.title.startsWith('Accept — '), `ledger title uses the UI verb (got "${row.title}")`);
   assert.equal(row.persona, finding.persona, 'the ledger row belongs to the deciding role');
+  assert.ok(row.subtitle.includes(NOTE), 'the decision note must be auditable on the ledger row');
 
   // Close the loop: the number is back → the finding closes with a verdict,
   // and the assessor upgrades the ledger row from "too early".
@@ -109,14 +112,16 @@ test('Act: a fix is opened and linked back to the finding', mut, async (t) => {
   const pick = await takeOpenFinding();
   if (!pick) return t.skip('no open finding available');
   const { ind, finding } = pick;
+  const BRIEF = 'Contract suite: recover fill rate without airfreighting the whole gap';
   const { data: decided } = await api(`/findings/${finding.id}/disposition?industry=${ind}`, {
-    method: 'POST', body: { disposition: 'act' },
+    method: 'POST', body: { disposition: 'act', reason: BRIEF },
   });
   assert.equal(decided.status, 'acting');
   assert.ok(decided.solutionDesignId, 'act must open a solution design');
   const sol = await api(`/solutions/${decided.solutionDesignId}?industry=${ind}`);
   assert.equal(sol.status, 200);
   assert.equal(sol.data.signalId, finding.id, 'the fix must trace back to its finding');
+  assert.ok(sol.data.approach.includes(BRIEF), "the decider's note must become part of the fix's brief");
   assert.ok((await ledgerRowFor(ind, finding.id)).title.startsWith('Act — '));
 });
 

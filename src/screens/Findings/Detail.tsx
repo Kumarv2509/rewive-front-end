@@ -158,7 +158,10 @@ export function FindingDetailScreen() {
               when={finding.dispositionAt ? new Date(finding.dispositionAt).toLocaleString() : undefined}
             >
               {finding.dispositionReason && (
-                <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>Reason fed back to the agent: {finding.dispositionReason}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>
+                  {finding.disposition === 'abandon' ? 'Reason fed back to the agent: ' : 'The call, in their words: '}
+                  {finding.dispositionReason}
+                </div>
               )}
               <div style={{ marginTop: 8 }}>
                 <Link to="/operate/decisions" style={{ fontSize: 12, color: 'var(--accent-deep)', textDecoration: 'none' }}>
