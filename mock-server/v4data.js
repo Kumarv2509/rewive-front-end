@@ -920,7 +920,7 @@ export const findingsSeed = {
     {
       id: 'fmcg-f-fnv-commfin-overrides',
       title: 'F&V promo price overrides eroding realized price in traditional trade',
-      summary: 'Field sales in traditional trade were overriding F&V promo floors to clear short-dated stock; realized price ran 6% under floor for five weeks. Accepted by the division commercial finance lead — an exit condition now watches realized price against floor weekly.',
+      summary: 'Field sales in traditional trade were overriding F&V promo floors to clear short-dated stock; realized price ran 6% under floor for five weeks. Accepted by the division commercial finance lead — an recovery target now watches realized price against floor weekly.',
       raisedByAgentId: 'fmcg-sa-finance', raisedByAgentName: 'Finance agent', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-gm', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-gm', nodeName: 'Gross margin', kind: 'stream_kpi', effect: 'realized price 6% under promo floor' },
@@ -941,7 +941,7 @@ export const findingsSeed = {
     {
       id: 'fmcg-f-ambient-cho',
       title: 'Sauce-line changeover time crept from 38 to 55 minutes',
-      summary: 'Changeover on the sauces line drifted up as new allergen-clean protocols were bolted onto the old sequence instead of redesigned into it. Accepted — the exit condition watches changeover time weekly while the SMED rework lands.',
+      summary: 'Changeover on the sauces line drifted up as new allergen-clean protocols were bolted onto the old sequence instead of redesigned into it. Accepted — the recovery target watches changeover time weekly while the SMED rework lands.',
       raisedByAgentId: 'fmcg-sa-manufacturing', raisedByAgentName: 'Manufacturing agent', streamKey: 'manufacturing', linkedKpiNodeId: 'fmcg-k-cho', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-cho', nodeName: 'Changeover time', kind: 'stream_kpi', effect: '55 min vs 30 min target on sauces' },
@@ -961,7 +961,7 @@ export const findingsSeed = {
     {
       id: 'fmcg-f-fnv-prepack',
       title: 'Pre-pack salad line runs out of capacity in the summer peak',
-      summary: 'At current growth the pre-pack salad line hits 100% utilization mid-August. Known and parked: the division acknowledged it with a trip-wire — if the 4-week demand forecast crosses 92% of line capacity, it re-alerts for a capex or co-pack call.',
+      summary: 'At current growth the pre-pack salad line hits 100% utilization mid-August. Known and parked: the division parked it with a re-alert rule — if the 4-week demand forecast crosses 92% of line capacity, it re-alerts for a capex or co-pack call.',
       raisedByAgentId: 'fmcg-sa-manufacturing', raisedByAgentName: 'Manufacturing agent', streamKey: 'manufacturing', linkedKpiNodeId: 'fmcg-k-oee', severity: 'medium',
       impactPath: [
         { nodeId: 'fmcg-k-oee', nodeName: 'OEE', kind: 'stream_kpi', effect: 'line at 87% utilization and climbing' },
@@ -1362,7 +1362,7 @@ export const findingsSeed = {
     {
       id: 'fmcg-f-9',
       title: 'Egypt receivables past 60 days crossed the re-alert line',
-      summary: 'Acknowledged seven weeks ago with a trip-wire at 22% of the Egypt book past 60 days. The wire fired this week at 24% — the finding is back, louder, and escalated one level. EGP devaluation pressure is pushing distributors to stretch terms.',
+      summary: 'Parked seven weeks ago with a re-alert rule at 22% of the Egypt book past 60 days. The rule fired this week at 24% — the finding is back, louder, and escalated one level. EGP devaluation pressure is pushing distributors to stretch terms.',
       raisedByAgentId: 'fmcg-sa-finance', raisedByAgentName: 'Finance agent', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-wcd', severity: 'high',
       impactPath: [
         { nodeId: 'fmcg-k-wcd', nodeName: 'Working-capital days', kind: 'stream_kpi', effect: 'Egypt receivable days +9 since April' },
@@ -1371,7 +1371,7 @@ export const findingsSeed = {
       impactEstimate: '≈ AED 1.6M equivalent locked beyond 60 days',
       evidence: [
         { label: 'Egypt book past 60 days', value: '24% vs 22% re-alert line (14% in March)' },
-        { label: 'Trip-wire history', value: 'Parked 7 weeks on the wire · fired this week' },
+        { label: 'Re-alert history', value: 'Parked 7 weeks on the rule · fired this week' },
       ],
       status: 'open', disposition: null, dispositionBy: null, dispositionAt: null, dispositionReason: null,
       slaHoursRemaining: 10, escalationLevel: 1, escalatedToAgentId: 'fmcg-sa-chief',
@@ -1451,7 +1451,7 @@ export const findingsSeed = {
     {
       id: 'fmcg-f-h3',
       title: 'KSA distributor receivables drifting past 75 days',
-      summary: 'The largest KSA distributor stretched payment from 58 to 76 days across Q1. Accepted in April with extended terms as the fix — the exit condition has since regressed: DSO is at 81 days and the assessor has marked the decision as not worked.',
+      summary: 'The largest KSA distributor stretched payment from 58 to 76 days across Q1. Accepted in April with extended terms as the fix — the recovery target has since regressed: DSO is at 81 days and the assessor has marked the decision as not worked.',
       raisedByAgentId: 'fmcg-sa-finance', raisedByAgentName: 'Finance agent', streamKey: 'finance', linkedKpiNodeId: 'fmcg-k-wcd', severity: 'high',
       impactPath: [
         { nodeId: 'fmcg-k-wcd', nodeName: 'Working-capital days', kind: 'stream_kpi', effect: 'KSA receivable days +18 across Q1' },
@@ -1815,11 +1815,11 @@ export const findingsSeed = {
       closureTemplate: { name: 'ALOS back to 4.3 days for a full month', baseline: '4.9', target: '4.3' },
     },
 
-    // ---- Watching: accepted, with an exit condition the CFO owns ----
+    // ---- Watching: accepted, with an recovery target the CFO owns ----
     {
       id: 'hc-f-4',
       title: 'Clean claim rate fell to 82% after the coding team turned over',
-      summary: 'Clean claim rate dropped from 94% to 82% in the eight weeks after three senior coders left. Accepted with an exit condition rather than acted on — the coding backfill was already approved, so the question was whether it lands, not what to do.',
+      summary: 'Clean claim rate dropped from 94% to 82% in the eight weeks after three senior coders left. Accepted with an recovery target rather than acted on — the coding backfill was already approved, so the question was whether it lands, not what to do.',
       raisedByAgentId: 'hc-sa-revcycle', raisedByAgentName: 'Revenue cycle agent', streamKey: 'revcycle', linkedKpiNodeId: 'hc-k-cleanclaim', severity: 'high',
       impactPath: [
         { nodeId: 'hc-k-cleanclaim', nodeName: 'Clean claim rate', kind: 'stream_kpi', effect: '82% vs 95% target' },
@@ -1937,7 +1937,7 @@ export const findingsSeed = {
     {
       id: 'hc-f-coo-safety',
       title: 'Medication error rate is being counted differently at each site',
-      summary: 'The network medication error rate reads 0.9 per 1,000 doses, but the three sites are not counting the same thing — Al Safa reports near-misses, the medical centres do not. The composite safety index the board sees is built on that number. Accepted with an exit condition: harmonise the definition first, then judge the rate.',
+      summary: 'The network medication error rate reads 0.9 per 1,000 doses, but the three sites are not counting the same thing — Al Safa reports near-misses, the medical centres do not. The composite safety index the board sees is built on that number. Accepted with an recovery target: harmonise the definition first, then judge the rate.',
       raisedByAgentId: 'hc-sa-chief', raisedByAgentName: 'Chief of staff agent', streamKey: 'pharmacy', linkedKpiNodeId: 'hc-k-mederror', severity: 'medium',
       impactPath: [
         { nodeId: 'hc-k-mederror', nodeName: 'Medication error rate', kind: 'stream_kpi', effect: '0.9 per 1,000 doses, not comparable across sites' },
@@ -2027,7 +2027,7 @@ export const findingsSeed = {
     {
       id: 'hc-f-cm-nps',
       title: 'Patient NPS at Sharjah fell to 31 after the room reshuffle',
-      summary: 'Site NPS dropped from 44 to 31 in the eight weeks after paediatrics and dermatology swapped floors. Free-text comments are dominated by wayfinding and being sent to the wrong desk. Accepted with an exit condition — signage and the check-in script were already being reworked.',
+      summary: 'Site NPS dropped from 44 to 31 in the eight weeks after paediatrics and dermatology swapped floors. Free-text comments are dominated by wayfinding and being sent to the wrong desk. Accepted with an recovery target — signage and the check-in script were already being reworked.',
       raisedByAgentId: 'hc-sa-patientexp', raisedByAgentName: 'Patient experience agent', streamKey: 'patientexp', linkedKpiNodeId: 'hc-k-nps', severity: 'medium',
       impactPath: [
         { nodeId: 'hc-k-nps', nodeName: 'Patient NPS', kind: 'stream_kpi', effect: '44 → 31 at the Sharjah site' },
@@ -2118,7 +2118,7 @@ export const findingsSeed = {
     {
       id: 'hc-f-fo-poscash',
       title: 'Desk collection is skipped whenever the patient disputes the co-pay amount',
-      summary: 'Front-office staff waive the desk collection rather than hold up the queue when a patient questions their co-pay — 1 in 9 visits. Acknowledged rather than acted on: the underlying fix is a benefits display the team does not control yet, so a trip-wire was set instead.',
+      summary: 'Front-office staff waive the desk collection rather than hold up the queue when a patient questions their co-pay — 1 in 9 visits. Acknowledged rather than acted on: the underlying fix is a benefits display the team does not control yet, so a re-alert rule was set instead.',
       raisedByAgentId: 'hc-sa-frontoffice', raisedByAgentName: 'Front office agent', streamKey: 'revcycle', linkedKpiNodeId: 'hc-k-poscash', severity: 'medium',
       impactPath: [
         { nodeId: 'hc-k-poscash', nodeName: 'Point-of-service collections', kind: 'stream_kpi', effect: '11% of visits waived at the desk' },
@@ -2211,7 +2211,7 @@ export const findingsSeed = {
     {
       id: 'hc-f-h2',
       title: 'AXA / GIG Gulf tariff renegotiation — closed, and the number did not come back',
-      summary: 'Realized rates on the AXA / GIG Gulf schedule were running 9% below the contracted tariff on outpatient consultations. The team acted: a renegotiation and a re-mapped fee schedule. The exit condition was realized rate within 2% of tariff — it never got there. The assessor called it, and the underlying drift was re-raised as the current Sukoon dispute.',
+      summary: 'Realized rates on the AXA / GIG Gulf schedule were running 9% below the contracted tariff on outpatient consultations. The team acted: a renegotiation and a re-mapped fee schedule. The recovery target was realized rate within 2% of tariff — it never got there. The assessor called it, and the underlying drift was re-raised as the current Sukoon dispute.',
       raisedByAgentId: 'hc-sa-payer', raisedByAgentName: 'Payer contracting agent', streamKey: 'revcycle', linkedKpiNodeId: 'hc-k-denial', severity: 'high',
       impactPath: [
         { nodeId: 'hc-k-denial', nodeName: 'Claim denial rate', kind: 'stream_kpi', effect: 'downcoding on outpatient consultations' },
@@ -2227,7 +2227,7 @@ export const findingsSeed = {
       status: 'closed', disposition: 'act', dispositionBy: 'Sana Qureshi', dispositionAt: daysAgo(96), dispositionReason: null,
       slaHoursRemaining: 0, escalationLevel: 0, escalatedToAgentId: null,
       closureKpiId: 'hc-c-h2', solutionDesignId: null, reAlertCondition: null,
-      assessorVerdict: { verdict: 'not_worked', note: 'Assessor agent: realized rate closed the period at −6.5% against a −2% exit condition. The re-map corrected the mapping errors but not the downcoding behaviour, which is the same pattern now open under the Sukoon bundled-code dispute.', at: daysAgo(21) },
+      assessorVerdict: { verdict: 'not_worked', note: 'Assessor agent: realized rate closed the period at −6.5% against a −2% recovery target. The re-map corrected the mapping errors but not the downcoding behaviour, which is the same pattern now open under the Sukoon bundled-code dispute.', at: daysAgo(21) },
       detectedAt: daysAgo(103), persona: 'commercial_finance', entity: 'Medcare Hospital Al Safa', region: 'Dubai',
       closureTemplate: { name: 'Realized rate within 2% of contracted tariff for 8 weeks', baseline: '−9%', target: 'within 2%' },
     },
@@ -2323,7 +2323,7 @@ export const findingsSeed = {
     {
       id: 'mfg-f-4',
       title: 'Inbound casting defects at 980 PPM are turning into line-side scrap',
-      summary: 'Inbound defect PPM from the two castings suppliers more than doubled to 980 against a 400 PPM ceiling. Receiving inspection is catching half; the rest surfaces as line-side scrap and sorting labor. Accepted — the exit condition tracks supplier PPM back under the ceiling.',
+      summary: 'Inbound defect PPM from the two castings suppliers more than doubled to 980 against a 400 PPM ceiling. Receiving inspection is catching half; the rest surfaces as line-side scrap and sorting labor. Accepted — the recovery target tracks supplier PPM back under the ceiling.',
       raisedByAgentId: 'mfg-sa-supplychain', raisedByAgentName: 'Supplier network agent', streamKey: 'supplychain', linkedKpiNodeId: 'mfg-k-suppm', severity: 'high',
       impactPath: [
         { nodeId: 'mfg-k-suppm', nodeName: 'Inbound defect PPM', kind: 'stream_kpi', effect: '980 PPM vs 400 ceiling, castings family' },
@@ -2459,7 +2459,7 @@ export const findingsSeed = {
     {
       id: 'hm-f-4',
       title: 'Shrink at Al Wahda climbed to 2.4% of sales, concentrated in three categories',
-      summary: 'Stock-count reconciliation puts Al Wahda shrink at 2.4% against the 1.2% target — razor blades, infant formula and mobile accessories account for 70% of the loss. Accepted: the exit condition tracks the store back under 1.4% while the tagging and case-display fix lands.',
+      summary: 'Stock-count reconciliation puts Al Wahda shrink at 2.4% against the 1.2% target — razor blades, infant formula and mobile accessories account for 70% of the loss. Accepted: the recovery target tracks the store back under 1.4% while the tagging and case-display fix lands.',
       raisedByAgentId: 'hm-sa-lossprev', raisedByAgentName: 'Loss prevention agent', streamKey: 'finance', linkedKpiNodeId: 'hm-k-shrink', severity: 'high',
       impactPath: [
         { nodeId: 'hm-k-shrink', nodeName: 'Shrink % of sales', kind: 'stream_kpi', effect: '2.4% at Al Wahda vs 1.2% target' },

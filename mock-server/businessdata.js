@@ -83,8 +83,8 @@ export const businessContextSeed = {
       actGuide: [
         { title: 'Start from the number', body: 'Sales by SKU and Sales by customer are the base data. A row marked “drifting” means the agent watching that number has already raised a finding — the link takes you to its thread.' },
         { title: 'The finding is the unit of work', body: 'Each finding names the drift, the evidence, and the role whose call it is. It waits in that role\'s Today queue with an SLA clock. Silence is not neutral: past the SLA it escalates up the org — function → division COO → Group CEO.' },
-        { title: 'Make the four-A call', body: 'Accept sets a measurable exit condition the agent watches until the number is back. Act opens a solution design. Acknowledge parks it on a trip-wire. Abandon requires a reason, which tunes the agent.' },
-        { title: 'Nothing is done until the number is back', body: 'Accepted findings appear in Findings → Watching until the exit condition holds. Every call lands in the Decision Ledger, and an assessor returns a verdict later: worked, didn\'t, or too early. That is the company\'s memory of judgment.' },
+        { title: 'Make the four-A call', body: 'Accept sets a measurable recovery target the agent watches until the number is back. Act opens a solution design. Park sets a re-alert rule. Dismiss requires a reason, which tunes the agent.' },
+        { title: 'Nothing is done until the number is back', body: 'Accepted findings appear in Findings → Watching until the recovery target holds. Every call lands in the Decision Ledger, and an assessor returns a verdict later: worked, didn\'t, or too early. That is the company\'s memory of judgment.' },
       ],
     },
     skus: [
@@ -166,8 +166,8 @@ export const businessContextSeed = {
       actGuide: [
         { title: 'Start from the number', body: 'Service-line and payer rows marked “drifting” already have a finding — the link opens its thread.' },
         { title: 'The finding is the unit of work', body: 'Each finding waits in the responsible role\'s Today queue with an SLA clock; silence escalates it.' },
-        { title: 'Make the four-A call', body: 'Accept sets an exit condition; Act opens a solution; Acknowledge sets a trip-wire; Abandon needs a reason.' },
-        { title: 'Nothing is done until the number is back', body: 'Watched exit conditions and assessor verdicts close the loop in the Decision Ledger.' },
+        { title: 'Make the four-A call', body: 'Accept sets a recovery target; Act opens a solution; Park sets a re-alert rule; Dismiss needs a reason.' },
+        { title: 'Nothing is done until the number is back', body: 'Watched recovery targets and assessor verdicts close the loop in the Decision Ledger.' },
       ],
     },
     skus: [

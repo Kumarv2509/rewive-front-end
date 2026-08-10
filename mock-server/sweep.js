@@ -256,10 +256,10 @@ export async function runSweep(trigger, ctx) {
               await ctx.scheduleLoopTimers?.(active);
               run.reAlertsFired += 1;
               step.status = 're-alert';
-              step.detail = worsened ? `trip-wire fired — deviation worsened to ${result.dev.toFixed(1)}%` : 'trip-wire fired — the acknowledge window expired';
+              step.detail = worsened ? `re-alert fired — deviation worsened to ${result.dev.toFixed(1)}%` : 're-alert fired — the park window expired';
               step.findingId = f.id;
               step.severity = f.severity;
-              ctx.logAudit('finding', f.id, `re-alert trip-wire fired by sweep — ${worsened ? `deviation worsened to ${result.dev.toFixed(1)}%` : 'the acknowledge window expired'}; back to open one level up`, 'Rewive (sweep)');
+              ctx.logAudit('finding', f.id, `re-alert rule fired by sweep — ${worsened ? `deviation worsened to ${result.dev.toFixed(1)}%` : 'the park window expired'}; back to open one level up`, 'Rewive (sweep)');
             }
           }
         }
@@ -279,7 +279,7 @@ export async function runSweep(trigger, ctx) {
               await tracking.saveLiveClosure(closureRow);
               run.closuresProgressed += 1;
               step.status = 'recovered';
-              step.detail = `exit condition advanced — ${current}, ${progress}% to target`;
+              step.detail = `recovery target advanced — ${current}, ${progress}% to target`;
               step.findingId = active.id;
             }
           }

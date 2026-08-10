@@ -76,7 +76,7 @@ export function NotificationsBell() {
           </div>
           {items.length === 0 && (
             <div style={{ padding: 'var(--sp-3)', fontSize: 'var(--text-sm)', color: 'var(--ink-3)' }}>
-              Nothing delivered yet. When a finding escalates — an SLA runs out, or a parked trip-wire
+              Nothing delivered yet. When a finding escalates — an SLA runs out, or a parked re-alert rule
               fires — the new owner hears about it here.
             </div>
           )}

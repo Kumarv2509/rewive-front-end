@@ -1414,18 +1414,18 @@ function runAssessorPass(industry) {
     if (closure.status === 'closed' && !row.assessorNote) {
       row.verdict = 'worked';
       row.measuredImpact = { text: `${closure.baseline} → ${closure.current}`, direction: 'up' };
-      row.assessorNote = `Assessor agent: ${closure.name} — held at ${closure.current} against the ${closure.target} exit condition, from a ${closure.baseline} baseline. The number came back; loop closed.`;
+      row.assessorNote = `Assessor agent: ${closure.name} — held at ${closure.current} against the ${closure.target} recovery target, from a ${closure.baseline} baseline. The number came back; loop closed.`;
       appendVerdictEvent(industry, row, closure);
       logAudit('decision', row.id, `assessor verdict: worked — ${closure.name}`);
     } else if (closure.status === 'regressed' && !row.assessorNote) {
       row.verdict = 'not_worked';
-      row.measuredImpact = { text: `${closure.current} against a ${closure.target} exit condition`, direction: 'down' };
+      row.measuredImpact = { text: `${closure.current} against a ${closure.target} recovery target`, direction: 'down' };
       row.assessorNote = `Assessor agent: ${closure.name} regressed — ${closure.current} against ${closure.target}. The loop closed without the number coming back.`;
       appendVerdictEvent(industry, row, closure);
       logAudit('decision', row.id, `assessor verdict: didn't work — ${closure.name}`);
     } else if (closure.status === 'tracking' && !row.assessorNote) {
       // No verdict yet — but keep the measurement honest as the target moves.
-      row.measuredImpact = { text: `measuring… ${closure.current} of a ${closure.target} exit condition`, direction: 'flat' };
+      row.measuredImpact = { text: `measuring… ${closure.current} of a ${closure.target} recovery target`, direction: 'flat' };
     }
   }
 }
@@ -2048,7 +2048,13 @@ app.post('/api/v1/findings/:id/disposition', async (req, res) => {
     informedBy: { type: 'agent', name: finding.raisedByAgentName },
     date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
     verdict: 'too_early',
-    measuredImpact: { text: 'measuring…', direction: 'flat' },
+    // "measuring…" is only honest when something is being measured: a parked
+    // finding is watching its re-alert rule, a dismissed one measures nothing.
+    measuredImpact: disposition === 'acknowledge'
+      ? { text: 'parked — watching the re-alert rule', direction: 'flat' }
+      : disposition === 'abandon'
+        ? { text: 'dismissed — nothing to measure', direction: 'flat' }
+        : { text: 'measuring…', direction: 'flat' },
     function: finding.streamKey === 'finance' ? 'finance' : 'operations',
     findingId: finding.id,
     ...(finding.entity ? { entity: finding.entity } : {}),
@@ -2247,9 +2253,9 @@ app.post('/api/v1/findings/:id/re-alert', (req, res) => {
   finding.disposition = null;
   finding.dispositionBy = null;
   finding.dispositionAt = null;
-  const { parentRole } = escalateFindingUp(finding, industry, 'A parked trip-wire fired — the finding re-opened one level up. Now your call.');
+  const { parentRole } = escalateFindingUp(finding, industry, 'A parked re-alert fired — the finding re-opened one level up. Now your call.');
   syncLiveDeadline(finding);
-  logAudit('finding', finding.id, `re-alerted — trip-wire fired, back to open${parentRole ? ` one level up (now ${parentRole}'s call)` : ''}`);
+  logAudit('finding', finding.id, `re-alerted — the rule fired, back to open${parentRole ? ` one level up (now ${parentRole}'s call)` : ''}`);
   res.json(stripServerFields(finding));
 });
 
@@ -2276,13 +2282,13 @@ app.post('/api/v1/closure-kpis/:id/close', async (req, res) => {
     // The assessor agent (independent of the validation that reviewed the plan) confirms the outcome.
     finding.assessorVerdict = {
       verdict: 'worked',
-      note: `Assessor agent confirmed the exit condition held: ${closure.name}. Closing the loop back to "${finding.title}".`,
+      note: `Assessor agent confirmed the recovery target held: ${closure.name}. Closing the loop back to "${finding.title}".`,
       at: now,
     };
-    logAudit('finding', finding.id, 'loop closed — assessor confirmed the exit condition held');
+    logAudit('finding', finding.id, 'loop closed — assessor confirmed the recovery target held');
     if (finding.id.startsWith('live-')) await loopTimers.cancelTimers(finding.id).catch(() => {});
   }
-  logAudit('kpi', closure.id, `exit condition met and closed: ${closure.name}`);
+  logAudit('kpi', closure.id, `recovery target met and closed: ${closure.name}`);
   res.json(closure);
 });
 

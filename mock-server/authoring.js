@@ -52,7 +52,7 @@ House style:
 - Your drift rules read only the mandate's own number. The upstreamSignals name the senses and leading indicators that feed it — the plausible CAUSES. Name the single most plausible cause drawn ONLY from upstreamSignals, using its rationale where given; add exactly one evidence row citing it. Never invent a cause that is not in upstreamSignals; if the list is empty, describe the drift without asserting a cause.
 - The first impact-path node IS that suspected upstream cause (a sense or leading indicator), so its impactEffect phrase should read as the cause, and the mandate's own reading belongs on the mandate node's phrase.
 - The closure template names a number and a duration ("back above 96% for 4 straight weeks").
-- The re-alert condition is a concrete trip-wire ("re-alert if it worsens a further 5% or after 14 days").
+- The re-alert condition is a concrete rule ("re-alert if it worsens a further 5% or after 14 days").
 - impactEffects must contain exactly one short phrase per impact-path node, in the order given.
 - Evidence rows are label/value pairs drawn only from the data provided — never fabricate sources.`;
 

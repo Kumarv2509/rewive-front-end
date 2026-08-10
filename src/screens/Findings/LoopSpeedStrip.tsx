@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useDecisionStats } from '../../api/decisions';
 import { useLoopSpeed } from '../../api/people';
 import { useEffectiveLens } from '../../components/layout/personaLens';
 import { Sparkline } from '../../components/shared/Sparkline';
@@ -19,6 +20,10 @@ function median(values: number[]): number | null {
 export function LoopSpeedStrip() {
   const { persona, scope } = useEffectiveLens();
   const { data } = useLoopSpeed(persona, scope);
+  // Median time-to-decide comes from the same ledger-derived stat the
+  // Decisions screen shows — one number, not two contradicting ones. The
+  // loop-speed pack keeps only what Decisions doesn't state: the close side.
+  const { data: stats } = useDecisionStats(persona, scope);
   if (!data || data.length === 0) return null;
 
   // Index-wise mean of the per-mandate close-time trends (all seeded at the
@@ -33,7 +38,7 @@ export function LoopSpeedStrip() {
   const trendColor = improving ? 'var(--green)' : worsening ? 'var(--amber)' : 'var(--ink-3)';
 
   const findings90d = data.reduce((sum, r) => sum + r.findings90d, 0);
-  const decideHours = median(data.map((r) => parseFloat(r.medianTimeToDecide)));
+  const decideDisplay = stats?.medianTimeToDecision.value ?? null;
   const closeDays = median(data.map((r) => parseFloat(r.medianTimeToClose)));
   const inWindowPct = Math.round(data.reduce((sum, r) => sum + r.closedInWindowPct, 0) / data.length);
 
@@ -57,10 +62,10 @@ export function LoopSpeedStrip() {
           <div className="eyebrow">Findings · 90d</div>
           <div className="ag-fig" style={{ marginTop: 6 }}>{findings90d}</div>
         </div>
-        {decideHours != null && (
+        {decideDisplay && (
           <div>
             <div className="eyebrow">Median time to decide</div>
-            <div className="ag-fig" style={{ marginTop: 6 }}>{decideHours}h</div>
+            <div className="ag-fig" style={{ marginTop: 6 }}>{decideDisplay}</div>
           </div>
         )}
         {closeDays != null && (
