@@ -74,25 +74,31 @@ export function OnboardingScreen() {
   // name + actual (current) + budget (target), so it rides the same pipeline.
   const handleFile = async (file: File) => {
     setError('');
-    const { read, utils } = await import('xlsx');
-    const workbook = read(await file.arrayBuffer());
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const raw = utils.sheet_to_json<Record<string, unknown>>(sheet, { raw: false });
-    if (!raw.length) { setUploadNote(`${file.name}: no rows found`); return; }
-    const keys = Object.keys(raw[0]);
-    const nameCol = pickColumn(keys, 'name', 'kpi', 'mandate', 'metric', 'label', 'line', 'line item');
-    const targetCol = pickColumn(keys, 'target', 'budget', 'goal', 'plan');
-    const currentCol = pickColumn(keys, 'current', 'actual', 'value', 'reading', 'ytd');
-    if (!nameCol) { setUploadNote(`${file.name}: no name/kpi/label column found`); return; }
-    const rows = raw
-      .map((r) => ({
-        name: String(r[nameCol] ?? '').trim(),
-        target: targetCol ? String(r[targetCol] ?? '') : '',
-        current: currentCol ? String(r[currentCol] ?? '') : '',
-      }))
-      .filter((r) => r.name);
-    setKpis((prev) => [...prev.filter((k) => k.name.trim()), ...rows]);
-    setUploadNote(`${file.name}: ${rows.length} row(s) added below — edit or remove before drafting.`);
+    try {
+      const { read, utils } = await import('xlsx');
+      const workbook = read(await file.arrayBuffer());
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const raw = utils.sheet_to_json<Record<string, unknown>>(sheet, { raw: false });
+      if (!raw.length) { setUploadNote(`${file.name}: no rows found`); return; }
+      const keys = Object.keys(raw[0]);
+      const nameCol = pickColumn(keys, 'name', 'kpi', 'mandate', 'metric', 'label', 'line', 'line item');
+      const targetCol = pickColumn(keys, 'target', 'budget', 'goal', 'plan');
+      const currentCol = pickColumn(keys, 'current', 'actual', 'value', 'reading', 'ytd');
+      if (!nameCol) { setUploadNote(`${file.name}: no name/kpi/label column found`); return; }
+      const rows = raw
+        .map((r) => ({
+          name: String(r[nameCol] ?? '').trim(),
+          target: targetCol ? String(r[targetCol] ?? '') : '',
+          current: currentCol ? String(r[currentCol] ?? '') : '',
+        }))
+        .filter((r) => r.name);
+      setKpis((prev) => [...prev.filter((k) => k.name.trim()), ...rows]);
+      setUploadNote(`${file.name}: ${rows.length} row(s) added below — edit or remove before drafting.`);
+    } catch (err) {
+      // A parse failure must never be silent — the org would be created with
+      // no numbers and the customer would believe their upload landed.
+      setUploadNote(`${file.name}: could not be read — ${err instanceof Error ? err.message : 'unrecognized format'}. Use CSV/XLSX with name + target/budget + current/actual columns, or type the numbers below.`);
+    }
   };
 
   const generateDraft = () => {
@@ -271,7 +277,7 @@ export function OnboardingScreen() {
             <div className="onb-actions">
               <button className="btn" onClick={() => setStep('people')}>Back</button>
               <button className="btn primary" disabled={draftMutation.isPending} onClick={generateDraft}>
-                {draftMutation.isPending ? 'Drafting…' : 'Draft my Operating Picture'}
+                {draftMutation.isPending ? 'Drafting…' : filledKpis.length ? `Draft my Operating Picture (${filledKpis.length} numbers)` : 'Draft my Operating Picture (no numbers yet)'}
               </button>
             </div>
           </>
@@ -318,10 +324,19 @@ export function OnboardingScreen() {
             <div className="onb-note">
               {included.length} mandates on the picture · {tracked.length} live-tracked from day one (target + current present).
             </div>
+            {included.length > 0 && tracked.length === 0 && (
+              <div className="onb-warn">
+                Nothing will be live-tracked — no mandate carries both a target and a current value. You can create the
+                organization anyway (the structure stands, waiting for data), but the agents will have nothing to watch.
+                If you uploaded a file, go back to Your numbers and check it landed.
+              </div>
+            )}
             <div className="onb-actions">
               <button className="btn" onClick={() => setStep('data')}>Back</button>
               <button className="btn primary" disabled={commitMutation.isPending || setIndustry.isPending || !included.length} onClick={createOrg}>
-                {commitMutation.isPending || setIndustry.isPending ? 'Creating…' : `Create ${name.trim() || 'organization'}`}
+                {commitMutation.isPending || setIndustry.isPending
+                  ? 'Creating…'
+                  : `Create ${name.trim() || 'organization'}${tracked.length === 0 ? ' — with no live numbers' : ''}`}
               </button>
             </div>
           </>
