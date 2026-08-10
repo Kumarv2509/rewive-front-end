@@ -1,4 +1,103 @@
-# Handoff — the Signal redesign: switchable appearance themes (2026-08-10)
+# Handoff — the founder review session: 7 commits of asks, P1.1/P1.2 Verified (2026-08-10, later session)
+
+## Where things stand at close
+
+- **This session was a live founder review** — screen by screen, every ask
+  built, verified and committed on the spot. Seven commits on `v5`, in
+  order:
+  1. `df128b7` **the friendliness pass + warm terracotta** — "more ui
+     friendly" then "dont keep the coral": row-level Decide/Approve became
+     `.btn.decide` (quiet accent outline, fills on row hover — filled
+     `.btn.primary` stays for singular page actions), Signal radii
+     softened (4/6/10px, pills 99px), roomier `.dec-item` rows, impact
+     figures emphasized in meta lines; then the whole Signal accent family
+     went terracotta: `--accent #C05B41` / deep `#9C452F` / soft
+     `#F8EEE9`, red → brick `#AE3B2A`, favicon + story.html + demo.html
+     hex-swapped. CLAUDE.md + the `paper-ledger-rebrand` memory updated —
+     Signal is no longer "alarm orange" or "near-square".
+  2. `9aa8cbe` **decision notes** — Accept and Act no longer commit
+     instantly: an optional note (rides the existing `reason` field)
+     lands on the finding thread ("The call, in their words"), the ledger
+     row subtitle, and for Act becomes the fix's brief.
+  3. `f9e94de` **the time dimension on Findings** — mono age stamp on
+     every row (`timeAgo` promoted to `src/components/shared/`), the Open
+     queue grouped Aging (7d+, first, red count) → This week → Last 24h,
+     and `LoopSpeedStrip` ("The loop, over time") at the screen's foot.
+  4. `84c7d71` **the re-alert parser understands people** — "review after
+     2 weeks" used to silently become the 14-day default;
+     `parseReAlertCondition` now reads days/weeks/months, digits or word
+     numbers. Verified end-to-end: 2 weeks→14d, 3 weeks→21d, a month→30d
+     timers. New CONTRACT_SWEEP-gated test pins phrasing→clock.
+  5. `fc7c06a` **closure is measured, not declared** — the close button
+     appears only at `progressPct >= 100` ("Number is back · close
+     loop"); UI gate only, the close API is unchanged (contract + seeds
+     close programmatically; server enforcement is a production-API
+     decision, flagged for P1.7-era). Plus the "Re-alerts when ·
+     Re-alert if" copy dupe and the Guide's honor-system line.
+  6. `dc2eb40` **the Closed tab finishes its story** — assessor verdict
+     pill (note as hover title) + mono "closed in Nd" on every closed
+     card; verdict passed in from the finding, phantom findingIds get no
+     badge.
+  7. `ab5a811` **Decisions-screen review** — the seeds finally speak the
+     July vocabulary (Park/Dismiss/re-alert rule/recovery target across
+     data.js, v4content.js, v4data.js, sweep step details,
+     businessdata.js, the authoring prompt — API values and identifiers
+     untouched); ONE median time-to-decide (the Findings strip now reads
+     `/decisions/stats` like the Decisions tiles — was 14h vs 24.0h on
+     two screens); parked/dismissed ledger rows get honest impact text
+     instead of "measuring…".
+- **P1.1 and P1.2 are VERIFIED** — founder browser walk + the p12-e2e
+  rerun (10/10, zero console errors; script copied from the `9c221393`
+  scratchpad, adapted playwright→playwright-core + executablePath).
+  Notion rows flipped, Build Tracker "Current state" updated.
+- **PUSH STATE: `v5` is ahead 10** (35467c7 + 1037690 from the previous
+  session, the seven above, plus this handoff commit) — the FortiGate
+  block was confirmed live this session (issuer FG201FT922921744; curl
+  000). **Notably: Notion and the npm registry ARE reachable — the block
+  is github-scoped, not general.** First action on a clean network:
+  `git push`.
+- **The Notion tracker is current**: new rows DEMO-FRIENDLY, DEMO-NOTES,
+  DEMO-TIME (Done, with commits); P1.1/P1.2 Verified. The four review
+  fixes (84c7d71, fc7c06a, dc2eb40, ab5a811) have no rows of their own —
+  add them or fold into the DEMO rows if the founder wants the tracker
+  exhaustive.
+- **Contract suite is now 50 tests** (notes assertions in 04, the park
+  phrasing test in 08), all green including CONTRACT_SWEEP=1. Pattern
+  worth keeping: run mutations against a THROWAWAY server on :4001
+  (`PORT=4001 REWIVE_SWEEP_MS=0 REWIVE_ENGINE_MS=0 REWIVE_SWEEP_PACE_MS=0`)
+  so the founder's live review session on :4000 stays clean.
+- **The Chrome extension failed to connect a seventh time** — keep using
+  headless + `open`. Playwright setup this session: symlink
+  `node_modules` from the `54e89aad` scratchpad (playwright-core) + the
+  chromium_headless_shell-1228 cache; screenshot scripts live in this
+  session's scratchpad (`shoot-ui.mjs`, `shoot-findings.mjs`).
+- **Review coverage:** Findings (all three tabs), Decisions, and the auth
+  chain are founder-reviewed. NOT yet reviewed: Today, Agents, Operating
+  Picture, Execution, Performance, the theme spot-check (Classic/
+  Terminal), landing/login. Offered but not requested: restructuring the
+  row meta lines; server-side close enforcement.
+
+### Natural next steps
+
+1. `git push` on a clean network (10 commits).
+2. Continue the founder review on the remaining screens (list above).
+3. **P1.7 Azure substrate** — still needs founder cloud decisions; the
+   Neon/Docker Postgres pre-step still unblocks P1.4–P1.6 runtime
+   verification first.
+4. Carried: PROD-002 capture, actions board, hero action seeds, palette
+   follow-ons.
+
+### Servers / state at close
+
+**`dev:all` RUNNING** (background task `bcb4l03sj`, started ~09:00 UTC
+after the vocabulary-seed restart): vite :5173 + mock :4000, default
+flags. State: clean boot + the founder's auth-chain walk + interval
+sweeps (live-* findings will have accumulated). Reset:
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — the Signal redesign: switchable appearance themes (2026-08-10)
 
 ## Where things stand at close
 
