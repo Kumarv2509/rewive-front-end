@@ -58,7 +58,12 @@ export function DispositionBar({ finding }: { finding: Finding }) {
   return (
     <div className="card" style={{ padding: '16px 20px', marginBottom: 16, borderColor: 'var(--accent)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontWeight: 600, fontSize: 13.5 }}>Your decision</div>
+        <div style={{ fontWeight: 600, fontSize: 13.5 }}>
+          Your decision
+          {selected && !dispose.isPending && (
+            <span style={{ color: 'var(--accent)' }}> — chosen, not recorded yet</span>
+          )}
+        </div>
         <button
           className="btn ghost sm"
           disabled={escalate.isPending}
@@ -112,11 +117,12 @@ export function DispositionBar({ finding }: { finding: Finding }) {
             />
           )}
           <button
-            className="btn primary sm"
+            className="btn primary"
+            style={{ whiteSpace: 'nowrap' }}
             disabled={dispose.isPending || (selected === 'abandon' && !reason.trim())}
             onClick={() => confirm(selected)}
           >
-            Confirm {OPTIONS.find((o) => o.key === selected)?.title.toLowerCase()}
+            {dispose.isPending ? 'Recording…' : `Record decision — ${OPTIONS.find((o) => o.key === selected)?.title}`}
           </button>
         </div>
       )}
