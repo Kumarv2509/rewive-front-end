@@ -1782,10 +1782,16 @@ app.post('/api/v1/kpi-brain/edges/:id/decline', (req, res) => {
 app.get('/api/v1/shadow-org', (req, res) => {
   const industry = v4Industry(req);
   const findings = findingsState[industry];
+  // A finding belongs to the agent that raised it; the stream match is only a
+  // fallback for findings whose raiser isn't a known agent. Counting by stream
+  // alone double-counts wherever several agents share a stream (four seeded
+  // finance agents; every channel agent of an onboarded sales org).
+  const agentIds = new Set(shadowOrgsSeed[industry].agents.map((a) => a.id));
   const agents = shadowOrgsSeed[industry].agents.map((agent) => {
     const mine = agent.streamKey === null
-      ? findings.filter((f) => f.escalatedToAgentId === agent.id)
-      : findings.filter((f) => f.streamKey === agent.streamKey);
+      ? findings.filter((f) => f.escalatedToAgentId === agent.id || f.raisedByAgentId === agent.id)
+      : findings.filter((f) => f.raisedByAgentId === agent.id
+        || (f.streamKey === agent.streamKey && !agentIds.has(f.raisedByAgentId)));
     const open = mine.filter((f) => f.status === 'open');
     const breaches = open.filter((f) => f.slaHoursRemaining <= 8);
     const health = breaches.length ? 'critical' : open.length ? 'attention' : 'healthy';

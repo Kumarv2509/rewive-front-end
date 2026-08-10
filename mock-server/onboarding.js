@@ -272,11 +272,86 @@ export function buildArtifacts(commit) {
   const roleInputs = commit.roles ?? {};
   const personOf = (persona) => String(roleInputs[persona]?.person ?? '').trim();
   const templateAgents = commit.__templateAgents; // injected by app.js (shadowOrgs lives there)
+
+  // Optional explicit holder roster: commit.agents = [{ name, persona?,
+  // watch: [mandateId…], owner?: { name, role? } }]. When present, the org's
+  // agents are built from it (chief always kept, unclaimed mandates fall to
+  // the chief) instead of the one-agent-per-stream blend below. This is how
+  // an org organizes holders around its own structure — e.g. one agent per
+  // sales channel — before the onboarding UI exposes it (API-first, like the
+  // control plane).
+  const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+  const agentSpecs = (Array.isArray(commit.agents) ? commit.agents : [])
+    .map((s) => ({
+      name: String(s?.name ?? '').trim(),
+      persona: LEGACY_ROLES.has(s?.persona) ? s.persona : 'sales_supervisor',
+      watch: (Array.isArray(s?.watch) ? s.watch : []).filter((id) => includedIds.has(id)),
+      owner: s?.owner ?? null,
+    }))
+    .filter((s) => s.name);
+
   const mandateIdsByStream = new Map();
   for (const m of included) {
     if (!mandateIdsByStream.has(m.streamKey)) mandateIdsByStream.set(m.streamKey, []);
     mandateIdsByStream.get(m.streamKey).push(m.id);
   }
+  let outAgents;
+  if (agentSpecs.length) {
+    const chiefTpl = (templateAgents ?? []).find((a) => a.streamKey === null) ?? (templateAgents ?? [])[0] ?? {};
+    const donorOf = (streamKey) => (templateAgents ?? []).find((a) => a.streamKey === streamKey) ?? chiefTpl;
+    const claimed = new Set(agentSpecs.flatMap((s) => s.watch));
+    const chiefPerson = personOf('coo');
+    const chief = {
+      ...chiefTpl,
+      id: chiefTpl.id ? reId(chiefTpl.id) : 'cust-sa-chief',
+      persona: 'coo',
+      streamKey: null,
+      humanOwner: {
+        ...chiefTpl.humanOwner,
+        name: chiefPerson || chiefTpl.humanOwner?.name || 'Unassigned',
+        initials: chiefPerson ? chiefPerson.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() : chiefTpl.humanOwner?.initials ?? '·',
+        role: roleInputs.coo?.label || chiefTpl.humanOwner?.role || 'coo',
+      },
+      watchesNodeIds: [...new Set([
+        ...(chiefTpl.watchesNodeIds ?? []).map(reId).filter((id) => nodeIds.has(id)),
+        ...included.filter((m) => !claimed.has(m.id)).map((m) => m.id),
+      ])],
+      openFindings: 0,
+      slaBreaches: 0,
+      health: 'healthy',
+      lastFindingAt: null,
+      reportsToAgentId: null,
+    };
+    const seenIds = new Set([chief.id]);
+    const specAgents = agentSpecs.map((s, i) => {
+      const streamKey = included.find((m) => m.id === s.watch[0])?.streamKey ?? template.streams[0].key;
+      const donor = donorOf(streamKey);
+      let id = `cust-sa-${slugify(s.name)}`;
+      if (seenIds.has(id)) id = `${id}-${i}`;
+      seenIds.add(id);
+      const ownerName = String(s.owner?.name ?? '').trim() || personOf(s.persona) || donor.humanOwner?.name || 'Unassigned';
+      return {
+        ...donor,
+        id,
+        name: s.name,
+        persona: s.persona,
+        streamKey,
+        humanOwner: {
+          ...donor.humanOwner,
+          name: ownerName,
+          initials: ownerName.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '·',
+          role: String(s.owner?.role ?? '').trim() || roleInputs[s.persona]?.label || donor.humanOwner?.role || s.persona,
+        },
+        watchesNodeIds: s.watch,
+        openFindings: 0,
+        slaBreaches: 0,
+        health: 'healthy',
+        lastFindingAt: null,
+        reportsToAgentId: chief.id,
+      };
+    });
+    outAgents = [chief, ...specAgents];
+  } else {
   const keptAgents = (templateAgents ?? []).filter(
     (a) => a.streamKey === null || (mandateIdsByStream.get(a.streamKey) ?? []).length > 0,
   );
@@ -284,7 +359,7 @@ export function buildArtifacts(commit) {
   const chiefId = keptAgents.find((a) => a.streamKey === null) ? reId(keptAgents.find((a) => a.streamKey === null).id) : null;
   const coveredStreams = new Set(keptAgents.map((a) => a.streamKey));
   const orphanMandateIds = included.filter((m) => !coveredStreams.has(m.streamKey)).map((m) => m.id);
-  const outAgents = keptAgents.map((a) => {
+  outAgents = keptAgents.map((a) => {
     const persona = a.streamKey === null ? 'coo' : toLegacyPersona(a.persona);
     const person = personOf(persona);
     const initials = person ? person.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() : a.humanOwner?.initials ?? '·';
@@ -313,6 +388,7 @@ export function buildArtifacts(commit) {
       reportsToAgentId: a.streamKey === null ? null : (reportsTo && keptAgentIds.has(reportsTo) ? reportsTo : chiefId),
     };
   });
+  }
 
   const tracked = included.filter((m) => Number.isFinite(Number(m.target)) && Number(m.target) !== 0 && Number.isFinite(Number(m.current)));
 
