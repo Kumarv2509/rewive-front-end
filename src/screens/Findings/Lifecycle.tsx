@@ -33,13 +33,16 @@ export function ExitConditionCard({ c }: { c: ClosureKpi }) {
         <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>
           baseline {c.baseline} · now {c.current} · target {c.target} · {c.progressPct}%
         </span>
-        {!done && (
+        {/* Closure is a measured target being met, not a status someone sets:
+            the close affordance appears only once the watching agent reports
+            the number back (100%). Until then the card just keeps watching. */}
+        {!done && c.progressPct >= 100 && (
           <button
             className="btn primary sm"
             disabled={close.isPending}
             onClick={() => close.mutate(c.id, { onSuccess: () => showToast('Loop closed — the finding is resolved') })}
           >
-            Mark met · close loop
+            Number is back · close loop
           </button>
         )}
       </div>
@@ -57,7 +60,9 @@ export function TripWireRow({ finding }: { finding: Finding }) {
       <div className="dec-ico" style={{ background: 'var(--amber-soft)' }}>⏰</div>
       <div style={{ minWidth: 0 }}>
         <div className="t1"><Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link></div>
-        <div className="t2">Re-alerts when · {finding.reAlertCondition ?? 'watching for change'}</div>
+        {/* Rule text often starts with "Re-alert if …" (the server default) —
+            strip it so the label doesn't read "Re-alerts when · Re-alert if". */}
+        <div className="t2">Re-alerts when · {(finding.reAlertCondition ?? 'watching for change').replace(/^re-?alerts?\s+(if|when)\s+/i, '')}</div>
       </div>
       <div className="acts">
         <button

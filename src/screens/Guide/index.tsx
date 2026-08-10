@@ -66,7 +66,7 @@ const STEPS: {
     cta: 'Open Watching',
     what: 'Nothing is "done" until the number is back. Accepted findings sit on the Watching tab as recovery targets with progress bars; parked ones wait behind their re-alert line. When the target holds, the loop closes itself — and the ledger gets the verdict.',
     doThis: [
-      'Only "Mark met · close loop" when the number is truly back.',
+      'The close button appears only when the agent reports the number back — closure is measured, not declared.',
       'Regressed targets and re-alerts resurface on their own.',
     ],
   },
