@@ -5,7 +5,9 @@ import { PageHeader } from '../../components/shared/PageHeader';
 import { Pill } from '../../components/shared/Pill';
 import { Loading, ErrorMessage } from '../../components/shared/StateMessage';
 import { PERSONAS, personaLabel, roleSubtree } from '../CommandCenter/personas';
+import { timeAgo } from '../../components/shared/timeAgo';
 import { ExitConditionCard, TripWireRow } from './Lifecycle';
+import { LoopSpeedStrip } from './LoopSpeedStrip';
 import { slaTone, statusLabel, statusTone } from './meta';
 import { AgentView } from './AgentView';
 import { LiveAnalysisStrip } from './LiveAnalysisStrip';
@@ -22,6 +24,27 @@ const TABS = [
   { key: 'closed', label: 'Closed' },
 ] as const;
 
+// The time dimension of the queue: open findings grouped by how long they have
+// sat. Oldest first — an aging open finding is drift unanswered, which is the
+// one thing this product exists to make visible.
+const AGE_BUCKETS = [
+  { key: 'aging', label: 'Aging — open more than 7 days', minHours: 7 * 24 },
+  { key: 'week', label: 'Raised this week', minHours: 24 },
+  { key: 'day', label: 'Raised in the last 24 hours', minHours: 0 },
+] as const;
+
+function ageBuckets(findings: Finding[]) {
+  const now = Date.now();
+  return AGE_BUCKETS.map((b, i) => ({
+    ...b,
+    items: findings.filter((f) => {
+      const hours = (now - new Date(f.detectedAt).getTime()) / 3_600_000;
+      const cap = i === 0 ? Infinity : AGE_BUCKETS[i - 1].minHours;
+      return hours >= b.minHours && hours < cap;
+    }),
+  })).filter((b) => b.items.length > 0);
+}
+
 type TabKey = (typeof TABS)[number]['key'];
 
 // One row = title + a plain meta line + at most two badges (severity dot,
@@ -35,7 +58,8 @@ function FindingRow({ finding, streamName }: { finding: Finding; streamName?: st
           <Link to={`/operate/findings/${finding.id}`}>{finding.title}</Link>
         </div>
         <div className="t2">
-          {finding.raisedByAgentName}
+          <span className="mono" style={{ color: 'var(--ink-3)' }}>{timeAgo(finding.detectedAt)}</span>
+          {' '}· {finding.raisedByAgentName}
           {streamName ? <> · {streamName}</> : null}
           {finding.entity ? <> · {finding.entity}{finding.region ? ` (${finding.region})` : ''}</> : null}
           {' '}· <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{finding.impactEstimate}</span>
@@ -194,7 +218,15 @@ export function FindingsScreen() {
                 <h3>Needs a decision</h3>
                 <Pill tone="red">{open.length}</Pill>
               </div>
-              {open.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+              {ageBuckets(open).map((bucket) => (
+                <div key={bucket.key}>
+                  <div className="eyebrow" style={{ padding: '10px 20px 2px', display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {bucket.label}
+                    <span style={{ color: bucket.key === 'aging' ? 'var(--red)' : 'var(--ink-3)' }}>× {bucket.items.length}</span>
+                  </div>
+                  {bucket.items.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
+                </div>
+              ))}
             </div>
           ) : (
             <div className="card" data-tour="findings-open">
@@ -334,13 +366,19 @@ export function FindingsScreen() {
                 <h3>Dismissed — the reason tuned the agent</h3>
                 <Pill tone="gray">{abandoned.length}</Pill>
               </div>
-              <div className="card">
+              <div className="card" style={{ marginBottom: 24 }}>
                 {abandoned.map((f) => <FindingRow key={f.id} finding={f} streamName={streamName(f.streamKey)} />)}
               </div>
             </>
           )}
         </>
       )}
+
+      {/* The time dimension of the loop itself: one aggregated close-time
+          trend at the current lens — the per-mandate table lives on
+          Performance. Rendered on every tab; the loop's speed is the context
+          for whichever slice of it you are looking at. */}
+      {!byAgent && <LoopSpeedStrip />}
     </section>
   );
 }

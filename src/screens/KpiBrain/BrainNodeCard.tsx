@@ -2,14 +2,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { BrainHealth, BrainNodeKind } from '../../api/types';
 import type { BrainNodeData } from './layout';
 import { Sparkline } from '../../components/shared/Sparkline';
-
-function timeAgo(iso: string): string {
-  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 48) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
-}
+import { timeAgo } from '../../components/shared/timeAgo';
 
 const kindLabel: Record<BrainNodeKind, string> = { target: 'Intent', pl_line: 'P&L line', stream_kpi: 'Mandate', driver: 'Sense' };
 const kindAccent: Record<BrainNodeKind, string> = { target: 'var(--teal)', pl_line: 'var(--amber)', stream_kpi: 'var(--accent)', driver: 'var(--ink-3)' };
