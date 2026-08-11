@@ -74,9 +74,31 @@ async function headOf() {
   return last ? { seq: last.seq, hash: last.hash } : { seq: 0, hash: GENESIS };
 }
 
-/** Append one event to the chain. Request handling is serialized by the
- * liveLock middleware, so read-head-then-insert is race-safe in-process. */
-export async function appendEvent({ kind, industry, persona = null, findingId = null, actor, payload }) {
+/** Append one event to the chain — serialized inside this module.
+ *
+ * Read-head-then-insert is only atomic if nothing interleaves between the two,
+ * and the request-level liveLock does not deliver that: two of the three call
+ * sites append fire-and-forget (the verdict pass, escalation transfers), so
+ * their promises outlive the request that started them. A heartbeat escalating
+ * three findings in one tick had all three appends read the same head, land on
+ * the same seq, and break the chain at the second one — an honest chain
+ * reporting itself tampered because the writer, not history, was wrong.
+ *
+ * The queue makes the pairing atomic whether or not the caller awaits. Across
+ * processes (Postgres, multiple instances) ordering would need a transaction
+ * with an advisory lock; that belongs with the production API, and `bigserial`
+ * already keeps seq unique there.
+ */
+let appendQueue = Promise.resolve();
+
+export function appendEvent(input) {
+  const run = appendQueue.then(() => appendOne(input), () => appendOne(input));
+  // A rejected append must not poison the queue for the next writer.
+  appendQueue = run.then(() => undefined, () => undefined);
+  return run;
+}
+
+async function appendOne({ kind, industry, persona = null, findingId = null, actor, payload }) {
   const head = await headOf();
   const evt = {
     id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

@@ -75,6 +75,43 @@ test('the assessor verdict arrives as an event, not an edit', mut, async (t) => 
   assert.equal(evt.actor, 'Assessor agent');
 });
 
+test('concurrent writers cannot break the chain', mut, async (t) => {
+  // Appending is read-head-then-insert. If two writers interleave between the
+  // two halves they land on the same seq and every reader after them sees a
+  // ledger reporting itself tampered — the chain has to be right because the
+  // writer was serialized, not because callers happened to take turns. (The
+  // real trigger was a heartbeat escalating several findings in one tick, each
+  // appending without awaiting; this is the contract-visible version.)
+  // The assessor pass is the sharp case: one ledger read delivers a verdict for
+  // every closure that came back, appending each without awaiting it. Two
+  // verdicts in one pass is two writers in the same turn.
+  const picks = [];
+  for (let i = 0; i < 2; i++) {
+    const pick = await takeOpenFinding();
+    if (pick) picks.push(pick);
+  }
+  if (picks.length < 2) return t.skip('need at least two open findings');
+
+  for (const p of picks) {
+    const { data: decided } = await api(`/findings/${p.finding.id}/disposition?industry=${p.ind}`, {
+      method: 'POST', body: { disposition: 'accept' },
+    });
+    await api(`/closure-kpis/${decided.closureKpiId}/close?industry=${p.ind}`, { method: 'POST' });
+  }
+  // One read, both verdicts.
+  await api(`/decisions?industry=${picks[0].ind}`);
+
+  const verify = await api('/ledger/verify');
+  assert.equal(verify.data.ok, true, `chain must survive writers in one pass (broken at ${verify.data.brokenAt})`);
+
+  const events = (await api('/ledger/events')).data.events;
+  const seqs = events.map((e) => e.seq);
+  assert.equal(new Set(seqs).size, seqs.length, 'every event holds its own position in the chain');
+  for (const p of picks) {
+    assert.ok(events.some((e) => e.kind === 'verdict' && e.findingId === p.finding.id), `${p.finding.id}'s verdict was recorded`);
+  }
+});
+
 test('verify recomputes the chain; anchor records the verified head', mut, async () => {
   const verify = await api('/ledger/verify');
   assert.equal(verify.status, 200);
