@@ -1,4 +1,121 @@
-# Handoff — the founder review session: 7 commits of asks, P1.1/P1.2 Verified (2026-08-10, later session)
+# Handoff — Americana-C&S built live: the onboarding review session (2026-08-10 → 11)
+
+## Where things stand at close
+
+- **This session was the founder building a real org through the product** —
+  Americana-C&S, a sales-only Americana entity, onboarded live and iterated
+  three times (meat cluster → generic sales scorecard → the founder's real
+  cadence: **MTD Gross Sales, actual vs projection vs target vs LY, in
+  BU / channel / region / category views** — 18 mandates whose views each
+  sum to the headline: target AED 135M MTD, actual 124). Six commits on
+  `v5`, all founder-review findings, in order:
+  1. `6aff991` **the decide bar can't silently evaporate a decision** —
+     header reads "chosen, not recorded yet" on selection; confirm is a
+     full-size "Record decision — Accept" with a Recording… state.
+  2. `d0af183` **onboarding can't silently produce a numberless org** —
+     the founder's CSV upload never landed and the org committed with zero
+     live-tracked mandates, no warning. handleFile try/catch surfaces parse
+     failures; the draft button counts its numbers; Review warns and the
+     commit button owns it ("Create X — with no live numbers").
+  3. `2835b0f` **Business screens survive an onboarded org** — the overview
+     WHITE-SCREENED for custom orgs (onboarding omitted `actGuide`, typed
+     required, rendered unguarded — now seeded in onboarding.js AND guarded);
+     P&L/SKU/customer tabs get honest empty states instead of skeleton
+     tables.
+  4. `e86c2e8` **onboarded agents hold the org's actual mandates** — stream
+     agents pick up their stream's included mandates, empty-handed template
+     agents are dropped, the chief absorbs orphans.
+  5. `feb3827` **holder agents by sales channel** — `/onboarding/commit`
+     accepts an optional `agents: [{name, persona?, watch:[mandateId…],
+     owner?}]` roster (API-first, no UI step yet); Americana-C&S runs 9
+     agents (Sales performance / 4 channels / BUs / regions / categories +
+     chief), findings attribute to the right channel agent via
+     `findCounterpart`'s watch-list-first order. **Plus a latent bug fixed:**
+     the shadow-org rollup counted findings BY STREAM — all 8 channel agents
+     showed "8 open" each, and the four seeded FMCG finance-stream agents
+     had double-counted forever. Now by `raisedByAgentId`, stream fallback
+     only for unknown raisers.
+  6. `4ba8ae7` **mutation log on the mock API** (`[req] METHOD path ->
+     status`, non-GETs only) — the instrument that cracked the mystery below.
+- **THE ACCEPT MYSTERY — root cause found, fix NOT yet built.** The founder
+  accepted findings four times; zero requests ever reached the server
+  (proven: tokenless AND minted-JWT API accepts land instantly; the `[req]`
+  wire monitor caught the founder's clicks signing into **Medcare** and then
+  **Americana Foods (fmcg)** instead). Root cause: **the custom tenant is
+  client-side** (`rewive.customTenant`) — the browser profile receiving
+  `open`ed tabs never had it, so RequireTenant bounced to /login, where
+  "Americana" resolves only to the seeded FMCG org. The founder was decades
+  of clicks deep in the wrong org. The known "demo-grade limit" is a real
+  trap. **Product fix proposed, not started:** server-side tenant resolution
+  for the front door (the onboarding commit already returns the tenant; the
+  server should answer for unknown org names before /login gives up).
+  Interim: sign in from the original browser profile, or the console
+  snippet in the conversation (sets `rewive.customTenant`, then
+  `/login?org=custom-org`).
+- **At close no founder accept has landed**; the org has 8 open findings,
+  ledger empty. A persistent wire monitor (task `bcygfguux`) tails the
+  `[req]` log. **The full loop demo remains unrun**: accept → ingest
+  improving readings (play the outside world) → watch recovery climb →
+  close at 100% → assessor verdict. All machinery verified server-side.
+- **The org is IN-MEMORY and scripted**: every mock-server restart wipes it.
+  Rebuild = `node <scratchpad>/build-cs-mtd.mjs` (drafts the 18 KPIs,
+  commits with the 9-agent roster + entity "Americana C&S — UAE", sets
+  per-region configs on the 3 region mandates, triggers a sweep; ~40s to 8
+  findings). The founder-uploadable CSV is `americana-cs-sales-kpis.csv` in
+  the same scratchpad. **Each rebuild mints fresh finding ids** — stale-tab
+  accepts 404 (this misled the investigation for an hour).
+- **PUSH STATE: `v5` ahead 17** (11 carried + 6 this session; the handoff
+  commit makes 18). FortiGate confirmed live again (github curl 000;
+  **vercel and Notion ARE reachable** — the deployed app answered, which is
+  how the "founder is on the deployed app" theory was killed). First action
+  on a clean network: `git push`.
+- **Open observation, uninvestigated:** mid-session `GET /ledger/verify`
+  returned `{"ok":false,"checked":4,"brokenAt":2}` on the pre-rebuild
+  in-memory chain (events: 2 decisions + escalation transfers from the
+  heartbeat). State was wiped by later rebuilds before it was chased. If the
+  evidence layer's chain can break in normal memory-mode operation, that is
+  a real P1.6 bug — repro: boot, accept a live finding via API, let the
+  heartbeat escalate something, then verify.
+- **The Chrome extension failed to connect an EIGHTH time** (tried because
+  reading the founder's console/network would have shortcut the whole accept
+  investigation). Keep using `open` + the `[req]` log + API-level probes.
+- **Notion tracker NOT updated this session** — the six commits above have
+  no rows; P1.1–P1.6 statuses unchanged and still accurate. The 2026-08-10
+  morning session's four review fixes also remain rowless. Add DEMO-* rows
+  (or one "DEMO-CS-ORG" row) if the founder wants the tracker exhaustive.
+- **Review coverage after this session:** onboarding flow, Agents screen,
+  Business screens, and the decide bar are now founder-exercised (via the
+  C&S build). Still unwalked: Operating Picture, Execution, Performance,
+  theme spot-check (Classic/Terminal), landing.
+
+### Natural next steps
+
+1. **Finish the loop demo on Americana-C&S** — get the founder into the
+   right org (path A: original browser; path B: console snippet), accept
+   the MTD finding while the wire monitor confirms, then ingest improving
+   readings and walk Watching → close → verdict.
+2. **Build the server-side tenant fix** for the client-side-custom-org trap
+   (the fourth review finding — arguably the sharpest one).
+3. `git push` on a clean network (18 commits).
+4. Investigate the `ledger/verify brokenAt:2` observation (repro above).
+5. Notion rows for this session's commits; P1.7 Azure + the Neon pre-step;
+   carried: PROD-002 capture, actions board, hero action seeds, palette
+   follow-ons.
+
+### Servers / state at close
+
+**`dev:all` RUNNING** (background task `bfjiqedx1`): vite :5173 + mock
+:4000, default flags, `[req]` mutation log active. **Persistent monitor
+`bcygfguux`** tails it for non-GET requests — stop with TaskStop when the
+accept test concludes. State: Americana-C&S installed (18 mandates, 9
+agents, 8 open findings, empty ledger) + whatever the founder's two
+wrong-org sign-ins touched in fmcg/healthcare. A restart loses the org —
+re-run `build-cs-mtd.mjs`. Reset:
+`for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — the founder review session: 7 commits of asks, P1.1/P1.2 Verified (2026-08-10, later session)
 
 ## Where things stand at close
 
