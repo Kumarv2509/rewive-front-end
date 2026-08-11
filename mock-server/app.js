@@ -63,6 +63,15 @@ import * as ledger from './ledger.js';
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
+// Mutation log: every non-GET request with its outcome. GETs are deliberately
+// excluded (refetch intervals would flood it) — this exists so "my click did
+// nothing" sessions can see whether the request arrived at all.
+app.use((req, res, next) => {
+  if (req.method !== 'GET') {
+    res.on('finish', () => console.log(`[req] ${req.method} ${req.originalUrl} -> ${res.statusCode}`));
+  }
+  next();
+});
 // The auth seam: JWT-shaped bearers are validated and become req.auth; the
 // cron secret and ingest keys (opaque bearers) pass through untouched, and
 // tokenless requests keep the legacy ?industry= demo behavior.
