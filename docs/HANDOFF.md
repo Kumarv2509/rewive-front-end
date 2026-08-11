@@ -1,4 +1,81 @@
-# Handoff — Americana-C&S built live: the onboarding review session (2026-08-10 → 11)
+# Handoff — the two traps closed: wrong-company sign-in and a self-accusing ledger (2026-08-11)
+
+## Where things stand at close
+
+- **Both open engineering items from the last handoff are built, verified and
+  pushed.** Two commits on `v5`:
+  1. `69a421e` **the front door can't sign you into the wrong company** — the
+     fourth review finding, and the sharpest. `GET /tenants/resolve`
+     (`resolveRuntimeTenants` in `app.js`) answers for the runtime org only and
+     never enumerates; `/login` step 1 unions it with `findTenants` before
+     calling found / ambiguous / unknown. "Americana" is now *ambiguous* — the
+     honest answer — instead of a silent sign-in to Americana Foods. A single
+     server match hydrates `rewive.customTenant` before step 2 (RequireTenant
+     stays synchronous); `?org=` deep links resolve server-side, so an invite
+     link works in a browser that has never seen the org; both matchers gained
+     a punctuation-blind fallback ("Americana C&S" → "Americana-C&S").
+     New contract file `contract/10-front-door.test.mjs`.
+  2. `afd397d` **the evidence layer can't report itself tampered** — the
+     `ledger/verify brokenAt:2` observation, root-caused and fixed.
+     `appendEvent` read the head then inserted; two of three call sites append
+     **fire-and-forget** (the assessor pass, escalation transfers), so one
+     assessor pass delivering two verdicts — or one heartbeat tick escalating
+     several findings — had every append read the same head and land on the
+     same `seq`. The chain was honest; the writer was wrong. Appends now
+     serialize inside `ledger.js` (`appendQueue`). The contract test
+     reproduces it through the assessor pass and **fails on the old code**.
+- **`git push` SUCCEEDED — `v5` and `origin/v5` are level at `afd397d`.** The
+  FortiGate block was not active this session (it had blocked the previous
+  three). 20 commits went up, including the whole previous session's work.
+- **Verification:** contract suite 52 pass / 0 fail / 3 skipped
+  (CONTRACT_SWEEP-gated); `npm run lint` and `npm run build` clean; and a
+  headless run from a **virgin browser profile** — the exact founder trap —
+  9/9 with zero console errors: finds the org by name, hydrates it, ambiguity
+  on the bare prefix, deep link, full sign-in landing on the org's own findings
+  with `tid=custom-org`, seeded tenant unchanged. Script:
+  `tenant-resolve-e2e.mjs` in this session's scratchpad (needs the
+  `playwright-core` symlink it documents — `node_modules` is linked from the
+  `fa1d62b9` scratchpad).
+- **Notion is current**: DEMO-FRONTDOOR extended (+`69a421e`), P1.6 extended
+  (+`afd397d`), new **DEMO-CS-ORG** row covering the previous session's six
+  commits (the gap the last handoff flagged), and the Build Tracker's
+  "Current state" rewritten as of 2026-08-11.
+- **The Americana-C&S org is rebuilt and live** (18 mandates, 9 agents, 8 open
+  findings, empty ledger) — same in-memory caveat: a mock-server restart wipes
+  it, rebuild with `node <scratchpad>/build-cs-mtd.mjs` (~40s, both that script
+  and the founder-uploadable CSV are copied into this session's scratchpad).
+- **The loop demo is still unrun** — it needs the founder in the browser. It is
+  now reachable the normal way: go to `/login`, type **"Americana C&S"** (the
+  full name, not "Americana"), any password. No console snippet, no original
+  profile required. Then: accept the MTD finding → ingest improving readings →
+  watch recovery climb → close at 100% → assessor verdict.
+- **Still unwalked in review:** Operating Picture, Execution, Performance,
+  theme spot-check (Classic/Terminal), landing.
+- **Chrome extension not attempted** — it has failed nine sessions running.
+  Headless playwright-core did the job instead and is the better tool here.
+
+### Natural next steps
+
+1. **Finish the loop demo on Americana-C&S** (founder, browser — the path is
+   clear now).
+2. P1.7 Azure + the Neon pre-step (Postgres-mode runtime verification of
+   P1.4–P1.6 — note the ledger's cross-process ordering caveat: `bigserial`
+   keeps `seq` unique, but ordering across instances would want an advisory
+   lock).
+3. Carried: PROD-002 capture, actions board, hero action seeds, palette
+   follow-ons.
+
+### Servers / state at close
+
+Mock API on :4000 (`node mock-server/server.js`, plain flags — note this is
+**not** the old `dev:all` task; that mock process was replaced when the new
+routes needed loading) and the original vite on :5173. Americana-C&S installed.
+The previous session's `[req]` wire monitor is gone with its mock process.
+Reset: `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — Americana-C&S built live: the onboarding review session (2026-08-10 → 11)
 
 ## Where things stand at close
 
