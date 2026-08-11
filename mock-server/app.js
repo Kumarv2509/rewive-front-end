@@ -1647,6 +1647,49 @@ app.post('/api/v1/onboarding/commit', async (req, res) => {
   }
 });
 
+// The front door asks the server for the organizations it cannot know
+// statically. An onboarded org lives in the browser that created it
+// (rewive.customTenant), so any other browser used to dead-end at /login —
+// or worse, resolve "Americana C&S" to the nearest *seeded* org and sign the
+// user into the wrong company, silently. Runtime orgs are answered here; the
+// four seeded tenants stay client-side, where their brand copy is a front-end
+// asset rather than server state.
+//
+// Matching mirrors findTenants() in src/tenants.ts — same normalization, same
+// name / id / domain / work-email order. Keep the two in step.
+function resolveRuntimeTenants(query) {
+  if (!customOrgState) return [];
+  const norm = (s) => String(s ?? '').toLowerCase().replace(/\(demo\)/g, '').trim();
+  const squash = (s) => String(s ?? '').replace(/[^a-z0-9]/g, '');
+  const q = norm(query);
+  if (!q) return [];
+  const t = customOrgState.tenant;
+  const name = norm(t.name);
+  const domain = String(t.domain ?? '').toLowerCase();
+  const hit = q.includes('@')
+    ? (() => {
+        const d = q.split('@').pop().trim();
+        if (domain && (d === domain || d.endsWith(`.${domain}`))) return true;
+        // The onboarded domain is often the derived "<slug>.example" placeholder,
+        // so fall back to the mailbox domain's stem against the org name.
+        const stem = squash(d.split('.')[0] ?? '');
+        return Boolean(stem) && squash(name).includes(stem);
+      })()
+    : t.id === q || name === q || domain === q || name.includes(q) || (Boolean(domain) && domain.includes(q))
+      // Punctuation-insensitive last resort: "Americana C&S" must find
+      // "Americana-C&S". People don't retype a hyphen the way it was seeded.
+      || squash(name).includes(squash(q));
+  if (!hit) return [];
+  // One entry, shaped like the client's CustomTenantSession: brand + the
+  // per-role labels chosen at onboarding, so a browser that never ran the
+  // factory still renders the org's own vocabulary.
+  return [{ ...t, labelOverrides: customOrgState.labels ?? {} }];
+}
+
+app.get('/api/v1/tenants/resolve', (req, res) => {
+  res.json({ tenants: resolveRuntimeTenants(req.query.q) });
+});
+
 // ---------- KPI brain ----------
 // Node statuses are reconciled with the Datasets registry at read time — a
 // mandate is 'connected' only when a live dataset names it in `feeds`, and a

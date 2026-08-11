@@ -148,7 +148,13 @@ export function findTenants(query: string): Tenant[] {
   }
   const exact = tenants.filter((t) => t.id === q || norm(t.name) === q || t.domain.toLowerCase() === q);
   if (exact.length) return exact;
-  return tenants.filter((t) => norm(t.name).includes(q) || t.domain.toLowerCase().includes(q));
+  // Punctuation-insensitive on the fallback: "Americana C&S" must find
+  // "Americana-C&S". People don't retype a hyphen the way it was seeded.
+  const squash = (s: string) => s.replace(/[^a-z0-9]/g, '');
+  const sq = squash(q);
+  return tenants.filter(
+    (t) => norm(t.name).includes(q) || t.domain.toLowerCase().includes(q) || squash(norm(t.name)).includes(sq),
+  );
 }
 
 export function tenantForIndustry(industry: string | null): Tenant | null {

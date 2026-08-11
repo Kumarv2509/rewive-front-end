@@ -1,11 +1,19 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSetIndustry } from '../../api/shadowOrg';
 import { useLogin } from '../../api/auth';
+import { resolveTenants } from '../../api/tenants';
 import { usePersonaLens, type PersonaLens } from '../../components/layout/personaLens';
 import { personaLabel, personaGroupsForIndustry, lensOfferedForIndustry } from '../CommandCenter/personas';
 import { ErrorMessage } from '../../components/shared/StateMessage';
-import { findTenants, setActiveTenantId, tenantById, type Tenant } from '../../tenants';
+import {
+  findTenants,
+  setActiveTenantId,
+  setCustomTenant,
+  tenantById,
+  type CustomTenantSession,
+  type Tenant,
+} from '../../tenants';
 
 // Organization sign-in: the SaaS front door. Tenants are never listed — a
 // multi-tenant product doesn't show one customer the others — so step 1 finds
@@ -22,6 +30,10 @@ export function LoginScreen() {
   const [tenant, setTenant] = useState<Tenant | null>(() => tenantById(params.get('org')));
   const [orgQuery, setOrgQuery] = useState('');
   const [orgError, setOrgError] = useState<string | null>(null);
+  // Step 1 now makes a server round-trip, so it has a pending state. It starts
+  // true for a deep link this browser can't resolve — the effect below is
+  // already asking the server about it as the screen first paints.
+  const [finding, setFinding] = useState(() => Boolean(params.get('org')) && !tenantById(params.get('org')));
   const [role, setRole] = useState<PersonaLens>('all');
   const [email, setEmail] = useState(() => (tenant ? `you@${tenant.domain}` : ''));
   const [emailEdited, setEmailEdited] = useState(false);
@@ -32,24 +44,64 @@ export function LoginScreen() {
     [tenant],
   );
 
-  const findOrg = (e: FormEvent) => {
+  // A runtime org resolved from the server has to land in localStorage before
+  // it can be signed into: tenantById / RequireTenant / personaLabel all read
+  // the client-side session, and RequireTenant is deliberately synchronous.
+  const adoptRuntimeTenant = (t: CustomTenantSession): Tenant => {
+    setCustomTenant(t);
+    return t;
+  };
+
+  const selectTenant = (t: Tenant) => {
+    setTenant(t);
+    setOrgError(null);
+    if (!lensOfferedForIndustry(role, t.industry)) setRole('all');
+    const next = new URLSearchParams(params);
+    next.set('org', t.id);
+    setParams(next, { replace: true });
+  };
+
+  // Deep link (?org=…) naming an org this browser can't resolve: it may still be
+  // a runtime org the server knows. Ask before falling back to step 1 — this is
+  // the invite-link path into an onboarded organization.
+  useEffect(() => {
+    const id = params.get('org');
+    if (!id || tenant) return;
+    let cancelled = false;
+    resolveTenants(id)
+      .then((remote) => {
+        if (cancelled) return;
+        const hit = remote.find((t) => t.id === id);
+        if (hit) selectTenant(adoptRuntimeTenant(hit));
+      })
+      .finally(() => { if (!cancelled) setFinding(false); });
+    return () => { cancelled = true; };
+    // Runs for the link the screen mounted with; later steps set tenant directly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const findOrg = async (e: FormEvent) => {
     e.preventDefault();
-    const matches = findTenants(orgQuery);
+    setFinding(true);
+    // Local (the seeded tenants + any org onboarded in this browser) *plus* the
+    // server's runtime orgs, merged before the found/ambiguous/unknown call.
+    // Deciding on the local set alone is what silently signed a founder into
+    // "Americana Foods" when they meant the org they had just onboarded.
+    const local = findTenants(orgQuery);
+    const remote = await resolveTenants(orgQuery);
+    setFinding(false);
+    const seen = new Set(local.map((t) => t.id));
+    const matches: Tenant[] = [...local, ...remote.filter((t) => !seen.has(t.id))];
     if (matches.length === 1) {
-      const t = matches[0];
-      setTenant(t);
-      setOrgError(null);
+      const match = matches[0];
+      const t = seen.has(match.id) ? match : adoptRuntimeTenant(match as CustomTenantSession);
       // A work email both finds the org and is the email to sign in with — but
       // only a full mailbox address; a "@acme.com"-style domain query isn't one.
       if (!emailEdited) {
         const q = orgQuery.trim();
         setEmail(/^[^@\s]+@[^@\s]+$/.test(q) ? q : `you@${t.domain}`);
       }
-      if (!lensOfferedForIndustry(role, t.industry)) setRole('all');
-      // Write the org back to the URL so step 2 survives a refresh.
-      const next = new URLSearchParams(params);
-      next.set('org', t.id);
-      setParams(next, { replace: true });
+      selectTenant(t);
     } else if (matches.length > 1) {
       setOrgError('More than one organization matches — try the full name or your work email.');
     } else {
@@ -159,7 +211,9 @@ export function LoginScreen() {
             </label>
             {orgError && <ErrorMessage message={orgError} />}
 
-            <button className="btn primary login-submit" type="submit">Continue</button>
+            <button className="btn primary login-submit" type="submit" disabled={finding}>
+              {finding ? 'Looking…' : 'Continue'}
+            </button>
 
             {foot}
           </form>
