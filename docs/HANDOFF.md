@@ -87,10 +87,12 @@ returns nothing (even `--follow`, even against a container printing
 continuously); `az containerapp exec` fails with `ClusterExecFailure`;
 `ContainerAppConsoleLogs` queries come back empty. A worker crash-looped to
 `restartCount=112` while the revision still reported *Healthy* — **revision
-health does not reflect replica restart cycles.** Likely fix:
-`log_analytics_workspace_id` directly on `azurerm_container_app_environment`.
-**Not yet fixed.** Until it is, don't burn time on CLI log tooling — a prior
-session lost an hour there.
+health does not reflect replica restart cycles.** The base skill's guess was
+`log_analytics_workspace_id` on `azurerm_container_app_environment`; it is
+that **plus `logs_destination`**, which are required together — see the PR
+section below, where the root cause is stated exactly and confirmed against
+live Azure. **Fix raised as rewive-infra PR #1, not yet applied.** Until it
+is, don't burn time on CLI log tooling — a prior session lost an hour there.
 
 Other open in that repo: `acr_resource_group_name` still an unverified
 assumption · Key Vault IP-restricted rather than private-endpoint-only (no
@@ -100,22 +102,97 @@ plans) · Front Door `/api/*` vs `/*` precedence unverified · Americana's Entra
 tenant/client IDs still empty · managed-identity auth for Postgres/Foundry not
 wired.
 
+## The fix: rewive-infra PR #1 — raised, NOT applied
+
+<https://github.com/sanjuveed-debug/rewive-infra/pull/1> ·
+`fix/container-app-env-log-analytics` · commit `175661f` · 24 insertions, one
+file. **Nothing has been applied to Azure. Merging the PR does not deploy it
+either** — `terraform apply` is a separate manual step in Cloud Shell.
+
+Root cause is **not** only the missing workspace id. The environment set no
+log destination at all, and per the `azurerm` docs at the pinned version,
+omitting `logs_destination` *"will result in logs being streamed only"* —
+nothing is persisted, so the existing `diag-cae-*` diagnostic setting had
+nothing to carry, which is why it showed `enabled: true` while no logs
+arrived. The two arguments are required together (`log_analytics_workspace_id`
+is mandatory when `logs_destination = "log-analytics"`, forbidden when it is
+`"azure-monitor"`).
+
+Verified against the **provider source** at `v4.50.0`, not the docs alone:
+neither argument is `ForceNew` (both plain `Optional`, unlike
+`internal_load_balancer_enabled`), so this updates the live environment **in
+place** — it does not recreate the environment or the container apps inside
+it. `Update()` genuinely handles the change rather than silently no-oping, and
+it calls `getSharedKeyForWorkspace()`, so the deployer needs
+`Microsoft.OperationalInsights/workspaces/sharedKeys/action`.
+
+Apply, targeted so a stale `deployer_allowed_ips` doesn't drag Key Vault ACLs
+into the plan:
+
+```bash
+terraform plan -target=module.americana.azurerm_container_app_environment.main
+```
+
+**Expect exactly one in-place update. If the plan proposes destroy/replace,
+stop** — that contradicts the provider source.
+
+## Live Azure verification (this session)
+
+`az` 2.89.1 installed via Homebrew + the `containerapp` extension; signed in
+as `admin@agilitegroupae.onmicrosoft.com`, subscription `Azure subscription 1`
+(`d117ff47-…`), which is **Owner at subscription scope**. Read-only script
+`verify-americana-logs.sh` + `baseline-before.txt` are in this session's
+scratchpad — **rerun after the apply and diff**. Confirmed live:
+
+1. **The bug is real in production**, no longer a code-reading argument:
+   `properties.appLogsConfiguration` = `{"destination": "",
+   "logAnalyticsConfiguration": null}`. The workspace itself is healthy and
+   simply unbound — `log-rewive-americana-prod`, customerId
+   `ba7dece9-53e6-4875-abd4-c5f338dd3b35`, PerGB2018, 90-day retention.
+   Section 1 flipping to `log-analytics` with that customerId is the proof the
+   apply worked.
+2. **Nothing is currently crash-looping** — `ca-api` 2/2, `ca-worker` 1/1,
+   `ca-frontend` 1/1, **0 restarts on every replica** (revisions
+   `--foods260812` / `--outcome260812`). The `restartCount=112` worker loop is
+   resolved; this closes a blind spot rather than chasing a fire.
+3. **`az monitor log-analytics query` returns `InsufficientAccessError`** —
+   including `Usage | take 1`, which exists in every workspace, so it is not
+   the missing tables and not ARM RBAC (the account is Owner). It is the
+   separate **data-plane** path (`api.loganalytics.io`), likely token-audience
+   or conditional access. **This will still fail after the apply and must not
+   be read as the fix failing.** Verify with `az containerapp logs show` (the
+   path that was broken) or the Portal Logs blade instead. Deliberately not
+   chased further — that is the never-guess-at-an-Azure-error rule.
+4. **The diagnostic-setting redundancy is confirmed, not theoretical** —
+   `diag-cae-rewive-americana-prod` has `ContainerAppConsoleLogs` +
+   `ContainerAppSystemLogs` enabled against that same workspace, carrying
+   nothing today. Once the environment is set to `log-analytics`, those two
+   categories are the other path. Dropping them (keeping `AllMetrics`) is a
+   second targeted change, deliberately kept out of PR #1.
+
+Also confirmed against live Azure: `rg-rewive-dedicated-americana` is in
+**eastus2**, `rewive-fpa-rg` (Nesto) in **eastus**, `rg-rewive-tfstate` in
+eastus2 — matching the committed config.
+
 ### Natural next steps
 
 1. **Resolve the open product question first: what is `frontend_image_tag =
    "v43"`?** Whether the deployed Americana frontend is *this* React SPA or a
    separate `rewive-fpa` frontend determines what "push the build to Azure"
    actually pushes, and whether this repo's demo and the live customer product
-   are one track or two. **Asked, not yet answered.**
-2. Fix the Log Analytics environment binding — it is a production blind spot.
-3. Then the customer-hosting push, working from the base skill's rules:
+   are one track or two. **Asked twice, still unanswered** — it is the real
+   gate on the build push, not the infra work.
+2. Merge + apply PR #1 in Cloud Shell (targeted plan above), then rerun
+   `verify-americana-logs.sh` and diff against `baseline-before.txt`.
+3. The `diag-cae-*` cleanup as its own targeted change (finding 4).
+4. Then the customer-hosting push, working from the base skill's rules:
    Cloud Shell + remote state, `fmt -check` → `init` → `validate` → **read the
    plan fully** → apply; targeted plans near Key Vault/Postgres; verify at
    replica level, never trust a "Healthy" revision string; **never guess at an
    Azure API error** (check `az`, Microsoft Learn, or the pinned `azurerm`
    source); **stop and ask** on region/DR/SKU/feature-gating calls, but bring
    real data to the question.
-4. Carried from the previous handoff: **the loop demo on Americana-C&S is
+5. Carried from the previous handoff: **the loop demo on Americana-C&S is
    still unrun** (see below), P1.7-era items, PROD-002 capture, actions board,
    hero action seeds, palette follow-ons.
 
