@@ -1,4 +1,4 @@
-# Handoff — rewive-infra-architect is the base from here on (2026-08-12)
+# Handoff — the infra repo becomes the base, and the documents catch up with what was built (2026-08-12 → 13)
 
 ## The decision
 
@@ -174,27 +174,160 @@ Also confirmed against live Azure: `rg-rewive-dedicated-americana` is in
 **eastus2**, `rewive-fpa-rg` (Nesto) in **eastus**, `rg-rewive-tfstate` in
 eastus2 — matching the committed config.
 
+## rewive-infra PR #2 — the Americana C&S environment, raised NOT applied
+
+<https://github.com/sanjuveed-debug/rewive-infra/pull/2> ·
+`feat/americanacs-environment` · `environments/americanacs/`, 5 files.
+Founder decisions taken before building: **rewive-fpa as a real customer
+environment** (which also answers the `v43` question — the deployed frontend
+is the rewive-fpa one, not this repo's SPA), customer key **`americanacs`**,
+**full estate** matching Americana.
+
+**`americana-cs` would have failed at apply**, checked before writing rather
+than discovered: storage accounts are `st${customer}${environment}` and allow
+no hyphens (`stamericana-csprod` is rejected), and the key vault
+`kv-americana-cs-prod-eus2` is 25 chars against a 24 limit. `americanacs`
+fits everywhere — but **the key vault lands at exactly 24/24**, and the
+`-eus2` suffix only exists because purge protection held the original eastus
+name, so if that suffix ever changes the name overflows. `amcs` (17/24) was
+offered as the headroom option.
+
+Verified live before committing: `stamericanacsprod` globally available ·
+`rg-rewive-dedicated-americanacs` absent (genuinely greenfield) · **ACR
+`rewivefpa` really is in `rewive-fpa-rg`** (Basic, eastus) — which closes the
+infra README's open item #2, "an assumption, not independently verified".
+Verified locally: `terraform fmt -check` clean and **`terraform validate`
+passes**. Only warnings are pre-existing module deprecations
+(`enable_rbac_authorization` → `rbac_authorization_enabled`, removed in
+provider 5.0) that support the existing `< 5.0.0` cap.
+
+**Found in passing:** `terraform fmt -check -recursive` **currently fails on
+`main`** for three pre-existing files — `front_door.tf`, `redis.tf`,
+`storage.tf`. That is the infra README's own first preflight step, so it fails
+before `init`. Left alone to keep the PR scoped.
+
+Before applying: **`connector_encryption_key` must be generated FRESH** — one
+environment's key must never decrypt another's connector credentials. `oidc_*`
+remain empty, same as Americana. The estate includes **Front Door Premium,
+~$330/month base per environment** before compute or traffic.
+
+## The platform data schema — written, validated, not landed
+
+`rewive-platform-schema.sql` in this session's scratchpad: **35 tables across
+`shared` / `fpa` / `audit` / `staging`**, worked against Americana C&S.
+Explained in an artifact:
+<https://claude.ai/code/artifact/3bff3bca-396e-4ea1-a16a-14eb91a1a15a>
+
+**The modelling error worth remembering.** The first draft treated
+`fact_measure` as a full cube — every row a complete BU × channel × region ×
+category coordinate. Americana C&S does not publish a cube; it publishes a
+**headline plus four independent breakdowns, each summing to it** —
+*marginals*. Loaded naively into one table, `SUM(value)` returns **496 against
+a true 124**: the same sales counted four times. Every row therefore declares
+a `grain`, and a CHECK makes a row unable to lie about it; no correct
+aggregate over that table omits `grain`, and `v_slice_reconciliation` compares
+each breakdown against the headline.
+
+Also caught by self-audit before shipping: a **forward foreign key**
+(`legal_entity` → `dim_country`, created 70 lines later — fails at apply, not
+review) and a missing `citext` extension.
+
+Verified: **all 61 statements parse against the real PostgreSQL grammar**
+(libpg_query via `pglast`, PG 18.4 — venv in scratchpad, needs Homebrew's
+arm64 python, the system 3.9 is x86_64), and no forward FKs remain. **Never
+run against a live PostgreSQL** — production Postgres is VNet-only with public
+access disabled, so it cannot be reached from a laptop.
+
+**Open before it lands:** it must be reconciled with whatever already exists in
+`sales_excellence` and `sales_staging` (Praveen's schemas in the live Americana
+database), which this design could not inspect. Then it lands as
+`migrations/005-platform-schema.sql` in `rewive-infra`.
+
+## The Notion scope — read, and it disagreed with what was proposed
+
+**Founder instruction: read the full project scope in Notion BEFORE proposing
+an Azure architecture or DB schema.** Saved as memory
+`read-notion-scope-before-architecture`. Most Notion pages mirror `docs/` (the
+root page states the repo is source of truth and Notion edits do not flow
+back), but **two exist only in Notion**: **Project Overview** and the **Build
+Tracker**, and both carried decisions that change architecture work.
+
+Four contradictions surfaced, all resolved in favour of what is deployed
+(founder call: *"scope is overtaken by whats deployed"*):
+
+| Topic | Notion scope said | Deployed reality |
+|---|---|---|
+| **Tenancy** | Pooled + **RLS** "from day one"; Phase 1 gate = cross-tenant leak test in CI | Dedicated RG + Postgres **per customer** |
+| **API** | Stateless **Express** | **FastAPI** (`rewive-fpa-backend`) |
+| **Region** | UAE North | **East US 2** |
+| **RAG** | "Cut from the GTM path deliberately" | **Built** — pgvector, HNSW + full-text hybrid, chunking, citations |
+
+The schema above assumes the database *is* the tenant boundary, which matches
+reality but contradicted the written scope — reading it first would have
+raised that before 35 tables were written.
+
+**Both Notion pages updated to match** (nine edits to Project Overview, four
+plus a database row to the Build Tracker): tenancy, API, region with the
+evidence for both rejected regions, the demo reframed as *the reference
+implementation of the contract*, Phase-1 gate rewritten, four tenants not
+three, and the RAG divergence flagged rather than absorbed. **Build items
+row P1.7 moved Not started → In progress**, not Done — Entra is unwired,
+PITR untested, managed-identity auth still secret-based, DR gated off.
+
+**One schema gap the scope exposed and fixed:** of its six success measures,
+five were already answerable, but **re-raise rate** — *"the same drift
+returning measures decisions that did not stick"* — was not, because nothing
+linked a repeat finding to the closed one it repeats. Added
+`finding.re_raise_of_id` + partial index.
+
+**Product input, not acted on:** the scope classifies drift by six
+**mechanisms** — attention / ownership / time / narrative / normalisation /
+memory. A candidate dimension on `finding`; would make "which mechanism costs
+us most" answerable. Founder's call whether it is real.
+
+## ARCH-003 / ARCH-004 marked superseded in part (`c46d8f8`)
+
+Both described a July design that **was never deployed**. Entries are **not**
+rewritten in place — `docs/README.md`'s own convention is that entry numbers
+are stable because other documents cite them (`ARCH-003 Entry 06`) — so each
+file gains a banner naming what no longer holds, plus corrected frontmatter
+(ARCH-003's `region:` field was flatly false).
+
+ARCH-004 also flags two things so they are not copied forward: **Entry 09
+mandates an RLS cross-tenant leak test** that has nothing to test, and
+**Entry 04's Redis / connection-pooling guidance is not in effect** (Redis
+gated off after repeated `InsufficientCapacity`; PgBouncer unsupported on the
+Burstable B1ms tier). Both banners state what is *still* good — naming,
+segmentation, SKU reasoning, RBAC, alert rules, runbooks, and `azurerm` as the
+IaC choice (AD-08), which the deployed Terraform follows.
+
+`superseded-in-part` was added to README's documented status vocabulary rather
+than overstating these as fully superseded or silently breaking the
+`draft → reviewed → approved → superseded` scheme.
+
+**NOT touched: `ARCH-001` Entry 02** — the *origin* of the pooled/RLS
+decision, still asserting it, including "introduce the tenant-scoped data
+layer plus RLS from day one". It is now the last place in the repo asserting
+the superseded model. Deliberately left; it was not in scope.
+
 ### Natural next steps
 
-1. **Resolve the open product question first: what is `frontend_image_tag =
-   "v43"`?** Whether the deployed Americana frontend is *this* React SPA or a
-   separate `rewive-fpa` frontend determines what "push the build to Azure"
-   actually pushes, and whether this repo's demo and the live customer product
-   are one track or two. **Asked twice, still unanswered** — it is the real
-   gate on the build push, not the infra work.
-2. Merge + apply PR #1 in Cloud Shell (targeted plan above), then rerun
-   `verify-americana-logs.sh` and diff against `baseline-before.txt`.
-3. The `diag-cae-*` cleanup as its own targeted change (finding 4).
-4. Then the customer-hosting push, working from the base skill's rules:
-   Cloud Shell + remote state, `fmt -check` → `init` → `validate` → **read the
-   plan fully** → apply; targeted plans near Key Vault/Postgres; verify at
-   replica level, never trust a "Healthy" revision string; **never guess at an
-   Azure API error** (check `az`, Microsoft Learn, or the pinned `azurerm`
-   source); **stop and ask** on region/DR/SKU/feature-gating calls, but bring
-   real data to the question.
-5. Carried from the previous handoff: **the loop demo on Americana-C&S is
-   still unrun** (see below), P1.7-era items, PROD-002 capture, actions board,
-   hero action seeds, palette follow-ons.
+1. **Apply rewive-infra PR #1** (Cloud Shell, targeted plan above), then rerun
+   `verify-americana-logs.sh` and diff against `baseline-before.txt`. Do this
+   **before** any new environment apply — pushing into an estate with no logs
+   is how the last failure took a session to diagnose. Remember
+   `az monitor log-analytics query` will **still** fail with
+   `InsufficientAccessError` afterwards; that is not the fix failing.
+2. **Reconcile the schema with `sales_excellence` / `sales_staging`** before
+   landing it as `migrations/005`. Requires someone who can see inside the
+   production database.
+3. PR #2 apply, once the connector encryption key is generated and the naming
+   choice (`americanacs` at 24/24 vs `amcs`) is confirmed.
+4. The `diag-cae-*` cleanup, and the `terraform fmt` drift on `main`, each as
+   its own targeted change.
+5. **`ARCH-001` Entry 02** — same supersession banner, if wanted.
+6. Carried: **the loop demo on Americana-C&S is still unrun**, PROD-002
+   capture, actions board, hero action seeds, palette follow-ons.
 
 ### Servers / state at close
 
@@ -214,6 +347,29 @@ The org is in-memory: a mock-server restart wipes it, rebuild with
 `build-cs-mtd.mjs`.
 
 Reset: `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+**Tooling installed this session** (previous sessions had none of it):
+
+- **`az` 2.89.1** via Homebrew at `/opt/homebrew/bin/az`, plus the
+  `containerapp` extension. Authenticated as
+  `admin@agilitegroupae.onmicrosoft.com`, subscription `Azure subscription 1`
+  (`d117ff47-…`), **Owner at subscription scope**. This makes **read-only**
+  live checks possible for the first time — SKU capacity, replica health,
+  resource state — so live facts no longer have to be guessed. **Terraform
+  still runs in Cloud Shell**; installing `az` locally does not change that,
+  and `apply` was never run from this machine.
+- **Terraform 1.15.8** as a plain binary in the scratchpad (`tfbin/`), for
+  `fmt` and `validate` only — neither touches Azure. Homebrew's formula wanted
+  a Command Line Tools reinstall, so the binary was downloaded directly.
+- **`pglast`** (libpg_query, PG 18.4) in a scratchpad venv for real
+  PostgreSQL-grammar parsing. Must use Homebrew's **arm64** python3.14 — the
+  system python 3.9 is x86_64 and the wheel will not load.
+
+Scratchpad artifacts worth keeping: `verify-americana-logs.sh` (read-only,
+five checks), `baseline-before.txt` (pre-apply state), `cae-logs.patch`,
+`rewive-platform-schema.sql`. All session-scoped — **they vanish with the
+scratchpad**; the verify script arguably belongs in `rewive-infra` beside the
+Terraform it checks.
 
 ---
 
