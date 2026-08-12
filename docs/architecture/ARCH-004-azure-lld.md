@@ -2,9 +2,9 @@
 doc: ARCH-004
 title: Rewive on Azure — Low-Level Design
 type: architecture
-status: draft
+status: superseded-in-part
 owner: Praveen
-updated: 2026-07-28
+updated: 2026-08-13
 tags: [azure, lld, terraform, runbook, configuration]
 ---
 
@@ -16,6 +16,38 @@ alert rules, and operational runbooks.
 
 Values shown are production (`prod` / West Europe); Entry 11 holds the
 per-environment matrix.
+
+> [!warning] Region and tenancy are superseded — the values below were never deployed
+> This is the **July 2026 configuration**. A live estate exists and it is
+> **East US 2**, not West Europe, so every `weu`/`neu` resource name here, the
+> `10.20.0.0/22` address plan, and the North Europe DR target describe a
+> deployment that was never built. The reasoning is in
+> [[ARCH-003-azure-hld|ARCH-003]]'s supersession note; the short version is
+> that Claude has zero Foundry availability in Middle East & Africa (ruling out
+> UAE North) and the subscription has zero Postgres SKU capacity in East US.
+>
+> **Read this document for its structure, not its values.** The naming
+> convention, network segmentation, SKU reasoning, RBAC model, alert rules,
+> hardening checklist and runbooks are all still the best reference — and the
+> deployed Terraform follows them closely, including `azurerm` as the IaC
+> choice (AD-08).
+>
+> **Two specific corrections, so they are not copied forward:**
+> - **Entry 09's smoke suite mandates an RLS cross-tenant leak test.** There is
+>   no RLS. Isolation is a dedicated resource group and PostgreSQL server per
+>   customer, so the equivalent check is that a customer's data is provisioned
+>   into its own database by the control plane — not that a policy filtered it.
+> - **Entry 04's Redis and the connection-pooling guidance are not in effect.**
+>   Redis is gated off after repeated `InsufficientCapacity` allocation
+>   failures, and PgBouncer is unsupported on the `Burstable B1ms` tier the
+>   deployment uses — a General Purpose SKU plus `statement_cache_size=0` in
+>   the app would be required first.
+>
+> **What is actually deployed** lives in the private repo
+> `sanjuveed-debug/rewive-infra` (Terraform, `azurerm`), one reusable module
+> invoked per customer. Its README records every failure found by a real
+> `terraform apply` — treat it as more current than this document for anything
+> operational.
 
 ---
 

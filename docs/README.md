@@ -18,8 +18,8 @@ by a new version, not rewritten in place under a new number.
 | [[BRIEF-001-project-brief\|BRIEF-001]] | **Project brief** — what Rewive is, and what it refuses to be | Draft |
 | [[ARCH-001-productization-strategy\|ARCH-001]] | SaaS &amp; on-prem productization strategy | Draft |
 | [[ARCH-002-multi-cloud-hosting\|ARCH-002]] | Multi-cloud hosting architecture | Draft |
-| [[ARCH-003-azure-hld\|ARCH-003]] | Rewive on Azure — High-Level Design | Draft |
-| [[ARCH-004-azure-lld\|ARCH-004]] | Rewive on Azure — Low-Level Design | Draft |
+| [[ARCH-003-azure-hld\|ARCH-003]] | Rewive on Azure — High-Level Design | Superseded in part — region &amp; tenancy |
+| [[ARCH-004-azure-lld\|ARCH-004]] | Rewive on Azure — Low-Level Design | Superseded in part — region &amp; tenancy |
 | [[PROD-001-access-control\|PROD-001]] | In-product access control | Draft |
 
 ### Reading aids
@@ -66,7 +66,14 @@ These predate the ledger and follow their own conventions:
   section means appending, not renumbering.
 - **Diagrams are mermaid** in fenced ```mermaid blocks. Obsidian, GitHub, and
   the published HTML versions all render them; no binary image files.
-- **Status** is one of `draft` → `reviewed` → `approved` → `superseded`.
+- **Status** is one of `draft` → `reviewed` → `approved` → `superseded`, plus
+  `superseded-in-part` for a document whose structure still stands while
+  specific decisions in it have been overtaken by what was built. Such a
+  document carries a banner at the top naming exactly which entries no longer
+  hold and what replaced them; its entries are **not** rewritten in place,
+  because other documents cite them by number. ARCH-003 and ARCH-004 are in
+  this state — their region (West Europe) and tenancy model (pooled Postgres
+  with row-level security) were never deployed.
 
 `.obsidian/` is gitignored — vault workspace state is per-person and shouldn't
 travel with the repo. Everything that matters is the markdown itself.

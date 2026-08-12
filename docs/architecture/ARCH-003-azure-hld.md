@@ -2,11 +2,11 @@
 doc: ARCH-003
 title: Rewive on Azure — High-Level Design
 type: architecture
-status: draft
+status: superseded-in-part
 owner: Praveen
-updated: 2026-07-28
+updated: 2026-08-13
 tags: [azure, hld, infrastructure, security, dr]
-region: West Europe (primary) · North Europe (recovery)
+region: East US 2 (built) — this document was written for West Europe primary · North Europe recovery, which was never deployed. See the supersession note below.
 ---
 
 # ARCH-003 · Rewive on Azure — High-Level Design
@@ -16,6 +16,45 @@ environments, security model, availability targets, and cost envelope.
 
 Companion LLD: [[ARCH-004-azure-lld|ARCH-004]]. Portability rules referenced as
 R-01…R-07 come from [[ARCH-002-multi-cloud-hosting|ARCH-002]] Entry 02.
+
+> [!warning] Superseded on two points — read before using this document
+> This is the **July 2026 design**. An Azure estate is now live and it differs
+> from this document in two load-bearing ways. Entries are left intact rather
+> than rewritten, because other documents cite them by number.
+>
+> **1. Region — not West Europe.** The build runs in **East US 2**. Two
+> decisions got it there, both made against evidence rather than preference:
+> **UAE North** was considered for UAE data residency and **ruled out** because
+> Claude has zero availability in any Middle East & Africa Foundry region (the
+> Claude/Foundry endpoint runs from **Sweden Central** regardless of where the
+> infrastructure sits); **East US** was then abandoned because the subscription
+> has zero PostgreSQL Flexible Server SKU capacity there — which surfaces as a
+> misleading `ParameterOutOfRange: Version` error — and because a Postgres
+> private endpoint must share its server's region, the whole deployment moved
+> rather than pinning one resource. Every `weu`/`neu` name and the
+> `10.20.0.0/22` plan in this document and in ARCH-004 therefore describe a
+> region that was never built.
+>
+> **2. Tenancy — not pooled, and no RLS.** This document's security model
+> (Entry 06) and [[ARCH-001-productization-strategy|ARCH-001]] Entry 02 assume
+> **one pooled database with row-level security** and an `app.tenant_id`
+> session variable. What shipped is the opposite: **a dedicated resource group
+> and a dedicated PostgreSQL server per customer** — the database *is* the
+> tenant boundary, so there is no `tenant_id` column and no RLS policy
+> anywhere. Anything here that depends on RLS — including the cross-tenant
+> leak test named as a release gate — needs rethinking in those terms, since
+> the isolation is now physical rather than enforced by policy.
+>
+> **Still accurate and worth using:** the component inventory, the security
+> architecture apart from RLS, HA/DR reasoning, the cost model's structure,
+> and the risks-and-assumptions framing. ARCH-004's resource-level detail
+> (naming conventions, SKUs, RBAC, alert rules, runbooks) likewise remains the
+> best reference, once the region codes are read as `eus2`.
+>
+> **Where the truth now lives:** the private repo `sanjuveed-debug/rewive-infra`
+> (Terraform, `azurerm`) and its README, which records every failure found by a
+> real `terraform apply`. The target design is **ARCH-GTM-001**; the
+> orientation page in Notion (Project Overview) reflects the deployed reality.
 
 ---
 
