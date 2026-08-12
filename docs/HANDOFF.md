@@ -1,4 +1,146 @@
-# Handoff — the two traps closed: wrong-company sign-in and a self-accusing ledger (2026-08-11)
+# Handoff — rewive-infra-architect is the base from here on (2026-08-12)
+
+## The decision
+
+**Founder call, this session: `rewive-infra-architect` governs all
+infrastructure work from now on.** It lives in the private repo
+`sanjuveed-debug/rewive-infra` at
+`.claude/skills/rewive-infra-architect/SKILL.md`, alongside a README that is
+kept current with a *"Real bugs found via actual `terraform apply`"* section
+and a live open-items list. **Both are to be read fresh each session that
+touches infra — never from memory or a copy:**
+
+```bash
+gh api repos/sanjuveed-debug/rewive-infra/contents/.claude/skills/rewive-infra-architect/SKILL.md \
+  --jq '.content' | base64 -d
+gh api repos/sanjuveed-debug/rewive-infra/contents/README.md --jq '.content' | base64 -d
+```
+
+The stated direction: **start pushing the build to Azure for proper customer
+hosting.**
+
+## What that repo is, and what it overturned
+
+Terraform (`azurerm`, per ARCH-003 AD-08). One reusable module
+`modules/rewive-deployment/` (VNet + private endpoints, Key Vault, managed
+identities, Postgres, Container Apps for backend/worker/frontend + a migration
+job, Front Door + WAF, Managed Redis, Blob, Log Analytics + App Insights, NSG
+egress allowlist) called once per customer under `environments/<customer>/`.
+
+- **Americana is LIVE** in `rg-rewive-dedicated-americana`, region
+  **East US 2**, images backend `v64` / frontend `v43`. **Nesto**
+  (`rewive-fpa-rg`) is Rewive's own internal testing ground — same
+  subscription, own RG, own much older tags; don't touch them as a side effect.
+- Isolation is **a dedicated resource group and Postgres server per customer**.
+- DB `americana` on `psql-rewive-americana-prod`; schemas `fpa`,
+  `sales_excellence`, `sales_staging`, `shared`, `audit`, `rag`, `public`;
+  `search_path=fpa,shared,audit,rag,public`. `fpa_code` no longer exists — a
+  full production cutover happened 2026-08-12. Roles: `rewive_admin` (migrate
+  job only, the sole DDL path), `rewive_app` (no DDL at all), plus
+  individually-attributable collaborator roles — **`sales_excellence` /
+  `sales_staging` are Praveen's**.
+- **Terraform runs in Azure Cloud Shell, never locally.** Remote state in
+  `rg-rewive-tfstate` / `sarewivetfstate` / `tfstate` — set up after a Cloud
+  Shell disconnect destroyed local-only state mid-`apply` on 2026-08-11. Never
+  propose removing the remote backend.
+- Deliberately off: **Redis** (`InsufficientCapacity`, four failed allocation
+  attempts across SKUs), **PgBouncer** (Azure doesn't support it on the
+  `Burstable B1ms` tier — found mid-`apply`, `plan` can't catch it), **DR
+  replica** (`enable_dr=false`).
+- The production application is **`rewive-fpa-backend`** (FastAPI, asyncpg),
+  not this repo's Express mock.
+
+**Decisions now recorded as superseded** — so nobody re-derives them:
+
+| Was decided | Reality |
+|---|---|
+| **UAE North** for residency (ARCH-GTM-001) | **Ruled out on evidence** — Microsoft's Foundry Models region table shows Claude has *zero* availability in any Middle East & Africa region. The Claude/Foundry endpoint runs from **Sweden Central** regardless of `location`. |
+| **East US** (2026-08-10) | Zero Postgres Flexible Server SKU capacity for this subscription, surfaced as a misleading `ParameterOutOfRange: Version`. Postgres private endpoints must share the server's region → whole deployment moved to **East US 2**. |
+| West Europe / North Europe (ARCH-003/004) | Never built. Those docs' resource names and the `10.20.0.0/22` plan target a region not in use. |
+| "P1.7 Azure substrate not started" (previous handoffs) | Wrong before it was written — the estate is applied and serving. |
+| "Runtime-verify pg paths on a free Neon Postgres" | Obsolete; there is a real production Postgres. |
+
+## Also this session
+
+- **`.claude/skills/architect/SKILL.md` written, then rewritten to obey the
+  above.** It is deliberately a **pointer, not a copy** — a vendored 18 KB
+  duplicate would drift within a session. It now holds only what is local to
+  this repo: the loop-engine thesis, the contract-as-asset, the ten invariants
+  (ledger `appendQueue`, the JWT three-segment shape-check, `live-*` never in
+  KV, `LIVE_LOCK_EXEMPT`, migration v1 *is* `schema.sql`, …), the
+  product-architecture drift patterns, and the superseded table. Sibling to
+  `rewive-brief`; doctrine still wins over architecture.
+- **ARCH-GTM-001 recovered from its artifact** and its substance captured. It
+  is cited by ID in 13 repo files and is a file in none — landing it as
+  `docs/architecture/ARCH-GTM-001-gtm-architecture.md` remains outstanding.
+- **Both new/changed files are UNCOMMITTED** (`.claude/skills/architect/`,
+  this handoff). `Architecture.png` still deliberately untracked. `v5` was
+  level with `origin/v5` at `f6a3988` at session start.
+
+## The urgent open item, from the base repo (dated 2026-08-12)
+
+**The Container App Environment was never linked to a Log Analytics workspace
+at the environment level** — a different, more direct binding than the
+`azurerm_monitor_diagnostic_setting` that exists and reports `enabled: true`.
+Effect: **no container logs at all.** `az containerapp logs show` connects and
+returns nothing (even `--follow`, even against a container printing
+continuously); `az containerapp exec` fails with `ClusterExecFailure`;
+`ContainerAppConsoleLogs` queries come back empty. A worker crash-looped to
+`restartCount=112` while the revision still reported *Healthy* — **revision
+health does not reflect replica restart cycles.** Likely fix:
+`log_analytics_workspace_id` directly on `azurerm_container_app_environment`.
+**Not yet fixed.** Until it is, don't burn time on CLI log tooling — a prior
+session lost an hour there.
+
+Other open in that repo: `acr_resource_group_name` still an unverified
+assumption · Key Vault IP-restricted rather than private-endpoint-only (no
+in-VNet CI runner exists; `deployer_allowed_ips` is the interim control, and a
+stale value makes a full plan want to alter Key Vault ACLs — prefer targeted
+plans) · Front Door `/api/*` vs `/*` precedence unverified · Americana's Entra
+tenant/client IDs still empty · managed-identity auth for Postgres/Foundry not
+wired.
+
+### Natural next steps
+
+1. **Resolve the open product question first: what is `frontend_image_tag =
+   "v43"`?** Whether the deployed Americana frontend is *this* React SPA or a
+   separate `rewive-fpa` frontend determines what "push the build to Azure"
+   actually pushes, and whether this repo's demo and the live customer product
+   are one track or two. **Asked, not yet answered.**
+2. Fix the Log Analytics environment binding — it is a production blind spot.
+3. Then the customer-hosting push, working from the base skill's rules:
+   Cloud Shell + remote state, `fmt -check` → `init` → `validate` → **read the
+   plan fully** → apply; targeted plans near Key Vault/Postgres; verify at
+   replica level, never trust a "Healthy" revision string; **never guess at an
+   Azure API error** (check `az`, Microsoft Learn, or the pinned `azurerm`
+   source); **stop and ask** on region/DR/SKU/feature-gating calls, but bring
+   real data to the question.
+4. Carried from the previous handoff: **the loop demo on Americana-C&S is
+   still unrun** (see below), P1.7-era items, PROD-002 capture, actions board,
+   hero action seeds, palette follow-ons.
+
+### Servers / state at close
+
+**Mock API still running from the previous session** — `node
+mock-server/server.js` on :4000, PID 11168, up 1d 11h at session start (this
+is *not* `dev:all`). **Vite started this session** on :5173. The
+**Americana-C&S runtime org survived**: `GET /tenants/resolve?q=americana`
+resolves `custom-org`, 8 open findings (all escalated to `coo` by a day of
+heartbeat ticks — sign in as **COO**, a sales-supervisor lens is now empty),
+zero closures.
+
+**The `afd397d` ledger fix is proven in the wild:** `GET /ledger/verify` →
+`ok:true, checked:69` after a full day of heartbeat escalations (57 `transfer`
+events). The loop demo is confirmed unrun **at the evidence layer** — the
+ledger's 8 `decision` + 4 `verdict` events are all `fmcg`; custom-org has none.
+The org is in-memory: a mock-server restart wipes it, rebuild with
+`build-cs-mtd.mjs`.
+
+Reset: `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+---
+
+# Previous handoff — the two traps closed: wrong-company sign-in and a self-accusing ledger (2026-08-11)
 
 ## Where things stand at close
 
