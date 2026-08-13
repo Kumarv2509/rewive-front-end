@@ -8,15 +8,25 @@
 --   channels and categories, their legal entities, and their people.
 --
 -- STATUS — read before using
---   * NOT APPLIED. Nothing here has run against any database, live or local.
+--   * APPLIED LOCALLY, 2026-08-13, against PostgreSQL 16 (the production major
+--     version), with `rewive_app`/`rewive_admin` created so the grants at the
+--     foot of this file were exercised rather than skipped. The Americana C&S
+--     configuration loads on top of it and the cycle guards were driven in
+--     both directions. NOT applied to any live database.
 --   * NOT WIRED. This is deliberately not in `mock-server/migrations/`; the
 --     control plane will not fan it out and `npm run migrate` will not see it.
---   * Destined for `rewive-infra` as part of `migrations/005-platform-schema.sql`,
---     and BLOCKED until reconciled with the `sales_excellence` and
+--   * Destination is the BACKEND repo's `migrations/` package
+--     (`rewive-fpa-backend`, run by `python -m migrations.runner`), NOT
+--     `rewive-infra` — that repo is Terraform only and has no `migrations/`
+--     directory. Corrected 2026-08-13 by reading the live repo; the earlier
+--     `migrations/005-platform-schema.sql` name was wrong on both counts.
+--     Still BLOCKED until reconciled with the `sales_excellence` and
 --     `sales_staging` schemas that already exist in the live Americana
 --     database, which this design has never been able to inspect.
---   * Verified only by parsing against the real PostgreSQL grammar
---     (libpg_query). A clean parse is not a clean apply.
+--   * The first real execution immediately found what parsing could not: the
+--     role-ancestry view had TWO recursive branches, which PostgreSQL rejects
+--     (it permits exactly one, and reads the surplus arm as part of the
+--     non-recursive term). Grammar-valid, apply-fatal. See section 12.
 --
 -- TARGET
 --   Azure Database for PostgreSQL Flexible Server, one database per customer.
@@ -659,16 +669,21 @@ WITH RECURSIVE walk AS (
     SELECT r.key AS node_key, r.key AS ancestor_key, 0 AS distance, false AS via_dotted
       FROM shared.role r
     UNION ALL
-    SELECT w.node_key, r.parent_role_key, w.distance + 1, w.via_dotted
+    -- One recursive branch, not two: PostgreSQL permits exactly one recursive
+    -- self-reference, and with three UNION arms it reads the first two as the
+    -- non-recursive term and rejects `walk` inside it. The solid and dotted
+    -- edges are therefore unioned into an edge set FIRST, then walked once.
+    SELECT w.node_key, e.parent_key, w.distance + 1, w.via_dotted OR e.is_dotted
       FROM walk w
-      JOIN shared.role r ON r.key = w.ancestor_key
-     WHERE r.parent_role_key IS NOT NULL
-    UNION ALL
-    SELECT w.node_key, r.dotted_parent_key, w.distance + 1, true
-      FROM walk w
-      JOIN shared.role r ON r.key = w.ancestor_key
-     WHERE r.dotted_parent_key IS NOT NULL
-       AND NOT w.via_dotted
+      JOIN (
+            SELECT key, parent_role_key  AS parent_key, false AS is_dotted
+              FROM shared.role WHERE parent_role_key IS NOT NULL
+             UNION ALL
+            SELECT key, dotted_parent_key,              true
+              FROM shared.role WHERE dotted_parent_key IS NOT NULL
+           ) e ON e.key = w.ancestor_key
+     -- At most one dotted hop per path, exactly as before.
+     WHERE NOT (e.is_dotted AND w.via_dotted)
 )
 SELECT node_key, ancestor_key, distance, via_dotted FROM walk;
 
