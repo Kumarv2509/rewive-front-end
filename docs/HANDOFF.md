@@ -158,9 +158,35 @@ invented**. No person in it is real — do not ship it as customer config.
    The dimension vocabulary they slice against now exists.
 4. Carried from the previous session, all still open: **apply rewive-infra
    PR #1** (the container-app logging fix) before any new environment apply,
-   PR #2 apply, the `diag-cae-*` cleanup, `terraform fmt` drift on `main`,
-   `ARCH-001` Entry 02's supersession banner, and **the loop demo on
-   Americana-C&S is still unrun**.
+   PR #2 apply, the `diag-cae-*` cleanup, `ARCH-001` Entry 02's supersession
+   banner, and **the loop demo on Americana-C&S is still unrun**.
+
+## rewive-infra PR #3 — the `terraform fmt` drift, raised and mergeable
+
+<https://github.com/sanjuveed-debug/rewive-infra/pull/3> ·
+`chore/terraform-fmt-drift` · commit `b90ca3a` · **+5/−5 across 3 files**.
+Closes the carried item. `terraform fmt -check -recursive` was failing on
+`main` — the README's *own first pre-apply step*, so the documented preflight
+broke before `init` was ever reached.
+
+Whitespace only: `patterns_to_match` over-indented in both `front_door.tf`
+route blocks, two trailing comments misaligned in `redis.tf`'s
+`default_database`, and `min_tls_version` over-indented by one in
+`storage.tf`. **`git diff -w` is empty — that is the proof**, and it is also
+why `terraform validate` was not re-run: a whitespace-only diff cannot change
+its result, so re-deriving it would have downloaded the provider to learn
+nothing.
+
+**Nothing touches Azure** — `fmt` is a local formatter, no plan, no apply, no
+state read. Run with Terraform **v1.15.8** (darwin_arm64), which satisfies the
+repo's `required_version = ">= 1.7.0"`. `fmt -check` passes clean afterward.
+
+**No conflict with the in-flight PRs**, checked rather than assumed: #1 touches
+`container_apps.tf`, #2 touches `environments/americanacs/*`, and neither
+overlaps these three files. #2's own files were confirmed `fmt`-clean when it
+was raised, so merging it will not reintroduce drift. PR #3 can merge in any
+order and **does not disturb the standing rule that #1 is applied before any
+new environment apply.**
 
 ### Servers / state at close
 
