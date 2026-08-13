@@ -7,11 +7,25 @@ initial dimensions: **14 tables, 66 statements**, plus a worked configuration
 for Americana C&S and the checker that validates both.
 
 **It is not applied.** Never executed against any database, live or local; not
-wired into `npm run migrate`; not in `mock-server/migrations/`. It is destined
-for `rewive-infra` as part of `migrations/005-platform-schema.sql` and **stays
+wired into `npm run migrate`; not in `mock-server/migrations/`. It **stays
 blocked on the same thing as the previous session's work** — reconciliation
 with `sales_excellence` / `sales_staging` in the live Americana database, which
 still cannot be inspected from here. A clean parse is not a clean apply.
+
+**Correction to the previous entry: it does not land in `rewive-infra`.** Once
+the network cleared, that repo was read directly rather than assumed. It has
+**no `migrations/` directory** — root is `.claude`, `.gitignore`, `README.md`,
+`environments/`, `modules/`, pure Terraform. The migration job
+(`azurerm_container_app_job.migrate`) runs the **backend** image,
+`rewive-backend:${var.backend_image_tag}`, with
+`command = ["python", "-m", "migrations.runner"]`. So migrations are a Python
+package inside the FastAPI backend (`rewive-fpa-backend`), and this DDL must be
+adapted to whatever that runner expects. The inherited name
+`migrations/005-platform-schema.sql` is therefore **doubly unverified** — wrong
+repo, and a numbering convention nobody has checked. The backend repo is not
+visible under the account in use (`sanjuveed-debug` holds only `rewive-infra`,
+`bloom-juniors`, `rewive-frontend-v4`, `rewive-frontend-v2`), so confirm there
+before renaming anything to fit a guess.
 
 This replaces the lost `rewive-platform-schema.sql`. **The previous session's
 scratchpad vanished exactly as that handoff predicted**, taking the 35-table

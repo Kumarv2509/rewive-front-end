@@ -17,8 +17,33 @@ this repo.
 | Applied to any database | **No.** Never executed, live or local. |
 | Wired into `npm run migrate` | **No**, on purpose. |
 | Verified | Parses against the real PostgreSQL grammar (libpg_query), no forward foreign keys. |
-| Destination | `rewive-infra`, as part of `migrations/005-platform-schema.sql`. |
+| Destination | **The backend repo's `migrations/` package — NOT `rewive-infra`.** See below. |
 | Blocker | Must first be reconciled with the `sales_excellence` and `sales_staging` schemas already in the live Americana database, which this design has never been able to inspect. |
+
+### Where this actually lands — corrected 2026-08-13
+
+Earlier notes in this repo said it would land in `rewive-infra` as
+`migrations/005-platform-schema.sql`. **That was wrong**, and it was checked
+against the live repo rather than assumed:
+
+- `rewive-infra` has **no `migrations/` directory**. Its root is
+  `.claude`, `.gitignore`, `README.md`, `environments/`, `modules/` — pure
+  Terraform.
+- The migration job (`azurerm_container_app_job.migrate` in
+  `modules/rewive-deployment/container_apps.tf`) runs the **backend** image,
+  `rewive-backend:${var.backend_image_tag}`, with
+  `command = ["python", "-m", "migrations.runner"]`.
+
+So migrations are a Python package inside the FastAPI backend
+(`rewive-fpa-backend`), applied by that runner as `rewive_admin` — the sole
+DDL path. This DDL has to be adapted to whatever shape that runner expects.
+
+**Unverified:** the backend repo is not visible under the account used here
+(`sanjuveed-debug` holds only `rewive-infra`, `bloom-juniors`,
+`rewive-frontend-v4`, `rewive-frontend-v2`). So the runner's file-naming and
+numbering convention is unknown — it may not take numbered `.sql` files at
+all. **Confirm against the backend repo before renaming anything to fit a
+guessed convention.**
 
 A clean parse is not a clean apply. It says nothing about whether roles exist,
 whether extensions are available, or whether the objects already exist.
