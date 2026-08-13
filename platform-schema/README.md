@@ -13,8 +13,17 @@ Nothing here is applied, migrated, imported or tested by any suite in this repo.
 **`shared-dimensions.sql` has landed in the backend repo** as
 `backend/migrations/018_platform_dimensions.sql`, in
 [sanjuveed-debug/rewive-fpa PR #1](https://github.com/sanjuveed-debug/rewive-fpa/pull/1).
-That PR is **open, not merged, and nothing is applied** — merging it deploys
-nothing, because the migrate job is a separate step.
+That PR was **merged on 2026-08-13** (`a1d8eaa`). **Merged is not applied** —
+merging deployed nothing, because the migrate job is a separate step, and
+neither `018` nor `019` has yet touched a database.
+
+Reviewing the PR before merge caught a defect this directory's own verification
+could not have: `019`'s `NOT VALID` constraints exempt existing **rows** but
+bind every new **write**, and two of them described a stricter product than the
+backend implemented — `POST /findings/{id}/re-alert` would have returned 500 on
+every call. Fixed in `40ab097`. **The mirror test that "proved" `019` safe
+planted rows; it never replayed what the application does.** Worth remembering
+here, because every file in this directory is verified the same way.
 
 What remains here is the **design source** for that migration plus a worked
 customer configuration. Treat the backend repo as authoritative for anything
@@ -25,7 +34,7 @@ disagree silently.
 |---|---|
 | Applied to a **local** database | **Yes.** PostgreSQL 16.14, the production major version, on top of the backend's migrations 000–017. |
 | Applied to any **live** database | **No.** |
-| Landed as a migration | **Yes** — `018_platform_dimensions.sql`, awaiting review. |
+| Landed as a migration | **Yes** — `018_platform_dimensions.sql`, reviewed and merged. |
 | Blocked on `sales_excellence` reconciliation | **Largely resolved — see below.** |
 
 ## Two corrections that came from finally reading the backend

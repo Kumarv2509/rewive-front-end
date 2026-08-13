@@ -1,4 +1,186 @@
-# Handoff — the backend repo opens, and two of our own assumptions turn out to be wrong (2026-08-13, later)
+# Handoff — the schema PR is reviewed and merged, and the review found the constraints were a claim about the code (2026-08-13, latest)
+
+## The one thing to act on
+
+**The migrate job is now the only gate, and it must not be the first thing you
+run.** `rewive-fpa` PR #1 is merged (`a1d8eaa`). Merging deployed nothing —
+`018` and `019` have still never touched a database.
+
+Run **`rewive-infra` PR #1 (Log Analytics) first.** It is the reason step 2
+exists. Applying the migrations into an estate that emits no container logs
+puts you straight back in the blind-estate failure the last two handoffs each
+warned costs a session to diagnose — and the migrations now carry more surface
+to fail on, not less.
+
+**Standing sequence, one step shorter:**
+
+| # | Step | State |
+|---|---|---|
+| 1 | Backend `000` provisioning fix | **merged, not applied** |
+| 2 | `rewive-infra` PR #1 — Log Analytics | open |
+| 3 | Run the migrate job | the step that makes any of it real |
+| 4 | `rewive-infra` PR #2 — Americana C&S | open |
+
+## What was delivered
+
+PR #1 reviewed properly rather than merged on its own account of itself — and
+the review found a second blocker, fixed on the same PR before merge.
+
+| Commit | What |
+|---|---|
+| `918d4bd` | The three migrations as authored last session. |
+| `40ab097` | The review fix: `findings.py`, the `019` grants, and a regression test. |
+| `a1d8eaa` | Merge commit. |
+
+## The review finding: a constraint is a claim about the code, not just the data
+
+`NOT VALID` was the centrepiece of `019`'s design, and it was reasoned about
+correctly but incompletely:
+
+> `NOT VALID` exempts existing **rows**. It binds every new **write**
+> immediately.
+
+So a constraint the *running application* violates is a 500 on the next
+request, not a migrate-job failure — and `NOT VALID` offers no protection from
+that whatsoever. Two of the six constraints described a stricter product than
+the code implemented.
+
+**`POST /findings/{id}/re-alert` would have returned 500 on every call.**
+`findings.py:357` set `status='open'` and left the disposition in place. The
+route only accepts findings in status `acknowledged`, and per `status_map` that
+is reachable only via `disposition='acknowledge'` — so the disposition is
+always set, always left set, and `ck_findings_open_is_undecided` always fires.
+**That is the Park half of the loop**, in production, on the first request
+after the migrate job.
+
+**And the obvious fix is also wrong** — this is the part worth carrying
+forward. Clearing the disposition alone trips the *other* new constraint:
+
+```
+SET status='open'                                → ERROR: ck_findings_open_is_undecided
+SET status='open', disposition=NULL              → ERROR: ck_findings_decision_whole
+SET status='open', disposition=NULL,
+    disposition_at=NULL, disposition_by=NULL     → UPDATE 1   ✓
+```
+
+The three decision columns move together or not at all. Semantically that is
+right anyway: a re-alerted finding is back to needing a decision, so the one
+that parked it is spent.
+
+**Second, smaller:** `POST /findings/{id}/disposition` accepted `abandon` with
+no reason — `DispositionRequest.reason` is `Optional` and only disposition
+membership was validated — which `ck_findings_dismissal_has_reason` now
+refuses. Rejected before the write, so it is a 400 rather than an unhandled
+write error.
+
+Two nits also fixed in `019`: the two append-only tables were granted `UPDATE`
+and `DELETE` that their own trigger refuses, so they now get `SELECT, INSERT`
+only; and the grants comment claimed to cover `shared`, which `018` grants
+itself.
+
+**The lesson, and it is the companion to "a clean parse is not a clean
+apply":** adding a constraint without reading every writer moves the failure
+out of the migration and into the running product, where it is far harder to
+see. Both bugs were invisible to the mirror test that "proved" `019` safe last
+session, because that test planted rows — it never replayed what the app does.
+
+## What checked out, so it is not re-derived
+
+- The `000` fix is correct, `format('%I', current_database())` included.
+- **No `CREATE INDEX CONCURRENTLY` anywhere**, which matters: `runner.py:61`
+  wraps each file in a single `conn.transaction()`, where it would be illegal.
+- FK types line up — findings/users `UUID`, the four `shared` dimensions
+  `BIGINT`.
+- The `disposition` and `status` enums match `status_map` exactly; `severity`
+  only ever receives `'high'`/`'medium'` anywhere in the app, both allowed.
+- **`disposition_by` is already a UUID FK to `fpa_users` in production** — not
+  the display name the mock carries, which is what the last handoff observed in
+  the loop demo. `ck_findings_decision_whole` is satisfiable as written.
+- `018` grants `USAGE` + DML on `shared` itself (lines 717–732), so there was
+  never a grant gap there.
+
+## Verification
+
+- Full `000` → `019` applies clean to a **fresh** database with the amended
+  `019` (`001_auth_and_rag.sql` skipped locally — pgvector has no PG16 build on
+  Homebrew).
+- Both bugs reproduced against `rewive_prod_mirror`, which already carries the
+  constraints, by replaying the app's own SQL verbatim.
+- The whole loop replays clean after the fix: raise → Park → re-alert →
+  decide again.
+- Grants land as intended (`INSERT,SELECT` on the two append-only tables).
+- `backend/tests/test_loop_hardening_constraints.py` — six assertions in the
+  repo's existing dependency-free style (static assertions over the migration
+  files, no database). **Reverted against the pre-fix router it fails on
+  exactly the two bugs**, which is the only reason to believe it is worth
+  anything.
+
+**On running the backend suite locally:** 8 tests fail collection with
+`TypeError: unsupported operand type(s) for |`. That is this machine's Python
+3.9.7 against the app's `python:3.11-slim` target, it reproduces identically on
+untouched `main`, and it is not worth diagnosing again. The file-only tests
+(the ones that don't import `app`) run fine on 3.9.
+
+## Notion
+
+**P1.8** updated: PR marked merged with both commits, the review finding
+written up in the body, `Commits` carrying `a1d8eaa`. **Status deliberately
+left `In progress`** — merging deployed nothing, and this item's own stated
+convention is that Done means it has actually run.
+
+## Still open
+
+1. **The migrate job has never run.** Everything else below is downstream of it.
+2. **The `NOT VALID` constraints still need validating.** They bind new writes
+   the moment they land but have never inspected an existing row. Audit queries
+   in section 6 of `019` first — a non-zero count is real customer data to
+   decide about, not a schema problem — then `VALIDATE CONSTRAINT` per
+   constraint.
+3. **No backfill.** Nothing maps free-text `persona`/`entity`/`region` onto the
+   new dimension rows, and nothing populates `period_id` / `owner_seat_id` /
+   `entity_id` / `region_id` on existing findings. Needs Americana's own
+   vocabulary.
+4. **Four contract domains have no production tables**: Execution
+   (runs/tasks/outcomes), agent-building (specs/studio/catalog), connector
+   definitions, and Business Context (SKUs/customers/divisions).
+5. **The contract suite has never run against the production API.** Still the
+   obvious next verification, and now more interesting than before: the review
+   above found the backend and the schema disagreeing about the product, which
+   is exactly the class of thing `contract/` against `CONTRACT_BASE_URL` would
+   surface across every endpoint rather than one at a time.
+6. **The loop demo has never been run on screen.** Driven through the API two
+   sessions ago; no visual walkthrough and no GIF exist.
+7. Carried, unchanged: `rewive-infra` PRs #1–#4 all open and MERGEABLE, the
+   `diag-cae-*` cleanup, `ARCH-001` Entry 02's supersession banner,
+   `ARCH-GTM-001` is cited by ID in 13 files and is a file in none, and nobody
+   has said what `rewive-studio` is.
+
+## State at close
+
+Nothing is running locally — no mock server, no Vite. **The Americana C&S org
+from the previous session is gone** (it was in-memory); rebuilding it is the
+four-step sequence in the previous handoff, and note that the rebuild script
+alone is not enough.
+
+**PostgreSQL 16 databases on this machine**, all surviving the session:
+`rewive_dev` (the dimensions), `rewive_prod_mirror` (000–017 + planted
+violating rows + 018/019, and now the constraints), `newcustomer`,
+`fresh_customer` (empty), and **`reviewtest`** — new this session, the
+fresh-database apply of the merged series. `platform-schema/README.md` carries
+the rebuild commands.
+
+The `rewive-fpa` clone is in the scratchpad and **will vanish** — re-clone.
+Pushing worked first attempt this session, which is worth knowing only because
+it means the flakiness is intermittent rather than gone; retry two or three
+times before diagnosing.
+
+`az` remains authenticated as Owner; read-only checks only. `terraform apply`
+has still never run from this machine, and per the infra doctrine it runs in
+Cloud Shell. `Architecture.png` is still deliberately untracked.
+
+---
+
+# Previous handoff — the backend repo opens, and two of our own assumptions turn out to be wrong (2026-08-13, later)
 
 ## The one thing to act on
 
