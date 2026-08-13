@@ -1,4 +1,168 @@
-# Handoff — the infra repo becomes the base, and the documents catch up with what was built (2026-08-12 → 13)
+# Handoff — the customer's dimensions become rows (2026-08-13)
+
+## What was built
+
+`platform-schema/` at the repo root — the `shared` schema, the customer's
+initial dimensions: **14 tables, 66 statements**, plus a worked configuration
+for Americana C&S and the checker that validates both.
+
+**It is not applied.** Never executed against any database, live or local; not
+wired into `npm run migrate`; not in `mock-server/migrations/`. It is destined
+for `rewive-infra` as part of `migrations/005-platform-schema.sql` and **stays
+blocked on the same thing as the previous session's work** — reconciliation
+with `sales_excellence` / `sales_staging` in the live Americana database, which
+still cannot be inspected from here. A clean parse is not a clean apply.
+
+This replaces the lost `rewive-platform-schema.sql`. **The previous session's
+scratchpad vanished exactly as that handoff predicted**, taking the 35-table
+draft, `verify-americana-logs.sh`, `baseline-before.txt` and the pglast venv
+with it. The artifact
+(<https://claude.ai/code/artifact/3bff3bca-396e-4ea1-a16a-14eb91a1a15a>)
+preserved the *narrative* — the marginals lesson, the schema layout, the
+decisions — but **not one line of the SQL**. Hence this is in the repo, not the
+scratchpad. Treat that as the standing rule: an artifact is not a backup.
+
+## The founder decisions this session
+
+| Question | Call |
+|---|---|
+| How far do "people" go? | **Template roles + real people.** Roles stay reference data per template; `person` and `seat` are real, and a seat is a person holding a role in an org unit for a period. A customer configures *who holds what*, not their own reporting line. |
+| Rollup shape | **Adjacency** — `parent_id` self-FK, one pattern for every dimension, arbitrary depth, cycles blocked by trigger. Not fixed levels, not a closure table. |
+| Where it lands | Written here, ready to land in `rewive-infra`. **Nothing applied.** |
+
+## What the current-state map turned up
+
+Before designing anything, the existing model was mapped. Three findings shaped
+the work and are worth not rediscovering:
+
+1. **The customer's business units are baked into the persona enum.**
+   `protein_*`, `gi_*`, `fnv_*`, `ambient_*` are hardcoded role ids in two
+   mirrored files (`mock-server/roles.js`, `src/screens/CommandCenter/personas.ts`).
+   So "configure their business" is not a data operation today — a new
+   customer's divisions need a code change. `BusinessDivision` exists as a type
+   but is display-only seed copy, and onboarded orgs get `divisions: []`.
+   `shared.org_unit` is where that finally becomes a join.
+2. **Region is flat free text at mixed grain in one column.** The seeds carry
+   `'GCC'`, `'UAE'`, `'Dubai'`, `'Sharjah & Northern Emirates'` and `'All'`
+   side by side, and every rollup is a string `GROUP BY` that silently skips
+   blanks. Nothing knows Dubai ⊂ UAE ⊂ GCC.
+3. **Multi-entity orgs already collapse silently.** Onboarding collects a list
+   of entities but `onboarding.js:480-481` assigns `entities[0]` to *every*
+   tracked mandate — a customer with four legal entities gets a single-entity
+   rollup and no error.
+
+## Two things in the schema worth knowing before extending it
+
+- **The seat exclusion constraint is the doctrine, enforced by Postgres.**
+  `EXCLUDE USING gist (role_id WITH =, org_unit_id WITH =, validity WITH &&)`
+  — one holder per role per org unit at any instant. Job-sharing a mandate is
+  refused by the database, not by convention. Needs `btree_gist`.
+- **`shared.dim_alias` uses an exclusive arc, not a polymorphic `target_id`** —
+  five nullable typed FKs with `num_nonnulls(...) = 1`, so every alias keeps a
+  real foreign key. A polymorphic target lets an alias outlive the row it
+  points at, which is how ingestion starts misrouting quietly. The alias table
+  is also the migration path for every existing free-text `entity`/`region`.
+  Note the seed value `'All'` is deliberately **not** aliased: it is the
+  absence of a slice (`grain='total'`, `region_id NULL`), and mapping it to a
+  row would recreate the 496-vs-124 error by making the headline look like a
+  fifth region.
+
+## Found and fixed mid-build
+
+**`shared.role` had no cycle guard.** The generic trigger walks by `id`, but
+role's hierarchy is keyed by `key`, so it could not be reused — leaving
+`v_role_ancestry`, a recursive CTE, able to spin forever on a cycle in the
+escalation line. It now has its own statically-typed guard
+(`assert_no_role_cycle`). The generic function was deliberately *not*
+generalized to cover it: a text-cast comparison would quietly lose citext's
+case-insensitivity, and a cycle that slips through does not raise — it hangs.
+
+**`v_role_ancestry` can return the same pair twice**, once solid and once
+dotted. Correct as ancestry, lethal as a rollup — joining a fact to it without
+`DISTINCT` double-counts in exactly the way summing marginals does. Documented
+in place. The four dimension ancestry views cannot duplicate (single parent,
+single path) and need no such care.
+
+## Verification — and its limits
+
+Both files parse against the **real PostgreSQL grammar** (libpg_query via
+`pglast` 8.4), no forward foreign keys. **The checker was proven to fail** on a
+deliberate forward FK and a deliberately broken PL/pgSQL body, and to correctly
+pass a self-FK — a checker that always passes is worse than none. If you change
+`validate-sql.py`, re-prove those.
+
+Two honest caveats:
+
+- **pglast 8.4's `parse_plpgsql` cannot deserialize its own successful output.**
+  Every body raises `JSONDecodeError`, including `BEGIN RETURN NEW; END`. The
+  parser itself is fine — a real syntax error still raises `ParseError`. So
+  `ParseError` is a failure and `JSONDecodeError` is a pass. Encoded explicitly
+  in the script rather than swallowed.
+- **Highest runtime risk: `assert_no_cycle` reads NEW's parent column
+  dynamically** — `EXECUTE format('SELECT ($1).%I', parent_col) ... USING NEW`.
+  Standard idiom, parses clean, **never executed**. If anything fails on first
+  write, expect it there. Check 2 in the worked example exercises it; it must
+  *raise*, not hang.
+
+The Americana C&S example is marked `[EVIDENCED]` vs `[ILLUSTRATIVE]` line by
+line. BU, channel, category and the Abu Dhabi key come from the real MTD work;
+the region tree above Abu Dhabi, the legal entities and **every person are
+invented**. No person in it is real — do not ship it as customer config.
+
+## Blocked this session
+
+- **`gh` is dead on this network** — `x509: "*.github.com" certificate is not
+  trusted`, the recurring FortiGate interception. So the `architect` skill's
+  first checklist item, *"have you read the `rewive-infra` README this
+  session?"*, **could not be satisfied**. Work was kept strictly to app-layer
+  DDL, which does not depend on it. Anything infra-side must wait for a network
+  where `gh` works.
+- **Nothing is pushed.** `v5` is now ahead of `origin/v5`, and the push will
+  fail from this network.
+- No local Postgres, no Docker, no `psql` on this machine — hence parse-only
+  validation.
+
+## Housekeeping
+
+- The three artifacts were first written into `docs/architecture/`, which was
+  **wrong** — `docs/` is an Obsidian vault of numbered markdown documents with
+  frontmatter, one file per document. Raw `.sql`/`.py` broke that convention,
+  so they were moved to `platform-schema/` with a README stating status.
+- **Not done, offered:** an `ARCH-005` numbered document for the platform data
+  model. Deliberately not written unasked — the repo's convention is that docs
+  describe what deploys, and this does not deploy yet.
+
+### Natural next steps
+
+1. **Reconcile with `sales_excellence` / `sales_staging`** — still the gate on
+   everything here. Needs someone who can see inside the production database;
+   it is VNet-only with public access disabled.
+2. **Exercise the cycle guard** before trusting it — the one construct that has
+   never run.
+3. The `fpa` half: `fact_measure` with its `grain` CHECK, `mandate` with
+   `owner_seat_id NOT NULL` pointing at `shared.seat`, and the loop tables.
+   The dimension vocabulary they slice against now exists.
+4. Carried from the previous session, all still open: **apply rewive-infra
+   PR #1** (the container-app logging fix) before any new environment apply,
+   PR #2 apply, the `diag-cae-*` cleanup, `terraform fmt` drift on `main`,
+   `ARCH-001` Entry 02's supersession banner, and **the loop demo on
+   Americana-C&S is still unrun**.
+
+### Servers / state at close
+
+**Nothing is running.** Ports 4000 and 5173 are both free — the mock API that
+had been up 1d 11h at the previous session's start is gone, which means **the
+Americana-C&S runtime org is wiped** (in-memory, as always). Rebuild with
+`build-cs-mtd.mjs` if it is needed.
+
+A fresh `pglast` venv was built at
+`<scratchpad>/pgvenv` on Homebrew's arm64 python 3.14 — **session-scoped, it
+will vanish too.** `platform-schema/README.md` carries the three commands to
+rebuild it.
+
+---
+
+# Previous handoff — the infra repo becomes the base, and the documents catch up with what was built (2026-08-12 → 13)
 
 ## The decision
 
