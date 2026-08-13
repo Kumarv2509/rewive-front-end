@@ -39,9 +39,27 @@ step):
 | `018_platform_dimensions.sql` | The `shared` schema — 14 dimension tables. `shared-dimensions.sql` from this repo, verbatim design. |
 | `019_loop_hardening.sql` | Strictly additive: `fpa_periods`, `fpa_user_sessions`, `fpa_finding_comments`, `fpa_finding_escalations`, `fpa_finding_leadership_actions`, nullable dimensional columns on `fpa_findings`/`fpa_users`, and six `NOT VALID` CHECKs on `fpa_findings`. |
 
-In this repo: `platform-schema/` reconciled with what actually landed,
-`CLAUDE.md` corrected in three places, `fpa-core.sql`/`fpa-loop.sql` and their
-test suites deleted (design preserved at `31c0802`).
+In this repo, on `v5`, all pushed (`db45c09` → `888afcf`):
+
+| Commit | What |
+|---|---|
+| `bb006f8` | `fpa-core.sql` + its constraint suite, and the first execution of any of this DDL. |
+| `d1e006e` | `fpa-loop.sql` + suite; the append-only/cascade collision found by running it. |
+| `31c0802` | `shared.agent` gains `temperament` / `last_sense_sweep_at`; derived agent-health view. |
+| `fa20cec` | The reconciliation: `fpa-core.sql`/`fpa-loop.sql` and both suites **deleted**, `platform-schema/README.md` rewritten, `CLAUDE.md` corrected in three places. |
+| `888afcf` | The org-reset procedure corrected, and the loop demo recorded. |
+
+Note the shape of that: `bb006f8`–`31c0802` built a model that `fa20cec` then
+deleted. The deleted design is preserved at `31c0802` and the reasoning is in
+"The two assumptions that were wrong" below — it is worth reading before
+rebuilding anything like it.
+
+**Notion:** Build Tracker item **P1.8** updated (`Platform data model — the
+customer's dimensions and the loop, as rows`) with the PR link, both
+corrections, and the provisioning blocker. Its `Commits` field carries
+`rewive-fpa PR #1 (918d4bd)` plus the five above. P1.7 was NOT touched, though
+the `000` blocker arguably belongs there too — it is an Azure-provisioning
+defect, not a data-model one.
 
 ## The two assumptions that were wrong
 
@@ -183,6 +201,19 @@ Now visible: `rewive-fpa` (the backend, private), `rewive-frontend-v5`
 (private), `rewive-infra`. **The backend is `rewive-fpa`, not
 `rewive-fpa-backend`** — that name appears in older notes and does not exist.
 
+Note also that the backend repo holds a `frontend/` directory (Next.js)
+alongside `backend/`. This repo is a **separate** React/Vite frontend; do not
+assume the two are the same application or that a change here reaches the
+deployed UI.
+
+**Pushing was flaky and it is not a permissions problem.** `git push origin v5`
+was rejected twice — once `Internal Server Error`, once a bare `failure` — and
+succeeded on the third identical attempt, with no change in between. It did
+this on two separate pushes this session. Retry two or three times before
+diagnosing anything; the office-network interference noted in earlier sessions
+presents exactly like a real error, and `gh auth status` will keep reporting
+everything healthy throughout.
+
 ## Still open
 
 1. **No backfill.** Nothing maps the existing free-text `persona` / `entity` /
@@ -201,6 +232,23 @@ Now visible: `rewive-fpa` (the backend, private), `rewive-frontend-v5`
 4. **The loop demo is no longer unrun** — see below. What remains is running it
    *on screen*: the Chrome extension was not connected, so it was driven
    through the API instead. No visual walkthrough and no GIF exist yet.
+5. **PR #1 is not reviewed, not merged, not applied.** Merging deploys nothing;
+   the migrate job is a separate step, run from Cloud Shell. Nothing in this
+   session touched a live database.
+6. **The `NOT VALID` constraints still need validating.** They bind new writes
+   today but have never inspected an existing row. Run the audit queries in
+   section 6 of `019_loop_hardening.sql` against Americana first — if any
+   return non-zero, that is real customer data to decide about, not a schema
+   problem. Then `ALTER TABLE fpa_findings VALIDATE CONSTRAINT <name>;` per
+   constraint.
+7. **The contract suite has never run against the production API.** This is now
+   the obvious next verification and it did not exist as an option before this
+   session, because the API was not visible. `contract/` runs against any base
+   URL via `CONTRACT_BASE_URL`, and the whole premise of the contract-as-asset
+   is that the production API passes it unmodified. Expect failures — the
+   backend was built to the same contract but nothing has ever checked that
+   claim. Doing this would answer "does the backend support the views?"
+   properly, where this session could only answer it by reading schemas.
 
 ## The loop demo, run end to end on Americana C&S
 
