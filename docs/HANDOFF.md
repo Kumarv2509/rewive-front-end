@@ -196,20 +196,109 @@ Now visible: `rewive-fpa` (the backend, private), `rewive-frontend-v5`
    `sales_excellence` territory and needs the customer's real data model.
 3. Carried, unchanged: `rewive-infra` PRs #1–#4 all open and MERGEABLE, the
    `diag-cae-*` cleanup, `ARCH-001` Entry 02's supersession banner,
-   **the loop demo on Americana-C&S is still unrun**, `ARCH-GTM-001` is cited
-   by ID in 13 files and is a file in none, and nobody has said what
-   `rewive-studio` is.
+   `ARCH-GTM-001` is cited by ID in 13 files and is a file in none, and nobody
+   has said what `rewive-studio` is.
+4. **The loop demo is no longer unrun** — see below. What remains is running it
+   *on screen*: the Chrome extension was not connected, so it was driven
+   through the API instead. No visual walkthrough and no GIF exist yet.
+
+## The loop demo, run end to end on Americana C&S
+
+Driven through the real endpoints, so it exercised the actual pipeline rather
+than the screens. The org has since been reset, so this is a record of what
+happened, not of current state.
+
+**Sense** — the first sweep returned `nodesEvaluated: 0, skipped: true`. That
+is correct, not a failure: all five mandates already carried an open finding
+and the double-raise guard refuses to re-raise drift already on someone's desk.
+
+**Find** — took *E-commerce gross sales at AED 9.1M vs AED 12M*, raised by the
+Commercial agent on `threshold_breach`, 24.2% adverse, with **2.6 hours left on
+its SLA**.
+
+**Decide** — Accept, with a reason. A recovery target was created
+automatically: *"back within 4% of AED 12M for 3 consecutive readings."*
+
+**Act → Close** — four recovered readings posted through the ingest API
+(11.2 → 11.6 → 11.9 → **12.1M**); the next sweep advanced the recovery target
+to 100%; closing it flipped the finding to `closed` with an assessor verdict of
+**worked**. `GET /ledger/verify` stayed `ok` throughout, ending at
+`checked: 16`.
+
+### Three things it surfaced
+
+1. **Closing is a deliberate act, not automatic.** `sweep.js` only ever updates
+   `current` and `progressPct` — nothing in the sweep sets `status = 'closed'`.
+   That happens in `POST /closure-kpis/:id/close` (`app.js:2357`), which the
+   Close button calls, and which also closes the finding and writes the
+   assessor verdict. So a recovery target sits at 100% indefinitely until a
+   person confirms it. Defensible under the doctrine — a human confirms the
+   number is back — but it reads as a stuck loop until you know. Whether the
+   agent *should* auto-close at 100% is a live product question.
+2. **The identity gap showed up in the running product.** The same decision was
+   recorded two ways: the ledger event carried the token's `sub`
+   (`ops@americana-cs.example`) while the finding row carried
+   `dispositionBy: "Kumara Vijayan"`, a display name. Exactly what
+   `019_loop_hardening.sql` binds to a real person.
+3. **Display and evidence are written by different paths at close.** The close
+   route sets `finding.assessorVerdict` inline but does not call
+   `appendVerdictEvent`; the ledger's `verdict` event comes from the separate
+   assessor pass (`app.js:1437`), which runs inside ledger reads. The Decisions
+   screen shows the verdict correctly, so the effect is cosmetic — but it is a
+   seam worth confirming rather than assuming.
+
+Two API details that cost time and are not obvious: metric ingest wants
+**`X-API-Key`** (`X-Ingest-Key` silently 401s), and findings only exist after a
+sweep — a freshly rebuilt org has an empty queue.
 
 ## Servers / state at close
 
-Mock API on :4000 and Vite on :5173, both still up from earlier in the session.
-**The Americana C&S org is live in memory** — `custom-org`, 7 mandates, 5
-live-tracked, 5 open findings on `sales_supervisor`. Sign in at
+Mock API on :4000 and Vite on :5173, both restarted clean at the end of the
+session. **The Americana C&S org is live in memory** — `custom-org`, 7
+mandates, 5 live-tracked, **5 open findings** on `sales_supervisor`, all with
+full SLA clocks (4h critical, 8h high). Sign in at
 `http://localhost:5173/login?org=custom-org` (any password) **as Sales
-supervisor**. A mock-server restart wipes it;
-`python3 scripts/rebuild-americanacs-org.py` brings it back.
+supervisor** — a COO lens is empty until something escalates.
 
-Reset: `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+### Resetting the org — the script alone is NOT enough
+
+`python3 scripts/rebuild-americanacs-org.py` rebuilds the **org**. It does not
+touch the **tracking store**, and those are different things: metric points,
+live findings and recovery targets survive a re-commit. Running the loop demo
+then re-running the script leaves the org looking rebuilt while e-commerce
+still reads the recovered `12.1 / 12` with 34 points and the closed finding is
+still sitting there. Verified the hard way this session.
+
+A real reset restarts the mock server first, so in-memory tracking state dies
+with the process:
+
+```bash
+# 1. stop everything. concurrently RESPAWNS vite, so kill the parent, and note
+#    that a browser tab holding :5173 makes the port look occupied after the
+#    process is gone — check the pid owner, not just the port.
+pkill -f "node.*concurrently" ; pkill -f "node.*bin/vite" ; pkill -f mock-server
+for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p) 2>/dev/null; done
+
+# 2. start clean
+npm run dev:all
+
+# 3. rebuild the org (in-memory: it starts with zero findings)
+python3 scripts/rebuild-americanacs-org.py
+
+# 4. raise the queue — findings only exist after a sweep
+curl -s -X POST http://localhost:4000/api/v1/agent-sweep
+```
+
+Expect afterwards: e-commerce back at `9.1 / 12` with 30 points, five open
+findings, zero closures, zero decisions, and `GET /ledger/verify` reporting
+`checked: 0` at `rewive-ledger-genesis`. If any of those are non-zero the
+tracking store did not actually clear, and step 1 did not do what you think.
+
+Note the sweep reports `nodesEvaluated: 23` and raises ~15 findings — it walks
+every industry's tracked mandates, not just C&S, which keeps its own five.
+`authoredByClaude: 0` is correct and expected: there is no `ANTHROPIC_API_KEY`
+in this environment, so the deterministic template fallback writes the finding
+narratives. A sweep never fails because authoring failed.
 
 **PostgreSQL 16 is now installed system-wide** (`brew services start
 postgresql@16`), with roles `rewive_app` / `rewive_admin` and three databases:
