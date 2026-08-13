@@ -1,4 +1,232 @@
-# Handoff — the customer's dimensions become rows, and the record catches up with live Azure (2026-08-13)
+# Handoff — the backend repo opens, and two of our own assumptions turn out to be wrong (2026-08-13, later)
+
+## The one thing to act on
+
+**`rewive-fpa` PR #1 contains a fix for a bug that blocks provisioning any new
+customer environment.** `backend/migrations/000_bootstrap_app_role.sql`
+hardcoded `GRANT CONNECT ON DATABASE fpa_code`, and `fpa_code` was **dropped in
+the 2026-08-12 production cutover**.
+
+Americana never saw it: `000` is already recorded in `schema_migrations` there
+and never re-runs. But a new customer environment applies **every** migration
+from `000` against a fresh database, so the very first file raises
+`ERROR: database "fpa_code" does not exist`, aborts its transaction, and fails
+the whole migrate job.
+
+**This blocks `rewive-infra` PR #2 (the Americana C&S environment).** That PR
+is greenfield and `terraform validate` clean, so it would have applied
+successfully — and then the migrate job would have failed, in an estate that
+(PR #1 still unapplied) **produces no container logs at all**. That is exactly
+the blind-estate failure the previous handoff warned costs a session to
+diagnose.
+
+Reproduced locally against a fresh database, fixed with `current_database()`,
+and verified. The fix is independent of the other two migrations in the PR and
+can be cherry-picked.
+
+**Standing sequence, now with a third step:** apply `rewive-infra` PR #1
+(logging) → merge/deploy the backend `000` fix → only then apply PR #2.
+
+## What was delivered
+
+**`sanjuveed-debug/rewive-fpa` PR #1** — three migrations, open, not merged,
+**nothing applied** (merging deploys nothing; the migrate job is a separate
+step):
+
+| File | What it does |
+|---|---|
+| `000_bootstrap_app_role.sql` | The blocker above, fixed. |
+| `018_platform_dimensions.sql` | The `shared` schema — 14 dimension tables. `shared-dimensions.sql` from this repo, verbatim design. |
+| `019_loop_hardening.sql` | Strictly additive: `fpa_periods`, `fpa_user_sessions`, `fpa_finding_comments`, `fpa_finding_escalations`, `fpa_finding_leadership_actions`, nullable dimensional columns on `fpa_findings`/`fpa_users`, and six `NOT VALID` CHECKs on `fpa_findings`. |
+
+In this repo: `platform-schema/` reconciled with what actually landed,
+`CLAUDE.md` corrected in three places, `fpa-core.sql`/`fpa-loop.sql` and their
+test suites deleted (design preserved at `31c0802`).
+
+## The two assumptions that were wrong
+
+Backend access was granted mid-session. Reading `rewive-fpa` overturned two
+things this repo had been asserting for three sessions. Both are worth not
+re-deriving.
+
+### 1. "The operating model has no tables" described the MOCK, not production
+
+Production has had `fpa_findings`, `fpa_brain_nodes`, `fpa_brain_edges`,
+`fpa_users`, `fpa_shadow_agents` and roughly thirty more **since migration
+002**. The architecture review written earlier in this session said the
+operating model and findings had no tables anywhere; that was true of
+`mock-server/`, which was the only thing visible at the time, and false of the
+deployed product.
+
+Acting on it, an `fpa-core.sql` / `fpa-loop.sql` pair was written here first —
+a clean model of the loop from scratch (`fpa.finding`, `fpa.brain_node`,
+`fpa.mandate`, `fact_measure` with its grain CHECK). **It would have landed as
+a second, parallel findings model beside the live one.** Deleted rather than
+kept, so the repo does not hold DDL that must never be applied.
+
+The replacement is additive and much smaller: harden what exists, add only what
+is genuinely absent.
+
+**The lesson: a model built against the demo is a model of the demo.** The gaps
+it found were real — every one was confirmed in the production schema — but
+their *shape* was wrong until the real thing was read.
+
+### 2. The `sales_excellence` blocker is mostly not there
+
+`backend/migrations/americana/001_domain_schemas.sql` says plainly what those
+schemas are: `sales_excellence` and `sales_staging` are created
+`AUTHORIZATION praveen` and granted `USAGE, CREATE` to that collaborator.
+**No migration creates a single table in either.** They are a colleague's
+workspace namespace, not a rival model of customer dimensions.
+
+And `shared` **already exists** in the Americana database, owned by
+`rewive_admin`, with no table ever created in it — so `018` lands with zero
+name collisions.
+
+Two sessions treated this as the hard gate on the entire platform schema. It
+was not. Remaining honest caveat: tables may have been created inside
+`sales_excellence` by hand and still cannot be enumerated without production
+database access — but they are a separate namespace and cannot collide by name.
+
+## The gaps, confirmed against the real schema
+
+Everything the review claimed was wrong with the model held up — `fpa_findings`
+is a near-literal transcription of the demo's TypeScript interface, weaknesses
+included:
+
+- `persona`, `entity`, `region` are free text with no foreign keys, at mixed
+  grain.
+- **Both `sla_hours_remaining NUMERIC` and `sla_deadline TIMESTAMPTZ`** — two
+  representations of one clock, free to disagree.
+- No constraint ties `disposition` / `disposition_at` / `disposition_by`
+  together, so a decision can be recorded without a decider.
+- `evidence` is JSONB; there is no impact-path, escalation-trail or
+  leadership-log table at all. `escalation_level` counts transfers but records
+  none of them, so nothing can answer "who was holding this on the 12th".
+- `fpa_users` has `role VARCHAR(50) DEFAULT 'Viewer'` flat on the login, no
+  person/seat model, no OIDC subject — consistent with `oidc_*` still empty in
+  both Terraform environments.
+- `fpa_task_comments` hangs off **tasks**, so the decision record — the finding
+  — had nowhere to hold discussion.
+- **No time dimension anywhere in 17 migrations.**
+
+## Why every new constraint is `NOT VALID`
+
+Americana carries real rows. A plain CHECK scans the table and fails the
+migrate job outright if any legacy row violates it — and with no container
+logs, that failure would be invisible.
+
+`NOT VALID` binds every INSERT and UPDATE from the moment it lands and does not
+inspect existing rows. Validation becomes a separate decision taken with the
+numbers in hand (`ALTER TABLE ... VALIDATE CONSTRAINT`, which takes only a
+`SHARE UPDATE EXCLUSIVE` lock and blocks neither reads nor writes). The audit
+queries that count violations first are in section 6 of `019`.
+
+**Proven, not asserted.** Rows were planted in a mirror to violate every new
+constraint; `018` and `019` applied without error, the bad rows survived
+untouched, new writes with the same defect were refused, and `VALIDATE`
+correctly refused while the legacy rows remained.
+
+## Verification, and what it cost to get it
+
+`brew install postgresql@16` — PostgreSQL 16.14, the production major version.
+This is what turned three sessions of "parses cleanly" into evidence.
+
+- **New-customer path:** a fresh database applies `000` → `019` cleanly. On
+  `main` it fails at `000`.
+- **Upgrade path:** the mirror above.
+- `001_auth_and_rag.sql` is skipped locally — `pgvector` has no PostgreSQL 16
+  build on Homebrew (17 and 18 only). Untouched by the PR.
+
+**The first execution of `shared-dimensions.sql` found a bug in thirty seconds
+that two sessions of parse-checking had not.** `v_role_ancestry` had **two**
+recursive branches — solid line and dotted line. PostgreSQL permits exactly
+one, and with three `UNION ALL` arms reads the first two as the non-recursive
+term, rejecting the second arm's reference to `walk`. Grammar-valid,
+apply-fatal: it would have failed inside the migrate job in Azure. Fixed by
+unioning the two edge kinds into an edge set first and walking that once.
+
+A second design bug came out of the constraint suite rather than the DDL:
+`ledger_event.finding_id` was `ON DELETE SET NULL` on a table with an
+append-only trigger — and `SET NULL` is an UPDATE, so deleting a finding failed
+from inside the cascade. Two correct features colliding. Resolved as *a finding
+whose decisions are on the record cannot be deleted*.
+
+**A clean parse is not a clean apply.** Standing rule now, with two findings
+behind it.
+
+## Where migrations actually live — settled, by reading
+
+- `sanjuveed-debug/rewive-fpa` ("Rewive FP&A Platform — FastAPI + Next.js"),
+  `backend/migrations/NNN_name.sql`.
+- `runner.py` applies them in **filename order, once each**, recorded in
+  `schema_migrations`, **each in its own transaction**, connecting as the
+  admin/schema-owner role — never `rewive_app`.
+- `MIGRATION_SET` selects a subdirectory; `americana/` is a per-customer set.
+- `rewive-infra` has no `migrations/` directory and never did.
+
+The long-inherited name `migrations/005-platform-schema.sql` was wrong on every
+count: wrong repo, wrong directory, wrong numbering, wrong separator.
+
+## Access, for the next session
+
+`gh` is authenticated as **`rianpraveen`**. Two invitations were pending and
+**had to be accepted** before anything was visible — `gh repo list` showed
+nothing new until then:
+
+```bash
+gh api user/repository_invitations --jq '.[] | .id, .repository.full_name'
+gh api --method PATCH user/repository_invitations/<id>
+```
+
+Now visible: `rewive-fpa` (the backend, private), `rewive-frontend-v5`
+(private), `rewive-infra`. **The backend is `rewive-fpa`, not
+`rewive-fpa-backend`** — that name appears in older notes and does not exist.
+
+## Still open
+
+1. **No backfill.** Nothing maps the existing free-text `persona` / `entity` /
+   `region` values onto the new dimension rows, and nothing populates
+   `period_id` / `owner_seat_id` / `entity_id` / `region_id` on existing
+   findings. That needs Americana's own vocabulary and was deliberately not
+   guessed at inside a schema migration.
+2. **Four contract domains have no production tables**: Execution
+   (runs/tasks/outcomes), agent-building (specs/studio/catalog), connector
+   definitions, and Business Context (SKUs/customers/divisions). The last is
+   `sales_excellence` territory and needs the customer's real data model.
+3. Carried, unchanged: `rewive-infra` PRs #1–#4 all open and MERGEABLE, the
+   `diag-cae-*` cleanup, `ARCH-001` Entry 02's supersession banner,
+   **the loop demo on Americana-C&S is still unrun**, `ARCH-GTM-001` is cited
+   by ID in 13 files and is a file in none, and nobody has said what
+   `rewive-studio` is.
+
+## Servers / state at close
+
+Mock API on :4000 and Vite on :5173, both still up from earlier in the session.
+**The Americana C&S org is live in memory** — `custom-org`, 7 mandates, 5
+live-tracked, 5 open findings on `sales_supervisor`. Sign in at
+`http://localhost:5173/login?org=custom-org` (any password) **as Sales
+supervisor**. A mock-server restart wipes it;
+`python3 scripts/rebuild-americanacs-org.py` brings it back.
+
+Reset: `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+**PostgreSQL 16 is now installed system-wide** (`brew services start
+postgresql@16`), with roles `rewive_app` / `rewive_admin` and three databases:
+`rewive_dev` (the dimensions), `rewive_prod_mirror` (000–017 plus the planted
+violating rows), and `newcustomer` (the fresh-provisioning test). Unlike the
+scratchpad, these survive the session. `platform-schema/README.md` carries the
+commands to rebuild them.
+
+A clone of `rewive-fpa` sits in the scratchpad and **will vanish** — re-clone
+rather than looking for it. `az` remains authenticated as Owner; read-only
+checks only, `terraform apply` has never run from this machine.
+
+`Architecture.png` is still deliberately untracked.
+
+---
+
+# Previous handoff — the customer's dimensions become rows, and the record catches up with live Azure (2026-08-13, earlier)
 
 ## What was built
 
