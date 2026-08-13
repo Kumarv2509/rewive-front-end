@@ -1,4 +1,4 @@
-# Handoff — the customer's dimensions become rows (2026-08-13)
+# Handoff — the customer's dimensions become rows, and the record catches up with live Azure (2026-08-13)
 
 ## What was built
 
@@ -123,18 +123,23 @@ line. BU, channel, category and the Abu Dhabi key come from the real MTD work;
 the region tree above Abu Dhabi, the legal entities and **every person are
 invented**. No person in it is real — do not ship it as customer config.
 
-## Blocked this session
+## The network — blocked, then cleared mid-session
 
-- **`gh` is dead on this network** — `x509: "*.github.com" certificate is not
-  trusted`, the recurring FortiGate interception. So the `architect` skill's
-  first checklist item, *"have you read the `rewive-infra` README this
-  session?"*, **could not be satisfied**. Work was kept strictly to app-layer
-  DDL, which does not depend on it. Anything infra-side must wait for a network
-  where `gh` works.
-- **Nothing is pushed.** `v5` is now ahead of `origin/v5`, and the push will
-  fail from this network.
-- No local Postgres, no Docker, no `psql` on this machine — hence parse-only
-  validation.
+For the first half, `gh` and `git push` both died with
+`x509: "*.github.com" certificate is not trusted` / `SSL certificate problem`
+— the recurring FortiGate interception. That meant the `architect` skill's
+first checklist item, *"have you read the `rewive-infra` README this
+session?"*, **could not be satisfied**, so work was deliberately confined to
+app-layer DDL, which does not depend on it.
+
+**It cleared on the founder's prompt, and the block is intermittent — it came
+back once mid-task and cleared again.** Everything is now pushed. Reading the
+infra repo the moment it cleared immediately caught the wrong destination
+recorded above, which is the argument for reading it early rather than
+working from inherited notes.
+
+Still true regardless of network: **no local Postgres, no Docker, no `psql`**
+on this machine — hence parse-only validation of the DDL.
 
 ## Housekeeping
 
@@ -145,21 +150,6 @@ invented**. No person in it is real — do not ship it as customer config.
 - **Not done, offered:** an `ARCH-005` numbered document for the platform data
   model. Deliberately not written unasked — the repo's convention is that docs
   describe what deploys, and this does not deploy yet.
-
-### Natural next steps
-
-1. **Reconcile with `sales_excellence` / `sales_staging`** — still the gate on
-   everything here. Needs someone who can see inside the production database;
-   it is VNet-only with public access disabled.
-2. **Exercise the cycle guard** before trusting it — the one construct that has
-   never run.
-3. The `fpa` half: `fact_measure` with its `grain` CHECK, `mandate` with
-   `owner_seat_id NOT NULL` pointing at `shared.seat`, and the loop tables.
-   The dimension vocabulary they slice against now exists.
-4. Carried from the previous session, all still open: **apply rewive-infra
-   PR #1** (the container-app logging fix) before any new environment apply,
-   PR #2 apply, the `diag-cae-*` cleanup, `ARCH-001` Entry 02's supersession
-   banner, and **the loop demo on Americana-C&S is still unrun**.
 
 ## rewive-infra PR #3 — the `terraform fmt` drift, raised and mergeable
 
@@ -188,17 +178,149 @@ was raised, so merging it will not reintroduce drift. PR #3 can merge in any
 order and **does not disturb the standing rule that #1 is applied before any
 new environment apply.**
 
+## rewive-infra PR #4 — two stale README claims, corrected against live Azure
+
+<https://github.com/sanjuveed-debug/rewive-infra/pull/4> ·
+`docs/readme-region-and-acr` · commit `df30724` · **+22/−5**, documentation
+only. Both claims were **checked with `az` against the live subscription**,
+not carried forward as assertions.
+
+1. **The "Resolved" list still said `Region: East US`** while the bug list
+   below it correctly recorded the move to East US 2. A reader hitting the
+   bullet first and stopping got the wrong region. Verified live:
+   `rg-rewive-dedicated-americana` and `rg-rewive-tfstate` are **eastus2**,
+   `rewive-fpa-rg` (Nesto) is **eastus**. The UAE North reasoning is unchanged
+   — still correct, still worth not relitigating.
+2. **Open item 2, `acr_resource_group_name` "an assumption"** — `az acr list`
+   returns `rewivefpa` in `rewive-fpa-rg` (Basic, eastus,
+   `rewivefpa.azurecr.io`). The default is correct; marked resolved with the
+   same `~~strikethrough~~` convention as items 1, 6 and 7.
+
+**The same stale caveat also lived in code** — `environments/americana/
+variables.tf`'s own `description` said "not independently re-verified against
+live Azure state". Fixing only the README would have left the repo
+disagreeing with itself. `environments/americanacs/` (PR #2) already carried
+the verified wording, so nothing was needed there.
+
+**A trap worth remembering: the README has mixed CRLF and LF line endings.**
+A first attempt edited it with Python in text mode, which normalized
+everything to LF and produced a **190-insertion/175-deletion whole-file
+rewrite** for a six-line change. Redone at byte level preserving each line's
+own terminator. Check `file README.md` before editing that file.
+
+## The Americana C&S org, rebuilt — and `build-cs-mtd.mjs` is gone for good
+
+`build-cs-mtd.mjs` only ever lived in a session scratchpad and **has now been
+lost twice**. It is not recoverable. The org was rebuilt through the
+onboarding factory instead, and that script is now **in the repo** as
+`scripts/rebuild-americanacs-org.py` (`1d4aec0`) so this cannot happen a
+third time.
+
+It drives the same two endpoints `/onboard` does — `POST /onboarding/draft`
+then `POST /onboarding/commit`. Two things it gets right that cost a wrong
+attempt each:
+
+- **The draft returns all 33 rows**, including every valueless mandate the
+  fmcg template carries. Including them all fills the org with ~26 empty
+  `needs_data` mandates that were never C&S's. Include only `source !==
+  'template'`.
+- **The commit route returns `{tenant, labels, industry, provisioning}` — not
+  `trackingPlan`.** Reading that missing key reports a confident
+  `0 tracked mandates` while the org is in fact fine. Ask
+  `GET /tracking-configs?industry=custom` what actually landed.
+
+**Only 7 of the original 18 mandates are recoverable** — the MTD gross-sales
+headline plus one representative slice per breakdown, which is all the C&S
+work evidenced. The other 11 are gone with the script. 5 of the 7 are
+live-tracked (two were published without targets, and `tracked` requires a
+non-zero target). The dev-server's interval sweep raised **5 findings**, all
+on `sales_supervisor` — fresh, so nothing has escalated to COO yet.
+
+Remember these are **marginals**: each breakdown sums back to the 124
+headline, so summing every row counts the same sales several times.
+
+## Live Azure inventory — what has actually moved, verified today
+
+Enumerated with `az`, not from documents. **One customer estate:** Americana,
+`rg-rewive-dedicated-americana`, **East US 2** — 3 Container Apps (`ca-api`
+2 replicas, `ca-worker` 1, `ca-frontend` 1, all Running) plus `job-migrate`;
+Postgres 16 on `Standard_B1ms` Burstable, 32 GB, **public access Disabled**,
+database `americana`; Front Door + WAF at
+`rewive-americana-dydwe2btf4brfsad.z02.azurefd.net`; Key Vault, 3 managed
+identities, VNet with private endpoints for Postgres/Key Vault/Blob, Log
+Analytics + App Insights, Storage. Supporting: `rg-rewive-tfstate` (eastus2)
+and `rewive-fpa-rg` (eastus — Nesto, the shared ACR, and the AI Foundry
+endpoint in **Sweden Central**).
+
+**Three corrections to the record, all from live checks:**
+
+| Recorded | Live |
+|---|---|
+| backend `v64` / frontend `v43` | **`rewive-backend:v91` / `rewive-frontend:v48`** — several deploys have happened since the notes were written |
+| PR #1 possibly applied | **Not applied.** `appLogsConfiguration.destination` is still `""`, `logAnalyticsConfiguration` still `null` — **the estate still produces no container logs** |
+| — | `rg-rewive-dedicated-americanacs` **does not exist** (`az group exists` → false). PR #2 is unapplied; C&S exists only in localhost memory |
+
+**Confirmed deliberately off:** no Redis resource of either type, **no read
+replicas** (`enable_dr=false`), PgBouncer unsupported on Burstable.
+
+**Production-posture facts worth surfacing**, since "moved to Azure" implies
+more than it should: Postgres HA is **Disabled**, geo-redundant backup
+**Disabled**, retention **7 days**, on a Burstable B1ms — and PITR has never
+been tested.
+
+**Unexplained:** a `rewive-studio` resource group in eastus with its own
+VNet, Postgres, gateways and an ACR `rewivestudio`. Rewive-named, but not in
+`rewive-infra`'s Terraform at all. Nobody has said what it is or whether it
+is still wanted.
+
+**Not on Azure, to be unambiguous:** this repo (the deployed app is
+`rewive-fpa-backend` + a separate frontend image, not the React demo or the
+Express mock), the platform schema, and all four PRs. **Merging a PR still
+deploys nothing** — `terraform apply` is a separate manual Cloud Shell step.
+
+### Natural next steps
+
+1. **Apply rewive-infra PR #1** — confirmed live today that the estate has no
+   container logs. Do this **before any new environment apply**; pushing into
+   a blind estate is what made the last failure take a session to diagnose.
+2. **Reconcile with `sales_excellence` / `sales_staging`** — still the gate on
+   the whole platform schema. Needs someone who can see inside the production
+   database; it is VNet-only with public access disabled.
+3. **Exercise the cycle guard** before trusting it — the one construct in the
+   DDL that has never run.
+4. The `fpa` half: `fact_measure` with its `grain` CHECK, `mandate` with
+   `owner_seat_id NOT NULL` pointing at `shared.seat`, and the loop tables.
+   The dimension vocabulary they slice against now exists.
+5. **Merge/apply PRs #2, #3, #4** — all four are open and confirmed
+   MERGEABLE; #3 and #4 are documentation/whitespace and carry no apply risk.
+6. Carried and still open: the `diag-cae-*` cleanup, `ARCH-001` Entry 02's
+   supersession banner, **the loop demo on Americana-C&S is still unrun**,
+   and the offered-but-unwritten `ARCH-005` for the platform data model.
+7. Ask the founder what `rewive-studio` is.
+
 ### Servers / state at close
 
-**Nothing is running.** Ports 4000 and 5173 are both free — the mock API that
-had been up 1d 11h at the previous session's start is gone, which means **the
-Americana-C&S runtime org is wiped** (in-memory, as always). Rebuild with
-`build-cs-mtd.mjs` if it is needed.
+**Both running**, started this session with `npm run dev:all`: mock API on
+:4000, Vite on :5173. **The Americana C&S org is live and rebuilt** —
+`custom-org`, 7 mandates, 5 live-tracked with 30 days of history each, 5 open
+findings on `sales_supervisor`, entity "Americana C&S" / region "UAE".
 
-A fresh `pglast` venv was built at
-`<scratchpad>/pgvenv` on Homebrew's arm64 python 3.14 — **session-scoped, it
-will vanish too.** `platform-schema/README.md` carries the three commands to
-rebuild it.
+Sign in at `http://localhost:5173/login?org=custom-org` (any password) **as
+Sales supervisor** — a COO lens is empty until escalation moves findings up.
+The org is in memory: a mock-server restart wipes it, and
+`python3 scripts/rebuild-americanacs-org.py` brings it back.
+
+Reset: `for p in 4000 5173 5174; do kill $(lsof -ti tcp:$p); done`.
+
+**Tooling, all session-scoped and it will vanish:** a `pglast` venv at
+`<scratchpad>/pgvenv` (Homebrew arm64 python 3.14 — the system python 3.9 is
+x86_64 and the wheel will not load), a Terraform **1.15.8** binary at
+`<scratchpad>/tfbin` for `fmt` only, and a clone of `rewive-infra`.
+`platform-schema/README.md` carries the commands to rebuild the venv. `az`
+2.89.1 remains installed system-wide and authenticated as Owner —
+**read-only checks only; `terraform apply` has never run from this machine.**
+
+`Architecture.png` is still deliberately untracked.
 
 ---
 
