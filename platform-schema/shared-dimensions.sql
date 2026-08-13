@@ -394,6 +394,16 @@ CREATE TABLE shared.agent (
     shadows_seat_id    bigint      REFERENCES shared.seat (id),
     reports_to_agent_id bigint     REFERENCES shared.agent (id),
     stream_key         citext,
+    -- How readily this agent raises: 0 quiet … 100 hair-trigger. Configuration,
+    -- not a derived score — it is the one dial a customer turns when an agent
+    -- is too noisy, and tuning it is what a Dismiss reason feeds.
+    temperament        smallint    NOT NULL DEFAULT 50
+                                   CHECK (temperament BETWEEN 0 AND 100),
+    -- When this agent last re-checked its signals. Distinct from "when it last
+    -- raised something": an agent that has been quiet for a week is healthy if
+    -- it is still looking and alarming if it is not, and the Agents screen has
+    -- to be able to tell those apart.
+    last_sense_sweep_at timestamptz,
     is_active          boolean     NOT NULL DEFAULT true,
     created_at         timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT agent_not_own_parent CHECK (reports_to_agent_id IS DISTINCT FROM id)

@@ -928,6 +928,38 @@ COMMENT ON VIEW fpa.v_finding_queue IS
   'the finding_id, never COUNT(*).';
 
 
+-- The holder side of "every mandate, held twice". Counts are DERIVED — the
+-- demo stores openFindings and slaBreaches on the agent object, which is a
+-- second source of truth for something the findings table already knows and
+-- drifts from it the moment a finding is dispositioned anywhere else.
+CREATE VIEW fpa.v_agent_health AS
+SELECT ag.id                       AS agent_id,
+       ag.key,
+       ag.name,
+       ag.stream_key,
+       ag.temperament,
+       ag.last_sense_sweep_at,
+       count(f.id) FILTER (WHERE f.status = 'open')            AS open_findings,
+       count(f.id) FILTER (WHERE f.status = 'open'
+                             AND f.sla_deadline_at < now())    AS sla_breaches,
+       max(f.detected_at)                                      AS last_finding_at,
+       CASE
+           WHEN count(f.id) FILTER (WHERE f.status = 'open'
+                                      AND f.sla_deadline_at < now()) > 0 THEN 'critical'
+           WHEN count(f.id) FILTER (WHERE f.status = 'open') > 0         THEN 'attention'
+           ELSE 'healthy'
+       END AS health
+  FROM shared.agent ag
+  LEFT JOIN fpa.finding f ON f.raised_by_agent_id = ag.id
+ WHERE ag.is_active
+ GROUP BY ag.id, ag.key, ag.name, ag.stream_key, ag.temperament, ag.last_sense_sweep_at;
+
+COMMENT ON VIEW fpa.v_agent_health IS
+  'The Agents screen. An agent with a breached SLA in its queue is critical '
+  'regardless of how many findings it has raised — the point is that something '
+  'it raised went unanswered.';
+
+
 -- -----------------------------------------------------------------------------
 -- 13. Grants
 --
