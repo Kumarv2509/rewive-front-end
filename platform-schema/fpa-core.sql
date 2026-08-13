@@ -646,9 +646,15 @@ CREATE INDEX finding_evidence_finding_idx ON fpa.finding_evidence (finding_id);
 --    not a record of anything.
 -- -----------------------------------------------------------------------------
 
+-- No ON DELETE CASCADE on either table below, deliberately. Both are
+-- append-only, so a cascade would fire their own refusal trigger and fail the
+-- delete from inside — two correct features colliding into a confusing error.
+-- Refusing at the foreign key says the real rule instead: a finding whose
+-- transfers have been recorded cannot be deleted. Findings close; they are
+-- never deleted, so this costs nothing and states Doctrine 4 plainly.
 CREATE TABLE fpa.escalation_trail (
     id           bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    finding_id   bigint      NOT NULL REFERENCES fpa.finding (id) ON DELETE CASCADE,
+    finding_id   bigint      NOT NULL REFERENCES fpa.finding (id),
     from_role_key citext     NOT NULL REFERENCES shared.role (key),
     to_role_key   citext     NOT NULL REFERENCES shared.role (key),
     reason       text        NOT NULL DEFAULT 'sla_lapsed'
@@ -663,7 +669,7 @@ CREATE INDEX escalation_trail_finding_idx ON fpa.escalation_trail (finding_id, o
 -- the four A's, which belong to the owner.
 CREATE TABLE fpa.leadership_action (
     id            bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    finding_id    bigint      NOT NULL REFERENCES fpa.finding (id) ON DELETE CASCADE,
+    finding_id    bigint      NOT NULL REFERENCES fpa.finding (id),
     action        text        NOT NULL
                               CHECK (action IN ('ask', 'reassign', 'raise_priority', 'take')),
     by_user_id    bigint      NOT NULL REFERENCES fpa.app_user (id),

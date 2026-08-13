@@ -14,10 +14,10 @@ this repo.
 
 | | |
 |---|---|
-| Applied to a **local** database | **Yes.** PostgreSQL 16.14, the production major version. Both schemas, the C&S configuration, every trigger and CHECK. |
+| Applied to a **local** database | **Yes.** PostgreSQL 16.14, the production major version. All four files, the C&S configuration, every trigger and CHECK. |
 | Applied to any **live** database | **No.** Never executed against Americana or any other real environment. |
 | Wired into `npm run migrate` | **No**, on purpose. |
-| Constraints exercised | **Yes** — `test-fpa-core.sql`: **24 illegal cases, each proven to fail** (24 `MUST FAIL` lines, 24 errors), alongside the legal cases they mirror. |
+| Constraints exercised | **Yes** — **33 illegal cases across two suites, each proven to fail**, alongside the legal cases they mirror. |
 | Destination | **The backend repo's `migrations/` package — NOT `rewive-infra`.** See below. |
 | Blocker | Must first be reconciled with the `sales_excellence` and `sales_staging` schemas already in the live Americana database, which this design has never been able to inspect. |
 
@@ -46,6 +46,21 @@ rather than by reading.
 **A clean parse is not a clean apply.** That was already written here as a
 caution; it is now written as a finding.
 
+A second one came out of running the constraint suite rather than the DDL.
+`ledger_event.finding_id` was declared `ON DELETE SET NULL` — reasoning that an
+event pointing at a vanished finding is an honest past fact, which is exactly
+how the reference implementation's KV snapshot behaves. But `SET NULL` is an
+UPDATE, and that table refuses updates, so deleting a finding failed from
+inside the cascade with `ledger_event is append-only: UPDATE is refused`. Two
+correct features colliding into an illegible error. The same shape existed on
+`escalation_trail` and `leadership_action`, which were append-only *and*
+`ON DELETE CASCADE`.
+
+Resolved the honest way rather than the accommodating way: **a finding whose
+decisions are on the record cannot be deleted.** The delete is now refused at
+the foreign key with a clear message. Nothing in the product deletes findings —
+they close — so it costs nothing and states the actual rule.
+
 ## Files
 
 | File | What it is |
@@ -53,7 +68,9 @@ caution; it is now written as a finding.
 | `shared-dimensions.sql` | The `shared` schema — 14 tables: geography, business units, channels, categories, legal entities, org units, roles, people, seats, agents, and the free-text crosswalk. Hierarchies are adjacency with cycle-guard triggers; ancestry views turn a rollup into a join. |
 | `fpa-core.sql` | The `fpa` schema — the loop: the fiscal calendar, identity and sessions, the operating model (nodes, edges, streams), mandates, `fact_measure` with its grain CHECK, findings and their whole lifecycle, escalation and leadership transfer, actions, recovery targets, the comment thread, and notifications. |
 | `shared-dimensions-americanacs.sql` | Americana C&S configured against the dimensions, to test the model rather than assert it. Rows are marked `[EVIDENCED]` or `[ILLUSTRATIVE]` line by line. **No person in it is real**, and the region tree above Abu Dhabi is invented. |
-| `test-fpa-core.sql` | The constraint suite. Every CHECK, trigger and unique index asserted in both directions. |
+| `fpa-loop.sql` | The loop engine and evidence layer — ingest keys, tracking configs, metric points, sweep runs and their per-mandate analysis trail, the durable timer queue, and the append-only hash-chained ledger with the Decision Ledger view. |
+| `test-fpa-core.sql` | Constraint suite for the core. Every CHECK, trigger and unique index asserted in both directions. |
+| `test-fpa-loop.sql` | Constraint suite for the loop engine — including the chain that cannot fork and the timer that cannot duplicate. |
 | `validate-sql.py` | The parse checker. Superseded in practice by applying the files, but still the only thing that catches a forward foreign key without a database. |
 
 ## Applying it locally
@@ -73,9 +90,12 @@ psql -d postgres -c "DROP DATABASE IF EXISTS rewive_dev;" -c "CREATE DATABASE re
 psql -d rewive_dev -v ON_ERROR_STOP=1 -f platform-schema/shared-dimensions.sql
 psql -d rewive_dev -v ON_ERROR_STOP=1 -f platform-schema/shared-dimensions-americanacs.sql
 psql -d rewive_dev -v ON_ERROR_STOP=1 -f platform-schema/fpa-core.sql
+psql -d rewive_dev -v ON_ERROR_STOP=1 -f platform-schema/fpa-loop.sql
 
-# Every "MUST FAIL" line should print an ERROR. That is the pass condition.
+# Every "MUST FAIL" line should print an ERROR. That is the pass condition:
+# 23 assertions / 23 errors, then 10 / 10.
 psql -d rewive_dev -f platform-schema/test-fpa-core.sql
+psql -d rewive_dev -f platform-schema/test-fpa-loop.sql
 ```
 
 Creating the roles is not optional if you want the run to mean anything — the
