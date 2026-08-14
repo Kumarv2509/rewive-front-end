@@ -1,25 +1,52 @@
-# Handoff — the schema PR is merged, and the contract-as-asset premise is measured for the first time (2026-08-13 → 14)
+# Handoff — the schema PR is merged, the contract premise is measured, and the frontend turns out not to be ours (2026-08-13 → 14)
 
 ## The one thing to act on
 
-**The migrate job is now the only gate, and it must not be the first thing you
-run.** `rewive-fpa` PR #1 is merged (`a1d8eaa`). Merging deployed nothing —
-`018` and `019` have still never touched a database.
+**`018` will fail on its first statement, and no test in this repo could ever
+have caught it.**
 
-Run **`rewive-infra` PR #1 (Log Analytics) first.** It is the reason step 2
-exists. Applying the migrations into an estate that emits no container logs
-puts you straight back in the blind-estate failure the last two handoffs each
-warned costs a session to diagnose — and the migrations now carry more surface
-to fail on, not less.
+`azure.extensions` on `psql-rewive-americana-prod` is set to **`vector`, and
+nothing else**. `018_platform_dimensions.sql` opens with
 
-**Standing sequence, one step shorter:**
+```sql
+CREATE EXTENSION IF NOT EXISTS citext;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+```
+
+On Azure Flexible Server an extension that is not on that allowlist **cannot be
+created**. `IF NOT EXISTS` does not save it — it does not exist, and creation is
+refused. The transaction aborts and the migrate job fails.
+
+Both are in the server's `allowedValues`, and the parameter is **dynamic — no
+restart, no downtime**:
+
+```bash
+az postgres flexible-server parameter set \
+  -g rg-rewive-dedicated-americana -s psql-rewive-americana-prod \
+  -n azure.extensions --value vector,citext,btree_gist
+```
+
+**Why every local test missed it: local PostgreSQL has no allowlist.** The
+fresh-database apply, the mirror, the constraint suite — all of them create
+extensions freely. The precedent was sitting in plain sight the whole time:
+`vector` is allowlisted precisely because migration `001` needs it. This is the
+Azure-specific class of failure the infra skill keeps warning about, and it was
+found by reading the live server rather than by reasoning.
+
+**Standing sequence, with the new prerequisite:**
 
 | # | Step | State |
 |---|---|---|
-| 1 | Backend `000` provisioning fix | **merged, not applied** |
-| 2 | `rewive-infra` PR #1 — Log Analytics | open |
-| 3 | Run the migrate job | the step that makes any of it real |
-| 4 | `rewive-infra` PR #2 — Americana C&S | open |
+| 1 | `rewive-infra` PR #1 — Log Analytics | **merged (`0aa76cc`), NOT applied** |
+| 2 | Allowlist `citext`, `btree_gist` | **not done** — one command, no restart |
+| 3 | Build v92 from backend `a1d8eaa` | not started |
+| 4 | Deploy API + worker to v92 **before** migrating | not started |
+| 5 | Repoint the migrate job (pinned to `v91`) and run it | not started |
+| 6 | `rewive-infra` PR #2 — Americana C&S environment | open, **not approved** |
+
+Step 4 is not a preference. v91 violates two of `019`'s constraints, so
+migrating first guarantees 500s; v92's code is backward-compatible with the
+pre-migration schema, so code-first has no failure window in either direction.
 
 ## What was delivered
 
@@ -189,9 +216,157 @@ verifiable without a credential.
 An Americana credential is needed, and none was available. With one, the 9
 auth-gated endpoints become testable and the picture stops being a floor.
 
+## `rewive-infra` PR #1 merged, verified against the provider source
+
+Merged as **`0aa76cc`**. **Not applied** — there is no Terraform CLI on this
+machine and the doctrine is Cloud Shell only.
+
+The PR's comment claimed neither `logs_destination` nor
+`log_analytics_workspace_id` is `ForceNew`. That claim was worth checking rather
+than trusting: if it were wrong, the apply would **destroy and recreate the
+Container App Environment** while Americana is serving. Checked against the
+provider source at the pinned `v4.50.0`:
+
+- `log_analytics_workspace_id` (line 105) — `Optional`, no `ForceNew`
+- `logs_destination` (line 112) — `Optional`, `Default: none`, no `ForceNew`
+- **Conclusive:** line 516 sits inside `Update()` and explicitly handles
+  `HasChanges("logs_destination", "log_analytics_workspace_id")`. A `ForceNew`
+  field would have no update path at all.
+
+Line 530 calls `getSharedKeyForWorkspace()` on update, confirming the
+permission note. The deployer has it.
+
+The blind spot is live and current, so this fixes something real:
+
+```
+appLogsConfiguration: { destination: "", logAnalyticsConfiguration: null }
+```
+
+**Expected plan: `1 to change, 0 to add, 0 to destroy`.** If any line reads
+`destroy and then create replaced`, stop — that contradicts the above and must
+not be applied.
+
+**One open question I could not answer.** `diag-cae-*` in `observability.tf`
+already enables the `ContainerAppConsoleLogs` and `ContainerAppSystemLogs`
+categories against the same workspace. Once persistence is bound, both paths
+may write — duplicate rows and double ingestion cost. Until now the diagnostic
+setting has emitted nothing, because it had no persisted source to carry, which
+is the whole bug. **Check after applying rather than assuming either way**; the
+KQL is in the integration handoff.
+
+**A mistake worth recording:** to confirm the `sharedKeys/action` permission I
+used a call that *returns* the Log Analytics shared keys, so those values landed
+in the session transcript. `az role assignment list` would have answered the
+same question without exposing them. Nothing consumes those keys yet, since log
+persistence has never been bound — regenerating them before applying costs
+nothing.
+
+## The deployed frontend is a different application
+
+This is the session's biggest surprise, and it invalidates a background
+assumption several documents were carrying.
+
+`rewive-frontend:v48` was built **2026-08-13**. The appearance-themes work
+landed in *this* repo on **2026-08-09** (`0fa8924`). A build from this codebase
+on the 13th would contain it. The deployed bundle has no `data-theme`, no
+`--rule-w`, no terminal theme, and its `index.html` is missing the pre-paint
+theme script this repo's has.
+
+| | This repo | Deployed `v48` |
+|---|---|---|
+| Tenants | 4 | **Americana only** — zero Medcare / GulfMart / hypermarket strings |
+| Auth | Bearer JWT in localStorage | **Cookies** — `withCredentials`, `Bearer` appears **0 times** |
+| API base | `/api/v1` | **empty** — call sites carry their own `/api/` prefix |
+| Appearance themes | Signal / classic / terminal | absent |
+| Vocabulary | Park, recovery target | still "Acknowledge"; **"shadow" ×24, "counterpart" ×7** |
+
+That last row is the giveaway: `CLAUDE.md` forbids "shadow" and "counterpart" in
+UI copy. The deployed build never went through the July plain-language pass.
+
+**The real source is `sanjuveed-debug/rewive-frontend-v5`**, `main` @ `1cb9d3a`
+— which matches the "frontend main" baseline exactly. Its `client.ts` states the
+contract outright: `API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''`,
+with a comment that it *"must NOT also be `/api` or requests become
+`/api/api/…`"*, plus `withCredentials: true`.
+
+**The two are architecturally incompatible.** Nothing can be lifted between them
+without rewriting the API layer.
+
+**And the endpoint gap is the hard number:** of 52 top-level paths this UI
+calls, **18 exist in production and 34 do not** — including `/decisions` (the
+Decision Ledger, which exists under no name in the backend), `/runs`,
+`/outcomes`, `/tracking-configs`, `/metrics`, `/sweep-*`, `/people`,
+`/tenants`, and **`/onboarding`**. That last one matters most: **the onboarding
+factory has no backend counterpart in production**, so building an org the way
+Americana C&S was built is not currently possible against the live API.
+
+Also found, and worth fixing in that repo when someone is next in it: its
+`.env.example` says `VITE_API_BASE_URL=/api/v1`, which given the comment above
+turns every request into `/api/v1/api/findings`. The deployed image was built
+without it (`baseURL:""`), so production is fine — but the file tells you to
+break it. Its `Dockerfile` also builds on `node:20-alpine`, past end-of-life
+since April 2026 and right on vite 8's `^20.19.0 || >=22.12.0` boundary.
+
+## There is no Americana C&S UI — searched exhaustively
+
+Worth recording so nobody looks for it again.
+
+**Scope searched:** four local branches, five remote branches (fetched fresh),
+the working tree with `--untracked-files=all`, the stash list, and four dangling
+commits recovered via `git fsck`.
+
+**Result:** a content search for `C&S` / `americanacs` / `americana-cs` returns
+**8 files on `v5` and zero on `master`, `v2`, `v3`, `v4`**. Exactly **one** of
+the 8 is under `src/` — `src/tenants.ts` — and it is a comment about
+punctuation matching. All four dangling commits are docs handoffs or a WIP auth
+stash. Nothing was uncommitted.
+
+**Americana C&S is runtime data, not code.** `scripts/rebuild-americanacs-org.py`
+says so in its own docstring: it drives `/onboarding/draft` then
+`/onboarding/commit` — *"the same two endpoints the /onboard UI does"* — and the
+org is rendered by the generic industry-parameterised screens under industry key
+`custom`. It lives in memory and dies with the mock server.
+
+The nearest thing to C&S "UI work" is four commits from 2026-08-10/11
+(`2835b0f`, `feb3827`, `e86c2e8`, `69a421e`), and they are fixes to the
+**generic** factory — C&S was simply what was being built when the defects
+surfaced.
+
+## Where this session's output went
+
+**A container build for this repo** (`7416ed5`) — the repo had no `Dockerfile`
+at all, so "deploy the frontend" had no build to run. `node:22-alpine` →
+`nginx:1.27-alpine`, listening on 80 to match `ingress.targetPort`;
+`VITE_API_BASE_URL` became a build arg. Verified both directions: `api/v1` → 0
+occurrences with the arg set, 2 without. **The image itself was never built —
+no Docker on this machine.** `DEPLOY.md` records the contract, why the live tag
+must never be overwritten (Single revision mode, 100% traffic to latest), and
+that a manual `containerapp update` is reverted by the next `terraform apply`.
+
+Also fixed there: `IngestKeysPanel` hardcoded `/api/v1` in the curl example it
+*shows the user*, which would print a non-existent URL in an Azure build.
+
+**`Sanju/`** (`8fe8316`) — the session's deliverables collected in this repo:
+the integration handoff, a read-only preflight audit, and an index.
+
+**`sanjuveed-debug/Sanju` PR #1** — the private handoff repo. Branch
+`handoff/americana-cs-complete`, commit `22df8a0`, 313 files, organised into
+`frontend/` (196) · `backend/` (57) · `database/` (32) · `docs/` (26), with
+`docs/source-inventory.md` recording every source repo, branch, commit,
+changed-file list, required endpoint, environment variable, database dependency,
+and a per-component judgement of real / mocked / incomplete / production-ready.
+The owner's scaffolding on `main` was preserved unchanged. Access needed an
+invitation accepted first — the same pattern as the backend repos, so check
+`gh api user/repository_invitations` before concluding a repo does not exist.
+
 ## Still open
 
-1. **The migrate job has never run.** Everything else below is downstream of it.
+0. **Allowlist `citext` and `btree_gist` before anything else touches the
+   database.** See the top of this entry. One command, no restart, and `018`
+   cannot succeed without it.
+1. **The migrate job has never run**, and is still pinned to `v91`. Everything
+   else below is downstream of it. **v92 must be built and deployed first** —
+   v91 violates two of `019`'s constraints.
 2. **The `NOT VALID` constraints still need validating.** They bind new writes
    the moment they land but have never inspected an existing row. Audit queries
    in section 6 of `019` first — a non-zero count is real customer data to
@@ -221,8 +396,21 @@ auth-gated endpoints become testable and the picture stops being a floor.
    of it (`1/26`) is not very meaningful. **This is a product decision, not a
    cleanup.**
 7. **The loop demo has never been run on screen.** Driven through the API two
-   sessions ago; no visual walkthrough and no GIF exist.
-8. Carried, unchanged: `rewive-infra` PRs #1–#4 all open and MERGEABLE, the
+   sessions ago; no visual walkthrough and no GIF exist — and the Chrome
+   extension failed to connect again this session, so this is now the *third*
+   time it has been deferred for the same reason. Fix the extension or accept
+   that no visual artefact will ever exist.
+8. **Decide what this repo is for, now that the deployed frontend is known to
+   be a different codebase.** It is the reference implementation of a contract
+   that production does not implement, and the UI it renders is not the UI
+   customers see. That is a defensible position — but it should be a stated
+   one, because several documents were quietly assuming otherwise.
+9. **Two defects in `rewive-frontend-v5` nobody has fixed**: `.env.example`
+   documents a value that breaks every request, and the `Dockerfile` builds on
+   an end-of-life Node. Both are one-line changes; neither is mine to make.
+10. **Duplicate log ingestion after infra PR #1 is applied** — unknown until
+    it is applied. Check, do not assume.
+11. Carried, unchanged: `rewive-infra` PRs #2–#4 open (#1 now merged), the
    `diag-cae-*` cleanup, `ARCH-001` Entry 02's supersession banner,
    `ARCH-GTM-001` is cited by ID in 13 files and is a file in none, and nobody
    has said what `rewive-studio` is.
@@ -247,14 +435,31 @@ session were to GitHub and Notion. The captured run output is in the scratchpad
 and **will vanish** — the analysis above is the durable copy, and re-running it
 costs one read-only pass.
 
-The `rewive-fpa` clone is in the scratchpad and **will vanish** — re-clone.
-Pushing worked first attempt this session, which is worth knowing only because
-it means the flakiness is intermittent rather than gone; retry two or three
-times before diagnosing.
+**A durable working copy of the handoff bundle** is at
+`/Users/praveenj/Developer/Sanju-handoff` — its own git repo, branch
+`handoff/americana-cs-complete`, commit `70af1da`. It is the same content that
+was pushed to `sanjuveed-debug/Sanju` as `22df8a0`, kept outside the scratchpad
+deliberately so it survives. Delete it once PR #1 there is merged.
 
-`az` remains authenticated as Owner; read-only checks only. `terraform apply`
-has still never run from this machine, and per the infra doctrine it runs in
-Cloud Shell. `Architecture.png` is still deliberately untracked.
+Clones of `rewive-fpa`, `rewive-frontend-v5` and `Sanju` are in the scratchpad
+and **will vanish** — re-clone.
+
+**On pushing: the Fortinet interception returned mid-session and then cleared.**
+Five consecutive `git push` attempts failed with `SSL certificate problem:
+unable to get local issuer certificate`, issuer `O = Fortinet, CN =
+FG201FT922921744`; `gh` failed the same way. The CA is not in the System
+keychain, so `http.sslBackend=securetransport` would not help either. **Do not
+set `http.sslVerify=false`** — the connection genuinely is being intercepted.
+It cleared on its own; the note in memory that this is location-dependent holds.
+Also worth knowing: `git push | tail` returns *tail's* exit status, so a retry
+loop written that way reports success on failure. Check the push output, not the
+loop.
+
+`az` remains authenticated as Owner; read-only checks only, plus the two ACR and
+container-app reads noted above. `terraform apply` has still never run from this
+machine, and per the infra doctrine it runs in Cloud Shell. The Chrome extension
+would not connect, so no browser automation happened at all.
+`Architecture.png` is still deliberately untracked.
 
 ---
 
