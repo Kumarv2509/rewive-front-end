@@ -13,8 +13,14 @@ export function IngestKeysPanel() {
   const [label, setLabel] = useState('');
   const [justCreated, setJustCreated] = useState<CreatedIngestKey | null>(null);
 
+  // The base path is per-deployment (`/api/v1` against the mock, `/api` where
+  // the API is mounted without a version segment), so read the same value the
+  // client is built with rather than hardcoding one — otherwise this hands the
+  // user a curl command pointing at a URL that does not exist.
+  const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+
   const curlExample = justCreated
-    ? `curl -X POST ${window.location.origin}/api/v1/metrics \\\n  -H "X-API-Key: ${justCreated.key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"points":[{"nodeId":"<mandate-node-id>","value":84.2}]}'`
+    ? `curl -X POST ${window.location.origin}${apiBase}/metrics \\\n  -H "X-API-Key: ${justCreated.key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"points":[{"nodeId":"<mandate-node-id>","value":84.2}]}'`
     : '';
 
   return (

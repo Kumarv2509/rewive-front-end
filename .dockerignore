@@ -1,0 +1,37 @@
+# Keep the build context small and deterministic.
+#
+# `tsc -b` compiles only `src` and `vite.config.ts` (see tsconfig.json's project
+# references), and Vite copies `public/`. Nothing else below is needed to build,
+# so excluding it cannot break the image — but do check tsconfig before adding
+# anything here.
+
+.git
+.github
+node_modules
+dist
+
+# Server-side and tooling: not part of the browser bundle.
+# Leading slashes anchor these to the context root — `/api` is the Vercel
+# handler directory and must not be confused with `src/api`, which the whole
+# app imports and which MUST stay in the image.
+/mock-server
+/contract
+/platform-schema
+/scripts
+/api
+
+# Documentation and design source.
+docs
+*.md
+!README.md
+Architecture.png
+
+# Local-only.
+.env
+.env.*
+!.env.example
+.vscode
+.idea
+.DS_Store
+*.log
+.claude
