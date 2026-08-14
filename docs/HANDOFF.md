@@ -1,4 +1,4 @@
-# Handoff — the schema PR is reviewed and merged, and the review found the constraints were a claim about the code (2026-08-13, latest)
+# Handoff — the schema PR is merged, and the contract-as-asset premise is measured for the first time (2026-08-13 → 14)
 
 ## The one thing to act on
 
@@ -128,6 +128,67 @@ written up in the body, `Commits` carrying `a1d8eaa`. **Status deliberately
 left `In progress`** — merging deployed nothing, and this item's own stated
 convention is that Done means it has actually run.
 
+## The contract suite, run against production for the first time
+
+The premise in the architect skill — *"the production API should pass this
+suite unmodified; that is what lets a frontend ship unchanged"* — had never
+been tested. It has now. **It does not hold, and the gap is structural rather
+than cosmetic.**
+
+```
+CONTRACT_BASE_URL=https://rewive-americana-dydwe2btf4brfsad.z02.azurefd.net/api \
+CONTRACT_MUTATIONS=0 CONTRACT_INDUSTRIES=fmcg npm run test:contract
+→ 1 of 26 passed
+```
+
+Read-only, per `contract/README.md`'s own rule for shared targets. **The base
+path is `/api`, not `/api/v1`** — production has no version segment at all, so
+the suite's default URL was wrong before any test ran.
+
+### The failures, separated — "25 failed" on its own is misleading
+
+Probing each endpoint unauthenticated splits them into two very different
+categories:
+
+**Exists, auth-gated (9, all 401):** `/industries`, `/org-profile`,
+`/auth/login`, `/kpi-brain`, `/shadow-org`, `/findings`, `/closure-kpis`,
+`/notifications`, `/pl-statement`. **Their behaviour is untested** — not
+failing, unknown. This is why the result below is a floor on the divergence,
+not a full picture.
+
+**Missing entirely (13, all 404):**
+
+| Group | Endpoints | Reading |
+|---|---|---|
+| **Decision Ledger** | `/decisions`, `/decisions/stats` | **The real gap.** No decision route exists in the backend under any name — checked; `/api/audit-log` is a generic audit trail, not a ledger with verdicts and provenance. The product's namesake surface has no production endpoint. |
+| Live tracking / sweep | `/tracking-configs`, `/sweep-history`, `/sweep-progress`, `/agent-sweep`, `/metrics` | Production derives findings from `fpa_alerts`; there is no metric-ingest → drift-rule pipeline at all. |
+| Evidence layer (P1.6) | `/ledger/events`, `/ledger/verify` | Built here *after* the backend, demo-grade by CLAUDE.md's own label. |
+| Loop engine (P1.5) | `/loop-timers` | Same. |
+| Control plane (P1.4) | `/control-plane/*` | Same. |
+| Front door | `/tenants/resolve` | Arguably *should* 404 — production is one dedicated environment per customer, so tenant resolution has no job there. |
+
+**Roughly half the 404s are not defects** — they are P1.4/P1.5/P1.6 features
+this repo built after the backend and already labels demo-grade. Do not report
+them as production gaps without that qualifier. The Decision Ledger is a
+different matter.
+
+### The blocker underneath all of it
+
+Production's `LoginRequest` is **`{email, password}`**. The contract's
+`login()` sends `{email, tenantId, industry, seat}` and expects `{token}`.
+That is not a prefix mismatch: **the contract's model, where tenant and lens
+live inside the token, does not exist in production.** Every authenticated test
+dies there, which is why only one passed.
+
+The one that did pass — *"a JWT-shaped but invalid bearer is refused with
+401"* — is a genuine point of agreement on the auth seam, and the only thing
+verifiable without a credential.
+
+### To go further
+
+An Americana credential is needed, and none was available. With one, the 9
+auth-gated endpoints become testable and the picture stops being a floor.
+
 ## Still open
 
 1. **The migrate job has never run.** Everything else below is downstream of it.
@@ -140,17 +201,28 @@ convention is that Done means it has actually run.
    new dimension rows, and nothing populates `period_id` / `owner_seat_id` /
    `entity_id` / `region_id` on existing findings. Needs Americana's own
    vocabulary.
-4. **Four contract domains have no production tables**: Execution
-   (runs/tasks/outcomes), agent-building (specs/studio/catalog), connector
-   definitions, and Business Context (SKUs/customers/divisions).
-5. **The contract suite has never run against the production API.** Still the
-   obvious next verification, and now more interesting than before: the review
-   above found the backend and the schema disagreeing about the product, which
-   is exactly the class of thing `contract/` against `CONTRACT_BASE_URL` would
-   surface across every endpoint rather than one at a time.
-6. **The loop demo has never been run on screen.** Driven through the API two
+4. **"Four contract domains have no production tables" needs revisiting — it
+   is at least partly wrong.** It has been carried unchanged for two sessions.
+   `fpa_tasks` is plainly there in `rewive_prod_mirror`, and `/api/tasks`,
+   `/api/solutions` and `/api/agent-specs` all exist as routers. Someone should
+   re-derive that claim against the real schema rather than carry it again;
+   what is *actually* absent is a separate question from what was assumed to
+   be.
+5. **The contract suite has now run against production — the authenticated
+   half remains.** Result and analysis above. What is still needed is an
+   Americana credential, which unlocks the 9 endpoints that could only be
+   observed returning 401. Until then the divergence measured is a floor.
+6. **Decide what the contract suite is *for*, now that production visibly
+   fails it.** Two honest readings, and they lead to different work: either the
+   backend is brought to the contract (large, and the auth model is the hard
+   part), or the contract is re-scoped to describe the subset production is
+   actually expected to serve, with the demo-grade surfaces marked as such.
+   Right now the suite asserts both at once, which is why a single number out
+   of it (`1/26`) is not very meaningful. **This is a product decision, not a
+   cleanup.**
+7. **The loop demo has never been run on screen.** Driven through the API two
    sessions ago; no visual walkthrough and no GIF exist.
-7. Carried, unchanged: `rewive-infra` PRs #1–#4 all open and MERGEABLE, the
+8. Carried, unchanged: `rewive-infra` PRs #1–#4 all open and MERGEABLE, the
    `diag-cae-*` cleanup, `ARCH-001` Entry 02's supersession banner,
    `ARCH-GTM-001` is cited by ID in 13 files and is a file in none, and nobody
    has said what `rewive-studio` is.
@@ -168,6 +240,12 @@ violating rows + 018/019, and now the constraints), `newcustomer`,
 `fresh_customer` (empty), and **`reviewtest`** — new this session, the
 fresh-database apply of the merged series. `platform-schema/README.md` carries
 the rebuild commands.
+
+**Nothing in Americana production was mutated.** The contract run was
+`CONTRACT_MUTATIONS=0` and every probe was a GET; the only writes anywhere this
+session were to GitHub and Notion. The captured run output is in the scratchpad
+and **will vanish** — the analysis above is the durable copy, and re-running it
+costs one read-only pass.
 
 The `rewive-fpa` clone is in the scratchpad and **will vanish** — re-clone.
 Pushing worked first attempt this session, which is worth knowing only because

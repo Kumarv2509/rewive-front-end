@@ -21,7 +21,7 @@ npm run migrate       # Apply mock-server/schema.sql to DATABASE_URL (live track
 npm run test:contract # Contract suite (contract/): the mock's REST contract as an executable spec
 ```
 
-The only test suite is the **contract harness** (`contract/`, zero deps — `node:test` + fetch): the mock server is the reference implementation of the API contract, and a production API must pass the same suite via `CONTRACT_BASE_URL`. Discovery-driven (never seed-id-dependent); mutation tests skip with `CONTRACT_MUTATIONS=0`; see `contract/README.md`. There are no component/unit tests.
+The only test suite is the **contract harness** (`contract/`, zero deps — `node:test` + fetch): the mock server is the reference implementation of the API contract, and a production API must pass the same suite via `CONTRACT_BASE_URL`. Discovery-driven (never seed-id-dependent); mutation tests skip with `CONTRACT_MUTATIONS=0`; see `contract/README.md`. **Measured against Americana production for the first time on 2026-08-14: 1 of 26 passed** — the base path is `/api` with no version segment, production's login is `{email, password}` rather than the contract's token-carries-tenant-and-lens model (which fails every authenticated test), `/decisions` exists nowhere in the backend, and about half the 404s are P1.4/P1.5/P1.6 surfaces this repo built after the backend and already calls demo-grade. Treat "production passes the contract" as the goal, not the current state, and see the handoff before quoting that number — it needs its qualifiers. There are no component/unit tests.
 
 ## Live mandate tracking (the one real pipeline)
 

@@ -87,6 +87,16 @@ its enduring job.
   complete, frontend-verified REST specification. The `contract/` suite runs
   against any target via `CONTRACT_BASE_URL` — the production API should pass
   it unmodified. That is what lets a frontend ship unchanged.
+  **This is the goal, not the state.** Measured against Americana production on
+  2026-08-14: **1 of 26**. Production's base path has no version segment, its
+  login is `{email, password}` rather than the contract's tenant-and-lens-in-
+  token model (which fails every authenticated test), and `/decisions` — the
+  product's namesake surface — exists nowhere in the backend. About half the
+  404s are P1.4/P1.5/P1.6 surfaces built here after the backend and already
+  labelled demo-grade, so the raw number overstates the divergence; 9 endpoints
+  are auth-gated and were never testable, so it also understates it. Before
+  designing anything on the premise that the frontend ships unchanged, read the
+  handoff section behind that number.
 - **The drift rules are production logic.** `mock-server/drift.js` (threshold
   breach, sustained deviation, trend-to-breach) is pure and deterministic —
   port it, don't rewrite it.
