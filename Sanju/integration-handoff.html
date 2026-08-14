@@ -1,0 +1,696 @@
+<title>Americana Migration Handoff</title>
+<style>
+  :root{
+    --ground:#FCFCFD; --surface:#F4F5F8; --surface-2:#EDEFF4;
+    --ink:#14171D; --muted:#5C6472; --faint:#868E9C;
+    --rule:#DEE2E9; --rule-strong:#C3C9D4;
+    --accent:#3A4E8F;
+    --blocker:#A62B1F; --blocker-bg:#FBEEEC;
+    --caution:#8A5F10; --caution-bg:#FBF4E6;
+    --clear:#2C6E4E; --clear-bg:#EAF4EE;
+    --code-bg:#F1F3F7;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sp:1.5rem;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0E1117; --surface:#171B23; --surface-2:#1E232D;
+      --ink:#E3E6EC; --muted:#9AA3B2; --faint:#79828F;
+      --rule:#262C37; --rule-strong:#38414F;
+      --accent:#8FA3E0;
+      --blocker:#E8776A; --blocker-bg:#2A1714;
+      --caution:#D9A441; --caution-bg:#251E10;
+      --clear:#62B98A; --clear-bg:#12211A;
+      --code-bg:#12161D;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0E1117; --surface:#171B23; --surface-2:#1E232D;
+    --ink:#E3E6EC; --muted:#9AA3B2; --faint:#79828F;
+    --rule:#262C37; --rule-strong:#38414F;
+    --accent:#8FA3E0;
+    --blocker:#E8776A; --blocker-bg:#2A1714;
+    --caution:#D9A441; --caution-bg:#251E10;
+    --clear:#62B98A; --clear-bg:#12211A;
+    --code-bg:#12161D;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.65;
+    margin:0; padding:0 1.25rem 6rem;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:52rem;margin:0 auto}
+  .wide{max-width:64rem;margin:0 auto}
+
+  /* masthead */
+  header.mast{padding:3.5rem 0 2rem;border-bottom:2px solid var(--ink)}
+  .kicker{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 .9rem;
+  }
+  h1{
+    font-family:var(--mono); font-size:clamp(1.7rem,4.2vw,2.5rem);
+    line-height:1.15; letter-spacing:-.02em; font-weight:600;
+    margin:0 0 1rem; text-wrap:balance;
+  }
+  .standfirst{font-size:1.05rem;color:var(--muted);margin:0;max-width:40rem}
+
+  .meta{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));
+    gap:.85rem 1.5rem; margin:2rem 0 0; padding:1.1rem 0 0;
+    border-top:1px solid var(--rule);
+  }
+  .meta div{display:flex;flex-direction:column;gap:.15rem}
+  .meta dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .meta dd{margin:0;font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+
+  /* status bands */
+  .bands{margin:2.5rem 0 0;display:flex;flex-direction:column;gap:.75rem}
+  .band{
+    border:1px solid var(--rule-strong); border-left:4px solid var(--muted);
+    background:var(--surface); padding:1rem 1.15rem; border-radius:3px;
+  }
+  .band.stop{border-left-color:var(--blocker);background:var(--blocker-bg)}
+  .band.warn{border-left-color:var(--caution);background:var(--caution-bg)}
+  .band h3{
+    font-family:var(--mono); font-size:12px; letter-spacing:.09em;
+    text-transform:uppercase; margin:0 0 .45rem; font-weight:600;
+  }
+  .band.stop h3{color:var(--blocker)} .band.warn h3{color:var(--caution)}
+  .band p{margin:0;font-size:14px}
+  .band p + p{margin-top:.5rem}
+
+  /* sections */
+  section{padding:3rem 0 0}
+  section > h2{
+    font-family:var(--mono); font-size:1.15rem; font-weight:600;
+    letter-spacing:-.01em; margin:0 0 .3rem; padding-bottom:.6rem;
+    border-bottom:1px solid var(--rule); display:flex; gap:.75rem; align-items:baseline;
+  }
+  .num{color:var(--accent);font-size:.85em;font-variant-numeric:tabular-nums}
+  h3.sub{
+    font-family:var(--mono); font-size:13px; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--muted); font-weight:600;
+    margin:2rem 0 .6rem;
+  }
+  p{margin:0 0 .9rem}
+  ul,ol{margin:0 0 1rem;padding-left:1.3rem}
+  li{margin:0 0 .4rem}
+  strong{font-weight:650}
+  code{
+    font-family:var(--mono);font-size:.875em;background:var(--code-bg);
+    padding:.1em .35em;border-radius:3px;
+  }
+  a{color:var(--accent)}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  pre{
+    background:var(--code-bg); border:1px solid var(--rule);
+    border-radius:4px; padding:.9rem 1rem; overflow-x:auto;
+    font-family:var(--mono); font-size:12.5px; line-height:1.6; margin:0 0 1rem;
+  }
+  pre code{background:none;padding:0;font-size:inherit}
+
+  .tbl{overflow-x:auto;margin:0 0 1.2rem;border:1px solid var(--rule);border-radius:4px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);background:var(--surface);font-weight:600;white-space:nowrap;
+  }
+  tr:last-child td{border-bottom:none}
+  td.mono,th.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .tag{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+    padding:.15em .5em;border-radius:3px;border:1px solid currentColor;white-space:nowrap;
+  }
+  .t-stop{color:var(--blocker);background:var(--blocker-bg)}
+  .t-warn{color:var(--caution);background:var(--caution-bg)}
+  .t-ok{color:var(--clear);background:var(--clear-bg)}
+  .t-none{color:var(--muted);background:var(--surface)}
+
+  .callout{
+    border:1px solid var(--rule-strong);background:var(--surface);
+    padding:1rem 1.15rem;border-radius:4px;margin:0 0 1.2rem;
+  }
+  .callout.stop{border-color:var(--blocker);background:var(--blocker-bg)}
+  .callout p:last-child{margin-bottom:0}
+
+  .steps{list-style:none;padding:0;counter-reset:s}
+  .steps > li{
+    counter-increment:s; position:relative; padding-left:2.4rem; margin-bottom:1.4rem;
+  }
+  .steps > li::before{
+    content:counter(s); position:absolute; left:0; top:.05rem;
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    width:1.6rem;height:1.6rem;border:1px solid var(--rule-strong);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;color:var(--accent);
+  }
+  .steps h4{margin:0 0 .35rem;font-size:14.5px;font-weight:650}
+
+  hr.end{border:none;border-top:2px solid var(--ink);margin:3.5rem 0 0}
+  footer{padding:2rem 0 0;color:var(--muted);font-size:13px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="mast">
+  <p class="kicker">Integration handoff · prepared for Sanju</p>
+  <h1>Americana: migrations 018 &amp; 019</h1>
+  <p class="standfirst">What was changed, what is merged but unapplied, and the order it has to happen in. Nothing in this document has been deployed, migrated or applied.</p>
+  <dl class="meta">
+    <div><dt>Backend main</dt><dd>a1d8eaa</dd></div>
+    <div><dt>Infra main</dt><dd>0aa76cc</dd></div>
+    <div><dt>API / worker live</dt><dd>v91</dd></div>
+    <div><dt>Frontend live</dt><dd>v48</dd></div>
+    <div><dt>Migrate job image</dt><dd>v91</dd></div>
+    <div><dt>Database</dt><dd>americana · PG 16</dd></div>
+  </dl>
+</header>
+
+<div class="bands">
+  <div class="band stop">
+    <h3>Blocker 1 — 018 will fail on its first statement</h3>
+    <p><code>azure.extensions</code> on <code>psql-rewive-americana-prod</code> is set to <code>vector</code> and nothing else. Migration 018 opens with <code>CREATE EXTENSION citext</code> and <code>CREATE EXTENSION btree_gist</code>. On Azure Flexible Server an extension that is not allowlisted cannot be created — <code>IF NOT EXISTS</code> does not help, because it does not exist and creation is refused.</p>
+    <p>Both are in the server's <code>allowedValues</code> and the parameter is <strong>dynamic — no restart, no downtime</strong>. It is a one-command fix, but it must happen before the migrate job runs. Every local test missed this because local PostgreSQL has no allowlist.</p>
+  </div>
+  <div class="band stop">
+    <h3>Blocker 2 — v91 returns 500 once 019 lands</h3>
+    <p>The constraints in 019 are <code>NOT VALID</code>, which exempts existing rows but binds every new write immediately. <code>POST /findings/{id}/re-alert</code> in v91 sets <code>status='open'</code> without clearing the disposition, so it violates <code>ck_findings_open_is_undecided</code> on <strong>every call</strong>. That is the Park half of the loop.</p>
+    <p>The fix is in <code>a1d8eaa</code> but is not in any built image. <strong>Deploy the code before the migration, not after.</strong></p>
+  </div>
+  <div class="band warn">
+    <h3>Blocker 3 — the migrate job is pinned to v91</h3>
+    <p>Migrations are baked into the backend image and <code>job-migrate-americana-prod</code> currently runs <code>rewive-backend:v91</code>, which predates 018 and 019. Running it today applies nothing. The job image must be repointed to a build that contains them.</p>
+  </div>
+</div>
+
+<section>
+  <h2><span class="num">01</span> Change inventory</h2>
+
+  <h3 class="sub">Commits I authored</h3>
+  <div class="tbl"><table>
+    <tr><th>Repo</th><th class="mono">Commit</th><th>Files</th><th>Purpose</th></tr>
+    <tr>
+      <td>rewive-fpa</td><td class="mono">40ab097</td>
+      <td class="mono">app/routers/findings.py<br>migrations/019_loop_hardening.sql<br>tests/test_loop_hardening_constraints.py</td>
+      <td>Make the running code satisfy 019's constraints; correct two grant defects; add a regression test</td>
+    </tr>
+    <tr>
+      <td>rewive-front-end</td><td class="mono">9d25cd8</td>
+      <td class="mono">docs/HANDOFF.md<br>CLAUDE.md<br>platform-schema/README.md</td>
+      <td>Documentation only — record the merge and the review finding</td>
+    </tr>
+    <tr>
+      <td>rewive-front-end</td><td class="mono">8a69421</td>
+      <td class="mono">docs/HANDOFF.md<br>CLAUDE.md<br>.claude/skills/architect/SKILL.md</td>
+      <td>Documentation only — record the contract-suite measurement</td>
+    </tr>
+  </table></div>
+
+  <h3 class="sub">Merges I performed (no authored code)</h3>
+  <div class="tbl"><table>
+    <tr><th>Repo</th><th>PR</th><th class="mono">Merge</th><th>Contents</th></tr>
+    <tr><td>rewive-fpa</td><td>#1</td><td class="mono">a1d8eaa</td><td>918d4bd (prior session) + 40ab097 (mine)</td></tr>
+    <tr><td>rewive-infra</td><td>#1</td><td class="mono">0aa76cc</td><td>Log Analytics binding — authored in a prior session, not by me</td></tr>
+  </table></div>
+
+  <p><strong>I created no branches and opened no PRs.</strong> Both PRs already existed; I reviewed one, added a commit to it, and merged both.</p>
+
+  <h3 class="sub">Still only local</h3>
+  <p>Nothing. All three commits are pushed. What exists only on this machine and holds no unique work: a scratchpad clone of <code>rewive-fpa</code>, and five local PostgreSQL 16 databases used for verification (<code>rewive_dev</code>, <code>rewive_prod_mirror</code>, <code>newcustomer</code>, <code>fresh_customer</code>, <code>reviewtest</code>).</p>
+
+  <div class="callout stop">
+    <p><strong>The "latest UI": there is none.</strong> I did not change, build, or push any frontend code, and I never referred to one. No screenshots exist because no UI was run. Section 02 below is answered as a correction, not as a description.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">02</span> Frontend integration</h2>
+  <p>Every question in this section rests on a premise that is not true of my work. Answering them individually:</p>
+  <div class="tbl"><table>
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr><td>Screens/components changed</td><td><strong>None.</strong></td></tr>
+    <tr><td>Frontend commit built from</td><td>N/A — nothing was built.</td></tr>
+    <tr><td>Americana branding / Operating Picture</td><td>N/A — untouched by me. Operating Picture work sits in backend main at <code>1cdc3d7</code>, which predates PR #1 and is already live in v91/v48.</td></tr>
+    <tr><td>Cookie auth / same-origin <code>/api</code></td><td>Untouched. No auth or routing code was modified.</td></tr>
+    <tr><td>New deps / env vars / build args</td><td>None.</td></tr>
+    <tr><td>Conflicts with frontend main <code>1cb9d3a</code></td><td><strong>None possible</strong> — zero frontend files changed.</td></tr>
+    <tr><td>Screenshots &amp; build commands</td><td>None exist.</td></tr>
+  </table></div>
+  <p>One clarification worth carrying, because the repos are easy to confuse: <code>rewive-front-end</code> — where my two documentation commits landed, on branch <code>v5</code>, not <code>main</code> — is a <strong>separate React/Vite demo application</strong>. It is not the deployed UI. The deployed frontend is <code>rewive-frontend:v48</code>, built from a different codebase. Nothing I changed reaches a user-facing screen.</p>
+</section>
+
+<section>
+  <h2><span class="num">03</span> Backend integration</h2>
+
+  <h3 class="sub">Behavior changes in 40ab097</h3>
+  <p>Two route changes, both in <code>app/routers/findings.py</code>. Both were written to make existing behavior legal under 019, not to add features.</p>
+  <ol>
+    <li><strong><code>POST /findings/{id}/re-alert</code></strong> — was <code>SET status='open'</code>; now also clears <code>disposition</code>, <code>disposition_at</code> and <code>disposition_by</code>. All three must move together: clearing <code>status</code> alone violates <code>ck_findings_open_is_undecided</code>, and clearing <code>disposition</code> alone violates <code>ck_findings_decision_whole</code>.</li>
+    <li><strong><code>POST /findings/{id}/disposition</code></strong> — <code>abandon</code> with an empty or missing <code>reason</code> now returns <strong>400</strong> before the write. Previously it returned 200 and stored a reasonless dismissal.</li>
+  </ol>
+
+  <h3 class="sub">API contract impact on the existing frontend</h3>
+  <div class="tbl"><table>
+    <tr><th>Surface</th><th>Change</th><th>Breaking?</th></tr>
+    <tr><td>Response shapes</td><td>None. Both routes still return <code>{"ok": true}</code>.</td><td><span class="tag t-ok">No</span></td></tr>
+    <tr><td><code>GET /findings/{id}</code> after a re-alert</td><td><code>disposition</code>, <code>disposition_at</code>, <code>disposition_by</code> now read <code>null</code> instead of retaining the spent decision.</td><td><span class="tag t-warn">Behavioral</span></td></tr>
+    <tr><td><code>POST .../disposition</code> with <code>abandon</code>, no reason</td><td>200 → <strong>400</strong>.</td><td><span class="tag t-warn">Behavioral</span></td></tr>
+  </table></div>
+  <p>The second one is the only change a client can trip over. If the deployed UI lets a user dismiss a finding without typing a reason, that flow starts failing with a 400 — a correct refusal, but it needs a message in the UI rather than a silent error. <strong>I could not verify whether the v48 frontend requires a reason</strong>; that UI is in a codebase I did not read.</p>
+
+  <h3 class="sub">Is <code>fpa_user_sessions</code> used?</h3>
+  <div class="callout">
+    <p><strong>Schema-only. Zero references anywhere in <code>backend/app/</code>.</strong> Nothing issues, reads, or revokes a session row. Token revocation does not work because a row is created; it works because code writes and checks one, and that code does not exist.</p>
+  </div>
+
+  <h3 class="sub">Added but unused — everything, in fact</h3>
+  <p>I grepped <code>backend/app/</code> for each new object. Every one returns zero hits:</p>
+  <div class="tbl"><table>
+    <tr><th>Object</th><th>App references</th><th>Follow-up code needed before it does anything</th></tr>
+    <tr><td class="mono">fpa_user_sessions</td><td>0</td><td>Issue <code>jti</code> at login, check on each request, revoke on logout / offboarding</td></tr>
+    <tr><td class="mono">fpa_periods</td><td>0</td><td>Period assignment at finding creation; close/BRM date capture</td></tr>
+    <tr><td class="mono">fpa_finding_comments</td><td>0</td><td>CRUD routes + a thread UI</td></tr>
+    <tr><td class="mono">fpa_finding_escalations</td><td>0</td><td>Write a row inside the existing escalate path and the SLA auto-escalation job</td></tr>
+    <tr><td class="mono">fpa_finding_leadership_actions</td><td>0</td><td>Routes for ask / reassign / raise_priority / take</td></tr>
+    <tr><td class="mono">fpa_users.person_id / idp_issuer / idp_subject / last_login_at</td><td>0</td><td>OIDC binding; derive role from <code>shared.v_current_seat</code> instead of <code>fpa_users.role</code></td></tr>
+    <tr><td class="mono">fpa_findings.period_id / owner_seat_id / entity_id / region_id</td><td>0</td><td>Populate at write time; migrate rollups off the free-text columns</td></tr>
+    <tr><td class="mono">shared.* (all 14 tables)</td><td>0</td><td>Onboarding writes dimensions; a backfill maps existing free text onto them</td></tr>
+  </table></div>
+  <p>An <code>entity_id</code> grep appears to hit nine files, but every hit is the audit log's unrelated <code>entity_id</code> parameter. I checked; it is a false positive.</p>
+  <p><strong>Read this plainly: 018 and 019 add capacity, not capability.</strong> After they apply, the product behaves exactly as it does today, minus the two v91 defects. The only immediate functional effect is the constraints refusing bad writes.</p>
+</section>
+
+<section>
+  <h2><span class="num">04</span> Database migrations</h2>
+
+  <h3 class="sub">What 018 creates — all in <code>shared</code></h3>
+  <div class="tbl"><table>
+    <tr><th>Kind</th><th>Count</th><th>Objects</th></tr>
+    <tr><td>Extensions</td><td>2</td><td class="mono">citext, btree_gist</td></tr>
+    <tr><td>Schema</td><td>1</td><td class="mono">shared</td></tr>
+    <tr><td>Tables</td><td>14</td><td class="mono">tenant, dim_country, dim_currency, dim_region, dim_business_unit, dim_channel, dim_category, legal_entity, org_unit, role, person, seat, agent, dim_alias</td></tr>
+    <tr><td>Views</td><td>7</td><td class="mono">v_region_ancestry, v_business_unit_ancestry, v_channel_ancestry, v_category_ancestry, v_legal_entity_ancestry, v_role_ancestry, v_current_seat</td></tr>
+    <tr><td>Functions</td><td>2</td><td>Cycle guards for the adjacency hierarchies</td></tr>
+    <tr><td>Triggers</td><td>8</td><td>Cycle prevention on each hierarchical dimension</td></tr>
+    <tr><td>Indexes</td><td>15</td><td>10 standard + 5 unique</td></tr>
+    <tr><td>Grants</td><td>—</td><td><code>USAGE</code> on the schema, DML on tables, <code>SELECT</code> on views, default privileges</td></tr>
+  </table></div>
+
+  <h3 class="sub">What 019 creates — all in <code>fpa</code></h3>
+  <div class="tbl"><table>
+    <tr><th>Kind</th><th>Objects</th></tr>
+    <tr><td>Tables (5)</td><td class="mono">fpa_periods, fpa_user_sessions, fpa_finding_comments, fpa_finding_escalations, fpa_finding_leadership_actions</td></tr>
+    <tr><td>Columns on <code>fpa_users</code></td><td class="mono">person_id, idp_issuer, idp_subject, last_login_at</td></tr>
+    <tr><td>Columns on <code>fpa_findings</code></td><td class="mono">period_id, owner_seat_id, entity_id, region_id</td></tr>
+    <tr><td>Constraints on <code>fpa_findings</code></td><td>6, all <code>NOT VALID</code></td></tr>
+    <tr><td>Trigger function + triggers</td><td><code>fpa_refuse_mutation()</code> + 2 append-only triggers</td></tr>
+    <tr><td>Grants</td><td>DML on 3 tables; <code>SELECT, INSERT</code> only on the 2 append-only tables</td></tr>
+  </table></div>
+
+  <h3 class="sub">Schemas touched</h3>
+  <div class="tbl"><table>
+    <tr><th>Schema</th><th>Touched?</th><th>Detail</th></tr>
+    <tr><td class="mono">shared</td><td><span class="tag t-warn">Yes</span></td><td>Created if absent; all 018 objects land here. Already exists in Americana, owned by <code>rewive_admin</code>, with no table ever created in it.</td></tr>
+    <tr><td class="mono">fpa</td><td><span class="tag t-warn">Yes</span></td><td>019's unqualified names resolve here — it is first in <code>PG_SEARCH_PATH</code>.</td></tr>
+    <tr><td class="mono">public</td><td><span class="tag t-ok">No</span></td><td>No object is created in <code>public</code>. Note the extensions land in <code>fpa</code>, not <code>public</code>, because they are unqualified.</td></tr>
+    <tr><td class="mono">sales_excellence</td><td><span class="tag t-ok">No</span></td><td>Appears in two comment lines in 018. Zero DDL.</td></tr>
+    <tr><td class="mono">sales_staging</td><td><span class="tag t-ok">No</span></td><td>Same — comments only.</td></tr>
+  </table></div>
+
+  <h3 class="sub">Ownership, grants, search_path, extensions</h3>
+  <ul>
+    <li><strong>Runs as</strong> <code>rewive_admin</code> (<code>PG_ADMIN_USER</code> on the job), never <code>rewive_app</code>. Correct per doctrine.</li>
+    <li><strong>Database</strong> <code>americana</code>. <strong><code>PG_SEARCH_PATH</code> = <code>fpa,shared,audit,rag,public</code></strong>, identical on the migrate job, the API and the worker — so type resolution for <code>citext</code> stays consistent.</li>
+    <li><strong>Grants</strong> are explicit because <code>000</code>'s default privileges cover <code>public</code> only. 018 grants for <code>shared</code>; 019 grants for its own tables.</li>
+    <li><strong>Extensions</strong> — see Blocker 1. <code>gen_random_uuid()</code> needs nothing; it is built into PostgreSQL 13+.</li>
+    <li>One structural note, not a blocker: because the <code>CREATE EXTENSION</code> statements are unqualified, <code>citext</code> installs into <code>fpa</code>. That is the same pattern <code>vector</code> already follows, and it works only while every connection shares the search path. Pinning extensions to a fixed schema would be more robust, but changing it now is a bigger decision than this deployment.</li>
+  </ul>
+
+  <h3 class="sub">Behavior with existing Americana rows</h3>
+  <div class="callout">
+    <p>All 8 added columns are <strong>nullable with no default</strong>, so PostgreSQL 11+ records them as metadata only — <strong>no table rewrite</strong>. All 6 constraints are <code>NOT VALID</code>, so <strong>no validation scan</strong>. On a <code>Standard_B1ms</code> server that distinction matters: neither operation reads the table.</p>
+    <p>Locks are brief <code>ACCESS EXCLUSIVE</code> for the DDL itself. Existing rows are neither read nor modified, and no row is rejected retroactively.</p>
+  </div>
+
+  <h3 class="sub">Preflight audit — run before migrating</h3>
+  <pre><code>-- 0. Extension allowlist (run in Cloud Shell, not psql)
+az postgres flexible-server parameter show \
+  -g rg-rewive-dedicated-americana -s psql-rewive-americana-prod \
+  -n azure.extensions --query value -o tsv
+-- EXPECT: a value containing citext AND btree_gist. Today it returns "vector".
+
+-- 1. Constraint violations already in the data
+SELECT count(*) AS decision_incomplete FROM fpa_findings
+ WHERE NOT ((disposition IS NULL AND disposition_at IS NULL AND disposition_by IS NULL)
+         OR (disposition IS NOT NULL AND disposition_at IS NOT NULL AND disposition_by IS NOT NULL));
+
+SELECT count(*) AS reasonless_dismissals FROM fpa_findings
+ WHERE disposition = 'abandon'
+   AND (disposition_reason IS NULL OR length(btrim(disposition_reason)) = 0);
+
+SELECT count(*) AS open_but_decided FROM fpa_findings
+ WHERE status = 'open' AND disposition IS NOT NULL;
+
+-- 2. Vocabulary actually present
+SELECT DISTINCT disposition FROM fpa_findings WHERE disposition IS NOT NULL;
+SELECT DISTINCT status      FROM fpa_findings;
+SELECT DISTINCT severity    FROM fpa_findings;
+
+-- 3. Collision check
+SELECT count(*) AS shared_tables FROM pg_tables WHERE schemaname = 'shared';
+SELECT rolname FROM pg_roles r
+  JOIN pg_namespace n ON n.nspowner = r.oid WHERE n.nspname = 'shared';
+
+-- 4. Migration ledger
+SELECT filename FROM schema_migrations ORDER BY filename DESC LIMIT 5;</code></pre>
+
+  <h3 class="sub">Expected results, and what means stop</h3>
+  <div class="tbl"><table>
+    <tr><th>Check</th><th>Expected</th><th>Stop if</th></tr>
+    <tr><td>Extension allowlist</td><td>contains <code>citext</code>, <code>btree_gist</code></td><td><span class="tag t-stop">Missing</span> — 018 fails outright</td></tr>
+    <tr><td><code>shared_tables</code></td><td><code>0</code></td><td><span class="tag t-stop">&gt; 0</span> — someone created tables by hand; 018 may collide</td></tr>
+    <tr><td><code>shared</code> owner</td><td><code>rewive_admin</code></td><td><span class="tag t-stop">Anything else</span> — ownership conflict</td></tr>
+    <tr><td>DISTINCT disposition</td><td>⊆ accept, act, acknowledge, abandon</td><td><span class="tag t-warn">Other values</span> — safe to migrate, but never validate that constraint until resolved</td></tr>
+    <tr><td>DISTINCT status</td><td>⊆ open, accepted, acting, acknowledged, abandoned, closed</td><td><span class="tag t-warn">Other values</span> — same</td></tr>
+    <tr><td>DISTINCT severity</td><td>⊆ low, medium, high, critical</td><td><span class="tag t-warn">Other values</span> — same</td></tr>
+    <tr><td>Violation counts</td><td>Any number is acceptable</td><td>Never a stop — <code>NOT VALID</code> ignores them. They only gate a later <code>VALIDATE</code>.</td></tr>
+    <tr><td><code>schema_migrations</code></td><td>latest is <code>017_...</code></td><td><span class="tag t-stop">018/019 present</span> — already applied; do not re-run</td></tr>
+  </table></div>
+
+  <h3 class="sub">Rollback and recovery</h3>
+  <p>There are no down migrations and I am not proposing any. The runner applies each file in its own transaction and records it only on success, so <strong>a failed migration rolls itself back and is not recorded</strong> — it simply retries on the next run once the cause is fixed. That is the primary recovery path.</p>
+  <div class="tbl"><table>
+    <tr><th>Situation</th><th>Action</th></tr>
+    <tr><td>018 or 019 fails mid-run</td><td>Nothing to undo. Fix the cause, re-run the job.</td></tr>
+    <tr><td>A constraint is rejecting legitimate writes</td><td><code>ALTER TABLE fpa_findings DROP CONSTRAINT &lt;name&gt;;</code> — instant, metadata-only, fully reversible by re-adding it <code>NOT VALID</code>. This is the correct emergency lever.</td></tr>
+    <tr><td>New tables/columns unwanted</td><td>Leave them. They are empty, unreferenced, and cost nothing. <strong>Do not drop columns</strong> — that is a rewrite and a data risk for no benefit.</td></tr>
+    <tr><td>Catastrophic</td><td>Point-in-time restore. Confirm the retention window before migrating, not after.</td></tr>
+  </table></div>
+
+  <h3 class="sub">Can a constraint make v91 return 500?</h3>
+  <div class="callout stop">
+    <p><strong>Yes — two of them, and one fires on every call.</strong></p>
+    <p><code>ck_findings_open_is_undecided</code> makes <code>POST /findings/{id}/re-alert</code> fail unconditionally in v91. The route only accepts findings in status <code>acknowledged</code>, which is reachable only via <code>disposition='acknowledge'</code>, so the disposition is always present and always left in place. Not intermittent — deterministic.</p>
+    <p><code>ck_findings_dismissal_has_reason</code> makes <code>POST /findings/{id}/disposition</code> fail when <code>abandon</code> is sent without a reason, as an unhandled write error rather than a 400.</p>
+    <p>Both are fixed in <code>a1d8eaa</code>. This is the entire reason the deployment order below is not negotiable.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">05</span> Safe deployment order</h2>
+  <ol class="steps">
+    <li>
+      <h4>Build a new backend image from <code>a1d8eaa</code></h4>
+      <p>Call it v92. It contains both the route fixes and migrations 018/019. Nothing else in this sequence works without it.</p>
+    </li>
+    <li>
+      <h4>Allowlist the extensions</h4>
+      <pre><code>az postgres flexible-server parameter set \
+  -g rg-rewive-dedicated-americana -s psql-rewive-americana-prod \
+  -n azure.extensions --value vector,citext,btree_gist</code></pre>
+      <p>Dynamic parameter — takes effect without a restart. Re-read it to confirm before continuing.</p>
+    </li>
+    <li>
+      <h4>Deploy API and worker to v92 — <em>before</em> any migration</h4>
+      <p>The v92 route code is fully backward-compatible with today's schema: clearing three already-existing nullable columns is legal without the constraints, and the <code>abandon</code> guard is pure Python. So v92 runs correctly on the pre-migration database.</p>
+      <p>Watch replica-level restart counts, not just revision status.</p>
+    </li>
+    <li>
+      <h4>Run the preflight audit</h4>
+      <p>Section 04. Stop on any red condition.</p>
+    </li>
+    <li>
+      <h4>Repoint the migrate job to v92 and execute it</h4>
+      <p>The job has no <code>MIGRATION_SET</code> variable, so it runs the default numbered set and will pick up 018 then 019 in filename order.</p>
+    </li>
+    <li>
+      <h4>Verify, then stop</h4>
+      <p>Do <strong>not</strong> run <code>VALIDATE CONSTRAINT</code> in this window. It is a separate decision taken later with the audit counts in hand.</p>
+    </li>
+  </ol>
+
+  <div class="callout">
+    <p><strong>Why this order is the safe one.</strong> The dangerous window is any period where the new constraints exist and old code is running. v92 code is correct under both schemas; v91 code is broken under the new one. Code-first therefore has no failure window in either direction, and if the migration is delayed or abandoned, v92 keeps working indefinitely.</p>
+    <p>Migration-first would guarantee 500s on the Park re-alert path for the entire gap between the two steps.</p>
+  </div>
+
+  <h3 class="sub">Smoke tests</h3>
+  <div class="tbl"><table>
+    <tr><th>Check</th><th>Request</th><th>Expect</th></tr>
+    <tr><td>Login</td><td><code>POST /api/auth/login</code> {email,password}</td><td class="mono">200 + token</td></tr>
+    <tr><td>Login rejects bad creds</td><td>same, wrong password</td><td class="mono">401</td></tr>
+    <tr><td>Findings list</td><td><code>GET /api/findings</code></td><td class="mono">200</td></tr>
+    <tr><td>Unauthenticated</td><td><code>GET /api/findings</code> no bearer</td><td class="mono">401</td></tr>
+    <tr><td>Disposition — Park</td><td><code>POST /api/findings/{id}/disposition</code> acknowledge</td><td class="mono">200</td></tr>
+    <tr><td><strong>Re-alert</strong> (the regression)</td><td><code>POST /api/findings/{id}/re-alert</code></td><td class="mono">200</td> </tr>
+    <tr><td>Re-alert on a non-parked finding</td><td>same, status ≠ acknowledged</td><td class="mono">400</td></tr>
+    <tr><td>Dismiss without reason</td><td><code>POST .../disposition</code> abandon, no reason</td><td class="mono">400</td></tr>
+    <tr><td>Dismiss with reason</td><td>same + reason</td><td class="mono">200</td></tr>
+    <tr><td>Operating Picture</td><td><code>GET /api/kpi-brain</code></td><td class="mono">200</td></tr>
+  </table></div>
+
+  <pre><code>-- after the re-alert smoke test, the decision must be fully cleared
+SELECT status, disposition, disposition_at, disposition_by
+  FROM fpa_findings WHERE id = '&lt;id&gt;';
+-- EXPECT: open | NULL | NULL | NULL
+
+-- migrations recorded
+SELECT filename, applied_at FROM schema_migrations
+ WHERE filename IN ('018_platform_dimensions.sql','019_loop_hardening.sql');
+
+-- objects landed
+SELECT count(*) FROM pg_tables WHERE schemaname='shared';           -- 14
+SELECT count(*) FROM pg_views  WHERE schemaname='shared';           -- 7
+SELECT conname, convalidated FROM pg_constraint
+ WHERE conrelid='fpa_findings'::regclass AND contype='c';           -- 6 rows, all f
+
+-- worker stability
+SELECT count(*) FROM fpa_findings WHERE auto_escalated_at &gt; now() - interval '1 hour';</code></pre>
+</section>
+
+<section>
+  <h2><span class="num">06</span> Testing evidence</h2>
+
+  <h3 class="sub">Against local PostgreSQL 16.14</h3>
+  <div class="tbl"><table>
+    <tr><th>Test</th><th>Result</th></tr>
+    <tr><td>Fresh-install path: <code>000</code> → <code>019</code> on an empty database</td><td><span class="tag t-ok">Pass</span> — all 20 files, <code>001</code> skipped (no pgvector build for PG16 on Homebrew)</td></tr>
+    <tr><td>Upgrade path: 018/019 onto a mirror carrying 000–017 + rows planted to violate every constraint</td><td><span class="tag t-ok">Pass</span> — applied clean, bad rows untouched, new bad writes refused</td></tr>
+    <tr><td>Reproduce the v91 re-alert defect (app SQL replayed verbatim)</td><td><span class="tag t-ok">Confirmed</span> — <code>ck_findings_open_is_undecided</code></td></tr>
+    <tr><td>Reproduce the partial-fix trap</td><td><span class="tag t-ok">Confirmed</span> — <code>ck_findings_decision_whole</code></td></tr>
+    <tr><td>Reproduce reasonless dismissal</td><td><span class="tag t-ok">Confirmed</span></td></tr>
+    <tr><td>Full loop replay after the fix: raise → Park → re-alert → decide again</td><td><span class="tag t-ok">Pass</span></td></tr>
+    <tr><td>Grants land as intended</td><td><span class="tag t-ok">Pass</span> — <code>INSERT,SELECT</code> only on append-only tables</td></tr>
+    <tr><td><code>pytest tests/test_loop_hardening_constraints.py</code></td><td><span class="tag t-ok">6 passed</span>; reverted against pre-fix router → <strong>2 fail</strong>, proving it detects the defect</td></tr>
+  </table></div>
+
+  <h3 class="sub">Against Azure</h3>
+  <div class="tbl"><table>
+    <tr><th>Test</th><th>Result</th></tr>
+    <tr><td>Contract suite vs production API, read-only</td><td><span class="tag t-warn">1 of 26</span> — auth model differs; see gaps below</td></tr>
+    <tr><td>Endpoint reachability probes via Front Door</td><td><span class="tag t-ok">Done</span> — 404 vs 401 separated per endpoint</td></tr>
+    <tr><td>Provider source check: neither logging argument is <code>ForceNew</code> at v4.50.0</td><td><span class="tag t-ok">Verified</span></td></tr>
+    <tr><td>Deployer can call <code>sharedKeys/action</code></td><td><span class="tag t-ok">Verified</span></td></tr>
+    <tr><td>Extension allowlist inspected</td><td><span class="tag t-stop">Blocker found</span></td></tr>
+    <tr><td><strong>Any migration against the live database</strong></td><td><span class="tag t-none">Never run</span></td></tr>
+  </table></div>
+
+  <h3 class="sub">Why the PRs had no status checks</h3>
+  <p>Neither repository has a <code>.github/workflows</code> directory. There is no CI configured, so <code>gh pr checks</code> correctly reports "no checks reported" — nothing failed or was skipped. Every test above was run by hand on this machine.</p>
+
+  <h3 class="sub">Gaps, stated honestly</h3>
+  <ul>
+    <li><strong>Nothing was tested against the Americana database.</strong> It is VNet-only with public access disabled and cannot be reached from here. All SQL evidence is from a local mirror I built, not from production data.</li>
+    <li><strong>The mirror was populated by planting rows, not by replaying the application.</strong> That is precisely how both v91 defects survived the previous session's verification.</li>
+    <li><strong><code>001_auth_and_rag.sql</code> was never executed locally</strong> — no pgvector build for PG16 on Homebrew. Untouched by this work, but the fresh-install path is therefore proven with one file skipped.</li>
+    <li><strong>No test ran under Python 3.11</strong>, the image's runtime. This machine has 3.9, which cannot even import the app; the tests I ran are file-based and runtime-independent.</li>
+    <li><strong>The v92 image does not exist and has never been built or run.</strong></li>
+    <li><strong>No frontend was tested at all</strong>, so the impact of the new 400 on the deployed UI is unknown.</li>
+    <li><strong>The contract suite's 1-of-26 needs qualifying in both directions</strong>: roughly half the 404s are demo-only surfaces that were never expected in production, and 9 endpoints returned 401 and were never exercised. It is a floor on divergence, not a measurement of it.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">07</span> Infrastructure PR #1</h2>
+  <p>Two arguments added to <code>azurerm_container_app_environment.main</code>:</p>
+  <pre><code>logs_destination           = "log-analytics"
+log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id</code></pre>
+  <p>Current live state confirms the gap is real and active:</p>
+  <pre><code>appLogsConfiguration: { destination: "", logAnalyticsConfiguration: null }</code></pre>
+  <p>Nothing is persisted today, which is why <code>az containerapp logs show</code> connects and returns nothing, and why a worker reached <code>restartCount=112</code> unseen.</p>
+
+  <div class="tbl"><table>
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr><td>Expected plan</td><td><code>1 to change, 0 to add, 0 to destroy</code> — only <code>azurerm_container_app_environment.main</code>, shown as <code>~ update in-place</code></td></tr>
+    <tr><td>In-place or replacement?</td><td><strong>In-place.</strong> Verified against provider source at v4.50.0: neither argument sets <code>ForceNew</code>, and <code>Update()</code> explicitly handles <code>HasChanges</code> on both — a <code>ForceNew</code> field would have no update path.</td></tr>
+    <tr><td>Permissions</td><td><code>Microsoft.OperationalInsights/workspaces/sharedKeys/action</code> (the provider calls <code>getSharedKeyForWorkspace()</code> on update) plus normal contributor rights on the environment. The current deployer is Owner and I confirmed the call succeeds.</td></tr>
+    <tr><td>Applied?</td><td><span class="tag t-stop">No.</span> Merged to infra main at <code>0aa76cc</code>. No <code>terraform apply</code> has run — there is no Terraform CLI on this machine and doctrine requires Cloud Shell.</td></tr>
+  </table></div>
+
+  <div class="callout">
+    <p><strong>Duplicate ingestion — a real question, not yet answerable.</strong> <code>diag-cae-*</code> in <code>observability.tf</code> already enables the <code>ContainerAppConsoleLogs</code> and <code>ContainerAppSystemLogs</code> categories against the same workspace. This PR makes the environment write those same log streams to that same workspace by a second, more direct mechanism.</p>
+    <p>Until now the diagnostic setting has emitted nothing — it had no persisted source to carry, which is the whole bug. Once persistence is bound, the honest position is that I <strong>do not know</strong> whether both paths will write, producing duplicate rows and double ingestion cost. Check it after applying rather than assume either way.</p>
+  </div>
+
+  <pre><code>// does anything arrive at all?
+ContainerAppConsoleLogs_CL | where TimeGenerated > ago(15m) | take 20
+
+// duplicate detection — same message, same timestamp, more than once
+ContainerAppConsoleLogs_CL
+| where TimeGenerated > ago(1h)
+| summarize copies = count() by Log_s, TimeGenerated, ContainerName_s
+| where copies > 1
+| take 20
+
+// the crash-loop that was invisible
+ContainerAppSystemLogs_CL
+| where TimeGenerated > ago(6h) and ContainerAppName_s == "ca-worker-americana-prod"
+| where Reason_s has_any ("Crash","BackOff","Killed")
+| order by TimeGenerated desc</code></pre>
+  <p>Also check ingestion volume for a few days: <code>Usage | where TimeGenerated > ago(7d) | summarize sum(Quantity) by DataType, bin(TimeGenerated, 1d)</code>.</p>
+</section>
+
+<section>
+  <h2><span class="num">08</span> Open infrastructure PRs</h2>
+  <div class="tbl"><table>
+    <tr><th>PR</th><th>Title</th><th>Needed for Americana production?</th></tr>
+    <tr><td class="mono">#2</td><td>Add Americana C&amp;S customer environment (<code>americanacs</code>)</td><td><span class="tag t-stop">No</span> — a second, separate environment. Not required by, and does not touch, the running deployment.</td></tr>
+    <tr><td class="mono">#3</td><td>Fix <code>terraform fmt</code> drift on main</td><td><span class="tag t-none">No</span> — formatting only, no resource change. Safe whenever; delivers nothing operationally.</td></tr>
+    <tr><td class="mono">#4</td><td>Correct two stale README claims</td><td><span class="tag t-none">No</span> — documentation only.</td></tr>
+  </table></div>
+
+  <p><strong>Why <code>americanacs</code> exists:</strong> it is a distinct customer entity (Americana C&amp;S) from the live Americana deployment, and this estate isolates each customer in a dedicated resource group with its own Postgres server. A new customer therefore means a new environment, not a tenant inside the existing one. That is the same greenfield pattern Americana itself used.</p>
+
+  <div class="callout stop">
+    <p><strong>I am not recommending #2 be merged.</strong> The second environment is not approved, and merging it changes nothing by itself but invites an apply that provisions a full estate.</p>
+    <p>One dependency worth recording: #2 is the PR that would have hit the <code>000</code> bootstrap bug, because a new environment applies every migration from <code>000</code> against an empty database. That bug is fixed in <code>a1d8eaa</code> — but only in an image that does not yet exist. <strong>If #2 is ever approved, it needs a migrate job pointing at v92 or later, or it fails on the first file.</strong></p>
+    <p><strong>Obsolete assumptions in #2 that I could not check.</strong> GitHub became unreachable from this network partway through (corporate TLS interception) and I could not re-read the PR's files. Its image tags are the specific risk: if it pins <code>backend_image_tag</code>/<code>frontend_image_tag</code> to values older than v91/v48, they are stale. <strong>Verify before any apply — I am flagging this as unchecked, not as clean.</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">09</span> Configuration and secrets</h2>
+  <div class="tbl"><table>
+    <tr><th>Category</th><th>New?</th><th>Detail</th></tr>
+    <tr><td>Application env vars</td><td><span class="tag t-ok">None</span></td><td>v92 introduces no new variable. Existing config is sufficient.</td></tr>
+    <tr><td>Migrate job env vars</td><td><span class="tag t-ok">None</span></td><td>Existing set is sufficient. <code>MIGRATION_SET</code> is deliberately unset — leave it unset.</td></tr>
+    <tr><td>Key Vault secrets</td><td><span class="tag t-ok">None</span></td><td>No new secret is required by 018, 019, or the route changes.</td></tr>
+    <tr><td>Managed identity permissions</td><td><span class="tag t-ok">None</span></td><td>No app-side change. The <em>deployer</em> needs <code>workspaces/sharedKeys/action</code> for infra PR #1 and already has it.</td></tr>
+    <tr><td>Server parameter</td><td><span class="tag t-stop">Yes</span></td><td><code>azure.extensions</code> must gain <code>citext,btree_gist</code>. This is the only configuration change the migration requires.</td></tr>
+    <tr><td>External dependencies</td><td><span class="tag t-ok">None</span></td><td>No new outbound calls; nothing added to the egress allowlist.</td></tr>
+  </table></div>
+  <p>No secret values appear anywhere in this document. One disclosure to report honestly: while confirming the <code>sharedKeys/action</code> permission I used a call that <em>returns</em> the Log Analytics shared keys, so those key values were printed into my working session transcript. A role-assignment check would have answered the same question without exposing them. Nothing currently consumes those keys, since log persistence has never been bound — but they can be regenerated, and doing so before applying infra PR #1 costs nothing.</p>
+</section>
+
+<section>
+  <h2><span class="num">10</span> Integration matrix</h2>
+  <div class="tbl"><table>
+    <tr>
+      <th>Repository</th><th class="mono">PR / commit</th><th>Purpose</th>
+      <th>Merged</th><th>Deployed</th><th>Migration</th><th>Risk</th><th>Recommended action</th>
+    </tr>
+    <tr>
+      <td>rewive-fpa</td><td class="mono">PR #1 → a1d8eaa</td>
+      <td>Migrations 018/019 + <code>000</code> provisioning fix + route fixes</td>
+      <td><span class="tag t-ok">Yes</span></td><td><span class="tag t-stop">No</span></td><td><span class="tag t-warn">Yes</span></td>
+      <td><span class="tag t-stop">High</span></td>
+      <td>Build v92; deploy code <strong>before</strong> migrating</td>
+    </tr>
+    <tr>
+      <td>rewive-fpa</td><td class="mono">40ab097</td>
+      <td>Route fixes making v92 safe under the new constraints</td>
+      <td><span class="tag t-ok">Yes</span></td><td><span class="tag t-stop">No</span></td><td><span class="tag t-none">No</span></td>
+      <td><span class="tag t-ok">Low</span></td>
+      <td>Ship in v92. Backward-compatible with today's schema</td>
+    </tr>
+    <tr>
+      <td>rewive-infra</td><td class="mono">PR #1 → 0aa76cc</td>
+      <td>Bind Log Analytics at environment level</td>
+      <td><span class="tag t-ok">Yes</span></td><td><span class="tag t-stop">Not applied</span></td><td><span class="tag t-none">No</span></td>
+      <td><span class="tag t-ok">Low</span></td>
+      <td>Apply in Cloud Shell <strong>first</strong> — makes everything else observable</td>
+    </tr>
+    <tr>
+      <td>rewive-infra</td><td class="mono">PR #2</td>
+      <td><code>americanacs</code> environment</td>
+      <td><span class="tag t-none">No</span></td><td><span class="tag t-none">No</span></td><td><span class="tag t-warn">Would need</span></td>
+      <td><span class="tag t-warn">Medium</span></td>
+      <td><strong>Hold.</strong> Not approved; image tags unverified</td>
+    </tr>
+    <tr>
+      <td>rewive-infra</td><td class="mono">PR #3</td>
+      <td><code>terraform fmt</code> drift</td>
+      <td><span class="tag t-none">No</span></td><td><span class="tag t-none">No</span></td><td><span class="tag t-none">No</span></td>
+      <td><span class="tag t-ok">None</span></td><td>Merge whenever convenient</td>
+    </tr>
+    <tr>
+      <td>rewive-infra</td><td class="mono">PR #4</td>
+      <td>README corrections</td>
+      <td><span class="tag t-none">No</span></td><td><span class="tag t-none">No</span></td><td><span class="tag t-none">No</span></td>
+      <td><span class="tag t-ok">None</span></td><td>Merge whenever convenient</td>
+    </tr>
+    <tr>
+      <td>rewive-front-end</td><td class="mono">9d25cd8, 8a69421</td>
+      <td>Documentation on branch <code>v5</code></td>
+      <td><span class="tag t-ok">Pushed</span></td><td><span class="tag t-none">N/A</span></td><td><span class="tag t-none">No</span></td>
+      <td><span class="tag t-ok">None</span></td><td>None. Not a deployed application</td>
+    </tr>
+    <tr>
+      <td>Azure config</td><td class="mono">azure.extensions</td>
+      <td>Allowlist <code>citext</code>, <code>btree_gist</code></td>
+      <td><span class="tag t-none">N/A</span></td><td><span class="tag t-stop">No</span></td><td><span class="tag t-warn">Prerequisite</span></td>
+      <td><span class="tag t-stop">Blocking</span></td>
+      <td>Set before the migrate job runs. Dynamic; no restart</td>
+    </tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">—</span> Blockers, risks, and the next action</h2>
+
+  <h3 class="sub">Blockers</h3>
+  <ol>
+    <li><strong><code>azure.extensions</code> lacks <code>citext</code> and <code>btree_gist</code>.</strong> 018 fails on its first statements. One dynamic parameter change, no restart.</li>
+    <li><strong>No image contains 018/019 or the route fixes.</strong> v92 must be built from <code>a1d8eaa</code>.</li>
+    <li><strong>The migrate job is pinned to v91</strong> and would apply nothing.</li>
+    <li><strong>v91 will 500 on re-alert the moment 019 lands.</strong> Code must go first.</li>
+  </ol>
+
+  <h3 class="sub">Unresolved assumptions</h3>
+  <ul>
+    <li>I could not connect to the Americana database. Every SQL result here comes from a local mirror I constructed from the same migrations — not from production data.</li>
+    <li>I could not re-read infra PR #2 after the network blocked GitHub. Its image tags are unverified.</li>
+    <li>Whether the v48 frontend requires a reason when dismissing is unknown, so the blast radius of the new 400 is unknown.</li>
+    <li>Whether the environment-level log binding duplicates <code>diag-cae-*</code> ingestion is unknown until it is applied.</li>
+    <li>The job has no <code>MIGRATION_SET</code>, so <code>americana/001_domain_schemas.sql</code> is not applied by it. Something else applied those schemas historically; I did not establish what.</li>
+  </ul>
+
+  <h3 class="sub">Known production risks</h3>
+  <ul>
+    <li>Deploying in the wrong order produces deterministic 500s on a core loop path.</li>
+    <li><code>Standard_B1ms</code> is a small server. The DDL itself is cheap — no rewrites, no scans — but it does take brief <code>ACCESS EXCLUSIVE</code> locks on <code>fpa_findings</code>. Prefer a quiet window.</li>
+    <li>Until infra PR #1 is applied, a migrate-job failure produces <strong>no container logs</strong>. That is the blind-estate condition that has cost this project a session before.</li>
+    <li>Confirm the point-in-time-restore window before migrating, not after.</li>
+    <li>018 and 019 deliver no user-visible capability. If the goal is functional value, the follow-up code in Section 03 is the actual work.</li>
+  </ul>
+
+  <div class="callout stop">
+    <h3 class="sub" style="margin-top:0">Exact next action for Sanju</h3>
+    <p><strong>Apply infra PR #1 in Cloud Shell, and nothing else yet.</strong></p>
+    <p>Confirm the plan reads <code>1 to change, 0 to add, 0 to destroy</code> before typing yes. If any line says <code>destroy and then create replaced</code>, stop — that contradicts what I verified and must not be applied to a live environment.</p>
+    <p>Then confirm <code>az containerapp logs show</code> actually returns content. Only once logging is working should the v92 build, the extension allowlist, and the migration follow — in that order. Do the rest blind and a failure will be invisible exactly when it matters most.</p>
+  </div>
+</section>
+
+<hr class="end">
+<footer>
+  <p>Prepared 2026-08-14. Nothing in this document has been deployed, migrated or applied. Baseline: backend v91, frontend v48, backend main <code>a1d8eaa</code>, infra main <code>0aa76cc</code>, database <code>americana</code> on PostgreSQL 16.</p>
+</footer>
+</div>
