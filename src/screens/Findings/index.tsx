@@ -322,7 +322,7 @@ export function FindingsScreen() {
             <Pill tone="teal">{inFlight.length}</Pill>
           </div>
           {inFlight.length === 0 && <div className="card" style={{ marginBottom: 24 }}><div className="state-msg">No recovery targets being watched — Accept a finding and it appears here until the number is back.</div></div>}
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }} data-tour="closure-exit">
+          <div className="grid grid-2col" style={{ marginBottom: 24 }} data-tour="closure-exit">
             {inFlight.map((c) => <ExitConditionCard key={c.id} c={c} />)}
           </div>
 
@@ -359,7 +359,7 @@ export function FindingsScreen() {
             <Pill tone="green">{closedLoops.length}</Pill>
           </div>
           {closedLoops.length === 0 && <div className="card" style={{ marginBottom: 24 }}><div className="state-msg">No closed loops yet — when a recovery target is met, the finding retires itself here.</div></div>}
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
+          <div className="grid grid-2col" style={{ marginBottom: 24 }}>
             {closedLoops.map((c) => <ExitConditionCard key={c.id} c={c} verdict={verdictFor.get(c.findingId)} />)}
           </div>
 

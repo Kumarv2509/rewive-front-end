@@ -10,6 +10,12 @@ import App from './App.tsx'
 // context that serves the SPA without that inline script.
 applyTheme()
 
+// Installability only (see public/sw.js) — prod-only so dev never fights a
+// registered worker.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => { /* non-fatal */ })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

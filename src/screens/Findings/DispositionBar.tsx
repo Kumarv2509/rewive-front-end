@@ -73,7 +73,7 @@ export function DispositionBar({ finding }: { finding: Finding }) {
         </button>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+      <div className="grid dispo-grid" style={{ gap: 10 }}>
         {OPTIONS.map((opt) => (
           <button
             key={opt.key}
@@ -93,7 +93,7 @@ export function DispositionBar({ finding }: { finding: Finding }) {
       </div>
 
       {selected && (
-        <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <div className="decide-row" style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           {selected === 'acknowledge' ? (
             <input
               style={{ flex: 1, border: '1px solid var(--border-strong)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit' }}

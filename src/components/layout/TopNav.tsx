@@ -82,7 +82,7 @@ export function TopNav() {
           <circle cx="11" cy="11" r="7" />
           <path d="M20 20l-3.5-3.5" />
         </svg>
-        Ask Rewive to do something… <span className="kbd">⌘K</span>
+        <span className="cmdbar-label">Ask Rewive to do something…</span> <span className="kbd">⌘K</span>
       </button>
       <div className="topnav-spacer" />
       <div className="top-actions">

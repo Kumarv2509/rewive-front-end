@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { TopNav } from './TopNav';
 import { AreaSidebar } from './AreaSidebar';
+import { MobileNav } from './MobileNav';
 import { TourOverlay } from '../tour/TourOverlay';
 import { CommandPaletteProvider } from './CommandPalette';
 
@@ -17,6 +18,7 @@ export function AppLayout() {
             </div>
           </div>
         </div>
+        <MobileNav />
         <TourOverlay />
       </div>
     </CommandPaletteProvider>

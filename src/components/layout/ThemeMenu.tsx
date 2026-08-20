@@ -32,7 +32,7 @@ export function ThemeMenu() {
   };
 
   return (
-    <div className="lens-menu" ref={wrapRef}>
+    <div className="lens-menu theme-menu" ref={wrapRef}>
       <button
         type="button"
         className="lens-btn"

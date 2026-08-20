@@ -662,3 +662,61 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
 .topnav-tenant-ind{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
 .topnav-switch{font-size:12px;font-weight:500;color:var(--ink-3);text-decoration:none;transition:color .15s;background:none;border:none;cursor:pointer;font-family:inherit}
 .topnav-switch:hover{color:var(--ink)}
+
+/* ---------- Mobile shell (phase 0 of the mobile app) ----------
+   One codebase: below 760px the rail becomes a bottom bar (Today + the loop;
+   the org/setup screens sit behind a "More" sheet — see MobileNav.tsx), the
+   top bar compacts, and the multi-column screens stack. Everything is gated
+   on width — desktop is untouched. Named grids that screens previously set
+   inline live here so the media query can reach them. */
+.app-v2{height:100dvh}
+.mobile-nav{display:none}
+.grid-2col{grid-template-columns:repeat(2,1fr)}
+.dispo-grid{grid-template-columns:repeat(4,1fr)}
+
+@media (max-width:760px){
+  /* Shell */
+  .area-side{display:none}
+  .content{padding:18px 14px calc(84px + env(safe-area-inset-bottom))}
+  .screen{max-width:none}
+  .topnav{gap:10px;padding:0 12px}
+  .topnav-tenant-name,.topnav-tenant-ind,.topnav-help{display:none}
+  .cmdbar{flex:0 0 auto;margin:0;padding:8px 10px}
+  .cmdbar-label,.cmdbar .kbd{display:none}
+  .top-actions{gap:8px}
+  .logo-name{display:none}
+  .theme-menu{display:none}
+  .lens-btn{white-space:nowrap}
+  .lens-btn .lens-label{display:none}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom));max-width:calc(100vw - 28px)}
+
+  /* Bottom bar — the rule-weight top border keeps it in the Signal language */
+  .mobile-nav{position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;background:var(--surface);border-top:var(--rule-w) solid var(--rule-c);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .mnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font:inherit;font-size:10px;font-weight:600;color:var(--ink-3);text-decoration:none;background:none;border:none;padding:5px 0 3px;cursor:pointer}
+  .mnav-item svg{width:20px;height:20px}
+  .mnav-item.active{color:var(--accent)}
+  .mobile-sheet-scrim{position:fixed;inset:0;z-index:118;background:var(--scrim)}
+  .mobile-sheet{position:fixed;left:0;right:0;bottom:0;z-index:119;background:var(--surface);border-top:var(--rule-w) solid var(--rule-c);border-radius:14px 14px 0 0;padding:12px 10px calc(64px + env(safe-area-inset-bottom));animation:menu-in .14s ease}
+  .mobile-sheet .menu-item{font-size:14px;padding:11px 12px}
+  .mobile-sheet .menu-item svg{width:18px;height:18px}
+
+  /* Screens: columns stack, dense grids relax */
+  .page-header .ph-row{flex-direction:column;align-items:stretch;gap:10px}
+  .page-header .ph-actions{padding-top:0}
+  .home-cols,.hl-cards,.agent-grid,.out-cols,.create-wrap,.ag-grid,.grid-2col,.itsm-board{grid-template-columns:1fr}
+  .kpis,.dstats,.score{grid-template-columns:repeat(2,1fr)}
+  .dispo-grid{grid-template-columns:1fr 1fr}
+  .q-hero{flex-wrap:wrap;row-gap:8px}
+  .q-hero .q-meta{margin-left:auto}
+  .dec-item{flex-wrap:wrap;row-gap:8px;padding:13px 14px}
+  .dec-item .acts{margin-left:auto}
+  .sec-head{padding:14px 14px 10px}
+  .state-msg{padding:20px 14px}
+  /* The Findings filter row sets flex:1 inline on .tabs; !important is the
+     one lever that beats an inline style, and it only fires at phone width. */
+  .tabs{overflow-x:auto;scrollbar-width:none;flex-basis:100% !important}
+  .tab{white-space:nowrap;margin-right:12px}
+  .btn,.pill{white-space:nowrap}
+  .decide-row{flex-wrap:wrap}
+  .decide-row .btn{flex:1 1 100%;justify-content:center}
+}
